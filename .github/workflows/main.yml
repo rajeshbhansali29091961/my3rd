@@ -1,41 +1,54 @@
 name: Build Flet Android APK
-on:
-push:
-branches: [ &quot;main&quot; ] # जब आप main ब्रांच में कोड पुश करेंगे तब यह चलेगा
-workflow_dispatch: # इससे आप खुद भी मैन्युअली बटन दबाकर रन कर सकते हैं
-jobs:
-build:
-runs-on: ubuntu-latest # यह आपके लिए मुफ़्त Linux मशीन स्टार्ट करेगा
-steps:
-- name: Checkout repository
 
-uses: actions/checkout@v4
-- name: Set up Python
-uses: actions/setup-python@v5
-with:
-python-version: &#39;3.11&#39;
-- name: Set up Java JDK 17
-uses: actions/setup-java@v4
-with:
-java-version: &#39;17&#39;
-distribution: &#39;temurin&#39;
-- name: Set up Flutter
-uses: subosito/flutter-action@v2
-with:
-flutter-version: &#39;3.19.x&#39; # Flet बिल्ड के लिए आवश्यक
-- name: Install Android SDK
-uses: android-actions/setup-android@v3
-- name: Install Python Dependencies
-run: |
-python -m pip upgrade pip
-pip install -r requirements.txt
-pip install flet # सुनिश्चित करने के लिए कि flet cli उपलब्ध हो
-- name: Build Android APK
-run: |
-# यह कमांड आपके Python कोड को Android APK में बदल देगी
-flet build apk
-- name: Upload APK Artifact
-uses: actions/upload-artifact@v4
-with:
-name: flet-android-app
-path: build/apk/*.apk
+on:
+  push:
+    branches:
+      - main  # या आपके मुख्य ब्रांच का नाम (जैसे master)
+  workflow_dispatch: # इससे आप जब चाहें मैन्युअल रूप से भी रन कर सकते हैं
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. कोड चेकआउट करें
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    # 2. जावा सेटअप करें (Android SDK के लिए ज़रूरी है)
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    # 3. Android SDK सेट करें
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    # 4. पायथन सेटअप करें
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    # 5. Flutter और Flet की ज़रूरतें इंस्टॉल करें
+    - name: Install Dependencies
+      run: |
+        python -msandbox.utils || true  # कुछ एनवायरनमेंट फिक्स के लिए
+        pip install --upgrade pip
+        pip install flet pandas requests
+        # अगर NseKit की जरूरत है तो: pip install NseKit (वैकल्पिक)
+
+    # 6. Flet प्रोजेक्ट को APK में बिल्ड करें
+    - name: Build Android APK
+      run: |
+        flet build apk --release
+
+    # 7. तैयार हुई APK को GitHub पर अपलोड करें ताकि आप डाउनलोड कर सकें
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Bhoovalaya-Engine-APK
+        path: build/apk/*.apk
+

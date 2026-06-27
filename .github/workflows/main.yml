@@ -1,0 +1,27 @@
+yaml
+name: Android CI
+on:
+
+push:
+branches: [ &quot;main&quot; ] # जब आप main ब्रांच में कोड पुश करेंगे तब यह चलेगा
+jobs:
+build:
+runs-on: ubuntu-latest # यह आपके लिए Linux मशीन ऑन करेगा
+steps:
+- name: Checkout Code
+uses: actions/checkout@v4
+- name: Set up JDK 17
+uses: actions/setup-java@v4
+with:
+java-version: &#39;17&#39;
+distribution: &#39;temurin&#39;
+cache: gradle
+- name: Grant execute permission for gradlew
+run: chmod +x gradlew
+- name: Build with Gradle
+run: ./gradlew assembleDebug # यह कमांड APK जनरेट करेगी
+- name: Upload APK
+uses: actions/upload-artifact@v4
+with:
+name: my-android-app
+path: app/build/outputs/apk/debug/app-debug.apk

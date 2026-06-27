@@ -2,7 +2,6 @@ import os
 import threading
 import requests
 import time
-import pandas as pd
 from datetime import datetime
 import flet as ft
 
@@ -38,8 +37,8 @@ def phonetic_transliterate(text):
         try:
             url = f"https://google.com{word}&ime=transliteration_en_hi&num=1"
             response = requests.get(url, timeout=5).json()
-            if response[0] == "SUCCESS":
-                trans_word = response[1][0][1][0]
+            if response == "SUCCESS":
+                trans_word = response
                 transliterated_words.append(trans_word)
             else:
                 transliterated_words.append(word)
@@ -55,7 +54,6 @@ def phonetic_transliterate(text):
 
 
 def main(page: ft.Page):
-    # Flet के कंपाइलर को बाईपास करने के लिए डायनामिक इन-फंक्शन इम्पोर्ट हैक
     sqlite3 = __import__("sq" + "lite3")
     
     page.title = "BHOOVALAYA PHONETIC ENGINE"
@@ -64,25 +62,21 @@ def main(page: ft.Page):
     
     db_path = 'bhuvalaya_oracle.db'
     
-    # Initialize Database Architecture
     conn = sqlite3.connect(db_path)
     conn.execute('''CREATE TABLE IF NOT EXISTS stocks (
                     symbol TEXT PRIMARY KEY, eng_name TEXT, hindi_name TEXT, 
                     listing_date TEXT, akshara_sum INTEGER, breakdown TEXT)''')
     conn.close()
 
-    # --- MAIN INTERFACE WIDGET STRUCTS ---
     search_box = ft.TextField(label="Enter Stock Name or Symbol", value="RELIANCE", expand=True)
     output_text = ft.Text(value="Welcome. Click 'Phonetic Sync Engine Data' to populate your workspace database.", size=15, selectable=True)
     
-    # Data Form Inputs for CRUD operations
     input_sym = ft.TextField(label="Symbol ID")
     input_eng = ft.TextField(label="English Standard Name")
     input_hindi = ft.TextField(label="Hindi Phonetic Name")
     input_date = ft.TextField(label="Listing Date (DD-MM-YYYY)")
     crud_status = ft.Text(value="Status: Idle", italic=True, color="gray")
     
-    # Grid Table View for Workspace Browser Rows
     data_table = ft.DataTable(
         columns=[
             ft.DataColumn(ft.Text("Symbol")),
@@ -138,14 +132,21 @@ def main(page: ft.Page):
         if res:
             sym, eng, hindi, l_date_str, a_sum, breakdown = res
             today = datetime.now()
+            
+            # Pure Python alternative to pandas to_datetime
             try:
-                l_date = pd.to_datetime(l_date_str, format="%d-%m-%Y", errors='coerce')
-                if pd.isna(l_date):
-                    l_date = pd.to_datetime(l_date_str, errors='coerce')
-                days_diff = (today - l_date).days if not pd.isna(l_date) else 0
+                # DD-MM-YYYY फॉर्मेट पार्स करने का प्रयास
+                l_date = datetime.strptime(l_date_str.strip(), "%d-%m-%Y")
+                days_diff = (today - l_date).days
                 date_val = days_diff % 730
             except:
-                days_diff, date_val = 0, 0
+                try:
+                    # YYYY-MM-DD बैकअप फॉर्मेट पार्स करने का प्रयास
+                    l_date = datetime.strptime(l_date_str.strip(), "%Y-%m-%d")
+                    days_diff = (today - l_date).days
+                    date_val = days_diff % 730
+                except:
+                    days_diff, date_val = 0, 0
 
             total_vib = a_sum + date_val
             sutra = SUTRA_MAP.get(total_vib % 9)
@@ -177,16 +178,22 @@ def main(page: ft.Page):
             from NseKit import Nse
             nse = Nse()
             df = nse.nse_eod_equity_full_list()
-            df.columns = [c.upper().strip() for c in df.columns]
+            
+            # Pandas का न्यूनतम उपयोग केवल CSV डिक्शनरी रीड के लिए
+            # यह क्रैश नहीं करेगा क्योंकि हम कोई भारी C-एक्सटेंशन फ़ंक्शन नहीं बुला रहे हैं
+            records = df.to_dict(orient="records")
             
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             
-            total = len(df)
-            for idx, row in df.iterrows():
-                sym = str(row.get('SYMBOL', '')).strip()
-                eng_name = str(row.get('COMPANY NAME', row.get('NAME OF COMPANY', ''))).strip()
-                l_date = str(row.get('DATE OF LISTING', '01-01-2000')).strip()
+            total = len(records)
+            for idx, row in enumerate(records):
+                # कॉलम नामों को केस-इन्सेंसिटिव तरीके से खोजें
+                row_upper = {str(k).upper().strip(): v for k, v in row.items()}
+                
+                sym = str(row_upper.get('SYMBOL', '')).strip()
+                eng_name = str(row_upper.get('COMPANY NAME', row_upper.get('NAME OF COMPANY', ''))).strip()
+                l_date = str(row_upper.get('DATE OF LISTING', '01-01-2000')).strip()
                 
                 if not sym or sym.lower() == 'symbol': 
                     continue
@@ -224,12 +231,3 @@ def main(page: ft.Page):
 
     def db_add(e):
         sqlite3 = __import__("sq" + "lite3")
-        sym, eng, hindi, l_date = input_sym.value.upper(), input_eng.value, input_hindi.value, input_date.value
-        if not (sym and eng and hindi): return
-        
-        a_sum = 0; steps = []
-        for char in hindi:
-            w = AKSHARA_VALS.get(char, 0)
-            a_sum += w
-            if w > 0 or char == '्': 
-                steps.append(f"{char}({w})")

@@ -43,7 +43,7 @@ jobs:
     # 6. Flet प्रोजेक्ट को APK में बिल्ड करें
     - name: Build Android APK
       run: |
-        flet build apk --release
+        flet build apk 
 
     # 7. तैयार हुई APK को GitHub पर अपलोड करें ताकि आप डाउनलोड कर सकें
     - name: Upload APK Artifact

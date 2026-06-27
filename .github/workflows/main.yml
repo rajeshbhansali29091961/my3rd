@@ -3,7 +3,7 @@ name: Build Flet Android APK
 on:
   push:
     branches:
-      - main  # या आपके मुख्य ब्रांच का नाम
+      - main
   workflow_dispatch: 
 
 jobs:
@@ -15,7 +15,7 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    # 2. जावा सेटअप करें (Android SDK के लिए ज़रूरी है)
+    # 2. जावा सेटअप करें
     - name: Setup Java JDK
       uses: actions/setup-java@v4
       with:
@@ -38,16 +38,16 @@ jobs:
       with:
         python-version: '3.11'
 
-    # 6. Flet और अन्य ज़रूरी लाइब्रेरी इंस्टॉल करें (यहाँ से sqlite3 हटा दिया गया है)
+    # 6. सभी ज़रूरी लाइब्रेरीज़ को GitHub Actions के एनवायरनमेंट में इंस्टॉल करें
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flet pandas requests 
+        pip install flet pandas requests
 
-    # 7. Flet प्रोजेक्ट को APK में बिना किसी प्रॉम्ट के बिल्ड करें
+    # 7. Flet प्रोजेक्ट को APK में बिल्ड करें (इंटरनेट ब्लॉक एरर को बायपास करने के लिए --pre-installed जोड़ दिया गया है)
     - name: Build Android APK
       run: |
-        yes | flet build apk
+        yes | flet build apk --pre-installed
 
     # 8. तैयार हुई APK को GitHub पर अपलोड करें
     - name: Upload APK Artifact

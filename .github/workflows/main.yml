@@ -33,23 +33,19 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Install and Vendor Dependencies
+    - name: Install Build Dependencies
       run: |
         python -m pip install --upgrade pip
-        # 1. शुद्ध पायथन (no-binary) वाले pandas और requests डाउनलोड करें
-        pip install --target=. pandas requests
         pip install --upgrade flet flet-cli
-        
-        # 2. किसी भी प्रकार के बाहरी संघर्ष से बचने के लिए कैश साफ करें
-        rm -rf *.dist-info __pycache__
 
+    # --no-isolation फ़्लैग Flet के आंतरिक कंपाइलर को नेटवर्क ब्लॉक किए बिना 
+    # सीधे Android (ARM64) के संगत numpy और pandas डाउनलोड करने की अनुमति देता है।
     - name: Build Android APK
       run: |
-        yes | flet build apk
+        yes | flet build apk --no-isolation
         
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: Bhoovalaya-Engine-APK
         path: build/apk/*.apk
-

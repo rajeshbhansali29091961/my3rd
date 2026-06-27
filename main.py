@@ -36,7 +36,7 @@ def phonetic_transliterate(text):
             transliterated_words.append(EXCHANGE_DICTIONARY[word])
             continue
         try:
-            url = f"https://inputtools.google.com/request?text={word}&ime=transliteration_en_hi&num=1"
+            url = f"https://google.com{word}&ime=transliteration_en_hi&num=1"
             response = requests.get(url, timeout=5).json()
             if response[0] == "SUCCESS":
                 trans_word = response[1][0][1][0]
@@ -55,7 +55,9 @@ def phonetic_transliterate(text):
 
 
 def main(page: ft.Page):
+    # Flet के कंपाइलर को बाईपास करने के लिए डायनामिक इन-फंक्शन इम्पोर्ट हैक
     sqlite3 = __import__("sq" + "lite3")
+    
     page.title = "BHOOVALAYA PHONETIC ENGINE"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.scroll = "adaptive"
@@ -137,8 +139,10 @@ def main(page: ft.Page):
             sym, eng, hindi, l_date_str, a_sum, breakdown = res
             today = datetime.now()
             try:
-                l_date = pd.to_datetime(l_date_str)
-                days_diff = (today - l_date).days
+                l_date = pd.to_datetime(l_date_str, format="%d-%m-%Y", errors='coerce')
+                if pd.isna(l_date):
+                    l_date = pd.to_datetime(l_date_str, errors='coerce')
+                days_diff = (today - l_date).days if not pd.isna(l_date) else 0
                 date_val = days_diff % 730
             except:
                 days_diff, date_val = 0, 0
@@ -184,7 +188,8 @@ def main(page: ft.Page):
                 eng_name = str(row.get('COMPANY NAME', row.get('NAME OF COMPANY', ''))).strip()
                 l_date = str(row.get('DATE OF LISTING', '01-01-2000')).strip()
                 
-                if not sym or sym.lower() == 'symbol': continue
+                if not sym or sym.lower() == 'symbol': 
+                    continue
                 
                 h_phonetic_name = phonetic_transliterate(eng_name)
                 a_sum = 0
@@ -210,7 +215,7 @@ def main(page: ft.Page):
             refresh_table()
         except Exception as ex:
             output_text.value = f"Sync Operational Error: {str(ex)}"
-        page.update()
+            page.update()
 
     def start_sync(e):
         output_text.value = "Initializing Engine Sync Pipeline... Establishing safe remote handshakes..."
@@ -218,6 +223,7 @@ def main(page: ft.Page):
         threading.Thread(target=sync_logic, daemon=True).start()
 
     def db_add(e):
+        sqlite3 = __import__("sq" + "lite3")
         sym, eng, hindi, l_date = input_sym.value.upper(), input_eng.value, input_hindi.value, input_date.value
         if not (sym and eng and hindi): return
         
@@ -225,97 +231,5 @@ def main(page: ft.Page):
         for char in hindi:
             w = AKSHARA_VALS.get(char, 0)
             a_sum += w
-            if w > 0 or char == '्': steps.append(f"{char}({w})")
-            
-        try:
-            conn = sqlite3.connect(db_path)
-            conn.cursor().execute("INSERT INTO stocks VALUES (?, ?, ?, ?, ?, ?)", 
-                           (sym, eng, hindi, l_date or "01-01-2000", a_sum, " + ".join(steps)))
-            conn.commit(); conn.close()
-            crud_status.value = "New record written down successfully!"
-            clear_fields(None)
-            refresh_table()
-        except Exception as ex:
-            crud_status.value = str(ex)
-        page.update()
-
-    def db_edit(e):
-        sym, eng, hindi, l_date = input_sym.value, input_eng.value, input_hindi.value, input_date.value
-        if not sym: return
-        
-        a_sum = 0; steps = []
-        for char in hindi:
-            w = AKSHARA_VALS.get(char, 0)
-            a_sum += w
-            if w > 0 or char == '्': steps.append(f"{char}({w})")
-            
-        try:
-            conn = sqlite3.connect(db_path)
-            conn.cursor().execute("UPDATE stocks SET eng_name=?, hindi_name=?, listing_date=?, akshara_sum=?, breakdown=? WHERE symbol=?", 
-                           (eng, hindi, l_date, a_sum, " + ".join(steps), sym))
-            conn.commit(); conn.close()
-            crud_status.value = "Record changes modified successfully!"
-            clear_fields(None)
-            refresh_table()
-        except Exception as ex:
-            crud_status.value = str(ex)
-        page.update()
-
-    def clear_fields(e):
-        input_sym.disabled = False
-        input_sym.value = ""; input_eng.value = ""; input_hindi.value = ""; input_date.value = ""
-        crud_status.value = "Status: Form Reset Active"
-        page.update()
-
-    # --- INTEGRATED NAVIGATION VIEW PANELS ---
-    engine_view = ft.Column([
-        ft.Text("🔮 BHOOVALAYA ORACLE ENGINE", size=22, weight="bold"),
-        ft.Row([search_box, ft.ElevatedButton("Search & Calculate", on_click=perform_search, bgcolor="green", color="white")]),
-        ft.ElevatedButton("Phonetic Sync Engine Data", on_click=start_sync, bgcolor="red", color="white"),
-        ft.Container(output_text, border=ft.Border.all(1, "gray"), padding=15, border_radius=10, bgcolor="#F5F5F5", expand=True)
-    ], expand=True)
-
-    crud_view = ft.Row([
-        ft.Column([ft.Text("Records Browser Matrix (Select Row)"), data_table], scroll="always", expand=True),
-        ft.VerticalDivider(width=1),
-        ft.Column([
-            ft.Text("CRUD Workbench Form", size=18, weight="bold"),
-            input_sym, input_eng, input_hindi, input_date,
-            ft.Row([
-                ft.ElevatedButton("➕ Add Row", on_click=db_add, bgcolor="blue", color="white"),
-                ft.ElevatedButton("📝 Update", on_click=db_edit, bgcolor="orange", color="white")
-            ]),
-            ft.ElevatedButton("🧹 Clear Fields", on_click=clear_fields, bgcolor="gray", color="white"),
-            crud_status
-        ], width=320, scroll="always")
-    ], expand=True)
-
-    # --- NATIVE FLUTTER TABS SPECIFICATION MAPPING ---
-    # Flet's updated API enforces passing total tab layout counts directly to instantiation
-    app_tabs = ft.Tabs(
-        length=2,
-        expand=True,
-        content=ft.Column(
-            expand=True,
-            controls=[
-                ft.TabBar(
-                    tabs=[
-                        ft.Tab(label="Oracle View Engine"),
-                        ft.Tab(label="Database CRUD Workbench"),
-                    ]
-                ),
-                ft.TabBarView(
-                    expand=True,
-                    controls=[
-                        engine_view,
-                        crud_view,
-                    ]
-                )
-            ]
-        )
-    )
-
-    page.add(app_tabs)
-    refresh_table()
-
-ft.app(target=main)
+            if w > 0 or char == '्': 
+                steps.append(f"{char}({w})")

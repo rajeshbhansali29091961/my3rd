@@ -28,23 +28,18 @@ jobs:
       with:
         flutter-version: '3.24.x'
 
+    # मोबाइल क्रैश को रोकने के लिए Python 3.12 सेटअप अनिवार्य है
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install Build Dependencies
       run: |
         python -m pip install --upgrade pip
         pip install --upgrade flet flet-cli
 
-    # PIP_ONLY_BINARY और अन्य वेरिएबल्स Flet के आंतरिक कंपाइलर को 
-    # मजबूर करेंगे कि वह Linux x86_64 के बजाय सीधे Android संगत पैकेज डाउनलोड करे।
     - name: Build Android APK
-      env:
-        PIP_ONLY_BINARY: ":all:"
-        PIP_PREFER_BINARY: "true"
-        PIP_NO_BUILD_ISOLATION: "false"
       run: |
         yes | flet build apk
         
@@ -53,3 +48,4 @@ jobs:
       with:
         name: Bhoovalaya-Engine-APK
         path: build/apk/*.apk
+

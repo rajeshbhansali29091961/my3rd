@@ -38,16 +38,21 @@ jobs:
       with:
         python-version: '3.11'
 
-    # 6. सभी ज़रूरी लाइब्रेरीज़ को GitHub Actions के एनवायरनमेंट में इंस्टॉल करें
+    # 6. सभी ज़रूरी लाइब्रेरीज़ को ग्लोबल पाथ के साथ इंस्टॉल करें
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flet pandas requests
+        pip install pandas requests
+        # Flet और Flet-CLI दोनों का नया वर्जन फ़ोर्स इंस्टॉल कर रहे हैं
+        pip install --upgrade flet flet-cli
 
-    # 7. Flet प्रोजेक्ट को APK में बिल्ड करें (इंटरनेट ब्लॉक एरर को बायपास करने के लिए --pre-installed जोड़ दिया गया है)
+    # 7. Flet प्रोजेक्ट को APK में बिल्ड करें
+    # PIP_CONFIG_FILE=/dev/null नेटवर्क आइसोलेशन के दौरान pip एरर को रोकता है
     - name: Build Android APK
+      env:
+        PIP_CONFIG_FILE: /dev/null
       run: |
-        yes | flet build apk --pre-installed
+        yes | flet build apk
 
     # 8. तैयार हुई APK को GitHub पर अपलोड करें
     - name: Upload APK Artifact
@@ -55,3 +60,5 @@ jobs:
       with:
         name: Bhoovalaya-Engine-APK
         path: build/apk/*.apk
+
+       

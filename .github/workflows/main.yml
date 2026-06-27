@@ -3,15 +3,15 @@ name: Build Flet Android APK
 on:
   push:
     branches:
-      - main  # या आपके मुख्य ब्रांच का नाम (जैसे master)
-  workflow_dispatch: # इससे आप जब चाहें मैन्युअल रूप से भी रन कर सकते हैं
+      - main  # या आपके मुख्य ब्रांच का नाम
+  workflow_dispatch: 
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. कोड चेकआउट करें
+    # 1. कोड चेकOUT करें
     - name: Checkout Repository
       uses: actions/checkout@v4
 
@@ -26,26 +26,30 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    # 4. पायथन सेटअप करें
+    # 4. Flutter SDK पहले से इंस्टॉल करें ताकि Flet सवाल न पूछे
+    - name: Setup Flutter SDK
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.x' # Flet 0.26/0.85 के लिए उपयुक्त स्थिर वर्जन
+
+    # 5. पायथन सेटअप करें
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
-    # 5. Flutter और Flet की ज़रूरतें इंस्टॉल करें
+    # 6. Flet और अन्य ज़रूरी लाइब्रेरी इंस्टॉल करें
     - name: Install Dependencies
       run: |
-        python -msandbox.utils || true  # कुछ एनवायरनमेंट फिक्स के लिए
-        pip install --upgrade pip
+        python -m pip install --upgrade pip
         pip install flet pandas requests
-        # अगर NseKit की जरूरत है तो: pip install NseKit (वैकल्पिक)
 
-    # 6. Flet प्रोजेक्ट को APK में बिल्ड करें
+    # 7. Flet प्रोजेक्ट को APK में बिना किसी प्रॉम्ट (yes |) के बिल्ड करें
     - name: Build Android APK
       run: |
-        flet build apk 
+        yes | flet build apk
 
-    # 7. तैयार हुई APK को GitHub पर अपलोड करें ताकि आप डाउनलोड कर सकें
+    # 8. तैयार हुई APK को GitHub पर अपलोड करें
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:

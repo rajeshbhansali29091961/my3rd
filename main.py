@@ -1,5 +1,4 @@
 import os
-import sqlite3
 import threading
 import requests
 import time
@@ -56,6 +55,7 @@ def phonetic_transliterate(text):
 
 
 def main(page: ft.Page):
+    import sqlite3 
     page.title = "BHOOVALAYA PHONETIC ENGINE"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.scroll = "adaptive"
@@ -168,6 +168,7 @@ def main(page: ft.Page):
         page.update()
 
     def sync_logic():
+         import sqlite3
         try:
             from NseKit import Nse
             nse = Nse()

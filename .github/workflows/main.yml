@@ -1,27 +1,41 @@
-yaml
-name: Android CI
+name: Build Flet Android APK
 on:
-
 push:
 branches: [ &quot;main&quot; ] # जब आप main ब्रांच में कोड पुश करेंगे तब यह चलेगा
+workflow_dispatch: # इससे आप खुद भी मैन्युअली बटन दबाकर रन कर सकते हैं
 jobs:
 build:
-runs-on: ubuntu-latest # यह आपके लिए Linux मशीन ऑन करेगा
+runs-on: ubuntu-latest # यह आपके लिए मुफ़्त Linux मशीन स्टार्ट करेगा
 steps:
-- name: Checkout Code
+- name: Checkout repository
+
 uses: actions/checkout@v4
-- name: Set up JDK 17
+- name: Set up Python
+uses: actions/setup-python@v5
+with:
+python-version: &#39;3.11&#39;
+- name: Set up Java JDK 17
 uses: actions/setup-java@v4
 with:
 java-version: &#39;17&#39;
 distribution: &#39;temurin&#39;
-cache: gradle
-- name: Grant execute permission for gradlew
-run: chmod +x gradlew
-- name: Build with Gradle
-run: ./gradlew assembleDebug # यह कमांड APK जनरेट करेगी
-- name: Upload APK
+- name: Set up Flutter
+uses: subosito/flutter-action@v2
+with:
+flutter-version: &#39;3.19.x&#39; # Flet बिल्ड के लिए आवश्यक
+- name: Install Android SDK
+uses: android-actions/setup-android@v3
+- name: Install Python Dependencies
+run: |
+python -m pip upgrade pip
+pip install -r requirements.txt
+pip install flet # सुनिश्चित करने के लिए कि flet cli उपलब्ध हो
+- name: Build Android APK
+run: |
+# यह कमांड आपके Python कोड को Android APK में बदल देगी
+flet build apk
+- name: Upload APK Artifact
 uses: actions/upload-artifact@v4
 with:
-name: my-android-app
-path: app/build/outputs/apk/debug/app-debug.apk
+name: flet-android-app
+path: build/apk/*.apk

@@ -42,7 +42,7 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flet pandas requests
+        pip install flet pandas requests sqlite3
 
     # 7. Flet प्रोजेक्ट को APK में बिना किसी प्रॉम्ट के बिल्ड करें
     - name: Build Android APK

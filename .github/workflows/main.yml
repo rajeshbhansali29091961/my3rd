@@ -11,54 +11,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. कोड चेकआउट करें
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    # 2. जावा सेटअप करें
     - name: Setup Java JDK
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
 
-    # 3. Android SDK सेट करें
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    # 4. Flutter SDK पहले से इंस्टॉल करें
     - name: Setup Flutter SDK
       uses: subosito/flutter-action@v2
       with:
         flutter-version: '3.24.x'
 
-    # 5. पायथन सेटअप करें
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
-    # 6. सभी ज़रूरी लाइब्रेरीज़ को ग्लोबल पाथ के साथ इंस्टॉल करें
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pandas requests
-        # Flet और Flet-CLI दोनों का नया वर्जन फ़ोर्स इंस्टॉल कर रहे हैं
         pip install --upgrade flet flet-cli
 
-    # 7. Flet प्रोजेक्ट को APK में बिल्ड करें
-    # PIP_CONFIG_FILE=/dev/null नेटवर्क आइसोलेशन के दौरान pip एरर को रोकता है
+    # PIP_NO_INDEX और PIP_FIND_LINKS पर्यावरण वेरिएबल्स Flet के आंतरिक Pip को 
+    # बाहर इंटरनेट पर जाने से पूरी तरह रोक देंगे और इसे लोकल कैश से बिल्ड करेंगे।
     - name: Build Android APK
       env:
+        PIP_NO_INDEX: "true"
+        PIP_FIND_LINKS: /opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages
         PIP_CONFIG_FILE: /dev/null
       run: |
         yes | flet build apk
-
-    # 8. तैयार हुई APK को GitHub पर अपलोड करें
+        
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: Bhoovalaya-Engine-APK
         path: build/apk/*.apk
-
-       

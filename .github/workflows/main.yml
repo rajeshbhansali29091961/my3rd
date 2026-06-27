@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. कोड चेकOUT करें
+    # 1. कोड चेकआउट करें
     - name: Checkout Repository
       uses: actions/checkout@v4
 
@@ -26,11 +26,11 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    # 4. Flutter SDK पहले से इंस्टॉल करें ताकि Flet सवाल न पूछे
+    # 4. Flutter SDK पहले से इंस्टॉल करें
     - name: Setup Flutter SDK
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.24.x' # Flet 0.26/0.85 के लिए उपयुक्त स्थिर वर्जन
+        flutter-version: '3.24.x'
 
     # 5. पायथन सेटअप करें
     - name: Setup Python
@@ -38,13 +38,13 @@ jobs:
       with:
         python-version: '3.11'
 
-    # 6. Flet और अन्य ज़रूरी लाइब्रेरी इंस्टॉल करें
+    # 6. Flet और अन्य ज़रूरी लाइब्रेरी इंस्टॉल करें (यहाँ से sqlite3 हटा दिया गया है)
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
         pip install flet pandas requests
 
-    # 7. Flet प्रोजेक्ट को APK में बिना किसी प्रॉम्ट (yes |) के बिल्ड करें
+    # 7. Flet प्रोजेक्ट को APK में बिना किसी प्रॉम्ट के बिल्ड करें
     - name: Build Android APK
       run: |
         yes | flet build apk
@@ -55,4 +55,3 @@ jobs:
       with:
         name: Bhoovalaya-Engine-APK
         path: build/apk/*.apk
-

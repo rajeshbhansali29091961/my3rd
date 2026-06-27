@@ -2,3 +2,4 @@ flet==0.26.0
 pandas
 requests
 sqlite3
+NseKit

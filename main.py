@@ -92,12 +92,12 @@ def main(page: ft.Page):
             cursor = conn.cursor()
             cursor.execute("SELECT symbol, hindi_name FROM stocks ORDER BY symbol ASC LIMIT 50")
             for row in cursor.fetchall():
-                def make_select_handler(sym=row[0]):
+                def make_select_handler(sym=row):
                     return lambda e: populate_fields(sym)
                 
                 data_table.rows.append(
                     ft.DataRow(
-                        cells=[ft.DataCell(ft.Text(row[0])), ft.DataCell(ft.Text(row[1]))],
+                        cells=[ft.DataCell(ft.Text(row)), ft.DataCell(ft.Text(row))],
                         on_select_changed=make_select_handler()
                     )
                 )
@@ -111,12 +111,12 @@ def main(page: ft.Page):
         res = conn.cursor().execute("SELECT * FROM stocks WHERE symbol = ?", (symbol,)).fetchone()
         conn.close()
         if res:
-            input_sym.value = res[0]
+            input_sym.value = res
             input_sym.disabled = True
-            input_eng.value = res[1]
-            input_hindi.value = res[2]
-            input_date.value = res[3]
-            crud_status.value = f"Selected entry: {res[0]}"
+            input_eng.value = res
+            input_hindi.value = res
+            input_date.value = res
+            crud_status.value = f"Selected entry: {res}"
             page.update()
 
     def perform_search(e):
@@ -133,15 +133,12 @@ def main(page: ft.Page):
             sym, eng, hindi, l_date_str, a_sum, breakdown = res
             today = datetime.now()
             
-            # Pure Python alternative to pandas to_datetime
             try:
-                # DD-MM-YYYY फॉर्मेट पार्स करने का प्रयास
                 l_date = datetime.strptime(l_date_str.strip(), "%d-%m-%Y")
                 days_diff = (today - l_date).days
                 date_val = days_diff % 730
             except:
                 try:
-                    # YYYY-MM-DD बैकअप फॉर्मेट पार्स करने का प्रयास
                     l_date = datetime.strptime(l_date_str.strip(), "%Y-%m-%d")
                     days_diff = (today - l_date).days
                     date_val = days_diff % 730
@@ -175,28 +172,37 @@ def main(page: ft.Page):
     def sync_logic():
         sqlite3 = __import__("sq" + "lite3")
         try:
-            from NseKit import Nse
-            nse = Nse()
-            df = nse.nse_eod_equity_full_list()
+            # NseKit से सीधे टेक्स्ट डेटा फ़ेच करने का सुरक्षित रिप्लेसमेंट (बिना pandas के)
+            url = "https://nseindia.com"
+            headers = {"User-Agent": "Mozilla/5.0"}
+            response = requests.get(url, headers=headers, timeout=15)
             
-            # Pandas का न्यूनतम उपयोग केवल CSV डिक्शनरी रीड के लिए
-            # यह क्रैश नहीं करेगा क्योंकि हम कोई भारी C-एक्सटेंशन फ़ंक्शन नहीं बुला रहे हैं
-            records = df.to_dict(orient="records")
+            if response.status_code != 200:
+                output_text.value = "Failed to download data from NSE Server."
+                page.update()
+                return
+
+            lines = response.text.split("\n")
+            if len(lines) < 2: return
             
+            # हेडर मैपिंग खोजें
+            headers_list = [h.strip().upper() for h in lines[0].split(",")]
+            sym_idx = headers_list.index("SYMBOL") if "SYMBOL" in headers_list else 0
+            name_idx = headers_list.index("NAME OF COMPANY") if "NAME OF COMPANY" in headers_list else 1
+            date_idx = headers_list.index("DATE OF LISTING") if "DATE OF LISTING" in headers_list else 2
+
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             
-            total = len(records)
-            for idx, row in enumerate(records):
-                # कॉलम नामों को केस-इन्सेंसिटिव तरीके से खोजें
-                row_upper = {str(k).upper().strip(): v for k, v in row.items()}
+            valid_rows = [l.split(",") for l in lines[1:] if len(l.split(",")) > max(sym_idx, name_idx, date_idx)]
+            total = len(valid_rows)
+            
+            for idx, cols in enumerate(valid_rows):
+                sym = cols[sym_idx].strip('" ').upper()
+                eng_name = cols[name_idx].strip('" ')
+                l_date = cols[date_idx].strip('" ')
                 
-                sym = str(row_upper.get('SYMBOL', '')).strip()
-                eng_name = str(row_upper.get('COMPANY NAME', row_upper.get('NAME OF COMPANY', ''))).strip()
-                l_date = str(row_upper.get('DATE OF LISTING', '01-01-2000')).strip()
-                
-                if not sym or sym.lower() == 'symbol': 
-                    continue
+                if not sym or sym == "SYMBOL": continue
                 
                 h_phonetic_name = phonetic_transliterate(eng_name)
                 a_sum = 0
@@ -211,7 +217,7 @@ def main(page: ft.Page):
                 
                 cursor.execute("INSERT OR REPLACE INTO stocks VALUES (?, ?, ?, ?, ?, ?)",
                                (sym, eng_name, h_phonetic_name, l_date, a_sum, " + ".join(steps)))
-                if idx % 10 == 0:
+                if idx % 20 == 0:
                     conn.commit()
                     output_text.value = f"Phonetic Mapping: {idx}/{total} stocks processed...\nCurrent Stream Track: {h_phonetic_name}"
                     page.update()
@@ -225,9 +231,4 @@ def main(page: ft.Page):
             page.update()
 
     def start_sync(e):
-        output_text.value = "Initializing Engine Sync Pipeline... Establishing safe remote handshakes..."
-        page.update()
-        threading.Thread(target=sync_logic, daemon=True).start()
 
-    def db_add(e):
-        sqlite3 = __import__("sq" + "lite3")

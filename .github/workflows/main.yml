@@ -38,11 +38,15 @@ jobs:
         python -m pip install --upgrade pip
         pip install --upgrade flet flet-cli
 
-    # --no-isolation फ़्लैग Flet के आंतरिक कंपाइलर को नेटवर्क ब्लॉक किए बिना 
-    # सीधे Android (ARM64) के संगत numpy और pandas डाउनलोड करने की अनुमति देता है।
+    # PIP_ONLY_BINARY और अन्य वेरिएबल्स Flet के आंतरिक कंपाइलर को 
+    # मजबूर करेंगे कि वह Linux x86_64 के बजाय सीधे Android संगत पैकेज डाउनलोड करे।
     - name: Build Android APK
+      env:
+        PIP_ONLY_BINARY: ":all:"
+        PIP_PREFER_BINARY: "true"
+        PIP_NO_BUILD_ISOLATION: "false"
       run: |
-        yes | flet build apk --no-isolation
+        yes | flet build apk
         
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4

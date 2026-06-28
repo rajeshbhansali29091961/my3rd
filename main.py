@@ -70,7 +70,7 @@ def main(page: ft.Page):
     conn.close()
 
     search_box = ft.TextField(label="Enter Stock Name or Symbol", value="RELIANCE", expand=True)
-    output_text = ft.Text(value="Welcome. Click 'Phonetic Sync Engine Data' to populate your database.", size=15, selectable=True)
+    output_text = ft.Text(value="Welcome. Click 'Phonetic Sync Engine Data' to populate database.", size=15, selectable=True)
     
     input_sym = ft.TextField(label="Symbol ID")
     input_eng = ft.TextField(label="English Standard Name")
@@ -93,31 +93,31 @@ def main(page: ft.Page):
             cursor = conn.cursor()
             cursor.execute("SELECT symbol, hindi_name FROM stocks ORDER BY symbol ASC LIMIT 50")
             for row in cursor.fetchall():
-                def make_select_handler(sym=row[0]):
+                def make_select_handler(sym=row):
                     return lambda e: populate_fields(sym)
                 
                 data_table.rows.append(
                     ft.DataRow(
-                        cells=[ft.DataCell(ft.Text(row[0])), ft.DataCell(ft.Text(row[1]))],
+                        cells=[ft.DataCell(ft.Text(row)), ft.DataCell(ft.Text(row))],
                         on_select_changed=make_select_handler()
                     )
                 )
             conn.close()
             page.update()
         except Exception as ex:
-            print("Table pipeline refresh warning:", ex)
+            print("Table refresh warning:", ex)
 
     def populate_fields(symbol):
         conn = sqlite3.connect(db_path)
         res = conn.cursor().execute("SELECT * FROM stocks WHERE symbol = ?", (symbol,)).fetchone()
         conn.close()
         if res:
-            input_sym.value = res[0]
+            input_sym.value = res
             input_sym.disabled = True
-            input_eng.value = res[1]
-            input_hindi.value = res[2]
-            input_date.value = res[3]
-            crud_status.value = f"Selected entry: {res[0]}"
+            input_eng.value = res
+            input_hindi.value = res
+            input_date.value = res
+            crud_status.value = f"Selected: {res}"
             page.update()
 
     def perform_search(e):
@@ -144,24 +144,24 @@ def main(page: ft.Page):
             sutra = SUTRA_MAP.get(total_vib % 9)
 
             output_text.value = (
-                f"📊 STOCK EXCHANGE SYMBOL: {sym}\n"
-                f"🏢 REGISTRATION NAME: {eng}\n"
-                f"🕉️  ENTIRE HINDI PHONETIC NAME: {hindi}\n"
-                f"📅 LISTED ON EXCHANGE: {l_date_str}\n"
+                f"📊 SYMBOL: {sym}\n"
+                f"🏢 REGISTRATION: {eng}\n"
+                f"🕉️ HINDI NAME: {hindi}\n"
+                f"📅 LISTED: {l_date_str}\n"
                 f"──────────────────────────────────────────────\n"
-                f"🧮 STEP 1: ENTIRE HINDI NAME MATH CALCULATION:\n"
+                f"🧮 MATH CALCULATION:\n"
                 f"   » {breakdown}\n"
-                f"   » Total Akshara Sound Weight Value = {a_sum}\n\n"
-                f"⏳ STEP 2: TEMPORAL VALUE MATH (Today: {today.strftime('%Y-%m-%d')}):\n"
-                f"   » Days running: {days_diff} days elapsed\n"
-                f"   » Temporal Formula Mapping (Mod 730) = {date_val}\n\n"
-                f"🌀 STEP 3: COMBINED ENGINE VIBRATION VALUE:\n"
-                f"   » {a_sum} (Akshara Value) + {date_val} (Temporal Value) = {total_vib}\n"
+                f"   » Weight Value = {a_sum}\n\n"
+                f"⏳ TEMPORAL VALUE:\n"
+                f"   » Days running: {days_diff} days\n"
+                f"   » Mapping = {date_val}\n\n"
+                f"🌀 COMBINED VIBRATION VALUE:\n"
+                f"   » {a_sum} + {date_val} = {total_vib}\n"
                 f"──────────────────────────────────────────────\n"
                 f"✨ SUTRA ORACLE RESULT: {sutra}"
             )
         else:
-            output_text.value = "Stock profile not found. Run 'Phonetic Sync Engine Data' first."
+            output_text.value = "Profile not discovered. Run Sync Data first."
         page.update()
 
     def sync_logic():
@@ -207,7 +207,7 @@ def main(page: ft.Page):
             page.update()
 
     def start_sync(e):
-        output_text.value = "Initializing Engine Sync Pipeline..."
+        output_text.value = "Initializing Sync Pipeline..."
         page.update()
         threading.Thread(target=sync_logic, daemon=True).start()
 
@@ -248,4 +248,3 @@ def main(page: ft.Page):
             conn.cursor().execute("UPDATE stocks SET eng_name=?, hindi_name=?, listing_date=?, akshara_sum=?, breakdown=? WHERE symbol=?", 
                                   (eng, hindi, l_date, a_sum, " + ".join(steps), sym))
             conn.commit(); conn.close()
-            

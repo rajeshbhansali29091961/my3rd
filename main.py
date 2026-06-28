@@ -244,3 +244,8 @@ def main(page: ft.Page):
             if w > 0 or char == ' ': steps.append(f"{char}({w})")
         
         try:
+            conn = sqlite3.connect(db_path)
+            conn.cursor().execute("UPDATE stocks SET eng_name=?, hindi_name=?, listing_date=?, akshara_sum=?, breakdown=? WHERE symbol=?", 
+                                  (eng, hindi, l_date, a_sum, " + ".join(steps), sym))
+            conn.commit(); conn.close()
+            

@@ -1,7 +1,9 @@
 import os
+import sqlite3
 import threading
 import requests
 import time
+import pandas as pd
 from datetime import datetime
 import flet as ft
 
@@ -37,8 +39,8 @@ def phonetic_transliterate(text):
         try:
             url = f"https://google.com{word}&ime=transliteration_en_hi&num=1"
             response = requests.get(url, timeout=5).json()
-            if response == "SUCCESS":
-                trans_word = response
+            if response[0] == "SUCCESS":
+                trans_word = response[1][0][1][0]
                 transliterated_words.append(trans_word)
             else:
                 transliterated_words.append(word)
@@ -54,29 +56,32 @@ def phonetic_transliterate(text):
 
 
 def main(page: ft.Page):
-    sqlite3 = __import__("sq" + "lite3")
-    
     page.title = "BHOOVALAYA PHONETIC ENGINE"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.scroll = "adaptive"
+    page.padding = 30 # मोबाइल स्क्रीन पर कटने से बचाने के लिए सुरक्षित स्पेस
     
     db_path = 'bhuvalaya_oracle.db'
     
+    # Initialize Database Architecture
     conn = sqlite3.connect(db_path)
     conn.execute('''CREATE TABLE IF NOT EXISTS stocks (
                     symbol TEXT PRIMARY KEY, eng_name TEXT, hindi_name TEXT, 
                     listing_date TEXT, akshara_sum INTEGER, breakdown TEXT)''')
     conn.close()
 
+    # --- MAIN INTERFACE WIDGET STRUCTS ---
     search_box = ft.TextField(label="Enter Stock Name or Symbol", value="RELIANCE", expand=True)
     output_text = ft.Text(value="Welcome. Click 'Phonetic Sync Engine Data' to populate your workspace database.", size=15, selectable=True)
     
+    # Data Form Inputs for CRUD operations
     input_sym = ft.TextField(label="Symbol ID")
     input_eng = ft.TextField(label="English Standard Name")
     input_hindi = ft.TextField(label="Hindi Phonetic Name")
     input_date = ft.TextField(label="Listing Date (DD-MM-YYYY)")
     crud_status = ft.Text(value="Status: Idle", italic=True, color="gray")
     
+    # Grid Table View for Workspace Browser Rows
     data_table = ft.DataTable(
         columns=[
             ft.DataColumn(ft.Text("Symbol")),
@@ -92,12 +97,12 @@ def main(page: ft.Page):
             cursor = conn.cursor()
             cursor.execute("SELECT symbol, hindi_name FROM stocks ORDER BY symbol ASC LIMIT 50")
             for row in cursor.fetchall():
-                def make_select_handler(sym=row):
+                def make_select_handler(sym=row[0]):
                     return lambda e: populate_fields(sym)
                 
                 data_table.rows.append(
                     ft.DataRow(
-                        cells=[ft.DataCell(ft.Text(row)), ft.DataCell(ft.Text(row))],
+                        cells=[ft.DataCell(ft.Text(row[0])), ft.DataCell(ft.Text(row[1]))],
                         on_select_changed=make_select_handler()
                     )
                 )
@@ -111,12 +116,12 @@ def main(page: ft.Page):
         res = conn.cursor().execute("SELECT * FROM stocks WHERE symbol = ?", (symbol,)).fetchone()
         conn.close()
         if res:
-            input_sym.value = res
+            input_sym.value = res[0]
             input_sym.disabled = True
-            input_eng.value = res
-            input_hindi.value = res
-            input_date.value = res
-            crud_status.value = f"Selected entry: {res}"
+            input_eng.value = res[1]
+            input_hindi.value = res[2]
+            input_date.value = res[3]
+            crud_status.value = f"Selected entry: {res[0]}"
             page.update()
 
     def perform_search(e):
@@ -132,18 +137,12 @@ def main(page: ft.Page):
         if res:
             sym, eng, hindi, l_date_str, a_sum, breakdown = res
             today = datetime.now()
-            
             try:
-                l_date = datetime.strptime(l_date_str.strip(), "%d-%m-%Y")
+                l_date = pd.to_datetime(l_date_str)
                 days_diff = (today - l_date).days
                 date_val = days_diff % 730
             except:
-                try:
-                    l_date = datetime.strptime(l_date_str.strip(), "%Y-%m-%d")
-                    days_diff = (today - l_date).days
-                    date_val = days_diff % 730
-                except:
-                    days_diff, date_val = 0, 0
+                days_diff, date_val = 0, 0
 
             total_vib = a_sum + date_val
             sutra = SUTRA_MAP.get(total_vib % 9)
@@ -170,39 +169,22 @@ def main(page: ft.Page):
         page.update()
 
     def sync_logic():
-        sqlite3 = __import__("sq" + "lite3")
         try:
-            # NseKit से सीधे टेक्स्ट डेटा फ़ेच करने का सुरक्षित रिप्लेसमेंट (बिना pandas के)
-            url = "https://nseindia.com"
-            headers = {"User-Agent": "Mozilla/5.0"}
-            response = requests.get(url, headers=headers, timeout=15)
+            from NseKit import Nse
+            nse = Nse()
+            df = nse.nse_eod_equity_full_list()
+            df.columns = [c.upper().strip() for c in df.columns]
             
-            if response.status_code != 200:
-                output_text.value = "Failed to download data from NSE Server."
-                page.update()
-                return
-
-            lines = response.text.split("\n")
-            if len(lines) < 2: return
-            
-            # हेडर मैपिंग खोजें
-            headers_list = [h.strip().upper() for h in lines[0].split(",")]
-            sym_idx = headers_list.index("SYMBOL") if "SYMBOL" in headers_list else 0
-            name_idx = headers_list.index("NAME OF COMPANY") if "NAME OF COMPANY" in headers_list else 1
-            date_idx = headers_list.index("DATE OF LISTING") if "DATE OF LISTING" in headers_list else 2
-
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             
-            valid_rows = [l.split(",") for l in lines[1:] if len(l.split(",")) > max(sym_idx, name_idx, date_idx)]
-            total = len(valid_rows)
-            
-            for idx, cols in enumerate(valid_rows):
-                sym = cols[sym_idx].strip('" ').upper()
-                eng_name = cols[name_idx].strip('" ')
-                l_date = cols[date_idx].strip('" ')
+            total = len(df)
+            for idx, row in df.iterrows():
+                sym = str(row.get('SYMBOL', '')).strip()
+                eng_name = str(row.get('COMPANY NAME', row.get('NAME OF COMPANY', ''))).strip()
+                l_date = str(row.get('DATE OF LISTING', '01-01-2000')).strip()
                 
-                if not sym or sym == "SYMBOL": continue
+                if not sym or sym.lower() == 'symbol': continue
                 
                 h_phonetic_name = phonetic_transliterate(eng_name)
                 a_sum = 0
@@ -210,14 +192,14 @@ def main(page: ft.Page):
                 for char in h_phonetic_name:
                     w = AKSHARA_VALS.get(char, 0)
                     a_sum += w
-                    if w > 0 or char == '्':
+                    if w > 0 or char == ' ':
                         steps.append(f"{char}({w})")
                     elif char == " ":
                         steps.append("[Space]")
-                
+
                 cursor.execute("INSERT OR REPLACE INTO stocks VALUES (?, ?, ?, ?, ?, ?)",
                                (sym, eng_name, h_phonetic_name, l_date, a_sum, " + ".join(steps)))
-                if idx % 20 == 0:
+                if idx % 10 == 0:
                     conn.commit()
                     output_text.value = f"Phonetic Mapping: {idx}/{total} stocks processed...\nCurrent Stream Track: {h_phonetic_name}"
                     page.update()
@@ -231,4 +213,23 @@ def main(page: ft.Page):
             page.update()
 
     def start_sync(e):
+        output_text.value = "Initializing Engine Sync Pipeline... Establishing safe remote handshakes..."
+        page.update()
+        threading.Thread(target=sync_logic, daemon=True).start()
 
+    def db_add(e):
+        sym, eng, hindi, l_date = input_sym.value.upper(), input_eng.value, input_hindi.value, input_date.value
+        if not (sym and eng and hindi): return
+        
+        a_sum = 0; steps = []
+        for char in hindi:
+            w = AKSHARA_VALS.get(char, 0)
+            a_sum += w
+            if w > 0 or char == ' ': steps.append(f"{char}({w})")
+        
+        try:
+            conn = sqlite3.connect(db_path)
+            conn.cursor().execute("INSERT INTO stocks VALUES (?, ?, ?, ?, ?, ?)", 
+                                  (sym, eng, hindi, l_date or "01-01-2000", a_sum, " + ".join(steps)))
+            conn.commit(); conn.close()
+            crud_status.value = "New record written down successfully!"

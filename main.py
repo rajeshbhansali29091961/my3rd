@@ -39,8 +39,8 @@ def phonetic_transliterate(text):
         try:
             url = f"https://google.com{word}&ime=transliteration_en_hi&num=1"
             response = requests.get(url, timeout=5).json()
-            if response[0] == "SUCCESS":
-                trans_word = response[1][0][1][0]
+            if response == "SUCCESS":
+                trans_word = response
                 transliterated_words.append(trans_word)
             else:
                 transliterated_words.append(word)
@@ -59,29 +59,25 @@ def main(page: ft.Page):
     page.title = "BHOOVALAYA PHONETIC ENGINE"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.scroll = "adaptive"
-    page.padding = 30 # मोबाइल स्क्रीन पर कटने से बचाने के लिए सुरक्षित स्पेस
+    page.padding = 30 
     
     db_path = 'bhuvalaya_oracle.db'
     
-    # Initialize Database Architecture
     conn = sqlite3.connect(db_path)
     conn.execute('''CREATE TABLE IF NOT EXISTS stocks (
                     symbol TEXT PRIMARY KEY, eng_name TEXT, hindi_name TEXT, 
                     listing_date TEXT, akshara_sum INTEGER, breakdown TEXT)''')
     conn.close()
 
-    # --- MAIN INTERFACE WIDGET STRUCTS ---
     search_box = ft.TextField(label="Enter Stock Name or Symbol", value="RELIANCE", expand=True)
-    output_text = ft.Text(value="Welcome. Click 'Phonetic Sync Engine Data' to populate your workspace database.", size=15, selectable=True)
+    output_text = ft.Text(value="Welcome. Click 'Phonetic Sync Engine Data' to populate your database.", size=15, selectable=True)
     
-    # Data Form Inputs for CRUD operations
     input_sym = ft.TextField(label="Symbol ID")
     input_eng = ft.TextField(label="English Standard Name")
     input_hindi = ft.TextField(label="Hindi Phonetic Name")
     input_date = ft.TextField(label="Listing Date (DD-MM-YYYY)")
     crud_status = ft.Text(value="Status: Idle", italic=True, color="gray")
     
-    # Grid Table View for Workspace Browser Rows
     data_table = ft.DataTable(
         columns=[
             ft.DataColumn(ft.Text("Symbol")),
@@ -165,7 +161,7 @@ def main(page: ft.Page):
                 f"✨ SUTRA ORACLE RESULT: {sutra}"
             )
         else:
-            output_text.value = "Stock profile not discovered inside the database workspace. Run 'Phonetic Sync Engine Data' first."
+            output_text.value = "Stock profile not found. Run 'Phonetic Sync Engine Data' first."
         page.update()
 
     def sync_logic():
@@ -194,26 +190,24 @@ def main(page: ft.Page):
                     a_sum += w
                     if w > 0 or char == ' ':
                         steps.append(f"{char}({w})")
-                    elif char == " ":
-                        steps.append("[Space]")
 
                 cursor.execute("INSERT OR REPLACE INTO stocks VALUES (?, ?, ?, ?, ?, ?)",
                                (sym, eng_name, h_phonetic_name, l_date, a_sum, " + ".join(steps)))
                 if idx % 10 == 0:
                     conn.commit()
-                    output_text.value = f"Phonetic Mapping: {idx}/{total} stocks processed...\nCurrent Stream Track: {h_phonetic_name}"
+                    output_text.value = f"Processing: {idx}/{total} stocks..."
                     page.update()
             
             conn.commit()
             conn.close()
-            output_text.value = "Sync Complete! Sound vibration weights successfully structured."
+            output_text.value = "Sync Complete!"
             refresh_table()
         except Exception as ex:
-            output_text.value = f"Sync Operational Error: {str(ex)}"
+            output_text.value = f"Sync Error: {str(ex)}"
             page.update()
 
     def start_sync(e):
-        output_text.value = "Initializing Engine Sync Pipeline... Establishing safe remote handshakes..."
+        output_text.value = "Initializing Engine Sync Pipeline..."
         page.update()
         threading.Thread(target=sync_logic, daemon=True).start()
 
@@ -232,4 +226,21 @@ def main(page: ft.Page):
             conn.cursor().execute("INSERT INTO stocks VALUES (?, ?, ?, ?, ?, ?)", 
                                   (sym, eng, hindi, l_date or "01-01-2000", a_sum, " + ".join(steps)))
             conn.commit(); conn.close()
-            crud_status.value = "New record written down successfully!"
+            crud_status.value = "New record written successfully!"
+            clear_fields(None)
+            refresh_table()
+        except Exception as ex:
+            crud_status.value = str(ex)
+            page.update()
+
+    def db_edit(e):
+        sym, eng, hindi, l_date = input_sym.value, input_eng.value, input_hindi.value, input_date.value
+        if not sym: return
+        
+        a_sum = 0; steps = []
+        for char in hindi:
+            w = AKSHARA_VALS.get(char, 0)
+            a_sum += w
+            if w > 0 or char == ' ': steps.append(f"{char}({w})")
+        
+        try:

@@ -37,10 +37,10 @@ def phonetic_transliterate(text):
             transliterated_words.append(EXCHANGE_DICTIONARY[word])
             continue
         try:
-            url = f"https://google.com{word}&ime=transliteration_en_hi&num=1"
+            url = f"https://inputtools.google.com/request?text={word}&ime=transliteration_en_hi&num=1"
             response = requests.get(url, timeout=5).json()
-            if response == "SUCCESS":
-                trans_word = response
+            if response[0] == "SUCCESS":
+                trans_word = response[1][0][1][0]
                 transliterated_words.append(trans_word)
             else:
                 transliterated_words.append(word)
@@ -59,25 +59,28 @@ def main(page: ft.Page):
     page.title = "BHOOVALAYA PHONETIC ENGINE"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.scroll = "adaptive"
-    page.padding = 30 
     
     db_path = 'bhuvalaya_oracle.db'
     
+    # Initialize Database Architecture
     conn = sqlite3.connect(db_path)
     conn.execute('''CREATE TABLE IF NOT EXISTS stocks (
                     symbol TEXT PRIMARY KEY, eng_name TEXT, hindi_name TEXT, 
                     listing_date TEXT, akshara_sum INTEGER, breakdown TEXT)''')
     conn.close()
 
+    # --- MAIN INTERFACE WIDGET STRUCTS ---
     search_box = ft.TextField(label="Enter Stock Name or Symbol", value="RELIANCE", expand=True)
-    output_text = ft.Text(value="Welcome. Click 'Phonetic Sync Engine Data' to populate database.", size=15, selectable=True)
+    output_text = ft.Text(value="Welcome. Click 'Phonetic Sync Engine Data' to populate your workspace database.", size=15, selectable=True)
     
+    # Data Form Inputs for CRUD operations
     input_sym = ft.TextField(label="Symbol ID")
     input_eng = ft.TextField(label="English Standard Name")
     input_hindi = ft.TextField(label="Hindi Phonetic Name")
     input_date = ft.TextField(label="Listing Date (DD-MM-YYYY)")
     crud_status = ft.Text(value="Status: Idle", italic=True, color="gray")
     
+    # Grid Table View for Workspace Browser Rows
     data_table = ft.DataTable(
         columns=[
             ft.DataColumn(ft.Text("Symbol")),
@@ -93,31 +96,31 @@ def main(page: ft.Page):
             cursor = conn.cursor()
             cursor.execute("SELECT symbol, hindi_name FROM stocks ORDER BY symbol ASC LIMIT 50")
             for row in cursor.fetchall():
-                def make_select_handler(sym=row):
+                def make_select_handler(sym=row[0]):
                     return lambda e: populate_fields(sym)
                 
                 data_table.rows.append(
                     ft.DataRow(
-                        cells=[ft.DataCell(ft.Text(row)), ft.DataCell(ft.Text(row))],
+                        cells=[ft.DataCell(ft.Text(row[0])), ft.DataCell(ft.Text(row[1]))],
                         on_select_changed=make_select_handler()
                     )
                 )
             conn.close()
             page.update()
         except Exception as ex:
-            print("Table refresh warning:", ex)
+            print("Table pipeline refresh warning:", ex)
 
     def populate_fields(symbol):
         conn = sqlite3.connect(db_path)
         res = conn.cursor().execute("SELECT * FROM stocks WHERE symbol = ?", (symbol,)).fetchone()
         conn.close()
         if res:
-            input_sym.value = res
+            input_sym.value = res[0]
             input_sym.disabled = True
-            input_eng.value = res
-            input_hindi.value = res
-            input_date.value = res
-            crud_status.value = f"Selected: {res}"
+            input_eng.value = res[1]
+            input_hindi.value = res[2]
+            input_date.value = res[3]
+            crud_status.value = f"Selected entry: {res[0]}"
             page.update()
 
     def perform_search(e):
@@ -144,24 +147,24 @@ def main(page: ft.Page):
             sutra = SUTRA_MAP.get(total_vib % 9)
 
             output_text.value = (
-                f"📊 SYMBOL: {sym}\n"
-                f"🏢 REGISTRATION: {eng}\n"
-                f"🕉️ HINDI NAME: {hindi}\n"
-                f"📅 LISTED: {l_date_str}\n"
+                f"📊 STOCK EXCHANGE SYMBOL: {sym}\n"
+                f"🏢 REGISTRATION NAME: {eng}\n"
+                f"🕉️  ENTIRE HINDI PHONETIC NAME: {hindi}\n"
+                f"📅 LISTED ON EXCHANGE: {l_date_str}\n"
                 f"──────────────────────────────────────────────\n"
-                f"🧮 MATH CALCULATION:\n"
+                f"🧮 STEP 1: ENTIRE HINDI NAME MATH CALCULATION:\n"
                 f"   » {breakdown}\n"
-                f"   » Weight Value = {a_sum}\n\n"
-                f"⏳ TEMPORAL VALUE:\n"
-                f"   » Days running: {days_diff} days\n"
-                f"   » Mapping = {date_val}\n\n"
-                f"🌀 COMBINED VIBRATION VALUE:\n"
-                f"   » {a_sum} + {date_val} = {total_vib}\n"
+                f"   » Total Akshara Sound Weight Value = {a_sum}\n\n"
+                f"⏳ STEP 2: TEMPORAL VALUE MATH (Today: {today.strftime('%Y-%m-%d')}):\n"
+                f"   » Days running: {days_diff} days elapsed\n"
+                f"   » Temporal Formula Mapping (Mod 730) = {date_val}\n\n"
+                f"🌀 STEP 3: COMBINED ENGINE VIBRATION VALUE:\n"
+                f"   » {a_sum} (Akshara Value) + {date_val} (Temporal Value) = {total_vib}\n"
                 f"──────────────────────────────────────────────\n"
                 f"✨ SUTRA ORACLE RESULT: {sutra}"
             )
         else:
-            output_text.value = "Profile not discovered. Run Sync Data first."
+            output_text.value = "Stock profile not discovered inside the database workspace. Run 'Phonetic Sync Engine Data' first."
         page.update()
 
     def sync_logic():
@@ -188,26 +191,28 @@ def main(page: ft.Page):
                 for char in h_phonetic_name:
                     w = AKSHARA_VALS.get(char, 0)
                     a_sum += w
-                    if w > 0 or char == ' ':
+                    if w > 0 or char == '्':
                         steps.append(f"{char}({w})")
-
+                    elif char == " ":
+                        steps.append("[Space]")
+                
                 cursor.execute("INSERT OR REPLACE INTO stocks VALUES (?, ?, ?, ?, ?, ?)",
                                (sym, eng_name, h_phonetic_name, l_date, a_sum, " + ".join(steps)))
                 if idx % 10 == 0:
                     conn.commit()
-                    output_text.value = f"Processing: {idx}/{total} stocks..."
+                    output_text.value = f"Phonetic Mapping: {idx}/{total} stocks processed...\nCurrent Stream Track: {h_phonetic_name}"
                     page.update()
             
             conn.commit()
             conn.close()
-            output_text.value = "Sync Complete!"
+            output_text.value = "Sync Complete! Sound vibration weights successfully structured."
             refresh_table()
         except Exception as ex:
-            output_text.value = f"Sync Error: {str(ex)}"
-            page.update()
+            output_text.value = f"Sync Operational Error: {str(ex)}"
+        page.update()
 
     def start_sync(e):
-        output_text.value = "Initializing Sync Pipeline..."
+        output_text.value = "Initializing Engine Sync Pipeline... Establishing safe remote handshakes..."
         page.update()
         threading.Thread(target=sync_logic, daemon=True).start()
 
@@ -219,19 +224,19 @@ def main(page: ft.Page):
         for char in hindi:
             w = AKSHARA_VALS.get(char, 0)
             a_sum += w
-            if w > 0 or char == ' ': steps.append(f"{char}({w})")
-        
+            if w > 0 or char == '्': steps.append(f"{char}({w})")
+            
         try:
             conn = sqlite3.connect(db_path)
             conn.cursor().execute("INSERT INTO stocks VALUES (?, ?, ?, ?, ?, ?)", 
-                                  (sym, eng, hindi, l_date or "01-01-2000", a_sum, " + ".join(steps)))
+                           (sym, eng, hindi, l_date or "01-01-2000", a_sum, " + ".join(steps)))
             conn.commit(); conn.close()
-            crud_status.value = "New record written successfully!"
+            crud_status.value = "New record written down successfully!"
             clear_fields(None)
             refresh_table()
         except Exception as ex:
             crud_status.value = str(ex)
-            page.update()
+        page.update()
 
     def db_edit(e):
         sym, eng, hindi, l_date = input_sym.value, input_eng.value, input_hindi.value, input_date.value
@@ -241,10 +246,75 @@ def main(page: ft.Page):
         for char in hindi:
             w = AKSHARA_VALS.get(char, 0)
             a_sum += w
-            if w > 0 or char == ' ': steps.append(f"{char}({w})")
-        
+            if w > 0 or char == '्': steps.append(f"{char}({w})")
+            
         try:
             conn = sqlite3.connect(db_path)
             conn.cursor().execute("UPDATE stocks SET eng_name=?, hindi_name=?, listing_date=?, akshara_sum=?, breakdown=? WHERE symbol=?", 
-                                  (eng, hindi, l_date, a_sum, " + ".join(steps), sym))
+                           (eng, hindi, l_date, a_sum, " + ".join(steps), sym))
             conn.commit(); conn.close()
+            crud_status.value = "Record changes modified successfully!"
+            clear_fields(None)
+            refresh_table()
+        except Exception as ex:
+            crud_status.value = str(ex)
+        page.update()
+
+    def clear_fields(e):
+        input_sym.disabled = False
+        input_sym.value = ""; input_eng.value = ""; input_hindi.value = ""; input_date.value = ""
+        crud_status.value = "Status: Form Reset Active"
+        page.update()
+
+    # --- INTEGRATED NAVIGATION VIEW PANELS ---
+    engine_view = ft.Column([
+        ft.Text("🔮 BHOOVALAYA ORACLE ENGINE", size=22, weight="bold"),
+        ft.Row([search_box, ft.ElevatedButton("Search & Calculate", on_click=perform_search, bgcolor="green", color="white")]),
+        ft.ElevatedButton("Phonetic Sync Engine Data", on_click=start_sync, bgcolor="red", color="white"),
+        ft.Container(output_text, border=ft.Border.all(1, "gray"), padding=15, border_radius=10, bgcolor="#F5F5F5", expand=True)
+    ], expand=True)
+
+    crud_view = ft.Row([
+        ft.Column([ft.Text("Records Browser Matrix (Select Row)"), data_table], scroll="always", expand=True),
+        ft.VerticalDivider(width=1),
+        ft.Column([
+            ft.Text("CRUD Workbench Form", size=18, weight="bold"),
+            input_sym, input_eng, input_hindi, input_date,
+            ft.Row([
+                ft.ElevatedButton("➕ Add Row", on_click=db_add, bgcolor="blue", color="white"),
+                ft.ElevatedButton("📝 Update", on_click=db_edit, bgcolor="orange", color="white")
+            ]),
+            ft.ElevatedButton("🧹 Clear Fields", on_click=clear_fields, bgcolor="gray", color="white"),
+            crud_status
+        ], width=320, scroll="always")
+    ], expand=True)
+
+    # --- NATIVE FLUTTER TABS SPECIFICATION MAPPING ---
+    # Flet's updated API enforces passing total tab layout counts directly to instantiation
+    app_tabs = ft.Tabs(
+        length=2,
+        expand=True,
+        content=ft.Column(
+            expand=True,
+            controls=[
+                ft.TabBar(
+                    tabs=[
+                        ft.Tab(label="Oracle View Engine"),
+                        ft.Tab(label="Database CRUD Workbench"),
+                    ]
+                ),
+                ft.TabBarView(
+                    expand=True,
+                    controls=[
+                        engine_view,
+                        crud_view,
+                    ]
+                )
+            ]
+        )
+    )
+
+    page.add(app_tabs)
+    refresh_table()
+
+ft.app(target=main)

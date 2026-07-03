@@ -361,28 +361,20 @@ def main(page: ft.Page):
         ], width=320, scroll="always")
     ], expand=True)
 
-    # --- NATIVE FLUTTER TABS SPECIFICATION MAPPING ---
+    # --- TABS (correct Flet API, works on all versions) ---
     app_tabs = ft.Tabs(
-        length=2,
+        selected_index=0,
         expand=True,
-        content=ft.Column(
-            expand=True,
-            controls=[
-                ft.TabBar(
-                    tabs=[
-                        ft.Tab(label="Oracle View Engine"),
-                        ft.Tab(label="Database CRUD Workbench"),
-                    ]
-                ),
-                ft.TabBarView(
-                    expand=True,
-                    controls=[
-                        engine_view,
-                        crud_view,
-                    ]
-                )
-            ]
-        )
+        tabs=[
+            ft.Tab(
+                text="Oracle View Engine",
+                content=engine_view
+            ),
+            ft.Tab(
+                text="Database CRUD Workbench",
+                content=crud_view
+            ),
+        ]
     )
 
     page.add(app_tabs)

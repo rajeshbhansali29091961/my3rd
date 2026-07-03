@@ -331,7 +331,19 @@ def main(page: ft.Page):
         ft.Text("🔮 BHOOVALAYA ORACLE ENGINE", size=22, weight="bold"),
         ft.Row([search_box, ft.ElevatedButton("Search & Calculate", on_click=perform_search, bgcolor="green", color="white")]),
         ft.ElevatedButton("Phonetic Sync Engine Data", on_click=start_sync, bgcolor="red", color="white"),
-        ft.Container(output_text, border=ft.Border.all(1, "gray"), padding=15, border_radius=10, bgcolor="#F5F5F5", expand=True)
+        ft.Container(
+            content=output_text,
+            border=ft.Border(
+                top=ft.BorderSide(1, "gray"),
+                bottom=ft.BorderSide(1, "gray"),
+                left=ft.BorderSide(1, "gray"),
+                right=ft.BorderSide(1, "gray")
+            ),
+            padding=15,
+            border_radius=10,
+            bgcolor="#F5F5F5",
+            expand=True
+        )
     ], expand=True)
 
     crud_view = ft.Row([

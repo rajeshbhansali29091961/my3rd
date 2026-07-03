@@ -1,0 +1,18 @@
+[project]
+name = "bhoovalaya-stock-chakra-analyser"
+version = "1.0.0"
+description = "Shri Bhoovalaya Stock Chakra Analyser"
+requires-python = ">=3.10"
+dependencies = [
+    "flet==0.28.3",
+    "requests==2.32.3",
+]
+
+[tool.flet]
+org = "com.flet"
+product = "my3rd"
+company = "my3rd"
+assets_dir = "assets"
+
+[tool.flet.android]
+permissions = ["android.permission.INTERNET"]

@@ -9,10 +9,9 @@ dependencies = [
 ]
 
 [tool.flet]
-org = "com.flet"
-product = "my3rd"
-company = "my3rd"
-assets_dir = "assets"
+org = "com.bhoovalaya"
+product = "oracle"
+company = "bhoovalaya"
 
 [tool.flet.android]
 permissions = ["android.permission.INTERNET"]

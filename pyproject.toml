@@ -2,7 +2,31 @@
 name = "bhoovalaya-stock-chakra-analyser"
 version = "1.0.0"
 description = "Shri Bhoovalaya Stock Chakra Analyser"
+requires-python = ">=3.10"[project]
+name = "bhoovalaya-stock-chakra-analyser"
+version = "1.0.0"
+description = "Shri Bhoovalaya Stock Chakra Analyser"
 requires-python = ">=3.10"
+dependencies = [
+    "flet==0.28.3",
+    "requests==2.32.3",
+    "firebase-admin>=6.5.0",    # Handles all Firebase/Firestore cloud synchronization
+]
+
+[tool.flet]
+org = "com.bhoovalaya"
+product = "oracle"
+company = "bhoovalaya"
+# Explicitly directs Flet to pack the current directory and look for main.py
+app_dir = "."
+main_script = "main.py"
+
+[tool.flet.android]
+permissions = [
+    "android.permission.INTERNET",
+    "android.permission.ACCESS_NETWORK_STATE" # Best practice when dealing with Firebase sync
+]
+
 dependencies = [
     "flet==0.28.3",
     "requests==2.32.3",

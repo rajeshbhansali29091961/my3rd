@@ -14,4 +14,3 @@ company = "my3rd"
 
 [tool.flet.android]
 permissions = ["android.permission.INTERNET"]
-

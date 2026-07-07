@@ -190,7 +190,7 @@ def make_report(asum, tval, ldate):
 def main(page: ft.Page):
     try:
         page.title   = "Bhoovalaya Oracle"
-        page.bgcolor = "#0A1628"
+        page.bgcolor = "#FFFFFF"
         page.padding = 10
         page.scroll  = "auto"
 
@@ -202,7 +202,7 @@ def main(page: ft.Page):
                 color="#FFFFFF",
                 weight="bold",
             ),
-            bgcolor="#1A237E",
+            bgcolor="#0D47A1",
             padding=12,
             border_radius=8,
         ))
@@ -212,7 +212,7 @@ def main(page: ft.Page):
                 size=14,
                 color="#FFFFFF",
             ),
-            bgcolor="#283593",
+            bgcolor="#1565C0",
             padding=8,
             border_radius=6,
         ))
@@ -265,7 +265,7 @@ def main(page: ft.Page):
         prg_text = ft.Text(
             "",
             size=15,
-            color="#FFD600",
+            color="#E65100",
             weight="bold",
         )
 
@@ -293,20 +293,20 @@ def main(page: ft.Page):
         result_text = ft.Text(
             "",
             size=16,
-            color="#FFFFFF",
+            color="#0D47A1",
             selectable=True,
             font_family="monospace",
         )
         result_box = ft.Container(
             content=result_text,
-            bgcolor="#0D1B3E",
+            bgcolor="#F3F8FF",
             padding=14,
             border_radius=8,
             border=ft.Border(
-                top=ft.BorderSide(2, "#42A5F5"),
-                bottom=ft.BorderSide(2, "#42A5F5"),
-                left=ft.BorderSide(2, "#42A5F5"),
-                right=ft.BorderSide(2, "#42A5F5"),
+                top=ft.BorderSide(2, "#0D47A1"),
+                bottom=ft.BorderSide(2, "#0D47A1"),
+                left=ft.BorderSide(2, "#0D47A1"),
+                right=ft.BorderSide(2, "#0D47A1"),
             ),
             visible=False,
         )
@@ -537,7 +537,7 @@ def main(page: ft.Page):
         page.add(ft.Divider(height=6))
         page.add(ft.Text(
             "Enter Stock Symbol:",
-            size=17, color="#E3F2FD", weight="bold"))
+            size=17, color="#0D47A1", weight="bold"))
         page.add(fld_search)
         page.add(btn_search)
         page.add(ft.Divider(height=10))
@@ -545,11 +545,11 @@ def main(page: ft.Page):
             content=ft.Text(
                 "FIRST TIME SETUP — Build Database",
                 size=16, color="#FFFFFF", weight="bold"),
-            bgcolor="#B71C1C",
+            bgcolor="#BF360C",
             padding=8, border_radius=6))
         page.add(ft.Text(
             "Tap below to download all NSE stocks (needs internet):",
-            size=15, color="#B3E5FC"))
+            size=15, color="#1A237E"))
         page.add(btn_build)
         page.add(ft.Divider(height=10))
         page.add(result_box)

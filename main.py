@@ -58,7 +58,7 @@ CURATED = {
     "TATAMOTORS":"टाटा मोटर्स","SUNPHARMA":"सन फार्मास्युटिकल",
     "BHARTIARTL":"भारती एयरटेल","BAJFINANCE":"बजाज फाइनेंस",
     "LICI":"भारतीय जीवन बीमा निगम","IRCTC":"भारतीय रेलवे खानपान",
-    "HAL":"हिंदुस्तान एयरोनॉटिक्स","ASIANPAINT":"एशियन पंतुस",
+    "HAL":"हिंदुस्तान एयरोनॉटिक्स","ASIANPAINT":"एशियन पेंट्स",
     "TITAN":"टाइटन कंपनी","ZOMATO":"जोमैटो",
     "PNB":"पंजाब नेशनल बैंक","BEL":"भारत इलेक्ट्रॉनिक्स",
     "HCLTECH":"एचसीएल टेक्नोलॉजीज","ADANIPORTS":"अदानी पोर्ट्स",
@@ -67,21 +67,56 @@ CURATED = {
     "ULTRACEMCO":"अल्ट्राटेक सीमेंट","BAJAJ-AUTO":"बजाज ऑटो",
     "POWERGRID":"पावर ग्रिड कॉर्पोरेशन","GAIL":"गेल इंडिया",
     "BPCL":"भारत पेट्रोलियम","IOC":"इंडियन ऑयल कॉर्पोरेशन",
+    "BANKBARODA":"बैंक ऑफ बड़ौदा","CANBK":"केनरा बैंक",
+    "UNIONBANK":"यूनियन बैंक ऑफ इंडिया","YESBANK":"यस बैंक",
+    "IDFCFIRSTB":"आईडीएफसी फर्स्ट बैंक","FEDERALBNK":"फेडरल बैंक",
+    "SAIL":"स्टील अथॉरिटी ऑफ इंडिया","NMDC":"एनएमडीसी",
+    "HINDALCO":"हिंडाल्को इंडस्ट्रीज","VEDL":"वेदांता",
+    "TATAPOWER":"टाटा पावर","ADANIPOWER":"अदानी पावर",
+    "ADANIENT":"अदानी एंटरप्राइजेज","ADANIGREEN":"अदानी ग्रीन एनर्जी",
+    "DLF":"डीएलएफ","GODREJPROP":"गोदरेज प्रॉपर्टीज",
+    "BRITANNIA":"ब्रिटानिया इंडस्ट्रीज","DABUR":"डाबर इंडिया",
+    "MARICO":"मेरिको","NESTLEIND":"नेस्ले इंडिया",
+    "HEROMOTOCO":"हीरो मोटोकॉर्प","EICHERMOT":"आयशर मोटर्स",
+    "ASHOKLEY":"अशोक लेलैंड","TVSMOTOR":"टीवीएस मोटर",
+    "CONCOR":"कंटेनर कॉर्पोरेशन","BHEL":"भारत हेवी इलेक्ट्रिकल्स",
+    "APOLLOHOSP":"अपोलो हॉस्पिटल्स","DIVISLAB":"दिविस लेबोरेटरीज",
+    "BIOCON":"बायोकॉन","LUPIN":"ल्यूपिन",
+    "AUROPHARMA":"ऑरोबिंदो फार्मा","TORNTPHARM":"टोरेंट फार्मा",
 }
 WD = {
     "LIMITED":"लिमिटेड","LTD":"लिमिटेड","BANK":"बैंक",
-    "INDUSTRIES":"इंडस्ट्रीज","INDIA":"इंडिया","POWER":"पावर",
+    "INDUSTRIES":"इंडस्ट्रीज","INDUSTRY":"उद्योग",
+    "INDIA":"इंडिया","INDIAN":"इंडियन","POWER":"पावर",
     "ENERGY":"एनर्जी","FINANCE":"फाइनेंस","STEEL":"स्टील",
-    "MOTORS":"मोटर्स","TECHNOLOGIES":"टेक्नोलॉजीज",
-    "AND":"एंड","&":"एंड","SERVICES":"सर्विसेज",
-    "PHARMA":"फार्मा","CEMENT":"सीमेंट","OIL":"ऑयल",
-    "GAS":"गैस","TELECOM":"टेलीकॉम","GROUP":"ग्रुप",
+    "MOTORS":"मोटर्स","MOTOR":"मोटर",
+    "TECHNOLOGIES":"टेक्नोलॉजीज","TECHNOLOGY":"टेक्नोलॉजी",
+    "AND":"एंड","&":"एंड","SERVICES":"सर्विसेज","SERVICE":"सर्विस",
+    "PHARMA":"फार्मा","PHARMACEUTICALS":"फार्मास्युटिकल्स",
+    "CEMENT":"सीमेंट","OIL":"ऑयल","GAS":"गैस",
+    "TELECOM":"टेलीकॉम","GROUP":"ग्रुप",
     "CHEMICALS":"केमिकल्स","NATIONAL":"नेशनल",
-    "CORPORATION":"कॉर्पोरेशन","MEDIA":"मीडिया",
-    "HEALTHCARE":"हेल्थकेयर","CAPITAL":"कैपिटल",
-    "AUTO":"ऑटो","ELECTRIC":"इलेक्ट्रिक",
-    "ELECTRONICS":"इलेक्ट्रॉनिक्स",
-    "CONSTRUCTION":"कंस्ट्रक्शन",
+    "CORPORATION":"कॉर्पोरेशन","CORP":"कॉर्प",
+    "MEDIA":"मीडिया","HEALTHCARE":"हेल्थकेयर",
+    "CAPITAL":"कैपिटल","INSURANCE":"इंश्योरेंस",
+    "REALTY":"रियल्टी","PROPERTIES":"प्रॉपर्टीज",
+    "AUTO":"ऑटो","AUTOMOBILE":"ऑटोमोबाइल",
+    "ELECTRIC":"इलेक्ट्रिक","ELECTRONICS":"इलेक्ट्रॉनिक्स",
+    "CONSTRUCTION":"कंस्ट्रक्शन","INFRASTRUCTURE":"इन्फ्रास्ट्रक्चर",
+    "ENTERPRISES":"एंटरप्राइजेज","ENTERPRISE":"एंटरप्राइज",
+    "HOLDINGS":"होल्डिंग्स","INVESTMENTS":"इन्वेस्टमेंट्स",
+    "LABORATORIES":"लेबोरेटरीज","LABS":"लैब्स",
+    "HOSPITAL":"हॉस्पिटल","HOSPITALS":"हॉस्पिटल्स",
+    "FOODS":"फूड्स","FOOD":"फूड","BEVERAGES":"बेवरेजेज",
+    "TEXTILE":"टेक्सटाइल","TEXTILES":"टेक्सटाइल्स",
+    "FERTILIZERS":"फर्टिलाइजर्स","AGRO":"एग्रो",
+    "TRADING":"ट्रेडिंग","EXPORTS":"एक्सपोर्ट्स",
+    "SOLUTIONS":"सॉल्यूशंस","SYSTEMS":"सिस्टम्स",
+    "GLOBAL":"ग्लोबल","INTERNATIONAL":"इंटरनेशनल",
+    "MANAGEMENT":"मैनेजमेंट","CONSULTING":"कंसल्टिंग",
+    "SECURITIES":"सिक्योरिटीज","PETROLEUM":"पेट्रोलियम",
+    "COMPANY":"कंपनी","SOLAR":"सोलर","RENEWABLE":"रिन्यूएबल",
+    "DIGITAL":"डिजिटल","NETWORK":"नेटवर्क","NETWORKS":"नेटवर्क्स",
 }
 PR = {
     'A':'ए','B':'ब','C':'क','D':'ड','E':'इ','F':'फ',
@@ -92,8 +127,27 @@ PR = {
 }
 NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
 
+# ── COLORS ─────────────────────────────────────────────────────────────────────
+C = {
+    "bg":       "#FFFFFF",
+    "primary":  "#0D47A1",
+    "secondary":"#1565C0",
+    "accent":   "#1976D2",
+    "dark_txt": "#0D47A1",
+    "black_txt":"#212121",
+    "hint_txt": "#546E7A",
+    "green":    "#1B5E20",
+    "orange":   "#BF360C",
+    "red":      "#B71C1C",
+    "inp_bg":   "#F3F8FF",
+    "res_bg":   "#EEF4FF",
+    "row_odd":  "#F3F8FF",
+    "row_even": "#FFFFFF",
+    "divider":  "#90CAF9",
+}
 
-# ── HELPERS ────────────────────────────────────────────────────────────────────
+
+# ── HELPER FUNCTIONS ───────────────────────────────────────────────────────────
 def parse_dt(s):
     if not s: return None
     for f in ("%d-%m-%Y","%Y-%m-%d","%d/%m/%Y","%d-%b-%Y"):
@@ -159,81 +213,59 @@ def make_report(asum, tval, ldate):
         tn = ["जन्म","सम्पत","विपत","क्षेम","प्रत्यरि",
               "साधक","वध","मित्र","परम-मित्र"]
         tara = tn[(tc-1)%9] + (
-            " ✅GOOD" if tc%9 in(2,4,6,8,0) else " ⚠️CAUTION")
+            " GOOD" if tc%9 in(2,4,6,8,0) else " CAUTION")
     else:
         tara = "N/A"
     S = "─" * 30
     return "\n".join([
         S,
-        "🕉  SUTRA   : " + sutra,
-        "🔢 NAVAANK : " + str(nv),
-        "🪐 GRAHA   : " + g[0],
+        "SUTRA   : " + sutra,
+        "NAVAANK : " + str(nv),
+        "GRAHA   : " + g[0],
         S,
-        "📈 MARKET FORECAST",
-        "   Signal   : " + g[1],
-        "   Strength : " + bars.get(g[2],"") + " " + str(g[2]) + "/5",
-        "   Sectors  : " + g[3],
-        "   Hold For : " + g[4],
-        "   Caution  : " + g[5],
-        "   Best Day : " + g[6],
+        "MARKET FORECAST:",
+        "  Signal  : " + g[1],
+        "  Strength: " + bars.get(g[2],"") + "  " + str(g[2]) + "/5",
+        "  Sectors : " + g[3],
+        "  Hold    : " + g[4],
+        "  Caution : " + g[5],
+        "  Best Day: " + g[6],
         S,
-        "🌟 VEDIC TIMING",
-        "   Date      : " + wday + " " + today.strftime("%d-%m-%Y"),
-        "   Nakshatra : " + nak,
-        "   Tara Bala : " + tara,
+        "VEDIC TIMING:",
+        "  Date     : " + wday + " " + today.strftime("%d-%m-%Y"),
+        "  Nakshatra: " + nak,
+        "  Tara Bala: " + tara,
         S,
-        "⚖️  Research only. Not SEBI advice.",
+        "Research only. Not SEBI advice.",
     ])
 
 
-# ── MAIN ───────────────────────────────────────────────────────────────────────
+# ── MAIN APP ───────────────────────────────────────────────────────────────────
 def main(page: ft.Page):
     try:
         page.title   = "Bhoovalaya Oracle"
-        page.bgcolor = "#FFFFFF"
-        page.padding = 10
+        page.bgcolor = C["bg"]
+        page.padding = 8
         page.scroll  = "auto"
-
-        # Show title immediately
-        page.add(ft.Container(
-            content=ft.Text(
-                "🔮 BHOOVALAYA STOCK ORACLE",
-                size=22,
-                color="#FFFFFF",
-                weight="bold",
-            ),
-            bgcolor="#0D47A1",
-            padding=12,
-            border_radius=8,
-        ))
-        page.add(ft.Container(
-            content=ft.Text(
-                "Vedic Akshara + Financial Astrology",
-                size=14,
-                color="#FFFFFF",
-                ),
-            bgcolor="#1565C0",
-            padding=8,
-            border_radius=6,
-        ))
-        page.add(ft.Divider(height=6))
-        page.update()
 
         # ── DB SETUP ───────────────────────────────────────────────────────────
         storage = os.getenv("FLET_APP_STORAGE_DATA", ".")
         db_path = os.path.join(storage, "bhuvalaya.db")
+
         try:
             conn = sqlite3.connect(db_path)
             conn.execute("""CREATE TABLE IF NOT EXISTS stocks(
-                symbol TEXT PRIMARY KEY, eng TEXT, hindi TEXT,
-                ldate TEXT, asum INTEGER, breakdown TEXT)""")
+                symbol      TEXT PRIMARY KEY,
+                eng_name    TEXT,
+                hindi_name  TEXT,
+                ldate       TEXT,
+                asum        INTEGER,
+                breakdown   TEXT,
+                series      TEXT DEFAULT 'EQ')""")
             conn.commit()
             conn.close()
         except Exception as dbe:
-            page.add(ft.Text(
-                "DB Error: " + str(dbe),
-                size=14, color="#D32F2F"))
-            page.update()
+            pass
 
         def db_count():
             try:
@@ -241,349 +273,787 @@ def main(page: ft.Page):
                     "SELECT COUNT(*) FROM stocks").fetchone()[0]
             except: return 0
 
-        # ── STATUS BANNER ──────────────────────────────────────────────────────
-        status_text = ft.Text(
-            "Checking database...",
-            size=15,
-            color="#FFFFFF",
-            weight="bold",
-        )
-        status_box = ft.Container(
-            content=status_text,
-            bgcolor="#1976D2",
-            padding=10,
-            border_radius=6,
-        )
+        def db_search(q):
+            try:
+                conn = sqlite3.connect(db_path)
+                rows = conn.execute(
+                    "SELECT symbol, eng_name, hindi_name, ldate, asum "
+                    "FROM stocks WHERE symbol LIKE ? OR eng_name LIKE ? "
+                    "ORDER BY symbol LIMIT 100",
+                    ("%" + q + "%", "%" + q + "%")
+                ).fetchall()
+                conn.close()
+                return rows
+            except: return []
 
-        prg_bar = ft.ProgressBar(
-            value=0,
-            visible=False,
-            color="#FF6F00",
-            bgcolor="#EEEEEE",
-        )
+        def db_get(sym):
+            try:
+                conn = sqlite3.connect(db_path)
+                row  = conn.execute(
+                    "SELECT * FROM stocks WHERE symbol=?",
+                    (sym,)).fetchone()
+                conn.close()
+                return row
+            except: return None
 
-        prg_text = ft.Text(
-            "",
-            size=15,
-            color="#E65100",
-            weight="bold",
-        )
+        def db_save(sym, eng, hindi, ldate, series="EQ"):
+            asum, bk = calc(hindi)
+            try:
+                conn = sqlite3.connect(db_path)
+                conn.execute(
+                    "INSERT OR REPLACE INTO stocks "
+                    "VALUES(?,?,?,?,?,?,?)",
+                    (sym, eng, hindi, ldate, asum, bk, series))
+                conn.commit()
+                conn.close()
+                return True, asum
+            except Exception as ex:
+                return False, str(ex)
 
-        # ── SEARCH BOX ─────────────────────────────────────────────────────────
-        fld_search = ft.TextField(
-            label="NSE Stock Symbol or Name",
-            label_style=ft.TextStyle(
-                size=15, color="#1565C0"),
-            hint_text="Example: RELIANCE or TCS",
-            hint_style=ft.TextStyle(
-                size=14, color="#757575"),
-            value="RELIANCE",
-            text_size=18,
-            text_style=ft.TextStyle(
-                size=18, color="#000000", weight="bold"),
-            border_color="#1565C0",
-            focused_border_color="#0D47A1",
-            border_width=2,
-            focused_border_width=3,
-            bgcolor="#F3F6FF",
-            cursor_color="#1565C0",
-        )
+        def db_delete(sym):
+            try:
+                conn = sqlite3.connect(db_path)
+                conn.execute(
+                    "DELETE FROM stocks WHERE symbol=?", (sym,))
+                conn.commit()
+                conn.close()
+                return True
+            except: return False
 
-        # ── RESULT BOX ─────────────────────────────────────────────────────────
-        result_text = ft.Text(
-            "",
-            size=16,
-            color="#0D47A1",
-            selectable=True,
-            font_family="monospace",
-        )
-        result_box = ft.Container(
-            content=result_text,
-            bgcolor="#F3F8FF",
-            padding=14,
-            border_radius=8,
-            border=ft.Border(
-                top=ft.BorderSide(2, "#0D47A1"),
-                bottom=ft.BorderSide(2, "#0D47A1"),
-                left=ft.BorderSide(2, "#0D47A1"),
-                right=ft.BorderSide(2, "#0D47A1"),
-            ),
-            visible=False,
-        )
+        # ── SHARED STATUS BAR ──────────────────────────────────────────────────
+        status_txt = ft.Text(
+            "Loading...", size=15,
+            color="#FFFFFF", weight="bold")
+        status_bar = ft.Container(
+            content=status_txt,
+            bgcolor=C["secondary"],
+            padding=10, border_radius=6)
 
-        # ── HELPERS ────────────────────────────────────────────────────────────
-        def set_status(msg, color="#1976D2"):
-            status_text.value = msg
-            status_box.bgcolor = color
+        prg_bar  = ft.ProgressBar(
+            value=0, visible=False,
+            color="#FF6F00", bgcolor="#EEEEEE")
+        prg_txt  = ft.Text(
+            "", size=14,
+            color=C["orange"], weight="bold")
+
+        def set_status(msg, color=None):
+            status_txt.value   = msg
+            status_bar.bgcolor = color or C["secondary"]
             page.update()
 
         def set_prg(pct, msg=""):
             prg_bar.visible = True
             prg_bar.value   = pct
-            prg_text.value  = msg
+            prg_txt.value   = msg
             page.update()
 
         def hide_prg():
             prg_bar.visible = False
-            prg_text.value  = ""
+            prg_txt.value   = ""
             page.update()
 
-        def set_result(txt):
-            result_text.value = txt
-            result_box.visible = bool(txt)
+        # ── HELPER: make text field ────────────────────────────────────────────
+        def make_field(label, hint="", value="", multiline=False):
+            return ft.TextField(
+                label=label,
+                label_style=ft.TextStyle(
+                    size=14, color=C["primary"]),
+                hint_text=hint,
+                hint_style=ft.TextStyle(
+                    size=13, color=C["hint_txt"]),
+                value=value,
+                text_size=16,
+                text_style=ft.TextStyle(
+                    size=16, color=C["black_txt"],
+                    weight="bold"),
+                border_color=C["primary"],
+                focused_border_color=C["accent"],
+                border_width=2,
+                bgcolor=C["inp_bg"],
+                cursor_color=C["primary"],
+                multiline=multiline,
+                min_lines=1 if not multiline else 2,
+            )
+
+        # ── HELPER: section header ─────────────────────────────────────────────
+        def make_header(title, bgcolor=None):
+            return ft.Container(
+                content=ft.Text(
+                    title, size=16,
+                    color="#FFFFFF", weight="bold"),
+                bgcolor=bgcolor or C["primary"],
+                padding=ft.padding.symmetric(
+                    horizontal=12, vertical=8),
+                border_radius=6)
+
+        # ══════════════════════════════════════════════════════════════════════
+        # SCREEN 1 — ORACLE SEARCH
+        # ══════════════════════════════════════════════════════════════════════
+        fld_oracle = make_field(
+            "NSE Stock Symbol or Name",
+            hint="Example: RELIANCE or TCS or SBIN",
+            value="RELIANCE")
+
+        result_txt = ft.Text(
+            "", size=15,
+            color=C["dark_txt"],
+            selectable=True,
+            font_family="monospace")
+
+        result_box = ft.Container(
+            content=result_txt,
+            bgcolor=C["res_bg"],
+            padding=14,
+            border_radius=8,
+            border=ft.Border(
+                top=ft.BorderSide(2, C["primary"]),
+                bottom=ft.BorderSide(2, C["primary"]),
+                left=ft.BorderSide(2, C["primary"]),
+                right=ft.BorderSide(2, C["primary"])),
+            visible=False)
+
+        def do_oracle(e):
+            q = fld_oracle.value.strip().upper()
+            if not q:
+                set_status("Enter a stock symbol.", C["red"])
+                return
+            set_status("Searching: " + q + " ...", C["accent"])
+            if db_count() < 5:
+                set_status("Database empty! Tap BUILD DATABASE.", C["red"])
+                result_txt.value = (
+                    "DATABASE IS EMPTY\n\n"
+                    "Go to Database tab and\n"
+                    "tap BUILD DATABASE button.\n\n"
+                    "Needs internet — 5 to 15 minutes.")
+                result_box.visible = True
+                page.update()
+                return
+            row = db_get(q)
+            if not row:
+                rows = db_search(q)
+                if rows:
+                    row = db_get(rows[0][0])
+            if row:
+                sym, eng, hi, ldt, asum, bk, *_ = row
+                ldate = parse_dt(ldt)
+                today = datetime.now()
+                days  = (today - ldate).days if ldate else 0
+                tval  = days % 730
+                rep   = make_report(asum, tval, ldate)
+                set_status("Found: " + sym, C["green"])
+                result_txt.value = "\n".join([
+                    "━" * 30,
+                    "SYMBOL  : " + sym,
+                    "COMPANY : " + eng,
+                    "HINDI   : " + hi,
+                    "LISTED  : " + ldt,
+                    "━" * 30,
+                    "AKSHARA SUM  = " + str(asum),
+                    "TEMPORAL MOD = " + str(tval),
+                    "COMBINED VIB = " + str(asum + tval),
+                    "NAVAANK      = " + str((asum % 9) or 9),
+                    "",
+                    rep,
+                ])
+                result_box.visible = True
+            else:
+                set_status("Not found: " + q, C["red"])
+                result_txt.value = (
+                    "'" + q + "' NOT FOUND\n\n"
+                    "Try: RELIANCE TCS SBIN\n"
+                    "     INFY WIPRO ITC LT")
+                result_box.visible = True
             page.update()
 
-        # ── SEARCH ─────────────────────────────────────────────────────────────
-        def on_search(e):
-            try:
-                q = fld_search.value.strip().upper()
-                if not q:
-                    set_status(
-                        "Please enter a stock symbol.", "#D32F2F")
-                    return
-                set_status("Searching: " + q + " ...", "#1565C0")
-                if db_count() < 5:
-                    set_status(
-                        "Database empty! Tap BUILD DATABASE.",
-                        "#D32F2F")
-                    set_result(
-                        "DATABASE IS EMPTY\n\n"
-                        "Tap orange BUILD DATABASE button.\n"
-                        "Needs internet. Takes 5-15 minutes.\n\n"
-                        "After build, search any NSE symbol.")
-                    return
-                conn = sqlite3.connect(db_path)
-                row  = conn.execute(
-                    "SELECT * FROM stocks "
-                    "WHERE symbol LIKE ? OR eng LIKE ?",
-                    ("%" + q + "%", "%" + q + "%")
-                ).fetchone()
-                conn.close()
-                if row:
-                    sym, eng, hi, ldt, asum, bk = row
-                    ldate = parse_dt(ldt)
-                    today = datetime.now()
-                    days  = (today - ldate).days if ldate else 0
-                    tval  = days % 730
-                    rep   = make_report(asum, tval, ldate)
-                    set_status("✅ Found: " + sym, "#2E7D32")
-                    set_result("\n".join([
-                        "━" * 30,
-                        "📊 SYMBOL  : " + sym,
-                        "🏢 COMPANY : " + eng,
-                        "🕉  HINDI   : " + hi,
-                        "📅 LISTED  : " + ldt,
-                        "━" * 30,
-                        "🧮 AKSHARA SUM  = " + str(asum),
-                        "🧮 BREAKDOWN    = " + str(bk),  # <── ADDED THIS FOR USER PROOF
-                        "⏳ TEMPORAL MOD = " + str(tval),
-                        "🌀 COMBINED VIB = " + str(asum + tval),
-                        "🔢 NAVAANK      = " + str((asum%9) or 9),
-                        "",
-                        rep,
-                    ]))
-                else:
-                    set_status(
-                        "❌ Not found: " + q, "#D32F2F")
-                    set_result(
-                        "'" + q + "' NOT FOUND\n\n"
-                        "Try these examples:\n"
-                        "  RELIANCE\n  TCS\n  SBIN\n"
-                        "  INFY\n  WIPRO\n  ITC\n  LT\n"
-                        "  NTPC\n  ONGC\n  MARUTI")
-            except Exception as ex:
-                set_status("Search error!", "#D32F2F")
-                set_result("ERROR: " + str(ex))
+        oracle_screen = ft.Column(
+            visible=True,
+            controls=[
+                make_header("🔮  ORACLE ANALYSIS"),
+                ft.Divider(height=4, color=C["divider"]),
+                ft.Text("Enter Stock Symbol or Name:",
+                        size=15, color=C["black_txt"],
+                        weight="bold"),
+                fld_oracle,
+                ft.ElevatedButton(
+                    "🔍  SEARCH AND CALCULATE",
+                    bgcolor=C["green"], color="#FFFFFF",
+                    height=52,
+                    style=ft.ButtonStyle(text_style=ft.TextStyle(
+                        size=17, weight="bold")),
+                    on_click=do_oracle),
+                ft.Divider(height=6, color=C["divider"]),
+                result_box,
+            ])
 
-        # ── BUILD ──────────────────────────────────────────────────────────────
-        def on_build(e):
+        # ══════════════════════════════════════════════════════════════════════
+        # SCREEN 2 — STOCK LIST (View All)
+        # ══════════════════════════════════════════════════════════════════════
+        fld_list_search = make_field(
+            "Search Symbol or Company Name",
+            hint="Leave blank to show first 100 stocks")
+
+        list_rows = ft.Column(
+            controls=[],
+            spacing=2)
+
+        list_count_txt = ft.Text(
+            "", size=14,
+            color=C["primary"], weight="bold")
+
+        def load_list(q=""):
+            list_rows.controls.clear()
+            rows = db_search(q) if q else db_search("")
+            list_count_txt.value = (
+                "Showing " + str(len(rows)) + " stocks"
+                + (" matching '" + q + "'" if q else
+                   " (first 100)"))
+
+            for i, r in enumerate(rows):
+                sym, eng, hi, ldt, asum = r
+                bg = C["row_odd"] if i % 2 == 0 else C["row_even"]
+
+                def make_edit_handler(s=sym):
+                    def handler(e):
+                        load_edit(s)
+                    return handler
+
+                row_ctrl = ft.Container(
+                    content=ft.Column([
+                        ft.Row([
+                            ft.Container(
+                                content=ft.Text(
+                                    sym, size=15,
+                                    color="#FFFFFF",
+                                    weight="bold"),
+                                bgcolor=C["primary"],
+                                padding=ft.padding.symmetric(
+                                    horizontal=10, vertical=4),
+                                border_radius=4),
+                            ft.Text(
+                                ldt, size=12,
+                                color=C["hint_txt"]),
+                            ft.Text(
+                                "Ak:" + str(asum),
+                                size=12, color=C["accent"]),
+                        ]),
+                        ft.Text(
+                            eng, size=14,
+                            color=C["black_txt"],
+                            weight="bold"),
+                        ft.Text(
+                            hi, size=15,
+                            color=C["primary"],
+                            weight="bold"),
+                        ft.Row([
+                            ft.TextButton(
+                                "✏️ Edit",
+                                style=ft.ButtonStyle(
+                                    color=C["accent"]),
+                                on_click=make_edit_handler(sym)),
+                            ft.TextButton(
+                                "🔮 Analyse",
+                                style=ft.ButtonStyle(
+                                    color=C["green"]),
+                                on_click=lambda e, s=sym: (
+                                    setattr(fld_oracle, 'value', s),
+                                    show_screen("oracle"),
+                                    do_oracle(e))),
+                        ]),
+                    ], spacing=2),
+                    bgcolor=bg,
+                    padding=8,
+                    border_radius=6,
+                    border=ft.Border(
+                        bottom=ft.BorderSide(1, C["divider"])))
+                list_rows.controls.append(row_ctrl)
+            page.update()
+
+        def do_list_search(e):
+            load_list(fld_list_search.value.strip().upper())
+
+        list_screen = ft.Column(
+            visible=False,
+            controls=[
+                make_header("📋  STOCK LIST  (NSE India)"),
+                ft.Divider(height=4, color=C["divider"]),
+                fld_list_search,
+                ft.Row([
+                    ft.ElevatedButton(
+                        "🔍 Search",
+                        bgcolor=C["primary"], color="#FFFFFF",
+                        height=46,
+                        style=ft.ButtonStyle(
+                            text_style=ft.TextStyle(
+                                size=15, weight="bold")),
+                        on_click=do_list_search),
+                    ft.ElevatedButton(
+                        "📋 Show All",
+                        bgcolor=C["accent"], color="#FFFFFF",
+                        height=46,
+                        style=ft.ButtonStyle(
+                            text_style=ft.TextStyle(
+                                size=15, weight="bold")),
+                        on_click=lambda e: load_list("")),
+                ]),
+                list_count_txt,
+                ft.Divider(height=4, color=C["divider"]),
+                list_rows,
+            ])
+
+        # ══════════════════════════════════════════════════════════════════════
+        # SCREEN 3 — DATA ENTRY (Add / Edit / Delete)
+        # ══════════════════════════════════════════════════════════════════════
+        fld_sym   = make_field("Symbol *", "e.g. RELIANCE")
+        fld_eng   = make_field("English Company Name *",
+                               "e.g. Reliance Industries Ltd")
+        fld_hindi = make_field("Hindi Name *",
+                               "e.g. रिलायंस इंडस्ट्रीज")
+        fld_ldate = make_field("Listing Date", "DD-MM-YYYY")
+        fld_series = make_field("Series", "e.g. EQ", value="EQ")
+
+        entry_status = ft.Text(
+            "", size=15, color=C["green"], weight="bold")
+
+        akshara_preview = ft.Container(
+            content=ft.Text(
+                "", size=14, color=C["dark_txt"]),
+            bgcolor=C["res_bg"],
+            padding=10, border_radius=6,
+            visible=False)
+
+        def load_edit(sym):
+            row = db_get(sym)
+            if row:
+                fld_sym.value    = row[0]
+                fld_sym.disabled = True
+                fld_eng.value    = row[1]
+                fld_hindi.value  = row[2]
+                fld_ldate.value  = row[3]
+                fld_series.value = row[6] if len(row) > 6 else "EQ"
+                asum, bk         = calc(row[2])
+                akshara_preview.content.value = (
+                    "Akshara Sum = " + str(asum) + "\n" + bk[:80])
+                akshara_preview.visible = True
+                entry_status.value  = "Loaded: " + sym + " — Edit and tap UPDATE"
+                entry_status.color  = C["accent"]
+                show_screen("entry")
+                page.update()
+
+        def do_transliterate(e):
+            eng = fld_eng.value.strip()
+            sym = fld_sym.value.strip().upper()
+            if not eng:
+                entry_status.value = "Enter English name first."
+                entry_status.color = C["red"]
+                page.update()
+                return
+            entry_status.value = "Transliterating... please wait"
+            entry_status.color = C["accent"]
+            page.update()
+            hi = get_hindi(sym, eng)
+            fld_hindi.value = hi
+            asum, bk        = calc(hi)
+            akshara_preview.content.value = (
+                "Akshara Sum = " + str(asum) + "\n" + bk[:80])
+            akshara_preview.visible = True
+            entry_status.value = "Hindi name generated!"
+            entry_status.color = C["green"]
+            page.update()
+
+        def do_preview(e):
+            hi = fld_hindi.value.strip()
+            if not hi:
+                entry_status.value = "Enter Hindi name first."
+                entry_status.color = C["red"]
+                page.update()
+                return
+            asum, bk = calc(hi)
+            akshara_preview.content.value = (
+                "Akshara Sum = " + str(asum) + "\n" + bk[:120])
+            akshara_preview.visible = True
+            entry_status.value = "Akshara = " + str(asum) + "  Navaank = " + str((asum%9) or 9)
+            entry_status.color = C["primary"]
+            page.update()
+
+        def do_save(e):
+            sym   = fld_sym.value.strip().upper()
+            eng   = fld_eng.value.strip()
+            hindi = fld_hindi.value.strip()
+            ldate = fld_ldate.value.strip()
+            series = fld_series.value.strip() or "EQ"
+            if not sym or not eng or not hindi:
+                entry_status.value = "Symbol, English and Hindi name are required!"
+                entry_status.color = C["red"]
+                page.update()
+                return
+            ok, val = db_save(sym, eng, hindi, ldate, series)
+            if ok:
+                entry_status.value = "Saved! " + sym + "  Akshara = " + str(val)
+                entry_status.color = C["green"]
+                fld_sym.disabled   = False
+            else:
+                entry_status.value = "Save failed: " + str(val)
+                entry_status.color = C["red"]
+            page.update()
+
+        def do_update(e):
+            sym   = fld_sym.value.strip().upper()
+            eng   = fld_eng.value.strip()
+            hindi = fld_hindi.value.strip()
+            ldate = fld_ldate.value.strip()
+            series = fld_series.value.strip() or "EQ"
+            if not sym:
+                entry_status.value = "No symbol loaded!"
+                entry_status.color = C["red"]
+                page.update()
+                return
+            ok, val = db_save(sym, eng, hindi, ldate, series)
+            if ok:
+                entry_status.value = "Updated! " + sym + "  Akshara = " + str(val)
+                entry_status.color = C["green"]
+                fld_sym.disabled   = False
+            else:
+                entry_status.value = "Update failed: " + str(val)
+                entry_status.color = C["red"]
+            page.update()
+
+        def do_delete(e):
+            sym = fld_sym.value.strip().upper()
+            if not sym:
+                entry_status.value = "No symbol loaded to delete!"
+                entry_status.color = C["red"]
+                page.update()
+                return
+            if db_delete(sym):
+                entry_status.value = "Deleted: " + sym
+                entry_status.color = C["orange"]
+                do_clear(None)
+            else:
+                entry_status.value = "Delete failed!"
+                entry_status.color = C["red"]
+            page.update()
+
+        def do_clear(e):
+            fld_sym.value    = ""
+            fld_eng.value    = ""
+            fld_hindi.value  = ""
+            fld_ldate.value  = ""
+            fld_series.value = "EQ"
+            fld_sym.disabled = False
+            akshara_preview.visible = False
+            entry_status.value = "Form cleared."
+            entry_status.color = C["hint_txt"]
+            page.update()
+
+        entry_screen = ft.Column(
+            visible=False,
+            controls=[
+                make_header("✏️  DATA ENTRY — Add / Edit Stock"),
+                ft.Divider(height=4, color=C["divider"]),
+                ft.Text(
+                    "Fields marked * are required",
+                    size=13, color=C["hint_txt"]),
+                fld_sym,
+                fld_eng,
+                ft.ElevatedButton(
+                    "🔄  Auto-Generate Hindi Name",
+                    bgcolor=C["accent"], color="#FFFFFF",
+                    height=46,
+                    style=ft.ButtonStyle(
+                        text_style=ft.TextStyle(
+                            size=15, weight="bold")),
+                    on_click=do_transliterate),
+                fld_hindi,
+                ft.ElevatedButton(
+                    "👁  Preview Akshara Calculation",
+                    bgcolor=C["secondary"], color="#FFFFFF",
+                    height=46,
+                    style=ft.ButtonStyle(
+                        text_style=ft.TextStyle(
+                            size=15, weight="bold")),
+                    on_click=do_preview),
+                akshara_preview,
+                fld_ldate,
+                fld_series,
+                ft.Divider(height=6, color=C["divider"]),
+                ft.Row([
+                    ft.ElevatedButton(
+                        "💾 SAVE NEW",
+                        bgcolor=C["green"], color="#FFFFFF",
+                        height=50,
+                        style=ft.ButtonStyle(
+                            text_style=ft.TextStyle(
+                                size=15, weight="bold")),
+                        on_click=do_save,
+                        expand=True),
+                    ft.ElevatedButton(
+                        "📝 UPDATE",
+                        bgcolor=C["accent"], color="#FFFFFF",
+                        height=50,
+                        style=ft.ButtonStyle(
+                            text_style=ft.TextStyle(
+                                size=15, weight="bold")),
+                        on_click=do_update,
+                        expand=True),
+                ]),
+                ft.Row([
+                    ft.ElevatedButton(
+                        "🗑 DELETE",
+                        bgcolor=C["red"], color="#FFFFFF",
+                        height=46,
+                        style=ft.ButtonStyle(
+                            text_style=ft.TextStyle(
+                                size=14, weight="bold")),
+                        on_click=do_delete,
+                        expand=True),
+                    ft.ElevatedButton(
+                        "🧹 CLEAR",
+                        bgcolor=C["hint_txt"], color="#FFFFFF",
+                        height=46,
+                        style=ft.ButtonStyle(
+                            text_style=ft.TextStyle(
+                                size=14, weight="bold")),
+                        on_click=do_clear,
+                        expand=True),
+                ]),
+                entry_status,
+            ])
+
+        # ══════════════════════════════════════════════════════════════════════
+        # SCREEN 4 — DATABASE BUILD
+        # ══════════════════════════════════════════════════════════════════════
+        build_result = ft.Text(
+            "", size=15,
+            color=C["dark_txt"],
+            selectable=True)
+
+        def do_build(e):
             def worker():
                 try:
-                    if not REQUESTS_OK:
-                        set_status(
-                            "requests module missing!", "#D32F2F")
-                        set_result(
-                            "BUILD FAILED\n\n"
-                            "requests module not available.\n"
-                            "Reinstall the app.")
-                        return
-                    set_status(
-                        "Step 1/4: Connecting to NSE...", "#E65100")
-                    set_prg(0.02,
-                        "Connecting to NSE India server...")
-                    set_result(
+                    set_status("Step 1/4: Connecting to NSE...", C["orange"])
+                    set_prg(0.02, "Connecting to NSE India server...")
+                    build_result.value = (
                         "BUILD STARTED\n\n"
                         "Connecting to NSE India...\n"
                         "Please keep app open.\n"
                         "Do not press back button.\n\n"
                         "Progress bar shows % complete.")
-                    hdrs = {"User-Agent": "Mozilla/5.0"}
+                    page.update()
+
+                    hdrs = {"User-Agent": "Mozilla/5.0 (Android)"}
                     resp = requests.get(
                         NSE_URL, headers=hdrs, timeout=60)
                     resp.raise_for_status()
-                    rows = list(csv.DictReader(io.StringIO(
-                        resp.content.decode(
-                            "utf-8", errors="ignore"))))
+
+                    # Filter EQ series only like original code
+                    all_rows = list(csv.DictReader(io.StringIO(
+                        resp.content.decode("utf-8", errors="ignore"))))
+                    rows = []
+                    for r in all_rows:
+                        nm = {k.strip().upper(): (v.strip() if v else "")
+                              for k, v in r.items()}
+                        series = nm.get("SERIES","").strip()
+                        if series == "EQ" or not series:
+                            rows.append(nm)
+
                     total = len(rows)
-                    set_status(
-                        "Step 2/4: Got "
-                        + str(total) + " stocks!", "#E65100")
-                    set_prg(0.10,
-                        "Downloaded " + str(total)
-                        + " stocks. Translating to Hindi...")
-                    set_result(
+                    set_status("Step 2/4: Got " + str(total) + " EQ stocks!", C["orange"])
+                    set_prg(0.10, "Downloaded " + str(total) + " EQ series stocks...")
+                    build_result.value = (
                         "BUILD IN PROGRESS\n\n"
-                        "Downloaded: "
-                        + str(total) + " NSE stocks\n\n"
-                        "Now translating to Hindi\n"
-                        "and calculating Akshara.\n\n"
+                        "Downloaded: " + str(total) + " EQ stocks\n\n"
+                        "Translating to Hindi...\n"
+                        "Calculating Akshara values...\n\n"
                         "Progress bar filling above.\n"
                         "Takes 5-15 minutes.\n"
                         "Please wait...")
-                    conn2  = sqlite3.connect(db_path)
-                    cur    = conn2.cursor()
-                    done   = 0
-                    for i, row in enumerate(rows):
-                        nm = {
-                            k.strip().upper():
-                            (v.strip() if v else "")
-                            for k, v in row.items()
-                        }
+                    page.update()
+
+                    conn2 = sqlite3.connect(db_path)
+                    cur   = conn2.cursor()
+                    done  = 0
+
+                    for i, nm in enumerate(rows):
                         sym = nm.get("SYMBOL","").strip()
                         eng = nm.get("NAME OF COMPANY",
                               nm.get("COMPANY NAME","")).strip()
                         ldt = nm.get("DATE OF LISTING",
                                      "01-01-2000").strip()
-                        if not sym or sym.lower()=="symbol":
+                        ser = nm.get("SERIES","EQ").strip()
+                        if not sym or sym.lower() == "symbol":
                             continue
                         hi       = get_hindi(sym, eng)
                         asum, bk = calc(hi)
                         cur.execute(
                             "INSERT OR REPLACE INTO stocks "
-                            "VALUES(?,?,?,?,?,?)",
-                            (sym,eng,hi,ldt,asum,bk))
+                            "VALUES(?,?,?,?,?,?,?)",
+                            (sym, eng, hi, ldt, asum, bk, ser))
                         done += 1
                         if i % 25 == 0:
                             conn2.commit()
-                            pct = 0.10 + (i/max(total,1)) * 0.90
+                            pct = 0.10 + (i / max(total, 1)) * 0.90
                             set_status(
-                                "Processing "
-                                + str(i) + "/" + str(total)
-                                + " — " + sym, "#E65100")
+                                "Processing " + str(i) + "/" + str(total)
+                                + " — " + sym, C["orange"])
                             set_prg(pct,
-                                str(int(pct*100))
-                                + "% done — " + sym)
+                                str(int(pct*100)) + "% done — " + sym)
+
                     conn2.commit()
                     conn2.close()
-                    set_prg(1.0,
-                        "✅ Complete! "
-                        + str(done) + " stocks ready!")
-                    set_status(
-                        "✅ Ready! " + str(done) + " stocks!",
-                        "#2E7D32")
-                    set_result(
-                        "✅ BUILD COMPLETE!\n\n"
-                        "Total stocks: " + str(done) + "\n\n"
-                        "Now search any symbol:\n"
-                        "  RELIANCE\n  TCS\n  SBIN\n"
-                        "  INFY\n  WIPRO\n  ITC")
+                    set_prg(1.0, "Complete! " + str(done) + " stocks ready!")
+                    set_status("Ready! " + str(done) + " EQ stocks.", C["green"])
+                    build_result.value = (
+                        "BUILD COMPLETE!\n\n"
+                        "EQ stocks processed: " + str(done) + "\n\n"
+                        "Go to STOCK LIST tab to view.\n"
+                        "Go to ORACLE tab to analyse.\n\n"
+                        "Search examples:\n"
+                        "  RELIANCE\n  TCS\n  SBIN\n  INFY")
+                    page.update()
+
                 except Exception as ex:
                     hide_prg()
-                    set_status(
-                        "❌ Build failed! Check internet.",
-                        "#D32F2F")
-                    set_result(
+                    set_status("Build failed! Check internet.", C["red"])
+                    build_result.value = (
                         "BUILD FAILED\n\n"
                         "Error: " + str(ex) + "\n\n"
-                        "Causes:\n"
-                        "1. No internet connection\n"
-                        "2. NSE server not responding\n\n"
-                        "Turn on internet and try again.")
-            set_status("Starting build...", "#E65100")
-            set_result(
+                        "Check internet and try again.")
+                    page.update()
+
+            set_status("Starting build...", C["orange"])
+            build_result.value = (
                 "PREPARING BUILD...\n\n"
-                "Connecting to internet.\n"
-                "Please wait a moment...")
+                "Connecting to NSE India.\n"
+                "Please wait...")
+            page.update()
             threading.Thread(target=worker, daemon=True).start()
 
-        # ── BUTTONS ────────────────────────────────────────────────────────────
-        btn_search = ft.ElevatedButton(
-            text="🔍  SEARCH AND CALCULATE",
-            bgcolor="#2E7D32",
-            color="#FFFFFF",
-            on_click=on_search,
-            height=54,
-            style=ft.ButtonStyle(
-                text_style=ft.TextStyle(
-                    size=17, weight="bold"),
-            ),
-        )
+        build_screen = ft.Column(
+            visible=False,
+            controls=[
+                make_header("🔄  DATABASE — Build & Manage"),
+                ft.Divider(height=4, color=C["divider"]),
+                ft.Container(
+                    content=ft.Text(
+                        "Downloads all NSE EQ series stocks\n"
+                        "with Hindi names into local database.\n"
+                        "Needs internet. Takes 5-15 minutes.",
+                        size=14, color=C["dark_txt"]),
+                    bgcolor=C["res_bg"],
+                    padding=10, border_radius=6),
+                ft.Divider(height=4, color=C["divider"]),
+                ft.ElevatedButton(
+                    "🔄  BUILD DATABASE  (first time)",
+                    bgcolor=C["orange"], color="#FFFFFF",
+                    height=54,
+                    style=ft.ButtonStyle(
+                        text_style=ft.TextStyle(
+                            size=17, weight="bold")),
+                    on_click=do_build),
+                ft.Divider(height=6, color=C["divider"]),
+                build_result,
+            ])
 
-        btn_build = ft.ElevatedButton(
-            text="🔄  BUILD DATABASE  (first time)",
-            bgcolor="#E65100",
-            color="#FFFFFF",
-            on_click=on_build,
-            height=54,
-            style=ft.ButtonStyle(
-                text_style=ft.TextStyle(
-                    size=16, weight="bold"),
-            ),
-        )
+        # ══════════════════════════════════════════════════════════════════════
+        # NAVIGATION
+        # ══════════════════════════════════════════════════════════════════════
+        screens = {
+            "oracle": oracle_screen,
+            "list":   list_screen,
+            "entry":  entry_screen,
+            "build":  build_screen,
+        }
 
-        # ── ADD TO PAGE ────────────────────────────────────────────────────────
-        page.add(status_box)
-        page.add(prg_bar)
-        page.add(prg_text)
-        page.add(ft.Divider(height=6))
-        page.add(ft.Text(
-            "Enter Stock Symbol:",
-            size=17, color="#0D47A1", weight="bold"))
-        page.add(fld_search)
-        page.add(btn_search)
-        page.add(ft.Divider(height=10))
+        nav_buttons = {}
+
+        def show_screen(name):
+            for k, s in screens.items():
+                s.visible = (k == name)
+            for k, b in nav_buttons.items():
+                b.bgcolor = C["primary"] if k == name else "#BDBDBD"
+                b.color   = "#FFFFFF"
+            if name == "list" and db_count() > 0:
+                load_list("")
+            page.update()
+
+        def make_nav(label, name):
+            btn = ft.ElevatedButton(
+                text=label,
+                bgcolor="#BDBDBD",
+                color="#FFFFFF",
+                height=46,
+                expand=True,
+                style=ft.ButtonStyle(
+                    text_style=ft.TextStyle(
+                        size=13, weight="bold")),
+                on_click=lambda e, n=name: show_screen(n))
+            nav_buttons[name] = btn
+            return btn
+
+        nav_bar = ft.Row([
+            make_nav("🔮\nOracle",  "oracle"),
+            make_nav("📋\nStocks",  "list"),
+            make_nav("✏️\nEntry",   "entry"),
+            make_nav("🔄\nBuild",   "build"),
+        ], spacing=4)
+
+        # ── BUILD PAGE ─────────────────────────────────────────────────────────
         page.add(ft.Container(
-            content=ft.Text(
-                "FIRST TIME SETUP — Build Database",
-                size=16, color="#FFFFFF", weight="bold"),
-            bgcolor="#BF360C",
-            padding=8, border_radius=6))
-        page.add(ft.Text(
-            "Tap below to download all NSE stocks (needs internet):",
-            size=15, color="#1A237E"))
-        page.add(btn_build)
-        page.add(ft.Divider(height=10))
-        page.add(result_box)
+            content=ft.Column([
+                ft.Text(
+                    "🔮 BHOOVALAYA STOCK ORACLE",
+                    size=20, color="#FFFFFF",
+                    weight="bold"),
+                ft.Text(
+                    "Vedic Akshara + Financial Astrology",
+                    size=12, color="#BBDEFB"),
+            ], spacing=2),
+            bgcolor=C["primary"],
+            padding=12, border_radius=0))
+
+        page.add(status_bar)
+        page.add(prg_bar)
+        page.add(prg_txt)
+        page.add(ft.Divider(height=2, color=C["divider"]))
+        page.add(nav_bar)
+        page.add(ft.Divider(height=4, color=C["divider"]))
+        page.add(oracle_screen)
+        page.add(list_screen)
+        page.add(entry_screen)
+        page.add(build_screen)
         page.update()
 
-        # ── STARTUP ────────────────────────────────────────────────────────────
+        # Set oracle as default active tab
+        show_screen("oracle")
+
+        # ── STARTUP MESSAGE ────────────────────────────────────────────────────
         n = db_count()
         if n < 5:
-            set_status(
-                "⚠️  No database. Tap BUILD DATABASE.",
-                "#C62828")
-            set_result(
-                "✅ APP IS WORKING!\n\n"
-                "Requests: "
-                + ("OK" if REQUESTS_OK else "MISSING") + "\n\n"
-                "FIRST TIME SETUP:\n"
-                "1. Turn on mobile internet\n"
-                "2. Tap orange BUILD DATABASE\n"
-                "3. Wait 5 to 15 minutes\n"
-                "4. Search any NSE symbol\n\n"
-                "The database downloads ~2500\n"
-                "NSE stocks with Hindi names.")
+            set_status("No database. Go to Build tab.", C["red"])
+            result_txt.value = (
+                "WELCOME!\n\n"
+                "App is working correctly.\n\n"
+                "SETUP STEPS:\n"
+                "1. Tap BUILD tab below\n"
+                "2. Tap BUILD DATABASE button\n"
+                "3. Wait 5-15 minutes\n"
+                "4. Come back to ORACLE tab\n"
+                "5. Search any NSE symbol\n\n"
+                "Or tap ENTRY tab to add\n"
+                "stocks manually one by one.")
+            result_box.visible = True
+            page.update()
         else:
-            set_status(
-                "✅ Ready — " + str(n) + " stocks loaded!",
-                "#2E7D32")
-            set_result(
-                "✅ WELCOME BACK!\n\n"
+            set_status("Ready — " + str(n) + " stocks loaded.", C["green"])
+            result_txt.value = (
+                "WELCOME BACK!\n\n"
                 + str(n) + " stocks in database.\n\n"
-                "Search examples:\n"
-                "  RELIANCE\n  TCS\n  SBIN\n"
-                "  INFY\n  WIPRO\n  ITC\n  LT\n\n"
-                "Type symbol and tap SEARCH.")
+                "Type symbol and tap SEARCH.\n\n"
+                "Examples:\n"
+                "  RELIANCE  TCS  SBIN\n"
+                "  INFY  WIPRO  ITC  LT")
+            result_box.visible = True
+            page.update()
 
     except Exception as err:
         try:
@@ -593,7 +1063,7 @@ def main(page: ft.Page):
                     "STARTUP ERROR:\n" + str(err),
                     size=15, color="#FFFFFF",
                     selectable=True),
-                bgcolor="#D32F2F",
+                bgcolor=C["red"],
                 padding=16, border_radius=8))
             page.update()
         except: pass

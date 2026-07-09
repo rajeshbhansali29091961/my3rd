@@ -5,7 +5,6 @@ import csv
 import io
 import time
 import math
-import sys
 from datetime import datetime
 
 try:
@@ -77,10 +76,10 @@ CURATED = {
     "TATAPOWER":"टाटा पावर","ADANIPOWER":"अदानी पावर",
     "ADANIENT":"अदानी एंटरप्राइजेज","ADANIGREEN":"अदानी ग्रीन एनर्जी",
     "DLF":"डीएलएफ","GODREJPROP":"गोदरेज प्रॉपर्टीज",
-    "BRITANNIA":"ब्रिटानिया निष्कर्ष","DABUR":"डाबर इंडिया",
+    "BRITANNIA":"ब्रिटानिया इंडस्ट्रीज","DABUR":"डाबर इंडिया",
     "MARICO":"मेरिको","NESTLEIND":"नेस्ले इंडिया",
     "HEROMOTOCO":"हीरो मोटोकॉर्प","EICHERMOT":"आयशर मोटर्स",
-    "ASHOKLEY":"अशोक लेलैंड","TVSMOTOR":"टीवीएस मोटर",
+    "ASHOKLEY":"अशोक लेलैंड","TVSMOTOR":"टीवीएस motor",
     "CONCOR":"कंटेनर कॉर्पोरेशन","BHEL":"भारत हेवी इलेक्ट्रिकल्स",
     "APOLLOHOSP":"अपोलो हॉस्पिटल्स","DIVISLAB":"दिविस लेबोरेटरीज",
     "BIOCON":"बायोकॉन","LUPIN":"ल्यूपिन",
@@ -91,7 +90,7 @@ WD = {
     "INDUSTRIES":"इंडस्ट्रीज","INDUSTRY":"उद्योग",
     "INDIA":"इंडिया","INDIAN":"इंडियन","POWER":"पावर",
     "ENERGY":"एनर्जी","FINANCE":"फाइनेंस","STEEL":"स्टील",
-    "MOTORS":"मोटर्स","MOTOR":"मोटर",
+    "MOTORS":"मोटर्स","MOTOR":"मोटो",
     "TECHNOLOGIES":"टेक्नोलॉजीज","TECHNOLOGY":"टेक्नोलॉजी",
     "AND":"एंड","&":"एंड","SERVICES":"सर्विसेज","SERVICE":"सर्विस",
     "PHARMA":"फार्मा","PHARMACEUTICALS":"फार्मास्युटिकल्स",
@@ -99,7 +98,7 @@ WD = {
     "TELECOM":"टेलीकॉम","GROUP":"ग्रुप",
     "CHEMICALS":"केमिकल्स","NATIONAL":"नेशनल",
     "CORPORATION":"कॉर्पोरेशन","CORP":"कॉर्प",
-    "MEDIA":"MEDIA","HEALTHCARE":"हेल्थकेयर",
+    "MEDIA":"मीडिया","HEALTHCARE":"हेल्थकेयर",
     "CAPITAL":"कैपिटल","INSURANCE":"इंश्योरेंस",
     "REALTY":"रियल्टी","PROPERTIES":"प्रॉपर्टीज",
     "AUTO":"ऑटो","AUTOMOBILE":"ऑटोमोबाइल",
@@ -215,21 +214,18 @@ def make_report(asum, tval, ldate):
     S2 = "═" * 30
     return "\n".join([
         S2, "    BHOOVALAYA ORACLE RESULT", S2, "",
-        "STEP 1: AKSHARA WEIGHT THEORY", "  (Siribhoovalaya — Jain Text)",
-        "  Each Hindi sound has weight:", "  अ=1 आ=2 इ=3 ई=4 उ=5 ऊ=6",
-        "  ए=7 ऐ=8 ओ=9 क=11 ब=33 र=37", "  (64 Akshara × weight = sum)", S,
-        "STEP 2: NAVAANK CALCULATION", "  (Vedic Digital Root Theory)",
-        "  Akshara Sum = " + str(asum), "  Digital Root (1-9) = " + str(nv), "  " + _navaank_steps(asum), S,
-        "STEP 3: TEMPORAL VIBRATION", "  (Jupiter Cycle = 730 days)", "  Days elapsed since listing",
-        "  Temporal = Days % 730 = " + str(tval), "  Combined = " + str(asum) + " + " + str(tval) + " = " + str(total),
-        "  Sutra Index = " + str(total) + " % 9 = " + str(total % 9), S,
-        "STEP 4: SUTRA PRINCIPLE", "  (Bhoovalaya Cosmic Principle)", "  " + sutra, S,
-        "STEP 5: RULING GRAHA (PLANET)", "  (Vedic Financial Astrology)", "  Navaank " + str(nv) + " → " + g[0], S2,
-        "  MARKET FORECAST", S2, "  Signal   : " + g[1], "  Strength : " + bars.get(g[2],"") + "  " + str(g[2]) + "/5",
-        "  Sectors  : " + g[3], "  Hold For : " + g[4], "  Caution  : " + g[5], "  Best Day : " + g[6], S,
-        "STEP 6: VEDIC TIMING", "  (Nakshatra + Tara Bala)", "  Today    : " + wday + " " + today.strftime("%d-%m-%Y"),
-        "  Nakshatra: " + nak, "  Tara Bala: " + tara, "  (Even Tara = GOOD entry)", S2,
-        "  Research only. Not SEBI advice.", S2,
+        "STEP 1: AKSHARA WEIGHT THEORY", "  Each Hindi sound has weight:",
+        S, "STEP 2: NAVAANK CALCULATION", "  Akshara Sum = " + str(asum),
+        "  Digital Root (1-9) = " + str(nv), "  " + _navaank_steps(asum),
+        S, "STEP 3: TEMPORAL VIBRATION", "  Temporal = Days % 730 = " + str(tval),
+        "  Combined = " + str(asum) + " + " + str(tval) + " = " + str(total),
+        S, "STEP 4: SUTRA PRINCIPLE", "  " + sutra,
+        S, "STEP 5: RULING GRAHA (PLANET)", "  Navaank " + str(nv) + " → " + g[0],
+        S2, "  MARKET FORECAST", S2,
+        "  Signal   : " + g[1], "  Strength : " + bars.get(g[2],"") + "  " + str(g[2]) + "/5",
+        "  Sectors  : " + g[3], "  Hold For : " + g[4], "  Best Day : " + g[6],
+        S, "STEP 6: VEDIC TIMING", "  Today    : " + wday + " " + today.strftime("%d-%m-%Y"),
+        "  Nakshatra: " + nak, "  Tara Bala: " + tara, S2,
     ])
 
 def _navaank_steps(n):
@@ -243,87 +239,132 @@ def _navaank_steps(n):
         return " → ".join(steps) + " → " + str(current)
     return str(current)
 
-# ── DIAMOND CHART GENERATOR COMPONENT ──────────────────────────────────────────
-SIGN_HI = ["मेष","वृष","मिथुन","कर्क","सिंह","कन्या","तुला","वृश्चिक","धनु","मकर","कुंभ","मीन"]
+# ── VEDIC ASTROLOGY CALCULATIONS ──────────────────────────────────────────────
+SIGN_ABB  = ["Ar","Ta","Ge","Ca","Le","Vi","Li","Sc","Sg","Cp","Aq","Pi"]
+SIGN_HI   = ["मेष","वृष","मिथुन","कर्क","सिंह","कन्या","तुला","वृश्चिक","धनु","मकर","कुंभ","मीन"]
+SIGN_FULL = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"]
+PLANET_NAMES = {
+    "As":"Lagna","Su":"Sun-सूर्य","Mo":"Moon-चंद्र",
+    "Ma":"Mars-मंगल","Me":"Mercury-बुध","Ju":"Jupiter-गुरु",
+    "Ve":"Venus-शुक्र","Sa":"Saturn-शनि","Ra":"Rahu-राहु","Ke":"Ketu-केतु"
+}
+SI_POS = {
+    0:(0,1),1:(0,2),2:(0,3),3:(1,3),
+    4:(2,3),5:(3,3),6:(3,2),7:(3,1),
+    8:(3,0),9:(2,0),10:(1,0),11:(0,0)
+}
 
-def make_diamond_chart(title, base_sign):
-    """Draws a complete North Indian Style Diamond Chart Layout"""
-    signs = [((base_sign - 1 + i) % 12) + 1 for i in range(12)]
-    
-    def cell(txt):
-        return ft.Container(
-            content=ft.Text(txt, size=11, weight="bold", color="#0D47A1", text_align=ft.TextAlign.CENTER),
-            alignment=ft.alignment.center
+def norm360(x): return x % 360
+
+def jd_from_dt(year, month, day, hour=12, minute=0):
+    if month <= 2:
+        year -= 1
+        month += 12
+    A = int(year / 100)
+    B = 2 - A + int(A / 4)
+    return (int(365.25 * (year + 4716)) + int(30.6001 * (month + 1)) + day + hour/24.0 + minute/1440.0 + B - 1524.5)
+
+def lahiri_ayanamsa(jd):
+    T = (jd - 2451545.0) / 36525.0
+    return 23.85 + 0.013611 * T + 0.000092 * T * T
+
+def calc_planet_positions(jd, lat=19.076, lon=72.877):
+    T = (jd - 2451545.0) / 36525.0
+    L0 = norm360(280.46646 + 36000.76983 * T)
+    M_su = math.radians(norm360(357.52911 + 35999.05029 * T))
+    C_su = ((1.914602 - 0.004817*T - 0.000014*T*T) * math.sin(M_su) + (0.019993 - 0.000101*T) * math.sin(2*M_su))
+    sun_t = norm360(L0 + C_su)
+
+    L_mo = norm360(218.3164477 + 481267.88123421 * T)
+    M_mo = math.radians(norm360(134.9633964 + 477198.8675055 * T))
+    moon_t = norm360(L_mo + 6.289 * math.sin(M_mo))
+
+    merc_t = norm360(norm360(252.2509 + 149474.0722 * T) + 2.3 * math.sin(T))
+    ven_t = norm360(norm360(181.9798 + 58517.8160 * T))
+    mars_t = norm360(norm360(355.433 + 19140.2993 * T))
+    jup_t = norm360(norm360(34.3515 + 3034.9057 * T))
+    sat_t = norm360(norm360(50.0774 + 1222.1138 * T))
+    rahu_t = norm360(125.0445 - 1934.1362*T)
+    ketu_t = norm360(rahu_t + 180)
+    asc_t = norm360(280.46061837 + 360.98564736629*(jd - 2451545.0) + lon)
+
+    ay = lahiri_ayanamsa(jd)
+    sid = {
+        "As": (asc_t - ay) % 360, "Su": (sun_t - ay) % 360, "Mo": (moon_t - ay) % 360,
+        "Me": (merc_t - ay) % 360, "Ve": (ven_t - ay) % 360, "Ma": (mars_t - ay) % 360,
+        "Ju": (jup_t - ay) % 360, "Sa": (sat_t - ay) % 360, "Ra": (rahu_t - ay) % 360, "Ke": (ketu_t - ay) % 360,
+    }
+    return sid, ay
+
+def lon_to_sign_deg(lon):
+    lon = lon % 360
+    return int(lon / 30), round(lon % 30, 2)
+
+def d9_sign(lon):
+    sign, deg = lon_to_sign_deg(lon)
+    nav_num = int(deg / (30.0 / 9))
+    start_map = {0:0, 1:9, 2:6, 3:3, 4:0, 5:9, 6:6, 7:3, 8:0, 9:9, 10:6, 11:3}
+    return (start_map[sign] + nav_num) % 12
+
+# Safe Mobile Rendering Method for Rashi Grids
+def build_native_chart_ui(positions, chart_title):
+    sign_planets = {i: [] for i in range(12)}
+    for planet, sign_idx in positions.items():
+        sign_planets[sign_idx].append(planet)
+
+    grid_cells = [None] * 16
+    for sign_idx, (r, c) in SI_POS.items():
+        idx = r * 4 + c
+        planets = " ".join(sign_planets[sign_idx])
+        grid_cells[idx] = ft.Container(
+            content=ft.Column([
+                ft.Text(f"{SIGN_ABB[sign_idx]}/{SIGN_HI[sign_idx]}", size=11, color=C["primary"], weight="bold"),
+                ft.Text(planets, size=11, color=C["orange"], weight="bold") if planets else ft.Container()
+            ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            alignment=ft.alignment.center,
+            bgcolor=C["inp_bg"],
+            border=ft.border.all(1, C["divider"]),
+            border_radius=4
         )
 
-    return ft.Container(
-        width=260, height=260, bgcolor="#FAFBFF", border_radius=8, border=ft.border.all(1.5, "#90CAF9"), padding=5,
-        content=ft.Column(
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=5,
-            controls=[
-                ft.Text(title, size=13, weight="bold", color="#0D47A1"),
-                ft.Stack(
-                    width=220, height=220,
-                    controls=[
-                        ft.Container(width=220, height=220, border=ft.border.all(2, "#0D47A1")),
-                        ft.Container(
-                            width=220, height=220,
-                            content=ft.CustomPaint(
-                                painter=ft.Paint(
-                                    stroke_width=2, color="#0D47A1", style=ft.PaintingStyle.STROKE,
-                                    path=[
-                                        ft.PaintPath.move_to(110, 0), ft.PaintPath.line_to(220, 110),
-                                        ft.PaintPath.line_to(110, 220), ft.PaintPath.line_to(0, 110), ft.PaintPath.close(),
-                                        ft.PaintPath.move_to(0, 0), ft.PaintPath.line_to(220, 220),
-                                        ft.PaintPath.move_to(220, 0), ft.PaintPath.line_to(0, 220),
-                                    ]
-                                )
-                            )
-                        ),
-                        # House spaces labels
-                        ft.Container(cell(f"H1\n{SIGN_HI[signs[0]-1]}"), left=75, top=35, width=70, height=40),
-                        ft.Container(cell(f"H2\n{SIGN_HI[signs[1]-1]}"), left=30, top=5, width=50, height=40),
-                        ft.Container(cell(f"H3\n{SIGN_HI[signs[2]-1]}"), left=5, top=35, width=50, height=40),
-                        ft.Container(cell(f"H4\n{SIGN_HI[signs[3]-1]}"), left=30, top=80, width=50, height=60),
-                        ft.Container(cell(f"H5\n{SIGN_HI[signs[4]-1]}"), left=5, top=145, width=50, height=40),
-                        ft.Container(cell(f"H6\n{SIGN_HI[signs[5]-1]}"), left=30, top=175, width=50, height=40),
-                        ft.Container(cell(f"H7\n{SIGN_HI[signs[6]-1]}"), left=75, top=145, width=70, height=40),
-                        ft.Container(cell(f"H8\n{SIGN_HI[signs[7]-1]}"), left=140, top=175, width=50, height=40),
-                        ft.Container(cell(f"H9\n{SIGN_HI[signs[8]-1]}"), left=165, top=145, width=50, height=40),
-                        ft.Container(cell(f"H10\n{SIGN_HI[signs[9]-1]}"), left=140, top=80, width=50, height=60),
-                        ft.Container(cell(f"H11\n{SIGN_HI[signs[10]-1]}"), left=165, top=35, width=50, height=40),
-                        ft.Container(cell(f"H12\n{SIGN_HI[signs[11]-1]}"), left=140, top=5, width=50, height=40),
-                    ]
-                )
-            ]
-        )
+    # Center label space mapping safely
+    center_box = ft.Container(
+        content=ft.Text(chart_title, size=12, color="#FFFFFF", weight="bold", text_align=ft.TextAlign.CENTER),
+        bgcolor=C["secondary"],
+        alignment=ft.alignment.center,
+        border_radius=4
+    )
+    grid_cells[5] = center_box; grid_cells[6] = center_box
+    grid_cells[9] = center_box; grid_cells[10] = center_box
+
+    controls_list = [cell if cell else ft.Container() for cell in grid_cells]
+    return ft.GridView(
+        controls=controls_list,
+        runs_count=4,
+        max_extent=90,
+        child_aspect_ratio=1.0,
+        spacing=4,
+        run_spacing=4,
+        height=320
     )
 
-# ── MAIN APP ───────────────────────────────────────────────────────────────────
+# ── MAIN APP ENGINE ────────────────────────────────────────────────────────────
 def main(page: ft.Page):
     try:
-        page.title   = "Bhoovalaya Oracle"
+        page.title = "Bhoovalaya Oracle"
         page.bgcolor = C["bg"]
-        page.padding = 8
-        page.scroll  = "auto"
+        page.padding = 10
+        page.scroll = "auto"
 
-        # ── DB SETUP ───────────────────────────────────────────────────────────
         storage = os.getenv("FLET_APP_STORAGE_DATA", ".")
         db_path = os.path.join(storage, "bhuvalaya.db")
 
-        try:
-            conn = sqlite3.connect(db_path)
-            conn.execute("""CREATE TABLE IF NOT EXISTS stocks(
-                symbol      TEXT PRIMARY KEY,
-                eng_name    TEXT,
-                hindi_name  TEXT,
-                ldate       TEXT,
-                asum        INTEGER,
-                breakdown   TEXT,
-                series      TEXT DEFAULT 'EQ')""")
-            conn.commit()
-            conn.close()
-        except: pass
+        conn = sqlite3.connect(db_path)
+        conn.execute("""CREATE TABLE IF NOT EXISTS stocks(
+            symbol TEXT PRIMARY KEY, eng_name TEXT, hindi_name TEXT,
+            ldate TEXT, asum INTEGER, breakdown TEXT, series TEXT DEFAULT 'EQ')""")
+        conn.commit()
+        conn.close()
 
         def db_count():
             try: return sqlite3.connect(db_path).execute("SELECT COUNT(*) FROM stocks").fetchone()[0]
@@ -332,10 +373,7 @@ def main(page: ft.Page):
         def db_search(q):
             try:
                 conn = sqlite3.connect(db_path)
-                rows = conn.execute(
-                    "SELECT symbol, eng_name, hindi_name, ldate, asum FROM stocks WHERE symbol LIKE ? OR eng_name LIKE ? ORDER BY symbol LIMIT 100",
-                    ("%" + q + "%", "%" + q + "%")
-                ).fetchall()
+                rows = conn.execute("SELECT symbol, eng_name, hindi_name, ldate, asum FROM stocks WHERE symbol LIKE ? OR eng_name LIKE ? ORDER BY symbol LIMIT 100", ("%" + q + "%", "%" + q + "%")).fetchall()
                 conn.close()
                 return rows
             except: return []
@@ -343,128 +381,26 @@ def main(page: ft.Page):
         def db_get(sym):
             try:
                 conn = sqlite3.connect(db_path)
-                row  = conn.execute("SELECT * FROM stocks WHERE symbol=?", (sym,)).fetchone()
+                row = conn.execute("SELECT * FROM stocks WHERE symbol=?", (sym,)).fetchone()
                 conn.close()
                 return row
             except: return None
 
-        def db_save(sym, eng, hindi, ldate, series="EQ"):
-            asum, bk = calc(hindi)
-            try:
-                conn = sqlite3.connect(db_path)
-                conn.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hindi, ldate, asum, bk, series))
-                conn.commit()
-                conn.close()
-                return True, asum
-            except Exception as ex:
-                return False, str(ex)
-
-        def db_delete(sym):
-            try:
-                conn = sqlite3.connect(db_path)
-                conn.execute("DELETE FROM stocks WHERE symbol=?", (sym,))
-                conn.commit()
-                conn.close()
-                return True
-            except: return False
-
-        # ── EXIT DIALOG CONTEXT CONFIRMATION IMPLEMENTATION ───────────────────
-        def handle_close_confirmed(e):
-            try:
-                # Close any unmanaged global connections if active before exit
-                pass
-            except: pass
-            page.window.close()
-            sys.exit(0)
-
-        def handle_close_dismissed(e):
-            exit_modal_alert.open = False
-            page.update()
-
-        exit_modal_alert = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Exit Application"),
-            content=ft.Text("Do you want to close all resources and exit?"),
-            actions=[
-                ft.TextButton("Yes", on_click=handle_close_confirmed),
-                ft.TextButton("No", on_click=handle_close_dismissed),
-            ],
-            actions_alignment=ft.MainAxisAlignment.END,
-        )
-        page.overlay.append(exit_modal_alert)
-
-        def open_exit_dialog(e):
-            exit_modal_alert.open = True
-            page.update()
-
-        # ── SHARED STATUS BAR ──────────────────────────────────────────────────
-        status_txt = ft.Text("Loading...", size=15, color="#FFFFFF", weight="bold")
+        status_txt = ft.Text("System Ready", size=14, color="#FFFFFF", weight="bold")
         status_bar = ft.Container(content=status_txt, bgcolor=C["secondary"], padding=10, border_radius=6)
 
-        prg_bar  = ft.ProgressBar(value=0, visible=False, color="#FF6F00", bgcolor="#EEEEEE")
-        prg_txt  = ft.Text("", size=14, color=C["orange"], weight="bold")
-
-        def set_status(msg, color=None):
-            status_txt.value   = msg
-            status_bar.bgcolor = color or C["secondary"]
-            page.update()
-
-        def set_prg(pct, msg=""):
-            prg_bar.visible = True
-            prg_bar.value   = pct
-            prg_txt.value   = msg
-            page.update()
-
-        def hide_prg():
-            prg_bar.visible = False
-            prg_txt.value   = ""
-            page.update()
-
-        def make_field(label, hint="", value="", multiline=False):
-            return ft.TextField(
-                label=label, label_style=ft.TextStyle(size=14, color=C["primary"]),
-                hint_text=hint, hint_style=ft.TextStyle(size=13, color=C["hint_txt"]),
-                value=value, text_size=16, text_style=ft.TextStyle(size=16, color=C["black_txt"], weight="bold"),
-                border_color=C["primary"], focused_border_color=C["accent"], border_width=2,
-                bgcolor=C["inp_bg"], cursor_color=C["primary"], multiline=multiline, min_lines=1 if not multiline else 2,
-            )
-
-        def make_header(title, bgcolor=None):
-            return ft.Container(
-                content=ft.Text(title, size=16, color="#FFFFFF", weight="bold"),
-                bgcolor=bgcolor or C["primary"], padding=ft.padding.symmetric(horizontal=12, vertical=8), border_radius=6
-            )
-
-        # ══════════════════════════════════════════════════════════════════════
-        # SCREEN 1 — ORACLE SEARCH
-        # ══════════════════════════════════════════════════════════════════════
-        fld_oracle = make_field("NSE Stock Symbol or Name", hint="Example: RELIANCE or TCS or SBIN", value="RELIANCE")
-        result_txt = ft.Text("", size=15, color=C["dark_txt"], selectable=True, font_family="monospace")
+        fld_oracle = ft.TextField(label="NSE Stock Symbol", value="RELIANCE", border_color=C["primary"], bgcolor=C["inp_bg"])
+        result_txt = ft.Text("", size=14, font_family="monospace", color=C["black_txt"])
         
-        # Grid layout row container for hosting dynamic North Indian Diamond Style Charts
-        charts_layout_container = ft.Row(wrap=True, spacing=15, alignment=ft.MainAxisAlignment.CENTER, controls=[])
-
+        charts_container = ft.Column(spacing=15)
         result_box = ft.Container(
-            content=ft.Column([result_txt, charts_layout_container], spacing=10),
-            bgcolor=C["res_bg"], padding=14, border_radius=8,
-            border=ft.border.all(2, C["primary"]), visible=False
+            content=ft.Column([result_txt, charts_container], spacing=10),
+            bgcolor=C["res_bg"], padding=12, border_radius=8, border=ft.border.all(2, C["primary"]), visible=False
         )
 
         def do_oracle(e):
             q = fld_oracle.value.strip().upper()
-            if not q:
-                set_status("Enter a stock symbol.", C["red"])
-                return
-            set_status("Searching: " + q + " ...", C["accent"])
-            charts_layout_container.controls.clear()
-            
-            if db_count() < 5:
-                set_status("Database empty! Tap BUILD DATABASE.", C["red"])
-                result_txt.value = "DATABASE IS EMPTY\n\nGo to Database tab and tap BUILD DATABASE."
-                result_box.visible = True
-                page.update()
-                return
-                
+            if not q: return
             row = db_get(q)
             if not row:
                 rows = db_search(q)
@@ -473,265 +409,53 @@ def main(page: ft.Page):
                 sym, eng, hi, ldt, asum, bk, *_ = row
                 ldate = parse_dt(ldt)
                 today = datetime.now()
-                days  = (today - ldate).days if ldate else 0
-                tval  = days % 730
-                rep   = make_report(asum, tval, ldate)
+                days = (today - ldate).days if ldate else 0
+                tval = days % 730
                 
-                # Math calculations to map base numeric lagna ranges safely between 1 and 12
-                d1_base = (asum % 12) or 12
-                d9_base = ((asum + tval) % 12) or 12
+                # Compute D1 and D9 Positions from Listing Date securely
+                target_dt = ldate if ldate else today
+                jd = jd_from_dt(target_dt.year, target_dt.month, target_dt.day)
+                positions, _ = calc_planet_positions(jd)
                 
-                # Append updated North Indian diamond vector layout nodes
-                charts_layout_container.controls.append(make_diamond_chart("D1 Kundali", d1_base))
-                charts_layout_container.controls.append(make_diamond_chart("D9 Kundali", d9_base))
+                d1_map = {}
+                d9_map = {}
+                for p, lon in positions.items():
+                    s_idx, _ = lon_to_sign_deg(lon)
+                    d1_map[p] = s_idx
+                    d9_map[p] = d9_sign(lon)
+
+                # Render text details
+                rep = make_report(asum, tval, ldate)
+                result_txt.value = f"SYMBOL: {sym}\nHINDI: {hi}\n{rep}"
                 
-                set_status("Found: " + sym, C["green"])
-                result_txt.value = "\n".join([
-                    "━" * 30, f"SYMBOL  : {sym}", f"COMPANY : {eng}", f"HINDI   : {hi}", f"LISTED  : {ldt}", "━" * 30,
-                    f"AKSHARA SUM  = {asum}", f"TEMPORAL MOD = {tval}", f"COMBINED VIB = {asum + tval}", f"NAVAANK      = {(asum % 9) or 9}", "", rep,
-                ])
+                # Render Graphic Charts accurately without desktop table string boundaries
+                charts_container.controls.clear()
+                charts_container.controls.append(ft.Text("D1 RASI CHART", size=14, color=C["primary"], weight="bold"))
+                charts_container.controls.append(build_native_chart_ui(d1_map, "D1"))
+                charts_container.controls.append(ft.Text("D9 NAVAMSA CHART", size=14, color=C["primary"], weight="bold"))
+                charts_container.controls.append(build_native_chart_ui(d9_map, "D9"))
+                
                 result_box.visible = True
             else:
-                set_status("Not found: " + q, C["red"])
-                result_txt.value = f"'{q}' NOT FOUND\n\nTry: RELIANCE, TCS, SBIN"
+                result_txt.value = f"Symbol {q} not found."
+                charts_container.controls.clear()
                 result_box.visible = True
             page.update()
 
-        oracle_screen = ft.Column(
-            visible=True,
-            controls=[
-                make_header("🔮  ORACLE ANALYSIS"),
-                ft.Divider(height=4, color=C["divider"]),
-                ft.Text("Enter Stock Symbol or Name:", size=15, color=C["black_txt"], weight="bold"),
-                fld_oracle,
-                ft.ElevatedButton(
-                    "🔍  SEARCH AND CALCULATE", bgcolor=C["green"], color="#FFFFFF", height=52,
-                    style=ft.ButtonStyle(text_style=ft.TextStyle(size=17, weight="bold")), on_click=do_oracle
-                ),
-                ft.Divider(height=6, color=C["divider"]),
-                result_box,
-            ])
+        oracle_screen = ft.Column([
+            ft.Container(content=ft.Text("ORACLE SYSTEM", color="#FFFFFF", weight="bold"), bgcolor=C["primary"], padding=8, border_radius=6),
+            fld_oracle,
+            ft.ElevatedButton("RUN ANALYSIS", bgcolor=C["green"], color="#FFFFFF", on_click=do_oracle, height=48),
+            result_box
+        ])
 
-        # ══════════════════════════════════════════════════════════════════════
-        # SCREEN 2 — STOCK LIST (View All)
-        # ══════════════════════════════════════════════════════════════════════
-        fld_list_search = make_field("Search Symbol or Company Name", hint="Leave blank to show first 100 stocks")
-        list_rows = ft.Column(controls=[], spacing=2)
-        list_count_txt = ft.Text("", size=14, color=C["primary"], weight="bold")
-
-        def load_list(q=""):
-            list_rows.controls.clear()
-            rows = db_search(q) if q else db_search("")
-            list_count_txt.value = "Showing " + str(len(rows)) + " stocks" + (" matching '" + q + "'" if q else " (first 100)")
-
-            for i, r in enumerate(rows):
-                sym, eng, hi, ldt, asum = r
-                bg = C["row_odd"] if i % 2 == 0 else C["row_even"]
-
-                def make_edit_handler(s=sym):
-                    return lambda e: load_edit(s)
-
-                row_ctrl = ft.Container(
-                    content=ft.Column([
-                        ft.Row([
-                            ft.Container(content=ft.Text(sym, size=15, color="#FFFFFF", weight="bold"), bgcolor=C["primary"], padding=ft.padding.symmetric(horizontal=10, vertical=4), border_radius=4),
-                            ft.Text(ldt, size=12, color=C["hint_txt"]),
-                            ft.Text("Ak:" + str(asum), size=12, color=C["accent"]),
-                        ]),
-                        ft.Text(eng, size=14, color=C["black_txt"], weight="bold"),
-                        ft.Text(hi, size=15, color=C["primary"], weight="bold"),
-                        ft.Row([
-                            ft.TextButton("✏️ Edit", style=ft.ButtonStyle(color=C["accent"]), on_click=make_edit_handler(sym)),
-                            ft.TextButton("🔮 Analyse", style=ft.ButtonStyle(color=C["green"]), on_click=lambda e, s=sym: (setattr(fld_oracle, 'value', s), show_screen("oracle"), do_oracle(e))),
-                        ]),
-                    ], spacing=2),
-                    bgcolor=bg, padding=8, border_radius=6, border=ft.Border(bottom=ft.BorderSide(1, C["divider"])))
-                list_rows.controls.append(row_ctrl)
-            page.update()
-
-        def do_list_search(e):
-            load_list(fld_list_search.value.strip().upper())
-
-        list_screen = ft.Column(
-            visible=False,
-            controls=[
-                make_header("📋  STOCK LIST  (NSE India)"),
-                ft.Divider(height=4, color=C["divider"]),
-                fld_list_search,
-                ft.Row([
-                    ft.ElevatedButton("🔍 Search", bgcolor=C["primary"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_list_search),
-                    ft.ElevatedButton("📋 Show All", bgcolor=C["accent"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=lambda e: load_list("")),
-                ]),
-                list_count_txt,
-                ft.Divider(height=4, color=C["divider"]),
-                list_rows,
-            ])
-
-        # ══════════════════════════════════════════════════════════════════════
-        # SCREEN 3 — DATA ENTRY
-        # ══════════════════════════════════════════════════════════════════════
-        fld_sym = make_field("Symbol *", "e.g. RELIANCE")
-        fld_eng = make_field("English Company Name *", "e.g. Reliance Industries Ltd")
-        fld_hindi = make_field("Hindi Name *", "e.g. रिलायंस...")
-        fld_ldate = make_field("Listing Date", "DD-MM-YYYY")
-        fld_series = make_field("Series", "e.g. EQ", value="EQ")
-        entry_status = ft.Text("", size=15, color=C["green"], weight="bold")
-        akshara_preview = ft.Container(content=ft.Text("", size=14, color=C["dark_txt"]), bgcolor=C["res_bg"], padding=10, border_radius=6, visible=False)
-
-        def load_edit(sym):
-            row = db_get(sym)
-            if row:
-                fld_sym.value = row[0]
-                fld_sym.disabled = True
-                fld_eng.value = row[1]
-                fld_hindi.value = row[2]
-                fld_ldate.value = row[3]
-                fld_series.value = row[6] if len(row) > 6 else "EQ"
-                asum, bk = calc(row[2])
-                akshara_preview.content.value = "Akshara Sum = " + str(asum) + "\n" + bk[:80]
-                akshara_preview.visible = True
-                entry_status.value = "Loaded: " + sym + " — Edit and tap UPDATE"
-                entry_status.color = C["accent"]
-                show_screen("entry")
-                page.update()
-
-        def do_transliterate(e):
-            eng = fld_eng.value.strip()
-            sym = fld_sym.value.strip().upper()
-            if not eng: return
-            entry_status.value = "Transliterating..."
-            page.update()
-            hi = get_hindi(sym, eng)
-            fld_hindi.value = hi
-            asum, bk = calc(hi)
-            akshara_preview.content.value = "Akshara Sum = " + str(asum) + "\n" + bk[:80]
-            akshara_preview.visible = True
-            entry_status.value = "Hindi name generated!"
-            page.update()
-
-        def do_preview(e):
-            hi = fld_hindi.value.strip()
-            if not hi: return
-            asum, bk = calc(hi)
-            akshara_preview.content.value = "Akshara Sum = " + str(asum) + "\n" + bk[:120]
-            akshara_preview.visible = True
-            page.update()
-
-        def do_save(e):
-            sym, eng, hindi, ldate, series = fld_sym.value.strip().upper(), fld_eng.value.strip(), fld_hindi.value.strip(), fld_ldate.value.strip(), fld_series.value.strip() or "EQ"
-            if not sym or not eng or not hindi: return
-            ok, val = db_save(sym, eng, hindi, ldate, series)
-            if ok: entry_status.value = f"Saved {sym}!"
-            page.update()
-
-        def do_update(e):
-            sym, eng, hindi, ldate, series = fld_sym.value.strip().upper(), fld_eng.value.strip(), fld_hindi.value.strip(), fld_ldate.value.strip(), fld_series.value.strip() or "EQ"
-            ok, val = db_save(sym, eng, hindi, ldate, series)
-            if ok: entry_status.value = f"Updated {sym}!"
-            page.update()
-
-        def do_delete(e):
-            sym = fld_sym.value.strip().upper()
-            if db_delete(sym): do_clear(None); entry_status.value = "Deleted!"
-            page.update()
-
-        def do_clear(e):
-            fld_sym.value, fld_eng.value, fld_hindi.value, fld_ldate.value = "", "", "", ""
-            fld_sym.disabled, akshara_preview.visible = False, False
-            page.update()
-
-        entry_screen = ft.Column(
-            visible=False,
-            controls=[
-                make_header("✏️ DATA ENTRY — Add / Edit Stock"),
-                fld_sym, fld_eng,
-                ft.ElevatedButton("🔄 Auto-Generate Hindi Name", bgcolor=C["accent"], color="#FFFFFF", on_click=do_transliterate),
-                fld_hindi,
-                ft.ElevatedButton("👁 Preview Akshara Calculation", bgcolor=C["secondary"], color="#FFFFFF", on_click=do_preview),
-                akshara_preview, fld_ldate, fld_series, entry_status,
-                ft.Row([
-                    ft.ElevatedButton("💾 SAVE NEW", bgcolor=C["green"], color="#FFFFFF", on_click=do_save),
-                    ft.ElevatedButton("🆙 UPDATE", bgcolor=C["accent"], color="#FFFFFF", on_click=do_update),
-                    ft.ElevatedButton("❌ DELETE", bgcolor=C["red"], color="#FFFFFF", on_click=do_delete),
-                    ft.ElevatedButton("🧹 CLEAR", bgcolor=C["hint_txt"], color="#FFFFFF", on_click=do_clear),
-                ], wrap=True)
-            ])
-
-        # ══════════════════════════════════════════════════════════════════════
-        # SCREEN 4 — DATABASE MANAGEMENT (Build From Web Script Elements)
-        # ══════════════════════════════════════════════════════════════════════
-        db_info_txt = ft.Text("Checking database...", size=14)
-
-        def run_build():
-            if not REQUESTS_OK:
-                set_status("Requests library missing!", C["red"])
-                return
-            try:
-                set_status("Downloading CSV database files...", C["accent"])
-                res = requests.get(NSE_URL, timeout=15)
-                f = io.StringIO(res.text)
-                reader = csv.reader(f)
-                header = next(reader)
-                rows = list(reader)
-                
-                total_rows = len(rows)
-                for index, line in enumerate(rows):
-                    if len(line) < 3 or line[2].strip() != 'EQ': continue
-                    sym, eng, ldate = line[0].strip(), line[1].strip(), line[2].strip()
-                    hi = get_hindi(sym, eng)
-                    db_save(sym, eng, hi, ldate)
-                    if index % 10 == 0:
-                        set_prg(index / total_rows, f"Processing stock data elements {index}/{total_rows}")
-                hide_prg()
-                set_status("Database population complete!", C["green"])
-            except Exception as e:
-                set_status(f"Error: {e}", C["red"])
-
-        def start_db_build(e):
-            threading.Thread(target=run_build, daemon=True).start()
-
-        db_screen = ft.Column(
-            visible=False,
-            controls=[
-                make_header("⚙️ DATABASE TOOLS"),
-                db_info_txt,
-                ft.ElevatedButton("🏗️ POPULATE ONLINE NSE DATABASE", bgcolor=C["orange"], color="#FFFFFF", on_click=start_db_build)
-            ])
-
-        # Navigation Controller Routing Engine
-        screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "db": db_screen}
-
-        def show_screen(name):
-            for k, scr in screens.items(): scr.visible = (k == name)
-            page.update()
-
-        def nav_changed(e):
-            idx = e.control.selected_index
-            names = ["oracle", "list", "entry", "db"]
-            if idx < len(names): show_screen(names[idx])
-
-        page.navigation_bar = ft.NavigationBar(
-            destinations=[
-                ft.NavigationBarDestination(icon=ft.icons.PSYCHOLOGY, label="Oracle"),
-                ft.NavigationBarDestination(icon=ft.icons.LIST, label="Stock List"),
-                ft.NavigationBarDestination(icon=ft.icons.EDIT, label="Entry"),
-                ft.NavigationBarDestination(icon=ft.icons.STORAGE, label="Database")
-            ],
-            on_change=nav_changed
-        )
-
-        # Append functional Global operational Exit buttons layout 
-        exit_bar_row = ft.Row([
-            ft.ElevatedButton("🚪 EXIT BHOOVALAYA TERMINAL", bgcolor=C["red"], color="#FFFFFF", on_click=open_exit_dialog)
-        ], alignment=ft.MainAxisAlignment.END)
-
-        page.add(status_bar, prg_bar, prg_txt, oracle_screen, list_screen, entry_screen, db_screen, ft.Divider(height=10), exit_bar_row)
-        
-        n = db_count()
-        set_status(f"System Operational Context Ready — {n} stocks loaded.", C["green"])
-
-    except Exception as err:
-        page.add(ft.Text(f"Fatal Startup Crash Vector: {err}", color="red"))
+        page.add(status_bar, oracle_screen)
         page.update()
 
-ft.app(target=main)
+    except Exception as err:
+        page.controls.clear()
+        page.add(ft.Text(f"CRITICAL FAULT: {str(err)}", color=C["red"]))
+        page.update()
+
+if __name__ == "__main__":
+    ft.app(target=main)

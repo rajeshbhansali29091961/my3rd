@@ -55,13 +55,13 @@ NAK = [
 CURATED = {
     "SBIN":"भारतीय स्टेट बैंक","HDFCBANK":"एचडीएफसी बैंक",
     "ICICIBANK":"आईसीआईसीआई बैंक","AXISBANK":"एक्सिस बैंक",
-    "RELIANCE":"रिलायंस इंडस्ट्रीज","TCS":"टाटा कंसल्टेंसी सर्विसेज",
+    "RELIANCE":"रिलायंस कुंजी","TCS":"टाटा कंसल्टेंसी सर्विसेज",
     "INFY":"इन्फोसिस","WIPRO":"विप्रो",
     "NTPC":"राष्ट्रीय ताप विद्युत निगम",
     "ONGC":"तेल और प्राकृतिक गैस निगम",
     "TATASTEEL":"टाटा स्टील","COALINDIA":"कोल इंडिया",
     "HINDUNILVR":"हिंदुस्तान यूनिलीवर","ITC":"आईटीसी",
-    "LT":"लार्सन एंड टुब्रो","MARUTI":"मारुति सुजुकी",
+    "LT":"लार्क एंड टुब्रो","MARUTI":"मारुति सुजुकी",
     "TATAMOTORS":"टाटा मोटर्स","SUNPHARMA":"सन फार्मास्युटिकल",
     "BHARTIARTL":"भारती एयरटेल","BAJFINANCE":"बजाज फाइनेंस",
     "LICI":"भारतीय जीवन बीमा निगम","IRCTC":"भारतीय रेलवे खानपान",
@@ -75,9 +75,8 @@ CURATED = {
     "POWERGRID":"पावर ग्रिड कॉर्पोरेशन","GAIL":"गेल इंडिया",
     "BPCL":"भारत पेट्रोलियम","IOC":"इंडियन ऑयल कॉर्पोरेशन",
     "BANKBARODA":"बैंक ऑफ बड़ौदा","CANBK":"केनरा बैंक",
-    "HEROMOTOCO":"हीरो मोटोकॉर्प","TATAMOTORS":"टाटा मोटर्स",
-    "HINDPETRO":"हिंदुस्तान पेट्रोलियम","VEDL":"वेदांता",
-    "HINDALCO":"हिंडाल्को邻डस्ट्रीज","SAIL":"स्टील अथॉरिटी ऑफ इंडिया",
+    "HEROMOTOCO":"हीरो मोटोकॉर्प","HINDPETRO":"हिंदुस्तान पेट्रोलियम","VEDL":"वेदांता",
+    "HINDALCO":"हिंडाल्को इंडस्ट्रीज","SAIL":"स्टील अथॉरिटी ऑफ इंडिया",
     "BRITANNIA":"ब्रिटानिया इंडस्ट्रीज","DABUR":"डाबर इंडिया",
     "MARICO":"मेरिको","NESTLEIND":"नेस्ले इंडिया",
     "TATAPOWER":"टाटा पावर","ADANIENT":"अदानी एंटरप्राइजेज",
@@ -117,7 +116,7 @@ SIGN_ABB  = ["Ar","Ta","Ge","Ca","Le","Vi",
 SIGN_HI   = ["मेष","वृष","मिथुन","कर्क","सिंह","कन्या",
              "तुला","वृश्चिक","धनु","मकर","कुंभ","मीन"]
 PLANET_NAMES = {
-    "As":"Lg","Su":"Su","Mo":"Mo","Ma":"Ma","Me":"Me",
+    "As":"Lag","Su":"Su","Mo":"Mo","Ma":"Ma","Me":"Me",
     "Ju":"Ju","Ve":"Ve","Sa":"Sa","Ra":"Ra","Ke":"Ke"
 }
 
@@ -327,126 +326,137 @@ def d9_sign(lon):
     start_map = {0:0,1:9,2:6,3:3,4:0,5:9,6:6,7:3,8:0,9:9,10:6,11:3}
     return (start_map[sign] + nav_num) % 12
 
-# ── PROFESSIONAL NORTH INDIAN VEDIC CHART (Canvas-based) ────────────────────────
-def build_vedic_north_chart(positions, lagna_sign, title, chart_size=340):
+# ── NORTH INDIAN DIAMOND CHART (Canvas-based) ──────────────────────────────────
+def build_diamond_chart(positions, lagna_sign, title, chart_size=310):
     """
-    Draws a highly professional, structurally accurate North Indian Vedic chart.
-    Consists of 4 center diamonds/kites and 8 outer triangles.
+    Draw North Indian diamond Kundali chart using Flet Canvas.
+    positions = {planet_abbr: sign_index_0_to_11}
+    lagna_sign = sign index of ascendant (House 1)
     """
     W = chart_size
-    p = 4  # boundary padding
+    p = 5  # padding
 
-    # 13 Coordinate intersections establishing authentic layout
-    TL = (p, p)
-    TR = (W-p, p)
-    BR = (W-p, W-p)
-    BL = (p, W-p)
-    
-    T  = (W//2, p)
-    R  = (W-p, W//2)
-    B  = (W//2, W-p)
-    L  = (p, W//2)
-    
-    M_TL = (W//4, W//4)
-    M_TR = (3*W//4, W//4)
-    M_BR = (3*W//4, 3*W//4)
-    M_BL = (W//4, 3*W//4)
-    
-    C = (W//2, W//2)
+    # Key coordinate points
+    TL=(p,p);   TR=(W-p,p);  BR=(W-p,W-p); BL=(p,W-p)
+    T=(W//2,p); R=(W-p,W//2); B=(W//2,W-p); L=(p,W//2)
+    q = W//4
+    iT=(W//2, p+q)
+    iR=(W-p-q, W//2)
+    iB=(W//2, W-p-q)
+    iL=(p+q, W//2)
+    C=(W//2, W//2)
 
-    # Clean geometric mappings for standard counter-clockwise Vedic houses
+    # 12 house polygon vertices (clockwise from top = H1)
     HOUSES = {
-        1:  [C, M_TL, T, M_TR],       # Top Center Diamond (Lagna)
-        2:  [TL, T, M_TL],            # Top Left Corner Triangle
-        3:  [TL, L, M_TL],            # Left Top Corner Triangle
-        4:  [C, M_TL, L, M_BL],       # Left Center Diamond
-        5:  [BL, L, M_BL],            # Left Bottom Corner Triangle
-        6:  [BL, B, M_BL],            # Bottom Left Corner Triangle
-        7:  [C, M_BL, B, M_BR],       # Bottom Center Diamond
-        8:  [BR, B, M_BR],            # Bottom Right Corner Triangle
-        9:  [BR, R, M_BR],            # Right Bottom Corner Triangle
-        10: [C, M_TR, R, M_BR],       # Right Center Diamond
-        11: [TR, R, M_TR],            # Right Top Corner Triangle
-        12: [TR, T, M_TR],            # Top Right Corner Triangle
+        1: [T,  TR, iR, iT],
+        2: [TR, R,  iR],
+        3: [R,  BR, iB, iR],
+        4: [BR, B,  iB],
+        5: [B,  BL, iL, iB],
+        6: [BL, L,  iL],
+        7: [L,  TL, iT, iL],
+        8: [TL, T,  iT],
+        9: [iT, iR, C],
+        10:[iR, iB, C],
+        11:[iB, iL, C],
+        12:[iL, iT, C],
     }
 
-    # Custom offsets to keep labels clearly aligned within polygons
-    OFFSETS = {
-        1: (0, -14), 2: (-20, -32), 3: (-34, -18), 4: (-14, 0),
-        5: (-34, 16), 6: (-20, 30), 7: (0, 16), 8: (20, 30),
-        9: (34, 16), 10: (14, 0), 11: (34, -18), 12: (20, -32)
-    }
+    def centroid(pts):
+        return sum(x for x,y in pts)//len(pts), sum(y for x,y in pts)//len(pts)
 
+    # Map sign_index → planets in that sign
     sign_planets = {i: [] for i in range(12)}
     for planet, s_idx in positions.items():
         sign_planets[int(s_idx)].append(PLANET_NAMES.get(planet, planet))
 
+    # Lagna sign index
     lagna_s = int(lagna_sign)
 
     def house_sign(house_num):
         return (lagna_s + house_num - 1) % 12
 
     shapes = []
-    # Base clear background
-    shapes.append(cv.Fill(paint=ft.Paint(color="#FAFAFA")))
 
-    # Loop to draw and fill each authentic Vedic house
+    # Background
+    shapes.append(cv.Fill(
+        paint=ft.Paint(color="#FAFAFA")))
+
+    # Draw each house polygon
     for house_num, pts in HOUSES.items():
-        sign_idx = house_sign(house_num)
+        sign_idx    = house_sign(house_num)
         planets_here = sign_planets.get(sign_idx, [])
-        is_lagna = (house_num == 1)
+        is_lagna    = (house_num == 1)
 
-        bg_color = "#FFF1F1" if is_lagna else "#F9FBFF"
-        stroke_color = "#C62828" if is_lagna else "#1565C0"
+        bg = "#FFD6D6" if is_lagna else "#E8F0FE"
+        bd = "#B71C1C" if is_lagna else "#0D47A1"
 
-        # Construct path fill
+        # Fill polygon
         path_fill = [cv.Path.MoveTo(pts[0][0], pts[0][1])]
         for pt in pts[1:]:
             path_fill.append(cv.Path.LineTo(pt[0], pt[1]))
         path_fill.append(cv.Path.Close())
-        shapes.append(cv.Path(path_fill, paint=ft.Paint(color=bg_color, style=ft.PaintingStyle.FILL)))
+        shapes.append(cv.Path(path_fill,
+            paint=ft.Paint(color=bg, style=ft.PaintingStyle.FILL)))
 
-        # Construct path outline
-        shapes.append(cv.Path(path_fill, paint=ft.Paint(color=stroke_color, stroke_width=2.0, style=ft.PaintingStyle.STROKE)))
+        # Stroke polygon
+        path_stroke = [cv.Path.MoveTo(pts[0][0], pts[0][1])]
+        for pt in pts[1:]:
+            path_stroke.append(cv.Path.LineTo(pt[0], pt[1]))
+        path_stroke.append(cv.Path.Close())
+        shapes.append(cv.Path(path_stroke,
+            paint=ft.Paint(color=bd, stroke_width=1.5,
+                           style=ft.PaintingStyle.STROKE)))
 
-        # Position metrics calculation
-        ox, oy = OFFSETS[house_num]
-        cx = sum(x for x, y in pts) // len(pts) + ox
-        cy = sum(y for x, y in pts) // len(pts) + oy
+        # Text label
+        cx, cy = centroid(pts)
+        sign_txt = SIGN_ABB[sign_idx]
+        hindi_txt = SIGN_HI[sign_idx]
+        planet_txt = " ".join(planets_here)
+        house_txt  = str(house_num)
 
-        # House sign value label
-        sign_num_str = str(sign_idx + 1)
+        # House number (small, top-left of centroid)
         shapes.append(cv.Text(
-            x=cx - 5, y=cy - 12,
-            text=sign_num_str,
-            style=ft.TextStyle(size=12, color="#B71C1C" if is_lagna else "#212121", weight="bold")
-        ))
+            x=cx-18, y=cy-22,
+            text=house_txt,
+            style=ft.TextStyle(
+                size=9, color="#546E7A",
+                weight="normal")))
 
-        # House numbers indicator inside
+        # Sign abbr + hindi
         shapes.append(cv.Text(
-            x=cx - 24, y=cy - 14,
-            text=f"H{house_num}",
-            style=ft.TextStyle(size=8, color="#90A4AE")
-        ))
+            x=cx-14, y=cy-12,
+            text=sign_txt,
+            style=ft.TextStyle(
+                size=11,
+                color="#B71C1C" if is_lagna else "#0D47A1",
+                weight="bold")))
 
-        # Planets grouping display inside the house
-        if planets_here:
-            chunk_size = 3
-            chunks = [planets_here[i:i + chunk_size] for i in range(0, len(planets_here), chunk_size)]
-            for row_idx, chunk in enumerate(chunks):
-                p_text = " ".join(chunk)
-                shapes.append(cv.Text(
-                    x=cx - 18, y=cy + 2 + (row_idx * 11),
-                    text=p_text,
-                    style=ft.TextStyle(size=10, color="#1B5E20" if not is_lagna else "#B71C1C", weight="bold")
-                ))
+        shapes.append(cv.Text(
+            x=cx-18, y=cy+1,
+            text=hindi_txt,
+            style=ft.TextStyle(
+                size=10,
+                color="#B71C1C" if is_lagna else "#1565C0",
+                weight="normal")))
 
-    # Center identity watermark label
+        # Planets (DARK BLUE bold, bigger visibility size=13)
+        if planet_txt:
+            shapes.append(cv.Text(
+                x=cx-20, y=cy+14,
+                text=planet_txt,
+                style=ft.TextStyle(
+                    size=13,
+                    color="#0D47A1",
+                    weight="bold")))
+
+    # Title in center
     shapes.append(cv.Text(
-        x=C[0] - 25, y=C[1] - 6,
+        x=C[0]-28, y=C[1]-8,
         text=title,
-        style=ft.TextStyle(size=10, color="#455A64", weight="bold")
-    ))
+        style=ft.TextStyle(
+            size=9, color="#0D47A1",
+            weight="bold")))
 
     return cv.Canvas(shapes=shapes, width=W, height=W)
 
@@ -784,7 +794,9 @@ def main(page: ft.Page):
                 entry_st.value = "Enter Hindi name first."
                 entry_st.color = C["red"]; page.update(); return
             asum,bk = calc(hi)
-            ak_prev.content.value = "Akshara="+str(asum)+"  Navaank="+str((asum%9) or 9)
+            ak_prev.content.value = "Akshara Sum = "+str(asum)+"\n"+bk[:120]
+            ak_prev.visible = True
+            entry_st.value = "Akshara="+str(asum)+"  Navaank="+str((asum%9) or 9)
             entry_st.color = C["primary"]; page.update()
 
         def do_save(e):
@@ -984,72 +996,60 @@ def main(page: ft.Page):
         ])
 
         # ══════════════════════════════════════════════════════════════════════
-        # SCREEN 5 — ASTRO (Calculations & One-By-One Charts view Flow)
+        # SCREEN 5 — ASTRO (D1 + D9 Diamond Charts)
         # ══════════════════════════════════════════════════════════════════════
         today_dt = datetime.now()
-        fld_date  = make_field("Date (DD-MM-YYYY)", "e.g. 09-07-2026", today_dt.strftime("%d-%m-%Y"))
-        fld_time  = make_field("Time (HH:MM) 24-hr IST", "e.g. 14:30", today_dt.strftime("%H:%M"))
-        fld_place = make_field("Place Name", "e.g. Mumbai, India", "Mumbai, India")
-        fld_lat   = make_field("Latitude (N+  S-)", "Mumbai=19.076", "19.076")
-        fld_lon   = make_field("Longitude (E+  W-)", "Mumbai=72.877", "72.877")
+        fld_date  = make_field("Date (DD-MM-YYYY)",
+                               "e.g. 09-07-2026",
+                               today_dt.strftime("%d-%m-%Y"))
+        fld_time  = make_field("Time (HH:MM) 24-hr IST",
+                               "e.g. 14:30",
+                               today_dt.strftime("%H:%M"))
+        fld_place = make_field("Place Name",
+                               "e.g. Mumbai, India",
+                               "Mumbai, India")
+        fld_lat   = make_field("Latitude (N+  S-)",
+                               "Mumbai=19.076", "19.076")
+        fld_lon   = make_field("Longitude (E+  W-)",
+                               "Mumbai=72.877", "72.877")
 
-        astro_inputs_view = ft.Column(spacing=10)
-        chart_display_view = ft.Column(visible=False, horizontal_alignment="center", spacing=12)
+        astro_res_txt = ft.Text("", size=13, color=C["dark_txt"],
+                                selectable=True, font_family="monospace")
+        astro_res_box = ft.Container(
+            content=astro_res_txt, bgcolor=C["res_bg"], padding=10,
+            border_radius=6, visible=False,
+            border=ft.Border(
+                top=ft.BorderSide(2,C["primary"]),
+                bottom=ft.BorderSide(2,C["primary"]),
+                left=ft.BorderSide(2,C["primary"]),
+                right=ft.BorderSide(2,C["primary"])))
 
-        d1_cached_canvas = [None]
-        d9_cached_canvas = [None]
-        astro_text_summary = [None]
-
-        def back_to_astro_inputs(e):
-            chart_display_view.visible = False
-            astro_inputs_view.visible = True
-            set_status("Inputs ready.", C["green"])
+        # Interactive scroll handler to return to inputs
+        def scroll_to_astro_inputs(e):
+            fld_date.focus()
             page.update()
 
-        def view_d1_chart(e):
-            chart_display_view.controls.clear()
-            chart_display_view.controls.extend([
-                ft.Row([
-                    ft.ElevatedButton("⬅ BACK TO INPUTS", bgcolor=C["hint_txt"], color="#FFFFFF", on_click=back_to_astro_inputs),
-                    ft.ElevatedButton("➡️ SEE D9 NAVAMSA", bgcolor=C["accent"], color="#FFFFFF", on_click=view_d9_chart)
-                ], alignment="spaceBetween"),
-                make_header("💎 D1 RASI CHART — BIRTH/FOUNDATION (Counter-Clockwise)"),
-                ft.Container(content=d1_cached_canvas[0], alignment=ft.alignment.center, padding=10),
-                ft.Container(content=ft.Text(astro_text_summary[0], size=12, font_family="monospace", color=C["black_txt"]), bgcolor=C["res_bg"], padding=10, border_radius=6)
-            ])
-            page.update()
-
-        def view_d9_chart(e):
-            chart_display_view.controls.clear()
-            chart_display_view.controls.extend([
-                ft.Row([
-                    ft.ElevatedButton("⬅ SEE D1 RASI", bgcolor=C["accent"], color="#FFFFFF", on_click=view_d1_chart),
-                    ft.ElevatedButton("⬅ BACK TO INPUTS", bgcolor=C["hint_txt"], color="#FFFFFF", on_click=back_to_astro_inputs)
-                ], alignment="spaceBetween"),
-                make_header("💎 D9 NAVAMSA CHART — SOUL & DHARMA (Counter-Clockwise)"),
-                ft.Container(content=d9_cached_canvas[0], alignment=ft.alignment.center, padding=10),
-                ft.Container(content=ft.Text(astro_text_summary[0], size=12, font_family="monospace", color=C["black_txt"]), bgcolor=C["res_bg"], padding=10, border_radius=6)
-            ])
-            page.update()
+        d1_container = ft.Container(visible=False)
+        d9_container = ft.Container(visible=False)
 
         def do_calc_astro(e):
             try:
-                set_status("Calculating authentic Vedic charts...", C["accent"])
+                set_status("Calculating Vedic charts...", C["accent"])
                 date_str = fld_date.value.strip()
                 time_str = fld_time.value.strip()
                 lat  = float(fld_lat.value.strip())
                 lon2 = float(fld_lon.value.strip())
-                
                 try:
-                    dt = datetime.strptime(date_str+" "+time_str, "%d-%m-%Y %H:%M")
+                    dt = datetime.strptime(
+                        date_str+" "+time_str, "%d-%m-%Y %H:%M")
                 except:
                     try:
-                        dt = datetime.strptime(date_str+" "+time_str, "%Y-%m-%d %H:%M")
+                        dt = datetime.strptime(
+                            date_str+" "+time_str, "%Y-%m-%d %H:%M")
                     except:
-                        set_status("Date format error! Use DD-MM-YYYY HH:MM", C["red"])
-                        return
-
-                # IST to UTC conversion
+                        set_status("Date format error! Use DD-MM-YYYY HH:MM",
+                                   C["red"]); return
+                # Convert IST to UTC (IST = UTC+5:30)
                 total_min = dt.hour*60 + dt.minute - 330
                 if total_min < 0: total_min += 1440
                 h_utc = total_min // 60
@@ -1057,80 +1057,145 @@ def main(page: ft.Page):
                 jd = jd_from_dt(dt.year, dt.month, dt.day, h_utc, m_utc)
                 sid, ay = calc_planet_positions(jd, lat, lon2)
 
+                # Build planet table
                 lines = ["═"*34,
                          "PLANET POSITIONS — SIDEREAL/LAHIRI",
                          "Date : "+date_str+"  "+time_str+" IST",
                          "Place: "+fld_place.value.strip(),
-                         f"Ayanamsa: {round(ay,3)}° (Lahiri)",
+                         "Ayanamsa: "+str(round(ay,3))+"°  (Lahiri)",
                          "─"*34,
-                         f"{'Planet':<12} {'Sign':<6} {'Hindi':<8} {'Deg':>5}",
-                         "─"*34]
+                         f"{'Planet':<12} {'Sign':<6} {'Hindi':<8} {'Deg':>5}"]
+                lines.append("─"*34)
 
-                d1_pos, d9_pos = {}, {}
+                d1_pos = {}; d9_pos = {}
                 order = ["As","Su","Mo","Me","Ve","Ma","Ju","Sa","Ra","Ke"]
                 p_full = {"As":"Lagna","Su":"Sun सूर्य","Mo":"Moon चंद्र",
                           "Ma":"Mars मंगल","Me":"Merc बुध","Ju":"Jupt गुरु",
                           "Ve":"Venu शुक्र","Sa":"Satn शनि",
                           "Ra":"Rahu राहु","Ke":"Ketu केतु"}
-                
                 for p in order:
                     lon_p = sid[p]
                     s_idx, deg = lon_to_sign_deg(lon_p)
                     d9_idx = d9_sign(lon_p)
-                    d1_pos[p] = s_idx
-                    d9_pos[p] = d9_idx
-                    lines.append(f"{p_full.get(p,p):<12} {SIGN_ABB[s_idx]:<6} {SIGN_HI[s_idx]:<8} {deg:>5.1f}°")
-                
-                lines.append("═"*34)
-                astro_text_summary[0] = "\n".join(lines)
+                    d1_pos[p] = s_idx; d9_pos[p] = d9_idx
+                    lines.append(f"{p_full.get(p,p):<12} "
+                                 f"{SIGN_ABB[s_idx]:<6} "
+                                 f"{SIGN_HI[s_idx]:<8} "
+                                 f"{deg:>5.1f}°")
+                lines += ["═"*34,
+                          "As=Lagna Ra=Rahu Ke=Ketu",
+                          "Lahiri Ayanamsa (Sidereal)",
+                          "Accuracy: approx +/-1-2 degrees",
+                          "═"*34]
 
-                # Rendering Professional Vedic Canvas structures
+                astro_res_txt.value = "\n".join(lines)
+                astro_res_box.visible = True
+
+                # D1 Diamond Chart Draw
                 lagna_sign = d1_pos.get("As", 0)
-                lagna_d9 = d9_pos.get("As", 0)
-
                 if CANVAS_OK:
-                    d1_cached_canvas[0] = build_vedic_north_chart(d1_pos, lagna_sign, "D1 RASI", chart_size=340)
-                    d9_cached_canvas[0] = build_vedic_north_chart(d9_pos, lagna_d9, "D9 NAVAMSA", chart_size=340)
+                    d1_canvas = build_diamond_chart(
+                        d1_pos, lagna_sign, "D1 RASI")
+                    d1_container.content = d1_canvas
                 else:
-                    d1_cached_canvas[0] = ft.Text("Canvas Unavailable", color=C["red"])
-                    d9_cached_canvas[0] = ft.Text("Canvas Unavailable", color=C["red"])
+                    d1_container.content = ft.Text(
+                        "Canvas not available for chart",
+                        color=C["red"])
+                d1_container.visible = True
 
-                # Toggle Screen Layout cleanly to show D1 Chart first
-                astro_inputs_view.visible = False
-                chart_display_view.visible = True
-                view_d1_chart(None)
-                set_status("Charts calculated! Viewing D1.", C["green"])
+                # D9 Diamond Chart Draw
+                lagna_d9 = d9_pos.get("As", 0)
+                if CANVAS_OK:
+                    d9_canvas = build_diamond_chart(
+                        d9_pos, lagna_d9, "D9 NAVAMSA")
+                    d9_container.content = d9_canvas
+                else:
+                    d9_container.content = ft.Text(
+                        "Canvas not available",
+                        color=C["red"])
+                d9_container.visible = True
+
+                set_status("D1 & D9 Charts calculated!", C["green"])
+                page.update()
             except Exception as ex:
                 set_status("Calc error: "+str(ex), C["red"])
+                astro_res_txt.value = "ERROR: "+str(ex)
+                astro_res_box.visible = True
                 page.update()
 
-        astro_inputs_view.controls = [
-            make_header("🪐 VEDIC ASTRO — INPUT SETTINGS"),
+        astro_screen = ft.Column(visible=False, controls=[
+            make_header("🪐  VEDIC ASTRO — D1 & D9 DIAMOND CHART",
+                        C["primary"]),
+            ft.Divider(height=4, color=C["divider"]),
             ft.Container(content=ft.Column([
-                ft.Text("📍 Location Coordinates Default: Mumbai, India", size=14, color=C["dark_txt"], weight="bold"),
-                ft.Text("19.076°N | 72.877°E | IST (UTC+5:30)", size=13, color=C["hint_txt"]),
-            ]), bgcolor=C["res_bg"], padding=10, border_radius=6),
-            ft.Text("Date & Time (IST Timezone):", size=14, color=C["primary"], weight="bold"),
+                ft.Text("📍 Default: Mumbai, India",
+                        size=14, color=C["dark_txt"], weight="bold"),
+                ft.Text("19.076°N  72.877°E  IST (UTC+5:30)",
+                        size=13, color=C["hint_txt"]),
+            ], spacing=2), bgcolor=C["res_bg"], padding=8, border_radius=6),
+            ft.Divider(height=4, color=C["divider"]),
+            ft.Text("Date & Time (IST):", size=14,
+                    color=C["primary"], weight="bold"),
             ft.Row([
                 ft.Column([fld_date], expand=True),
                 ft.Column([fld_time], expand=True),
             ], spacing=6),
-            ft.Text("Geographic Coordinates Configuration:", size=14, color=C["primary"], weight="bold"),
+            ft.Text("Location:", size=14,
+                    color=C["primary"], weight="bold"),
             fld_place,
             ft.Row([
                 ft.Column([fld_lat], expand=True),
                 ft.Column([fld_lon], expand=True),
             ], spacing=6),
-            ft.Divider(height=10, color=C["divider"]),
-            ft.ElevatedButton("🪐 GENERATE D1 & D9 VEDIC CHARTS",
+            ft.Divider(height=6, color=C["divider"]),
+            ft.ElevatedButton(
+                "🪐  CALCULATE D1 & D9 DIAMOND CHARTS",
                 bgcolor=C["primary"], color="#FFFFFF", height=56,
-                style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")),
+                style=ft.ButtonStyle(text_style=ft.TextStyle(
+                    size=16,weight="bold")),
                 on_click=do_calc_astro),
-        ]
-
-        astro_screen = ft.Column(visible=False, controls=[
-            astro_inputs_view,
-            chart_display_view
+            ft.Divider(height=8, color=C["divider"]),
+            astro_res_box,
+            ft.Divider(height=10, color=C["divider"]),
+            
+            # --- D1 Rasi Section ---
+            ft.Container(content=ft.Text(
+                "━━  D1 RASI CHART (जन्म कुंडली)  ━━",
+                size=15, color=C["primary"], weight="bold",
+                text_align="center"), padding=6),
+            ft.Container(content=ft.Text(
+                "H1 (Red) = Lagna  |  Houses go clockwise from top",
+                size=12, color=C["hint_txt"]),
+                padding=ft.padding.only(bottom=4)),
+            d1_container,
+            ft.ElevatedButton("⬅️ Back to Astro Input Form", 
+                             icon=ft.icons.ARROW_UPWARD,
+                             bgcolor=C["secondary"], color="#FFFFFF",
+                             on_click=scroll_to_astro_inputs),
+            
+            ft.Divider(height=14, color=C["divider"]),
+            
+            # --- D9 Navamsa Section ---
+            ft.Container(content=ft.Text(
+                "━━  D9 NAVAMSA CHART (नवांश कुंडली)  ━━",
+                size=15, color=C["primary"], weight="bold",
+                text_align="center"), padding=6),
+            ft.Container(content=ft.Text(
+                "Each sign ÷ 9 parts of 3°20'  |  Soul & Dharma chart",
+                size=12, color=C["hint_txt"]),
+                padding=ft.padding.only(bottom=4)),
+            d9_container,
+            ft.ElevatedButton("⬅️ Back to Astro Input Form", 
+                             icon=ft.icons.ARROW_UPWARD,
+                             bgcolor=C["secondary"], color="#FFFFFF",
+                             on_click=scroll_to_astro_inputs),
+            
+            ft.Divider(height=8, color=C["divider"]),
+            ft.Container(content=ft.Text(
+                "North Indian Diamond Style  |  Lahiri Ayanamsa\n"
+                "Research only. Not financial or astrological advice.",
+                size=11, color=C["hint_txt"], text_align="center"),
+                bgcolor=C["res_bg"], padding=8, border_radius=6),
         ])
 
         # ══════════════════════════════════════════════════════════════════════
@@ -1224,7 +1289,7 @@ def main(page: ft.Page):
             "Shows actual positions of all\n"
             "planets at birth/query time.\n"
             "H1 (RED) = Lagna (Ascendant)\n"
-            "Houses go counter-clockwise from top.\n\n"
+            "Houses go clockwise from top.\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             "D9 NAVAMSA CHART\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -1279,7 +1344,9 @@ def main(page: ft.Page):
                     right=ft.BorderSide(2,C["primary"]))),
         ])
 
-        # ── QUIT DIALOG ────────────────────────────────────────────────────────
+        # ══════════════════════════════════════════════════════════════════════
+        # QUIT DIALOG — Confirm Yes/No before closing
+        # ══════════════════════════════════════════════════════════════════════
         def confirm_quit(e):
             def yes_quit(ev):
                 dlg.open = False
@@ -1292,11 +1359,24 @@ def main(page: ft.Page):
 
             dlg = ft.AlertDialog(
                 modal=True,
-                title=ft.Text("Exit App?", size=18, weight="bold", color=C["primary"]),
-                content=ft.Text("Are you sure you want to exit\nBhoovalaya Oracle?", size=15, color=C["black_txt"]),
+                title=ft.Text("Exit App?", size=18, weight="bold",
+                              color=C["primary"]),
+                content=ft.Text(
+                    "Are you sure you want to exit\nBhoovalaya Oracle?",
+                    size=15, color=C["black_txt"]),
                 actions=[
-                    ft.ElevatedButton("✅  YES — EXIT", bgcolor=C["red"], color="#FFFFFF", on_click=yes_quit),
-                    ft.ElevatedButton("❌  NO — STAY", bgcolor=C["green"], color="#FFFFFF", on_click=no_quit),
+                    ft.ElevatedButton(
+                        "✅  YES — EXIT",
+                        bgcolor=C["red"], color="#FFFFFF",
+                        style=ft.ButtonStyle(text_style=ft.TextStyle(
+                            size=15, weight="bold")),
+                        on_click=yes_quit),
+                    ft.ElevatedButton(
+                        "❌  NO — STAY",
+                        bgcolor=C["green"], color="#FFFFFF",
+                        style=ft.ButtonStyle(text_style=ft.TextStyle(
+                            size=15, weight="bold")),
+                        on_click=no_quit),
                 ],
                 actions_alignment="center",
             )
@@ -1304,13 +1384,23 @@ def main(page: ft.Page):
             dlg.open = True
             page.update()
 
+        # Handle keyboard Enter key to show confirmation pop-up
+        def on_keyboard(e: ft.KeyboardEvent):
+            if e.key == "Enter":
+                confirm_quit(None)
+
+        page.on_keyboard_event = on_keyboard
+
+        # Handle Android back button also triggers quit confirm
         def on_window_event(e):
             if e.data == "close":
                 confirm_quit(e)
 
         page.on_window_event = on_window_event
 
-        # ── NAVIGATION ─────────────────────────────────────────────────────────
+        # ══════════════════════════════════════════════════════════════════════
+        # NAVIGATION
+        # ══════════════════════════════════════════════════════════════════════
         screens = {
             "oracle": oracle_screen,
             "list":   list_screen,
@@ -1327,10 +1417,6 @@ def main(page: ft.Page):
             for k, b in nav_buttons.items():
                 b.bgcolor = C["primary"] if k == name else "#9E9E9E"
                 b.color   = "#FFFFFF"
-            if name == "astro":
-                # Ensure we land back on input view safely
-                chart_display_view.visible = False
-                astro_inputs_view.visible = True
             if name == "list" and db_count() > 0:
                 load_list("")
             page.update()
@@ -1339,7 +1425,8 @@ def main(page: ft.Page):
             btn = ft.ElevatedButton(
                 text=label, bgcolor="#9E9E9E",
                 color="#FFFFFF", height=48, expand=True,
-                style=ft.ButtonStyle(text_style=ft.TextStyle(size=12,weight="bold")),
+                style=ft.ButtonStyle(
+                    text_style=ft.TextStyle(size=12,weight="bold")),
                 on_click=lambda e, n=name: show_screen(n))
             nav_buttons[name] = btn
             return btn
@@ -1357,10 +1444,17 @@ def main(page: ft.Page):
         page.add(ft.Container(
             content=ft.Row([
                 ft.Column([
-                    ft.Text("🔮 BHOOVALAYA STOCK ORACLE", size=17, color="#FFFFFF", weight="bold"),
-                    ft.Text("Vedic Akshara + Financial Astrology", size=11, color="#BBDEFB"),
+                    ft.Text("🔮 BHOOVALAYA STOCK ORACLE",
+                            size=17, color="#FFFFFF", weight="bold"),
+                    ft.Text("Vedic Akshara + Financial Astrology",
+                            size=11, color="#BBDEFB"),
                 ], expand=True, spacing=2),
-                ft.ElevatedButton("✕ QUIT", bgcolor="#B71C1C", color="#FFFFFF", height=38, on_click=confirm_quit),
+                ft.ElevatedButton(
+                    "✕ QUIT",
+                    bgcolor="#B71C1C", color="#FFFFFF", height=38,
+                    style=ft.ButtonStyle(text_style=ft.TextStyle(
+                        size=13, weight="bold")),
+                    on_click=confirm_quit),
             ], alignment="spaceBetween"),
             bgcolor=C["primary"], padding=12))
 
@@ -1411,9 +1505,11 @@ def main(page: ft.Page):
         try:
             page.controls.clear()
             page.add(ft.Container(
-                content=ft.Text("STARTUP ERROR:\n"+str(err), size=15, color="#FFFFFF", selectable=True),
+                content=ft.Text("STARTUP ERROR:\n"+str(err),
+                                size=15, color="#FFFFFF", selectable=True),
                 bgcolor=C["red"], padding=16, border_radius=8))
             page.update()
         except: pass
+
 
 ft.app(target=main)

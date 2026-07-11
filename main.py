@@ -96,7 +96,7 @@ WD = {
     "CORPORATION":"कॉर्पोरेशन","MEDIA":"मीडिया",
     "HEALTHCARE":"हेल्थकेयर","CAPITAL":"कैपिटल",
     "AUTO":"ऑटो","ELECTRONICS":"इलेक्ट्रॉनिक्स",
-    "CONSTRUCTION":"कंस्ट्रक्शन","PETROLEUM":"पेट्रोलियम",
+    "CONSTRUCTION":"कंструкक्शन","PETROLEUM":"पेट्रोलियम",
     "ENTERPRISES":"एंटरप्राइजेज","INSURANCE":"इंश्योरेंस",
     "REALTY":"रियल्टी","SOLAR":"सोलर","GLOBAL":"ग्लोबल",
     "FOODS":"फूड्स","TEXTILE":"टेक्सटाइल","COMPANY":"कंपनी",
@@ -207,7 +207,7 @@ def make_report(asum, tval, ldate):
     today = datetime.now()
     nak   = NAK[today.timetuple().tm_yday % 27]
     wday  = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][today.weekday()]
-    bars  = {1:"★☆☆☆☆",2:"★★☆☆☆",3:"★★★☆☆",4:"★★★★☆",5:"★★★★★"}
+    bars  = {1:"★☆☆☆☆",2:"★★☆☆•",3:"★★★☆☆",4:"★★★★☆",5:"★★★★★"}
     if ldate:
         tc = ((today.timetuple().tm_yday -
                ldate.timetuple().tm_yday) % 27) + 1
@@ -328,11 +328,6 @@ def d9_sign(lon):
 
 # ── NORTH INDIAN DIAMOND CHART (Canvas-based) ──────────────────────────────────
 def build_diamond_chart(positions, lagna_sign, title, chart_size=310):
-    """
-    Draw North Indian diamond Kundali chart using Flet Canvas.
-    positions = {planet_abbr: sign_index_0_to_11}
-    lagna_sign = sign index of ascendant (House 1)
-    """
     W = chart_size
     p = 5  # padding
 
@@ -346,7 +341,6 @@ def build_diamond_chart(positions, lagna_sign, title, chart_size=310):
     iL=(p+q, W//2)
     C=(W//2, W//2)
 
-    # 12 house polygon vertices (clockwise from top = H1)
     HOUSES = {
         1: [T,  TR, iR, iT],
         2: [TR, R,  iR],
@@ -365,12 +359,10 @@ def build_diamond_chart(positions, lagna_sign, title, chart_size=310):
     def centroid(pts):
         return sum(x for x,y in pts)//len(pts), sum(y for x,y in pts)//len(pts)
 
-    # Map sign_index → planets in that sign
     sign_planets = {i: [] for i in range(12)}
     for planet, s_idx in positions.items():
         sign_planets[int(s_idx)].append(PLANET_NAMES.get(planet, planet))
 
-    # Lagna sign index
     lagna_s = int(lagna_sign)
 
     def house_sign(house_num):
@@ -379,10 +371,8 @@ def build_diamond_chart(positions, lagna_sign, title, chart_size=310):
     shapes = []
 
     # Background
-    shapes.append(cv.Fill(
-        paint=ft.Paint(color="#FAFAFA")))
+    shapes.append(cv.Fill(paint=ft.Paint(color="#FAFAFA")))
 
-    # Draw each house polygon
     for house_num, pts in HOUSES.items():
         sign_idx    = house_sign(house_num)
         planets_here = sign_planets.get(sign_idx, [])
@@ -396,67 +386,45 @@ def build_diamond_chart(positions, lagna_sign, title, chart_size=310):
         for pt in pts[1:]:
             path_fill.append(cv.Path.LineTo(pt[0], pt[1]))
         path_fill.append(cv.Path.Close())
-        shapes.append(cv.Path(path_fill,
-            paint=ft.Paint(color=bg, style=ft.PaintingStyle.FILL)))
+        shapes.append(cv.Path(path_fill, paint=ft.Paint(color=bg, style=ft.PaintingStyle.FILL)))
 
         # Stroke polygon
         path_stroke = [cv.Path.MoveTo(pts[0][0], pts[0][1])]
         for pt in pts[1:]:
             path_stroke.append(cv.Path.LineTo(pt[0], pt[1]))
         path_stroke.append(cv.Path.Close())
-        shapes.append(cv.Path(path_stroke,
-            paint=ft.Paint(color=bd, stroke_width=1.5,
-                           style=ft.PaintingStyle.STROKE)))
+        shapes.append(cv.Path(path_stroke, paint=ft.Paint(color=bd, stroke_width=1.5, style=ft.PaintingStyle.STROKE)))
 
-        # Text label
         cx, cy = centroid(pts)
         sign_txt = SIGN_ABB[sign_idx]
         hindi_txt = SIGN_HI[sign_idx]
         planet_txt = " ".join(planets_here)
         house_txt  = str(house_num)
 
-        # House number (small, top-left of centroid)
+        # House number
         shapes.append(cv.Text(
-            x=cx-18, y=cy-22,
-            text=house_txt,
-            style=ft.TextStyle(
-                size=9, color="#546E7A",
-                weight="normal")))
+            x=cx-18, y=cy-22, text=house_txt,
+            style=ft.TextStyle(size=9, color="#546E7A", weight="normal")))
 
-        # Sign abbr + hindi
+        # Sign
         shapes.append(cv.Text(
-            x=cx-14, y=cy-12,
-            text=sign_txt,
-            style=ft.TextStyle(
-                size=11,
-                color="#B71C1C" if is_lagna else "#0D47A1",
-                weight="bold")))
+            x=cx-14, y=cy-12, text=sign_txt,
+            style=ft.TextStyle(size=11, color="#B71C1C" if is_lagna else "#0D47A1", weight="bold")))
 
         shapes.append(cv.Text(
-            x=cx-18, y=cy+1,
-            text=hindi_txt,
-            style=ft.TextStyle(
-                size=10,
-                color="#B71C1C" if is_lagna else "#1565C0",
-                weight="normal")))
+            x=cx-18, y=cy+1, text=hindi_txt,
+            style=ft.TextStyle(size=10, color="#B71C1C" if is_lagna else "#1565C0", weight="normal")))
 
-        # Planets (DARK BLUE bold, bigger visibility size=13)
+        # Planets (Bigger font + dark blue color)
         if planet_txt:
             shapes.append(cv.Text(
-                x=cx-20, y=cy+14,
-                text=planet_txt,
-                style=ft.TextStyle(
-                    size=13,
-                    color="#0D47A1",
-                    weight="bold")))
+                x=cx-20, y=cy+14, text=planet_txt,
+                style=ft.TextStyle(size=13, color="#0D47A1", weight="bold")))
 
-    # Title in center
+    # Title
     shapes.append(cv.Text(
-        x=C[0]-28, y=C[1]-8,
-        text=title,
-        style=ft.TextStyle(
-            size=9, color="#0D47A1",
-            weight="bold")))
+        x=C[0]-28, y=C[1]-8, text=title,
+        style=ft.TextStyle(size=9, color="#0D47A1", weight="bold")))
 
     return cv.Canvas(shapes=shapes, width=W, height=W)
 
@@ -532,13 +500,9 @@ def main(page: ft.Page):
             except: return False
 
         # ── SHARED STATUS & PROGRESS ───────────────────────────────────────────
-        status_txt = ft.Text("Loading...", size=15,
-                             color="#FFFFFF", weight="bold")
-        status_bar = ft.Container(
-            content=status_txt, bgcolor=C["secondary"],
-            padding=10, border_radius=6)
-        prg_bar = ft.ProgressBar(value=0, visible=False,
-                                 color="#FF6F00", bgcolor="#EEEEEE")
+        status_txt = ft.Text("Loading...", size=15, color="#FFFFFF", weight="bold")
+        status_bar = ft.Container(content=status_txt, bgcolor=C["secondary"], padding=10, border_radius=6)
+        prg_bar = ft.ProgressBar(value=0, visible=False, color="#FF6F00", bgcolor="#EEEEEE")
         prg_txt = ft.Text("", size=13, color=C["orange"], weight="bold")
 
         def set_status(msg, color=None):
@@ -565,38 +529,26 @@ def main(page: ft.Page):
                 hint_text=hint,
                 hint_style=ft.TextStyle(size=13, color=C["hint_txt"]),
                 value=value, text_size=16,
-                text_style=ft.TextStyle(size=16, color=C["black_txt"],
-                                        weight="bold"),
-                border_color=C["primary"],
-                focused_border_color=C["accent"],
-                border_width=2, bgcolor=C["inp_bg"],
-                cursor_color=C["primary"])
+                text_style=ft.TextStyle(size=16, color=C["black_txt"], weight="bold"),
+                border_color=C["primary"], focused_border_color=C["accent"],
+                border_width=2, bgcolor=C["inp_bg"], cursor_color=C["primary"])
 
         def make_header(title, bgcolor=None):
             return ft.Container(
-                content=ft.Text(title, size=16,
-                                color="#FFFFFF", weight="bold"),
+                content=ft.Text(title, size=16, color="#FFFFFF", weight="bold"),
                 bgcolor=bgcolor or C["primary"],
                 padding=ft.padding.symmetric(horizontal=12, vertical=8),
                 border_radius=6)
 
         def res_box(txt_ctrl):
             return ft.Container(
-                content=txt_ctrl, bgcolor=C["res_bg"],
-                padding=12, border_radius=8,
-                border=ft.Border(
-                    top=ft.BorderSide(2,C["primary"]),
-                    bottom=ft.BorderSide(2,C["primary"]),
-                    left=ft.BorderSide(2,C["primary"]),
-                    right=ft.BorderSide(2,C["primary"])))
+                content=txt_ctrl, bgcolor=C["res_bg"], padding=12, border_radius=8,
+                border=ft.Border(top=ft.BorderSide(2,C["primary"]), bottom=ft.BorderSide(2,C["primary"]),
+                                  left=ft.BorderSide(2,C["primary"]), right=ft.BorderSide(2,C["primary"])))
 
-        # ══════════════════════════════════════════════════════════════════════
         # SCREEN 1 — ORACLE
-        # ══════════════════════════════════════════════════════════════════════
-        fld_oracle = make_field("NSE Stock Symbol or Name",
-                                "e.g. RELIANCE or TCS", "RELIANCE")
-        result_txt = ft.Text("", size=14, color=C["dark_txt"],
-                             selectable=True, font_family="monospace")
+        fld_oracle = make_field("NSE Stock Symbol or Name", "e.g. RELIANCE or TCS", "RELIANCE")
+        result_txt = ft.Text("", size=14, color=C["dark_txt"], selectable=True, font_family="monospace")
         result_cont = res_box(result_txt)
         result_cont.visible = False
 
@@ -653,31 +605,25 @@ def main(page: ft.Page):
         oracle_screen = ft.Column(visible=True, controls=[
             make_header("🔮  ORACLE ANALYSIS"),
             ft.Divider(height=4, color=C["divider"]),
-            ft.Text("Enter Stock Symbol or Name:",
-                    size=15, color=C["black_txt"], weight="bold"),
+            ft.Text("Enter Stock Symbol or Name:", size=15, color=C["black_txt"], weight="bold"),
             fld_oracle,
             ft.ElevatedButton("🔍  SEARCH AND CALCULATE",
                 bgcolor=C["green"], color="#FFFFFF", height=52,
-                style=ft.ButtonStyle(text_style=ft.TextStyle(
-                    size=17, weight="bold")),
+                style=ft.ButtonStyle(text_style=ft.TextStyle(size=17, weight="bold")),
                 on_click=do_oracle),
             ft.Divider(height=6, color=C["divider"]),
             result_cont,
         ])
 
-        # ══════════════════════════════════════════════════════════════════════
         # SCREEN 2 — STOCK LIST
-        # ══════════════════════════════════════════════════════════════════════
-        fld_list_search = make_field("Search Symbol or Company",
-                                     "Leave blank for first 100")
+        fld_list_search = make_field("Search Symbol or Company", "Leave blank for first 100")
         list_rows  = ft.Column(controls=[], spacing=2)
         list_count = ft.Text("", size=14, color=C["primary"], weight="bold")
 
         def load_list(q=""):
             list_rows.controls.clear()
             rows = db_search(q)
-            list_count.value = ("Showing "+str(len(rows))+" stocks"
-                + (" matching '"+q+"'" if q else " (first 100)"))
+            list_count.value = ("Showing "+str(len(rows))+" stocks" + (" matching '"+q+"'" if q else " (first 100)"))
             for i, r in enumerate(rows):
                 sym,eng,hi,ldt,asum = r
                 bg = C["inp_bg"] if i%2==0 else "#FFFFFF"
@@ -693,33 +639,19 @@ def main(page: ft.Page):
                 list_rows.controls.append(ft.Container(
                     content=ft.Column([
                         ft.Row([
-                            ft.Container(
-                                content=ft.Text(sym, size=14,
-                                    color="#FFFFFF", weight="bold"),
-                                bgcolor=C["primary"],
-                                padding=ft.padding.symmetric(
-                                    horizontal=8,vertical=3),
-                                border_radius=4),
+                            ft.Container(content=ft.Text(sym, size=14, color="#FFFFFF", weight="bold"),
+                                         bgcolor=C["primary"], padding=ft.padding.symmetric(horizontal=8,vertical=3), border_radius=4),
                             ft.Text(ldt, size=11, color=C["hint_txt"]),
-                            ft.Text("Ak:"+str(asum), size=11,
-                                    color=C["accent"]),
+                            ft.Text("Ak:"+str(asum), size=11, color=C["accent"]),
                         ]),
-                        ft.Text(eng, size=14, color=C["black_txt"],
-                                weight="bold"),
-                        ft.Text(hi, size=14, color=C["primary"],
-                                weight="bold"),
+                        ft.Text(eng, size=14, color=C["black_txt"], weight="bold"),
+                        ft.Text(hi, size=14, color=C["primary"], weight="bold"),
                         ft.Row([
-                            ft.TextButton("✏️ Edit",
-                                style=ft.ButtonStyle(color=C["accent"]),
-                                on_click=mk_edit(sym)),
-                            ft.TextButton("🔮 Analyse",
-                                style=ft.ButtonStyle(color=C["green"]),
-                                on_click=mk_analyse(sym)),
+                            ft.TextButton("✏️ Edit", style=ft.ButtonStyle(color=C["accent"]), on_click=mk_edit(sym)),
+                            ft.TextButton("🔮 Analyse", style=ft.ButtonStyle(color=C["green"]), on_click=mk_analyse(sym)),
                         ]),
                     ], spacing=2),
-                    bgcolor=bg, padding=8, border_radius=6,
-                    border=ft.Border(
-                        bottom=ft.BorderSide(1,C["divider"]))))
+                    bgcolor=bg, padding=8, border_radius=6, border=ft.Border(bottom=ft.BorderSide(1,C["divider"]))))
             page.update()
 
         list_screen = ft.Column(visible=False, controls=[
@@ -727,16 +659,11 @@ def main(page: ft.Page):
             ft.Divider(height=4, color=C["divider"]),
             fld_list_search,
             ft.Row([
-                ft.ElevatedButton("🔍 Search",
-                    bgcolor=C["primary"], color="#FFFFFF", height=46,
-                    style=ft.ButtonStyle(text_style=ft.TextStyle(
-                        size=15,weight="bold")),
-                    on_click=lambda e: load_list(
-                        fld_list_search.value.strip().upper())),
-                ft.ElevatedButton("📋 Show All",
-                    bgcolor=C["accent"], color="#FFFFFF", height=46,
-                    style=ft.ButtonStyle(text_style=ft.TextStyle(
-                        size=15,weight="bold")),
+                ft.ElevatedButton("🔍 Search", bgcolor=C["primary"], color="#FFFFFF", height=46,
+                    style=ft.ButtonStyle(text_style=ft.TextStyle(size=15,weight="bold")),
+                    on_click=lambda e: load_list(fld_list_search.value.strip().upper())),
+                ft.ElevatedButton("📋 Show All", bgcolor=C["accent"], color="#FFFFFF", height=46,
+                    style=ft.ButtonStyle(text_style=ft.TextStyle(size=15,weight="bold")),
                     on_click=lambda e: load_list("")),
             ]),
             list_count,
@@ -744,19 +671,14 @@ def main(page: ft.Page):
             list_rows,
         ])
 
-        # ══════════════════════════════════════════════════════════════════════
         # SCREEN 3 — DATA ENTRY
-        # ══════════════════════════════════════════════════════════════════════
         fld_sym   = make_field("Symbol *", "e.g. RELIANCE")
         fld_eng   = make_field("English Name *", "e.g. Reliance Industries Ltd")
         fld_hindi = make_field("Hindi Name *", "e.g. रिलायंस इंडस्ट्रीज")
         fld_ldate = make_field("Listing Date", "DD-MM-YYYY")
         fld_series= make_field("Series", "e.g. EQ", "EQ")
         entry_st  = ft.Text("", size=15, color=C["green"], weight="bold")
-        ak_prev   = ft.Container(
-            content=ft.Text("", size=13, color=C["dark_txt"]),
-            bgcolor=C["res_bg"], padding=10,
-            border_radius=6, visible=False)
+        ak_prev   = ft.Container(content=ft.Text("", size=13, color=C["dark_txt"]), bgcolor=C["res_bg"], padding=10, border_radius=6, visible=False)
 
         def load_edit(sym):
             row = db_get(sym)
@@ -809,8 +731,7 @@ def main(page: ft.Page):
                 entry_st.value = "Symbol, English and Hindi are required!"
                 entry_st.color = C["red"]; page.update(); return
             ok,val = db_save(sym,eng,hindi,ldate,ser)
-            entry_st.value = ("Saved! "+sym+"  Ak="+str(val) if ok
-                              else "Save failed: "+str(val))
+            entry_st.value = ("Saved! "+sym+"  Ak="+str(val) if ok else "Save failed: "+str(val))
             entry_st.color = C["green"] if ok else C["red"]
             if ok: fld_sym.disabled = False
             page.update()
@@ -820,12 +741,8 @@ def main(page: ft.Page):
             if not sym:
                 entry_st.value = "No symbol loaded!"
                 entry_st.color = C["red"]; page.update(); return
-            ok,val = db_save(sym,fld_eng.value.strip(),
-                             fld_hindi.value.strip(),
-                             fld_ldate.value.strip(),
-                             fld_series.value.strip() or "EQ")
-            entry_st.value = ("Updated! "+sym+"  Ak="+str(val) if ok
-                              else "Update failed: "+str(val))
+            ok,val = db_save(sym,fld_eng.value.strip(), fld_hindi.value.strip(), fld_ldate.value.strip(), fld_series.value.strip() or "EQ")
+            entry_st.value = ("Updated! "+sym+"  Ak="+str(val) if ok else "Update failed: "+str(val))
             entry_st.color = C["green"] if ok else C["red"]
             if ok: fld_sym.disabled = False
             page.update()
@@ -854,50 +771,31 @@ def main(page: ft.Page):
         entry_screen = ft.Column(visible=False, controls=[
             make_header("✏️  DATA ENTRY — Add / Edit Stock"),
             ft.Divider(height=4, color=C["divider"]),
-            ft.Text("Fields marked * are required",
-                    size=13, color=C["hint_txt"]),
+            ft.Text("Fields marked * are required", size=13, color=C["hint_txt"]),
             fld_sym, fld_eng,
-            ft.ElevatedButton("🔄  Auto-Generate Hindi Name",
-                bgcolor=C["accent"], color="#FFFFFF", height=46,
-                style=ft.ButtonStyle(text_style=ft.TextStyle(
-                    size=15,weight="bold")), on_click=do_translit),
+            ft.ElevatedButton("🔄  Auto-Generate Hindi Name", bgcolor=C["accent"], color="#FFFFFF", height=46,
+                style=ft.ButtonStyle(text_style=ft.TextStyle(size=15,weight="bold")), on_click=do_translit),
             fld_hindi,
-            ft.ElevatedButton("👁  Preview Akshara Calculation",
-                bgcolor=C["secondary"], color="#FFFFFF", height=46,
-                style=ft.ButtonStyle(text_style=ft.TextStyle(
-                    size=15,weight="bold")), on_click=do_preview),
+            ft.ElevatedButton("👁  Preview Akshara Calculation", bgcolor=C["secondary"], color="#FFFFFF", height=46,
+                style=ft.ButtonStyle(text_style=ft.TextStyle(size=15,weight="bold")), on_click=do_preview),
             ak_prev, fld_ldate, fld_series,
             ft.Divider(height=6, color=C["divider"]),
             ft.Row([
-                ft.ElevatedButton("💾 SAVE NEW",
-                    bgcolor=C["green"], color="#FFFFFF", height=50,
-                    style=ft.ButtonStyle(text_style=ft.TextStyle(
-                        size=15,weight="bold")),
-                    on_click=do_save, expand=True),
-                ft.ElevatedButton("📝 UPDATE",
-                    bgcolor=C["accent"], color="#FFFFFF", height=50,
-                    style=ft.ButtonStyle(text_style=ft.TextStyle(
-                        size=15,weight="bold")),
-                    on_click=do_update, expand=True),
+                ft.ElevatedButton("💾 SAVE NEW", bgcolor=C["green"], color="#FFFFFF", height=50,
+                    style=ft.ButtonStyle(text_style=ft.TextStyle(size=15,weight="bold")), on_click=do_save, expand=True),
+                ft.ElevatedButton("📝 UPDATE", bgcolor=C["accent"], color="#FFFFFF", height=50,
+                    style=ft.ButtonStyle(text_style=ft.TextStyle(size=15,weight="bold")), on_click=do_update, expand=True),
             ]),
             ft.Row([
-                ft.ElevatedButton("🗑 DELETE",
-                    bgcolor=C["red"], color="#FFFFFF", height=46,
-                    style=ft.ButtonStyle(text_style=ft.TextStyle(
-                        size=14,weight="bold")),
-                    on_click=do_delete, expand=True),
-                ft.ElevatedButton("🧹 CLEAR",
-                    bgcolor=C["hint_txt"], color="#FFFFFF", height=46,
-                    style=ft.ButtonStyle(text_style=ft.TextStyle(
-                        size=14,weight="bold")),
-                    on_click=do_clear, expand=True),
+                ft.ElevatedButton("🗑 DELETE", bgcolor=C["red"], color="#FFFFFF", height=46,
+                    style=ft.ButtonStyle(text_style=ft.TextStyle(size=14,weight="bold")), on_click=do_delete, expand=True),
+                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["hint_txt"], color="#FFFFFF", height=46,
+                    style=ft.ButtonStyle(text_style=ft.TextStyle(size=14,weight="bold")), on_click=do_clear, expand=True),
             ]),
             entry_st,
         ])
 
-        # ══════════════════════════════════════════════════════════════════════
         # SCREEN 4 — BUILD DATABASE
-        # ══════════════════════════════════════════════════════════════════════
         build_res = ft.Text("", size=14, color=C["dark_txt"], selectable=True)
 
         def do_build(e):
@@ -913,12 +811,10 @@ def main(page: ft.Page):
                     hdrs = {"User-Agent":"Mozilla/5.0 (Android)"}
                     resp = requests.get(NSE_URL, headers=hdrs, timeout=60)
                     resp.raise_for_status()
-                    all_rows = list(csv.DictReader(io.StringIO(
-                        resp.content.decode("utf-8", errors="ignore"))))
+                    all_rows = list(csv.DictReader(io.StringIO(resp.content.decode("utf-8", errors="ignore"))))
                     rows = []
                     for r in all_rows:
-                        nm = {k.strip().upper():(v.strip() if v else "")
-                              for k,v in r.items()}
+                        nm = {k.strip().upper():(v.strip() if v else "") for k,v in r.items()}
                         ser = nm.get("SERIES","").strip()
                         if ser == "EQ" or not ser: rows.append(nm)
                     total = len(rows)
@@ -935,22 +831,18 @@ def main(page: ft.Page):
                     cur   = conn2.cursor(); done = 0
                     for i,nm in enumerate(rows):
                         sym = nm.get("SYMBOL","").strip()
-                        eng = nm.get("NAME OF COMPANY",
-                              nm.get("COMPANY NAME","")).strip()
+                        eng = nm.get("NAME OF COMPANY", nm.get("COMPANY NAME","")).strip()
                         ldt = nm.get("DATE OF LISTING","01-01-2000").strip()
                         ser = nm.get("SERIES","EQ").strip()
                         if not sym or sym.lower()=="symbol": continue
                         hi = get_hindi(sym, eng)
                         asum,bk = calc(hi)
-                        cur.execute(
-                            "INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)",
-                            (sym,eng,hi,ldt,asum,bk,ser))
+                        cur.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym,eng,hi,ldt,asum,bk,ser))
                         done += 1
                         if i%25==0:
                             conn2.commit()
                             pct = 0.10+(i/max(total,1))*0.90
-                            set_status("Processing "+str(i)+"/"+str(total)
-                                       +" — "+sym, C["orange"])
+                            set_status("Processing "+str(i)+"/"+str(total)+" — "+sym, C["orange"])
                             set_prg(pct, str(int(pct*100))+"% — "+sym)
                     conn2.commit(); conn2.close()
                     set_prg(1.0, "Complete! "+str(done)+" stocks ready!")
@@ -964,9 +856,7 @@ def main(page: ft.Page):
                 except Exception as ex:
                     hide_prg()
                     set_status("Build failed! Check internet.", C["red"])
-                    build_res.value = ("BUILD FAILED\n\n"
-                        "Error: "+str(ex)+"\n\n"
-                        "Check internet and try again.")
+                    build_res.value = ("BUILD FAILED\n\n" "Error: "+str(ex)+"\n\n" "Check internet and try again.")
                     page.update()
             set_status("Starting build...", C["orange"])
             build_res.value = "PREPARING BUILD...\nPlease wait..."
@@ -978,53 +868,31 @@ def main(page: ft.Page):
             ft.Divider(height=4, color=C["divider"]),
             ft.Container(
                 content=ft.Column([
-                    ft.Text("Downloads all NSE EQ series stocks",
-                            size=14, color=C["dark_txt"]),
-                    ft.Text("with Hindi names into local database.",
-                            size=14, color=C["dark_txt"]),
-                    ft.Text("Needs internet. Takes 5-15 minutes.",
-                            size=13, color=C["hint_txt"]),
-                ], spacing=2),
-                bgcolor=C["res_bg"], padding=10, border_radius=6),
+                    ft.Text("Downloads all NSE EQ series stocks", size=14, color=C["dark_txt"]),
+                    ft.Text("with Hindi names into local database.", size=14, color=C["dark_txt"]),
+                    ft.Text("Needs internet. Takes 5-15 minutes.", size=13, color=C["hint_txt"]),
+                ], spacing=2), bgcolor=C["res_bg"], padding=10, border_radius=6),
             ft.Divider(height=6, color=C["divider"]),
-            ft.ElevatedButton("🔄  BUILD DATABASE  (first time)",
-                bgcolor=C["orange"], color="#FFFFFF", height=54,
-                style=ft.ButtonStyle(text_style=ft.TextStyle(
-                    size=17,weight="bold")), on_click=do_build),
+            ft.ElevatedButton("🔄  BUILD DATABASE  (first time)", bgcolor=C["orange"], color="#FFFFFF", height=54,
+                style=ft.ButtonStyle(text_style=ft.TextStyle(size=17,weight="bold")), on_click=do_build),
             ft.Divider(height=6, color=C["divider"]),
             build_res,
         ])
 
-        # ══════════════════════════════════════════════════════════════════════
         # SCREEN 5 — ASTRO (D1 + D9 Diamond Charts)
-        # ══════════════════════════════════════════════════════════════════════
         today_dt = datetime.now()
-        fld_date  = make_field("Date (DD-MM-YYYY)",
-                               "e.g. 09-07-2026",
-                               today_dt.strftime("%d-%m-%Y"))
-        fld_time  = make_field("Time (HH:MM) 24-hr IST",
-                               "e.g. 14:30",
-                               today_dt.strftime("%H:%M"))
-        fld_place = make_field("Place Name",
-                               "e.g. Mumbai, India",
-                               "Mumbai, India")
-        fld_lat   = make_field("Latitude (N+  S-)",
-                               "Mumbai=19.076", "19.076")
-        fld_lon   = make_field("Longitude (E+  W-)",
-                               "Mumbai=72.877", "72.877")
+        fld_date  = make_field("Date (DD-MM-YYYY)", "e.g. 09-07-2026", today_dt.strftime("%d-%m-%Y"))
+        fld_time  = make_field("Time (HH:MM) 24-hr IST", "e.g. 14:30", today_dt.strftime("%H:%M"))
+        fld_place = make_field("Place Name", "e.g. Mumbai, India", "Mumbai, India")
+        fld_lat   = make_field("Latitude (N+  S-)", "Mumbai=19.076", "19.076")
+        fld_lon   = make_field("Longitude (E+  W-)", "Mumbai=72.877", "72.877")
 
-        astro_res_txt = ft.Text("", size=13, color=C["dark_txt"],
-                                selectable=True, font_family="monospace")
+        astro_res_txt = ft.Text("", size=13, color=C["dark_txt"], selectable=True, font_family="monospace")
         astro_res_box = ft.Container(
-            content=astro_res_txt, bgcolor=C["res_bg"], padding=10,
-            border_radius=6, visible=False,
-            border=ft.Border(
-                top=ft.BorderSide(2,C["primary"]),
-                bottom=ft.BorderSide(2,C["primary"]),
-                left=ft.BorderSide(2,C["primary"]),
-                right=ft.BorderSide(2,C["primary"])))
+            content=astro_res_txt, bgcolor=C["res_bg"], padding=10, border_radius=6, visible=False,
+            border=ft.Border(top=ft.BorderSide(2,C["primary"]), bottom=ft.BorderSide(2,C["primary"]),
+                              left=ft.BorderSide(2,C["primary"]), right=ft.BorderSide(2,C["primary"])))
 
-        # Interactive scroll handler to return to inputs
         def scroll_to_astro_inputs(e):
             fld_date.focus()
             page.update()
@@ -1040,16 +908,12 @@ def main(page: ft.Page):
                 lat  = float(fld_lat.value.strip())
                 lon2 = float(fld_lon.value.strip())
                 try:
-                    dt = datetime.strptime(
-                        date_str+" "+time_str, "%d-%m-%Y %H:%M")
+                    dt = datetime.strptime(date_str+" "+time_str, "%d-%m-%Y %H:%M")
                 except:
                     try:
-                        dt = datetime.strptime(
-                            date_str+" "+time_str, "%Y-%m-%d %H:%M")
+                        dt = datetime.strptime(date_str+" "+time_str, "%Y-%m-%d %H:%M")
                     except:
-                        set_status("Date format error! Use DD-MM-YYYY HH:MM",
-                                   C["red"]); return
-                # Convert IST to UTC (IST = UTC+5:30)
+                        set_status("Date format error! Use DD-MM-YYYY HH:MM", C["red"]); return
                 total_min = dt.hour*60 + dt.minute - 330
                 if total_min < 0: total_min += 1440
                 h_utc = total_min // 60
@@ -1057,62 +921,39 @@ def main(page: ft.Page):
                 jd = jd_from_dt(dt.year, dt.month, dt.day, h_utc, m_utc)
                 sid, ay = calc_planet_positions(jd, lat, lon2)
 
-                # Build planet table
-                lines = ["═"*34,
-                         "PLANET POSITIONS — SIDEREAL/LAHIRI",
-                         "Date : "+date_str+"  "+time_str+" IST",
-                         "Place: "+fld_place.value.strip(),
-                         "Ayanamsa: "+str(round(ay,3))+"°  (Lahiri)",
-                         "─"*34,
-                         f"{'Planet':<12} {'Sign':<6} {'Hindi':<8} {'Deg':>5}"]
-                lines.append("─"*34)
+                lines = ["═"*34, "PLANET POSITIONS — SIDEREAL/LAHIRI", "Date : "+date_str+"  "+time_str+" IST",
+                         "Place: "+fld_place.value.strip(), "Ayanamsa: "+str(round(ay,3))+"°  (Lahiri)", "─"*34,
+                         f"{'Planet':<12} {'Sign':<6} {'Hindi':<8} {'Deg':>5}", "─"*34]
 
                 d1_pos = {}; d9_pos = {}
                 order = ["As","Su","Mo","Me","Ve","Ma","Ju","Sa","Ra","Ke"]
-                p_full = {"As":"Lagna","Su":"Sun सूर्य","Mo":"Moon चंद्र",
-                          "Ma":"Mars मंगल","Me":"Merc बुध","Ju":"Jupt गुरु",
-                          "Ve":"Venu शुक्र","Sa":"Satn शनि",
-                          "Ra":"Rahu राहु","Ke":"Ketu केतु"}
+                p_full = {"As":"Lagna","Su":"Sun सूर्य","Mo":"Moon चंद्र", "Ma":"Mars मंगल","Me":"Merc बुध",
+                          "Ju":"Jupt गुरु","Ve":"Venu शुक्र","Sa":"Satn शनि","Ra":"Rahu राहु","Ke":"Ketu केतु"}
                 for p in order:
                     lon_p = sid[p]
                     s_idx, deg = lon_to_sign_deg(lon_p)
                     d9_idx = d9_sign(lon_p)
                     d1_pos[p] = s_idx; d9_pos[p] = d9_idx
-                    lines.append(f"{p_full.get(p,p):<12} "
-                                 f"{SIGN_ABB[s_idx]:<6} "
-                                 f"{SIGN_HI[s_idx]:<8} "
-                                 f"{deg:>5.1f}°")
-                lines += ["═"*34,
-                          "As=Lagna Ra=Rahu Ke=Ketu",
-                          "Lahiri Ayanamsa (Sidereal)",
-                          "Accuracy: approx +/-1-2 degrees",
-                          "═"*34]
+                    lines.append(f"{p_full.get(p,p):<12} {SIGN_ABB[s_idx]:<6} {SIGN_HI[s_idx]:<8} {deg:>5.1f}°")
+                lines += ["═"*34, "As=Lagna Ra=Rahu Ke=Ketu", "Lahiri Ayanamsa (Sidereal)", "Accuracy: approx +/-1-2 degrees", "═"*34]
 
                 astro_res_txt.value = "\n".join(lines)
                 astro_res_box.visible = True
 
-                # D1 Diamond Chart Draw
+                # Draw D1
                 lagna_sign = d1_pos.get("As", 0)
                 if CANVAS_OK:
-                    d1_canvas = build_diamond_chart(
-                        d1_pos, lagna_sign, "D1 RASI")
-                    d1_container.content = d1_canvas
+                    d1_container.content = build_diamond_chart(d1_pos, lagna_sign, "D1 RASI")
                 else:
-                    d1_container.content = ft.Text(
-                        "Canvas not available for chart",
-                        color=C["red"])
+                    d1_container.content = ft.Text("Canvas not available for chart", color=C["red"])
                 d1_container.visible = True
 
-                # D9 Diamond Chart Draw
+                # Draw D9
                 lagna_d9 = d9_pos.get("As", 0)
                 if CANVAS_OK:
-                    d9_canvas = build_diamond_chart(
-                        d9_pos, lagna_d9, "D9 NAVAMSA")
-                    d9_container.content = d9_canvas
+                    d9_container.content = build_diamond_chart(d9_pos, lagna_d9, "D9 NAVAMSA")
                 else:
-                    d9_container.content = ft.Text(
-                        "Canvas not available",
-                        color=C["red"])
+                    d9_container.content = ft.Text("Canvas not available", color=C["red"])
                 d9_container.visible = True
 
                 set_status("D1 & D9 Charts calculated!", C["green"])
@@ -1123,84 +964,51 @@ def main(page: ft.Page):
                 astro_res_box.visible = True
                 page.update()
 
+        # Fixed layout with direct string icon property for Android compliance
         astro_screen = ft.Column(visible=False, controls=[
-            make_header("🪐  VEDIC ASTRO — D1 & D9 DIAMOND CHART",
-                        C["primary"]),
+            make_header("🪐  VEDIC ASTRO — D1 & D9 DIAMOND CHART", C["primary"]),
             ft.Divider(height=4, color=C["divider"]),
             ft.Container(content=ft.Column([
-                ft.Text("📍 Default: Mumbai, India",
-                        size=14, color=C["dark_txt"], weight="bold"),
-                ft.Text("19.076°N  72.877°E  IST (UTC+5:30)",
-                        size=13, color=C["hint_txt"]),
+                ft.Text("📍 Default: Mumbai, India", size=14, color=C["dark_txt"], weight="bold"),
+                ft.Text("19.076°N  72.877°E  IST (UTC+5:30)", size=13, color=C["hint_txt"]),
             ], spacing=2), bgcolor=C["res_bg"], padding=8, border_radius=6),
             ft.Divider(height=4, color=C["divider"]),
-            ft.Text("Date & Time (IST):", size=14,
-                    color=C["primary"], weight="bold"),
+            ft.Text("Date & Time (IST):", size=14, color=C["primary"], weight="bold"),
             ft.Row([
                 ft.Column([fld_date], expand=True),
                 ft.Column([fld_time], expand=True),
             ], spacing=6),
-            ft.Text("Location:", size=14,
-                    color=C["primary"], weight="bold"),
+            ft.Text("Location:", size=14, color=C["primary"], weight="bold"),
             fld_place,
             ft.Row([
                 ft.Column([fld_lat], expand=True),
                 ft.Column([fld_lon], expand=True),
             ], spacing=6),
             ft.Divider(height=6, color=C["divider"]),
-            ft.ElevatedButton(
-                "🪐  CALCULATE D1 & D9 DIAMOND CHARTS",
-                bgcolor=C["primary"], color="#FFFFFF", height=56,
-                style=ft.ButtonStyle(text_style=ft.TextStyle(
-                    size=16,weight="bold")),
-                on_click=do_calc_astro),
+            ft.ElevatedButton("🪐  CALCULATE D1 & D9 DIAMOND CHARTS", bgcolor=C["primary"], color="#FFFFFF", height=56,
+                style=ft.ButtonStyle(text_style=ft.TextStyle(size=16,weight="bold")), on_click=do_calc_astro),
             ft.Divider(height=8, color=C["divider"]),
             astro_res_box,
             ft.Divider(height=10, color=C["divider"]),
             
-            # --- D1 Rasi Section ---
-            ft.Container(content=ft.Text(
-                "━━  D1 RASI CHART (जन्म कुंडली)  ━━",
-                size=15, color=C["primary"], weight="bold",
-                text_align="center"), padding=6),
-            ft.Container(content=ft.Text(
-                "H1 (Red) = Lagna  |  Houses go clockwise from top",
-                size=12, color=C["hint_txt"]),
-                padding=ft.padding.only(bottom=4)),
+            ft.Container(content=ft.Text("━━  D1 RASI CHART (जन्म कुंडली)  ━━", size=15, color=C["primary"], weight="bold", text_align="center"), padding=6),
+            ft.Container(content=ft.Text("H1 (Red) = Lagna  |  Houses go clockwise from top", size=12, color=C["hint_txt"]), padding=ft.padding.only(bottom=4)),
             d1_container,
-            ft.ElevatedButton("⬅️ Back to Astro Input Form", 
-                             icon=ft.icons.ARROW_UPWARD,
-                             bgcolor=C["secondary"], color="#FFFFFF",
-                             on_click=scroll_to_astro_inputs),
+            ft.ElevatedButton("⬅️ Back to Astro Input Form", icon="arrow_upward", bgcolor=C["secondary"], color="#FFFFFF", on_click=scroll_to_astro_inputs),
             
             ft.Divider(height=14, color=C["divider"]),
             
-            # --- D9 Navamsa Section ---
-            ft.Container(content=ft.Text(
-                "━━  D9 NAVAMSA CHART (नवांश कुंडली)  ━━",
-                size=15, color=C["primary"], weight="bold",
-                text_align="center"), padding=6),
-            ft.Container(content=ft.Text(
-                "Each sign ÷ 9 parts of 3°20'  |  Soul & Dharma chart",
-                size=12, color=C["hint_txt"]),
-                padding=ft.padding.only(bottom=4)),
+            ft.Container(content=ft.Text("━━  D9 NAVAMSA CHART (नवांश कुंडली)  ━━", size=15, color=C["primary"], weight="bold", text_align="center"), padding=6),
+            ft.Container(content=ft.Text("Each sign ÷ 9 parts of 3°20'  |  Soul & Dharma chart", size=12, color=C["hint_txt"]), padding=ft.padding.only(bottom=4)),
             d9_container,
-            ft.ElevatedButton("⬅️ Back to Astro Input Form", 
-                             icon=ft.icons.ARROW_UPWARD,
-                             bgcolor=C["secondary"], color="#FFFFFF",
-                             on_click=scroll_to_astro_inputs),
+            ft.ElevatedButton("⬅️ Back to Astro Input Form", icon="arrow_upward", bgcolor=C["secondary"], color="#FFFFFF", on_click=scroll_to_astro_inputs),
             
             ft.Divider(height=8, color=C["divider"]),
-            ft.Container(content=ft.Text(
-                "North Indian Diamond Style  |  Lahiri Ayanamsa\n"
-                "Research only. Not financial or astrological advice.",
-                size=11, color=C["hint_txt"], text_align="center"),
-                bgcolor=C["res_bg"], padding=8, border_radius=6),
+            ft.Container(content=ft.Text("North Indian Diamond Style  |  Lahiri Ayanamsa\nResearch only. Not financial or astrological advice.", size=11, color=C["hint_txt"], text_align="center"),
+                         bgcolor=C["res_bg"], padding=8, border_radius=6),
         ])
 
-        # ══════════════════════════════════════════════════════════════════════
         # SCREEN 6 — HELP / THEORY
-        # ══════════════════════════════════════════════════════════════════════
         HELP_TEXT = (
             "╔══════════════════════════════╗\n"
             "   BHOOVALAYA ORACLE — THEORY\n"
@@ -1242,84 +1050,6 @@ def main(page: ft.Page):
             "  3=धर्म  4=वैराग्य 5=ऐश्वर्य\n"
             "  6=यश   7=श्री   8=वीर्य\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "THEORY 5: GRAHA MARKET MAPPING\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "Sun → BULLISH 5/5\n"
-            "  PSU Govt Energy Gold\n"
-            "  Hold 1-4 Wks | Best: Sunday\n\n"
-            "Moon → VOLATILE 2/5\n"
-            "  FMCG Dairy Retail\n"
-            "  Hold 1-3 Days | Best: Monday\n\n"
-            "Jupiter → STRONGLY BULLISH 5/5\n"
-            "  Banking Education\n"
-            "  Hold 1-6 Months | Best: Thu\n\n"
-            "Rahu → SPECULATIVE 3/5\n"
-            "  Tech Pharma Foreign\n"
-            "  Caution | Best: Saturday\n\n"
-            "Mercury → BULLISH 4/5\n"
-            "  IT Telecom Media\n"
-            "  Hold 1-3 Wks | Best: Wed\n\n"
-            "Venus → BULLISH 4/5\n"
-            "  FMCG Luxury Hotels\n"
-            "  Hold 2-8 Wks | Best: Friday\n\n"
-            "Ketu → BEARISH 2/5\n"
-            "  Old Economy Exit Zones\n"
-            "  Avoid Entry | Best: Tuesday\n\n"
-            "Saturn → SLOW BULLISH 3/5\n"
-            "  Infra Metals Coal\n"
-            "  Hold 3-12 Months | Best: Sat\n\n"
-            "Mars → BULLISH 4/5\n"
-            "  Metals Defence Energy\n"
-            "  Hold 1-7 Days | Best: Tuesday\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "THEORY 6: TARA BALA\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "Count Nakshatras from listing\n"
-            "date to today % 9:\n"
-            "  2=सम्पत 4=क्षेम 6=साधक\n"
-            "  8=मित्र 0=परम-मित्र = GOOD\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "THEORY 7: NAKSHATRA TIMING\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "27 Nakshatras = 1 lunar cycle\n"
-            "Today Nakshatra = DayOfYear%27\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "D1 RASI CHART\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "Shows actual positions of all\n"
-            "planets at birth/query time.\n"
-            "H1 (RED) = Lagna (Ascendant)\n"
-            "Houses go clockwise from top.\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "D9 NAVAMSA CHART\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "Each sign divided into 9 parts\n"
-            "of 3 degrees 20 minutes each.\n"
-            "108 divisions total.\n"
-            "Shows spouse, dharma & soul.\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "COMPLETE ORACLE FLOW\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "  English Name\n"
-            "       ↓\n"
-            "  Hindi Transliteration\n"
-            "       ↓\n"
-            "  Akshara Sum (Theory 1)\n"
-            "       ↓\n"
-            "  Navaank 1-9 (Theory 2)\n"
-            "       ↓\n"
-            "  Ruling Planet + Market Bias\n"
-            "       +\n"
-            "  Temporal Vibration (Th 3)\n"
-            "       ↓\n"
-            "  Sutra Principle (Theory 4)\n"
-            "       +\n"
-            "  Tara Bala (Theory 6)\n"
-            "       +\n"
-            "  Today Nakshatra (Theory 7)\n"
-            "       ↓\n"
-            "  FINAL ORACLE FORECAST\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             "DISCLAIMER\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             "For study and research ONLY.\n"
@@ -1332,51 +1062,28 @@ def main(page: ft.Page):
         help_screen = ft.Column(visible=False, controls=[
             make_header("❓  HELP — Theory & Reference"),
             ft.Divider(height=4, color=C["divider"]),
-            ft.Container(
-                content=ft.Text(HELP_TEXT, size=14,
-                                color=C["dark_txt"], selectable=True,
-                                font_family="monospace"),
+            ft.Container(content=ft.Text(HELP_TEXT, size=14, color=C["dark_txt"], selectable=True, font_family="monospace"),
                 bgcolor=C["res_bg"], padding=14, border_radius=8,
-                border=ft.Border(
-                    top=ft.BorderSide(2,C["primary"]),
-                    bottom=ft.BorderSide(2,C["primary"]),
-                    left=ft.BorderSide(2,C["primary"]),
-                    right=ft.BorderSide(2,C["primary"]))),
+                border=ft.Border(top=ft.BorderSide(2,C["primary"]), bottom=ft.BorderSide(2,C["primary"]), left=ft.BorderSide(2,C["primary"]), right=ft.BorderSide(2,C["primary"]))),
         ])
 
-        # ══════════════════════════════════════════════════════════════════════
-        # QUIT DIALOG — Confirm Yes/No before closing
-        # ══════════════════════════════════════════════════════════════════════
+        # QUIT DIALOG
         def confirm_quit(e):
             def yes_quit(ev):
                 dlg.open = False
                 page.update()
                 page.window_destroy()
-
             def no_quit(ev):
                 dlg.open = False
                 page.update()
 
             dlg = ft.AlertDialog(
                 modal=True,
-                title=ft.Text("Exit App?", size=18, weight="bold",
-                              color=C["primary"]),
-                content=ft.Text(
-                    "Are you sure you want to exit\nBhoovalaya Oracle?",
-                    size=15, color=C["black_txt"]),
+                title=ft.Text("Exit App?", size=18, weight="bold", color=C["primary"]),
+                content=ft.Text("Are you sure you want to exit\nBhoovalaya Oracle?", size=15, color=C["black_txt"]),
                 actions=[
-                    ft.ElevatedButton(
-                        "✅  YES — EXIT",
-                        bgcolor=C["red"], color="#FFFFFF",
-                        style=ft.ButtonStyle(text_style=ft.TextStyle(
-                            size=15, weight="bold")),
-                        on_click=yes_quit),
-                    ft.ElevatedButton(
-                        "❌  NO — STAY",
-                        bgcolor=C["green"], color="#FFFFFF",
-                        style=ft.ButtonStyle(text_style=ft.TextStyle(
-                            size=15, weight="bold")),
-                        on_click=no_quit),
+                    ft.ElevatedButton("✅  YES — EXIT", bgcolor=C["red"], color="#FFFFFF", style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=yes_quit),
+                    ft.ElevatedButton("❌  NO — STAY", bgcolor=C["green"], color="#FFFFFF", style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=no_quit),
                 ],
                 actions_alignment="center",
             )
@@ -1384,31 +1091,20 @@ def main(page: ft.Page):
             dlg.open = True
             page.update()
 
-        # Handle keyboard Enter key to show confirmation pop-up
         def on_keyboard(e: ft.KeyboardEvent):
             if e.key == "Enter":
                 confirm_quit(None)
 
         page.on_keyboard_event = on_keyboard
 
-        # Handle Android back button also triggers quit confirm
         def on_window_event(e):
             if e.data == "close":
                 confirm_quit(e)
 
         page.on_window_event = on_window_event
 
-        # ══════════════════════════════════════════════════════════════════════
-        # NAVIGATION
-        # ══════════════════════════════════════════════════════════════════════
-        screens = {
-            "oracle": oracle_screen,
-            "list":   list_screen,
-            "entry":  entry_screen,
-            "build":  build_screen,
-            "astro":  astro_screen,
-            "help":   help_screen,
-        }
+        # NAVIGATION CONTROL
+        screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "build": build_screen, "astro": astro_screen, "help": help_screen}
         nav_buttons = {}
 
         def show_screen(name):
@@ -1422,12 +1118,8 @@ def main(page: ft.Page):
             page.update()
 
         def make_nav(label, name):
-            btn = ft.ElevatedButton(
-                text=label, bgcolor="#9E9E9E",
-                color="#FFFFFF", height=48, expand=True,
-                style=ft.ButtonStyle(
-                    text_style=ft.TextStyle(size=12,weight="bold")),
-                on_click=lambda e, n=name: show_screen(n))
+            btn = ft.ElevatedButton(text=label, bgcolor="#9E9E9E", color="#FFFFFF", height=48, expand=True,
+                style=ft.ButtonStyle(text_style=ft.TextStyle(size=12,weight="bold")), on_click=lambda e, n=name: show_screen(n))
             nav_buttons[name] = btn
             return btn
 
@@ -1440,23 +1132,16 @@ def main(page: ft.Page):
             make_nav("❓\nHelp",    "help"),
         ], spacing=2)
 
-        # ── PAGE LAYOUT ────────────────────────────────────────────────────────
+        # PAGE ATTACHMENTS
         page.add(ft.Container(
             content=ft.Row([
                 ft.Column([
-                    ft.Text("🔮 BHOOVALAYA STOCK ORACLE",
-                            size=17, color="#FFFFFF", weight="bold"),
-                    ft.Text("Vedic Akshara + Financial Astrology",
-                            size=11, color="#BBDEFB"),
+                    ft.Text("🔮 BHOOVALAYA STOCK ORACLE", size=17, color="#FFFFFF", weight="bold"),
+                    ft.Text("Vedic Akshara + Financial Astrology", size=11, color="#BBDEFB"),
                 ], expand=True, spacing=2),
-                ft.ElevatedButton(
-                    "✕ QUIT",
-                    bgcolor="#B71C1C", color="#FFFFFF", height=38,
-                    style=ft.ButtonStyle(text_style=ft.TextStyle(
-                        size=13, weight="bold")),
-                    on_click=confirm_quit),
-            ], alignment="spaceBetween"),
-            bgcolor=C["primary"], padding=12))
+                ft.ElevatedButton("✕ QUIT", bgcolor="#B71C1C", color="#FFFFFF", height=38,
+                    style=ft.ButtonStyle(text_style=ft.TextStyle(size=13, weight="bold")), on_click=confirm_quit),
+            ], alignment="spaceBetween"), bgcolor=C["primary"], padding=12))
 
         page.add(status_bar)
         page.add(prg_bar)
@@ -1474,40 +1159,21 @@ def main(page: ft.Page):
 
         show_screen("oracle")
 
-        # ── STARTUP MESSAGE ────────────────────────────────────────────────────
         n = db_count()
         if n < 5:
             set_status("No database. Go to Build tab.", C["red"])
-            result_txt.value = ("WELCOME!\n\n"
-                "App is working correctly.\n\n"
-                "FIRST TIME SETUP:\n"
-                "1. Tap BUILD tab below\n"
-                "2. Tap BUILD DATABASE\n"
-                "3. Wait 5-15 minutes\n"
-                "4. Come back to ORACLE\n"
-                "5. Search any NSE symbol\n\n"
-                "Tap ❓HELP for theory guide.\n"
-                "Tap 🪐ASTRO for D1 D9 charts.")
+            result_txt.value = ("WELCOME!\n\nApp is working correctly.\n\nFIRST TIME SETUP:\n1. Tap BUILD tab below\n2. Tap BUILD DATABASE\n3. Wait 5-15 minutes\n4. Come back to ORACLE\n5. Search any NSE symbol\n\nTap ❓HELP for theory guide.\nTap 🪐ASTRO for D1 D9 charts.")
             result_cont.visible = True
         else:
             set_status("Ready — "+str(n)+" stocks loaded.", C["green"])
-            result_txt.value = ("WELCOME BACK!\n\n"
-                +str(n)+" stocks ready.\n\n"
-                "Examples:\n"
-                "  RELIANCE  TCS  SBIN\n"
-                "  INFY  WIPRO  ITC  LT\n\n"
-                "Tap 🪐ASTRO for D1+D9 charts.\n"
-                "Tap ❓HELP for theory guide.")
+            result_txt.value = ("WELCOME BACK!\n\n"+str(n)+" stocks ready.\n\nExamples:\n  RELIANCE  TCS  SBIN\n  INFY  WIPRO  ITC  LT\n\nTap 🪐ASTRO for D1+D9 charts.\nTap ❓HELP for theory guide.")
             result_cont.visible = True
         page.update()
 
     except Exception as err:
         try:
             page.controls.clear()
-            page.add(ft.Container(
-                content=ft.Text("STARTUP ERROR:\n"+str(err),
-                                size=15, color="#FFFFFF", selectable=True),
-                bgcolor=C["red"], padding=16, border_radius=8))
+            page.add(ft.Container(content=ft.Text("STARTUP ERROR:\n"+str(err), size=15, color="#FFFFFF", selectable=True), bgcolor=C["red"], padding=16, border_radius=8))
             page.update()
         except: pass
 

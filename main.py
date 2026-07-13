@@ -19,7 +19,7 @@ import flet.canvas as cv
 # ── CONSTANTS ──────────────────────────────────────────────────────────────────
 AKSHARA_VALS = {
     'अ':1,'आ':2,'इ':3,'ई':4,'उ':5,'ऊ':6,'ए':7,'ऐ':8,'ओ':9,'औ':10,
-    'क':11,'ख':12,'ग':13,'घ':14,'ङ':15,'च':16,'छ':17,'ज':18,'झ':19,'ञ':20,
+    'क':11,'ख':12,'ग':13,'ग':14,'ङ':15,'च':16,'छ':17,'ज':18,'झ':19,'ञ':20,
     'ट':21,'ठ':22,'ड':23,'ढ':24,'ण':25,'त':26,'थ':27,'द':28,'ध':29,'न':30,
     'प':31,'फ':32,'ब':33,'भ':34,'म':35,'य':36,'र':37,'ल':38,'व':39,'श':40,
     'ष':41,'स':42,'ह':43,'ि':2,'ा':2,'े':7,'ै':8,'ो':9,'ौ':10,'्':0,'ं':1
@@ -50,7 +50,7 @@ NAK = [
 CURATED = {
     "SBIN":"भारतीय स्टेट बैंक","HDFCBANK":"एचडीएफसी बैंक",
     "ICICIBANK":"आईसीआईसीआई बैंक","AXISBANK":"एक्सिस बैंक",
-    "RELIANCE":"रिलायंस","TCS":"टाटा कंसल्टेंसी सर्विसेज",
+    "RELIANCE":"रिलायंस लिमिटेड","TCS":"टाटा कंसल्टेंसी सर्विसेज",
     "INFY":"इन्फोसिस","WIPRO":"विप्रो",
     "NTPC":"राष्ट्रीय ताप विद्युत निगम",
     "ONGC":"तेल और प्राकृतिक गैस निगम",
@@ -75,12 +75,12 @@ CURATED = {
     "SAIL":"स्टील अथॉरिटी ऑफ इंडिया","NMDC":"एनएमडीसी",
     "HINDALCO":"हिंडाल्को निष्कर्ष","VEDL":"वेदांता",
     "TATAPOWER":"टाटा पावर","ADANIPOWER":"अदानी पावर",
-    "ADANIENT":"अदानी एंटरप्राइजेज","ADANIGREEN":"अदानी ग्रीन एनर्जी",
+    "ADANIENT":"अदानी एंटरप्राइजेज","ADANIGREEN":"अदानी ग्रीन配置",
     "DLF":"डीएलएफ","GODREJPROP":"गोदरेज प्रॉपर्टीज",
-    "BRITANNIA":"ब्रिटानिया इंडस्ट्रीज","DABUR":"डाबर इंडिया",
+    "BRITANNIA":"ब्रिटानिया景气","DABUR":"डाबर इंडिया",
     "MARICO":"मेरिको","NESTLEIND":"नेस्ले इंडिया",
     "HEROMOTOCO":"हीरो मोटोकॉर्प","EICHERMOT":"आयशर मोटर्स",
-    "ASHOKLEY":"अशोक लेलैंड","TVSMOTOR":"टीवीएस motor",
+    "ASHOKLEY":"अशोक लेलैंड","TVSMOTOR":"टीवीएस मोटर",
     "CONCOR":"कंटेनर कॉर्पोरेशन","BHEL":"भारत हेवी इलेक्ट्रिकल्स",
     "APOLLOHOSP":"अपोलो हॉस्पिटल्स","DIVISLAB":"दिविस लेबोरेटरीज",
     "BIOCON":"बायोकॉन","LUPIN":"ल्यूपिन",
@@ -89,3841 +89,7 @@ CURATED = {
 WD = {
     "LIMITED":"लिमिटेड","LTD":"लिमिटेड","BANK":"बैंक",
     "INDUSTRIES":"इंडस्ट्रीज","INDUSTRY":"उद्योग",
-    "INDIA":"INDIA","INDIAN":"इंडियन","POWER":"पावर",
-    "ENERGY":"एनर्जी","FINANCE":"फाइनेंस","STEEL":"स्टील",
-    "MOTORS":"MOTORS","MOTOR":"मोटर",
-    "TECHNOLOGIES":"टेक्नोलॉजीज","TECHNOLOGY":"टेक्नोलॉजी",
-    "AND":"एंड","&":"एंड","SERVICES":"सर्विसेज","SERVICE":"सर्विस",
-    "PHARMA":"फार्मा","PHARMACEUTICALS":"फार्मास्युटिकल्स",
-    "CEMENT":"सीमेंट","OIL":"OIL","GAS":"गैस",
-    "TELECOM":"टेलीकॉम","GROUP":"ग्रुप",
-    "CHEMICALS":"केमिकल्स","NATIONAL":"नेशनल",
-    "CORPORATION":"कॉर्पोरेशन","CORP":"कॉर्प",
-    "MEDIA":"MEDIA","HEALTHCARE":"हेल्थकेयर",
-    "CAPITAL":"कैपिटल","INSURANCE":"इंश्योरेंस",
-    "REALTY":"रियल्टी","PROPERTIES":"प्रॉपर्टीज",
-    "AUTO":"ऑटो","AUTOMOBILE":"ऑटोमोबाइल",
-    "ELECTRIC":"इलेक्ट्रिक","ELECTRONICS":"इलेक्ट्रॉनिक्स",
-    "CONSTRUCTION":"कंस्ट्रक्शन","INFRASTRUCTURE":"इन्फ्रास्ट्रक्चर",
-    "ENTERPRISES":"एंटरप्राइजेज","ENTERPRISE":"एंटरप्राइज",
-    "HOLDINGS":"होल्डिंग्स","INVESTMENTS":"इन्वेस्टमेंट्स",
-    "LABORATORIES":"लेबोरेटरीज","LABS":"लैब्स",
-    "HOSPITAL":"हॉस्पिटल","HOSPITALS":"हॉस्पिटल्स",
-    "FOODS":"फूड्स","FOOD":"फूड","BEVERAGES":"बेवरेजेज",
-    "TEXTILE":"टेक्सटाइल","TEXTILES":"टेक्सटाइल्स",
-    "FERTILIZERS":"फर्टिलाइजर्स","AGRO":"एग्रो",
-    "TRADING":"ट्रेडिंग","EXPORTS":"एक्सपोर्ट्स",
-    "SOLUTIONS":"सॉल्यूशंस","SYSTEMS":"सिस्टम्स",
-    "GLOBAL":"ग्लोबल","INTERNATIONAL":"इंटरनेशनल",
-    "MANAGEMENT":"मैनेजमेंट","CONSULTING":"कंसलिटींग",
-    "SECURITIES":"सिक्योरिटीज","PETROLEUM":"पेट्रोलियम",
-    "COMPANY":"कंपनी","SOLAR":"सोलर","RENEWABLE":"रिन्यूएबल",
-    "DIGITAL":"डिजिटल","NETWORK":"नेटवर्क","NETWORKS":"नेटवर्क्स",
-}
-PR = {
-    'A':'ए','B':'ब','C':'क','D':'ड','E':'इ','F':'फ',
-    'G':'ग','H':'ह','I':'इ','J':'ज','K':'क','L':'ल',
-    'M':'म','N':'न','O':'ओ','P':'प','Q':'क','R':'र',
-    'S':'स','T':'ट','U':'य','V':'व','W':'व','X':'क्स',
-    'Y':'य','Z':'ज'
-}
-NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
-
-# ── HIGH VISIBILITY SYSTEM BLUE COLOR PALETTE ──────────────────────────────────
-C = {
-    "bg":       "#FFFFFF",
-    "primary":  "#0D47A1",  # Dark Blue
-    "secondary":"#1565C0",  # Medium Vivid Blue
-    "accent":   "#1976D2",  # Operation Blue
-    "dark_txt": "#0D47A1",
-    "black_txt":"#1A237E",
-    "hint_txt": "#546E7A",
-    "green":    "#1B5E20",
-    "orange":   "#E65100",
-    "red":      "#B71C1C",
-    "inp_bg":   "#F0F4FA",
-    "res_bg":   "#E8EAF6",
-    "row_odd":  "#F5F7FA",
-    "row_even": "#FFFFFF",
-    "divider":  "#5C6BC0",
-}
-
-# ── HELPER FUNCTIONS ───────────────────────────────────────────────────────────
-def parse_dt(s):
-    if not s: return None
-    for f in ("%d-%m-%Y","%Y-%m-%d","%d/%m/%Y","%d-%b-%Y"):
-        try: return datetime.strptime(s.strip(), f)
-        except: pass
-    return None
-
-def get_hindi(sym, eng):
-    if sym in CURATED: return CURATED[sym]
-    if not REQUESTS_OK:
-        out = []
-        for w in eng.upper().split():
-            cw = w.strip("&.,()-/")
-            out.append(WD.get(cw, "".join(PR.get(c,"") for c in cw)))
-        return " ".join(out)
-    try:
-        url = ("https://translate.googleapis.com/translate_a/single"
-               "?client=gtx&sl=en&tl=hi&dt=t&q=" + requests.utils.quote(eng))
-        d = requests.get(url, timeout=5).json()
-        t = "".join(p[0] for p in d[0] if p[0]).strip()
-        if t and t != eng:
-            time.sleep(0.15)
-            return t
-    except: pass
-    out = []
-    for w in eng.upper().split():
-        cw = w.strip("&.,()-/")
-        if cw in WD: out.append(WD[cw]); continue
-        try:
-            r = requests.get(
-                "https://inputtools.google.com/request?text=" + cw + "&ime=transliteration_en_hi&num=1",
-                timeout=4).json()
-            out.append(r[1][0][1][0] if r[0]=="SUCCESS" else "".join(PR.get(c,"") for c in cw))
-        except: out.append("".join(PR.get(c,"") for c in cw))
-    return " ".join(out)
-
-def calc(name):
-    total, steps = 0, []
-    for c in name:
-        w = AKSHARA_VALS.get(c, 0)
-        total += w
-        if w > 0 or c == "्":
-            steps.append(c + "=" + str(w))
-        elif c == " ":
-            steps.append("|")
-    return total, " ".join(steps)
-
-def make_report(asum, tval, ldate, elapsed_days):
-    nv    = (asum % 9) or 9
-    g     = GRAHA[(nv - 1) % 9]
-    total = asum + tval
-    sutra = SUTRA_MAP.get(total % 9, "")
-    today = datetime.now()
-    nak   = NAK[today.timetuple().tm_yday % 27]
-    if ldate:
-        tc = ((today.timetuple().tm_yday - ldate.timetuple().tm_yday) % 27) + 1
-        tn = ["जन्म","सम्पत","विपत","क्षेम","प्रत्यरि","साधक","वध","मित्र","परम-मित्र"]
-        tara = tn[(tc-1)%9] + (" GOOD" if tc%9 in(2,4,6,8,0) else " CAUTION")
-    else:
-        tara = "N/A"
-    S  = "─" * 30
-    S2 = "═" * 30
-    return "\n".join([
-        S2, "    BHOOVALAYA ORACLE RESULT", S2, "",
-        f"  LISTING DATE : {ldate.strftime('%d-%m-%Y') if ldate else 'N/A'}",
-        f"  DAYS LAPSED  : {elapsed_days} Days", "",
-        "STEP 1: AKSHARA WEIGHT THEORY", "  Each Hindi sound has weight:", S,
-        "STEP 2: NAVAANK CALCULATION", "  Akshara Sum = " + str(asum), "  Digital Root (1-9) = " + str(nv), S,
-        "STEP 3: TEMPORAL VIBRATION", f"  Temporal = Days % 730 = {tval}", f"  Combined Vib = {total}", S,
-        "STEP 4: SUTRA PRINCIPLE", "  " + sutra, S,
-        "STEP 5: RULING GRAHA (PLANET)", "  Navaank " + str(nv) + " → " + g[0], S2,
-        "  MARKET FORECAST", S2, "  Signal   : " + g[1], "  Strength : " + {1:"★☆☆☆☆", 2:"★★☆☆☆", 3:"★★★☆☆", 4:"★★★★☆", 5:"★★★★★"}.get(g[2],""), "  Sectors  : " + g[3], S,
-        "STEP 6: VEDIC TIMING", f"  Nakshatra: {nak} | Tara: {tara}", S2
-    ])
-
-# ── VEDIC ASTROLOGY CALCULATIONS ──────────────────────────────────────────────
-SIGN_ABB  = ["Ar","Ta","Ge","Ca","Le","Vi","Li","Sc","Sg","Cp","Aq","Pi"]
-
-def norm360(x): return x % 360
-
-def jd_from_dt(year, month, day, hour=12, minute=0):
-    if month <= 2: year -= 1; month += 12
-    A = int(year / 100)
-    B = 2 - A + int(A / 4)
-    return (int(365.25 * (year + 4716)) + int(30.6001 * (month + 1)) + day + hour/24.0 + minute/1440.0 + B - 1524.5)
-
-def lahiri_ayanamsa(jd):
-    T = (jd - 2451545.0) / 36525.0
-    return 23.85 + 0.013611 * T + 0.000092 * T * T
-
-def calc_planet_positions(jd, lat=19.0544, lon=72.8405):
-    T = (jd - 2451545.0) / 36525.0
-    sun_t = norm360(280.46646 + 36000.76983 * T)
-    moon_t = norm360(218.3164477 + 481267.88123421 * T)
-    merc_t = norm360(252.2509 + 149474.0722 * T)
-    ven_t  = norm360(181.9798 + 58517.8160 * T)
-    mars_t = norm360(355.433 + 19140.2993 * T)
-    jup_t  = norm360(34.3515 + 3034.9057 * T)
-    sat_t  = norm360(50.0774 + 1222.1138 * T)
-    rahu_t = norm360(125.0445 - 1934.1362*T)
-    ketu_t = norm360(rahu_t + 180)
-    
-    eps     = math.radians(23.439291111 - 0.013004167*T)
-    GMST    = norm360(280.46061837 + 360.98564736629*(jd - 2451545.0))
-    LST     = math.radians(norm360(GMST + lon))
-    asc_t   = math.degrees(math.atan2(math.cos(LST), -math.sin(LST)*math.cos(eps) - math.tan(math.radians(lat))*math.sin(eps))) % 360
-    ay = lahiri_ayanamsa(jd)
-    return {
-        "As": (asc_t - ay) % 360, "Su": (sun_t  - ay) % 360, "Mo": (moon_t - ay) % 360,
-        "Me": (merc_t - ay) % 360, "Ve": (ven_t  - ay) % 360, "Ma": (mars_t - ay) % 360,
-        "Ju": (jup_t  - ay) % 360, "Sa": (sat_t  - ay) % 360, "Ra": (rahu_t - ay) % 360, "Ke": (ketu_t - ay) % 360,
-    }, ay
-
-def lon_to_sign_deg(lon): return int((lon % 360) / 30), round(lon % 30, 2)
-
-def d9_sign(lon):
-    sign, deg = lon_to_sign_deg(lon)
-    nav_num   = int(deg / (30.0 / 9))
-    start_map = {0:0, 1:9, 2:6, 3:3, 4:0, 5:9, 6:6, 7:3, 8:0, 9:9, 10:6, 11:3}
-    return (start_map[sign] + nav_num) % 12
-
-def build_diamond_chart(positions, lagna_sign, title, chart_size=320):
-    W, p = chart_size, 8
-    x0, y0, x1, y1 = p, p, W - p, W - p
-    cx, cy = W // 2, W // 2
-    
-    HOUSES_GEOM = {
-        1:  {"poly": [(cx, y0), (x1, cy), (cx, y1), (x0, cy)], "txt": (cx, cy - 40),   "planets": (cx, cy - 15)},
-        2:  {"poly": [(x0, y0), (cx, y0), (x0, cy)],           "txt": (x0 + 35, y0 + 25), "planets": (x0 + 35, y0 + 45)},
-        3:  {"poly": [(x0, y0), (x0, cy), (cx, y0)],           "txt": (x0 + 25, y0 + 55), "planets": (x0 + 25, y0 + 75)},
-        4:  {"poly": [(x0, cy), (cx, y0), (cx, cy)],           "txt": (cx - 45, cy - 15), "planets": (cx - 45, cy + 5)},
-        5:  {"poly": [(x0, y1), (x0, cy), (cx, y1)],           "txt": (x0 + 25, y1 - 55), "planets": (x0 + 25, y1 - 35)},
-        6:  {"poly": [(x0, y1), (cx, y1), (x0, cy)],           "txt": (x0 + 35, y1 - 25), "planets": (x0 + 35, y1 - 5)},
-        7:  {"poly": [(cx, y1), (x0, cy), (cx, y0), (x1, cy)], "txt": (cx, cy + 40),   "planets": (cx, cy + 55)},
-        8:  {"poly": [(x1, y1), (cx, y1), (x1, cy)],           "txt": (x1 - 35, y1 - 25), "planets": (x1 - 35, y1 - 5)},
-        9:  {"poly": [(x1, y1), (x1, cy), (cx, y1)],           "txt": (x1 - 25, y1 - 55), "planets": (x1 - 25, y1 - 35)},
-        10: {"poly": [(x1, cy), (cx, y1), (cx, cy)],           "txt": (cx + 45, cy + 15), "planets": (cx + 45, cy - 5)},
-        11: {"poly": [(x1, y0), (x1, cy), (cx, y0)],           "txt": (x1 - 25, y0 + 55), "planets": (x1 - 25, y0 + 75)},
-        12: {"poly": [(x1, y0), (cx, y0), (x1, cy)],           "txt": (x1 - 35, y0 + 25), "planets": (x1 - 35, y0 + 45)},
-    }
-    
-    sign_planets = {i: [] for i in range(12)}
-    for planet, s_idx in positions.items(): sign_planets[int(s_idx)].append(planet)
-    
-    lagna_s = int(lagna_sign)
-    def get_house_sign(h_num): return (lagna_s + h_num - 1) % 12
-
-    shapes = [cv.Fill(paint=ft.Paint(color="#FCFDFE"))]
-    for h_num, info in HOUSES_GEOM.items():
-        is_lagna = (h_num == 1)
-        bg_color = "#FFE082" if is_lagna else "#F5F7FA"
-        stroke_color = "#B71C1C" if is_lagna else "#0D47A1"
-        stroke_w = 2.0 if is_lagna else 1.2
-        pts = info["poly"]
-        path_data = [cv.Path.MoveTo(pts[0][0], pts[0][1])]
-        for pt in pts[1:]: path_data.append(cv.Path.LineTo(pt[0], pt[1]))
-        path_data.append(cv.Path.Close())
-        shapes.append(cv.Path(path_data, paint=ft.Paint(color=bg_color, style=ft.PaintingStyle.FILL)))
-        shapes.append(cv.Path(path_data, paint=ft.Paint(color=stroke_color, stroke_width=stroke_w, style=ft.PaintingStyle.STROKE)))
-
-    grid_paint = ft.Paint(color="#0D47A1", stroke_width=1.5, style=ft.PaintingStyle.STROKE)
-    shapes.extend([
-        cv.Line(x0, y0, x1, y1, paint=grid_paint), cv.Line(x1, y0, x0, y1, paint=grid_paint),
-        cv.Line(cx, y0, x0, cy, paint=grid_paint), cv.Line(x0, cy, cx, y1, paint=grid_paint),
-        cv.Line(cx, y1, x1, cy, paint=grid_paint), cv.Line(x1, cy, cx, y0, paint=grid_paint),
-        cv.Rect(x=x0, y=y0, width=W-(2*p), height=W-(2*p), paint=grid_paint)
-    ])
-
-    for h_num, info in HOUSES_GEOM.items():
-        sign_idx = get_house_sign(h_num)
-        planets_here = sign_planets.get(sign_idx, [])
-        tx, ty = info["txt"]
-        shapes.append(cv.Text(x=tx - 6, y=ty - 10, text=str(sign_idx + 1), style=ft.TextStyle(size=12, color="#1A237E", weight="bold")))
-        shapes.append(cv.Text(x=tx + 5, y=ty - 8, text=f"({SIGN_ABB[sign_idx]})", style=ft.TextStyle(size=8, color="#546E7A")))
-        if planets_here:
-            px, py = info["planets"]
-            planets_txt = " ".join(planets_here)
-            shapes.append(cv.Text(x=px - (len(planets_txt) * 3), y=py, text=planets_txt, style=ft.TextStyle(size=11, color="#B71C1C", weight="bold")))
-
-    shapes.append(cv.Text(x=cx - 30, y=cy - 8, text=title, style=ft.TextStyle(size=10, color="#FFFFFF", weight="bold", bgcolor="#0D47A1")))
-    return cv.Canvas(shapes=shapes, width=W, height=W)
-
-# ── MAIN APP INTERFACE ─────────────────────────────────────────────────────────
-def main(page: ft.Page):
-    try:
-        page.title, page.bgcolor, page.padding, page.scroll = "Bhoovalaya Cosmic System", C["bg"], 10, "auto"
-        db_path = os.path.join(os.getenv("FLET_APP_STORAGE_DATA", "."), "bhuvalaya.db")
-
-        def init_db():
-            conn = sqlite3.connect(db_path)
-            conn.execute("CREATE TABLE IF NOT EXISTS stocks(symbol TEXT PRIMARY KEY, eng_name TEXT, hindi_name TEXT, ldate TEXT, asum INTEGER, breakdown TEXT, series TEXT DEFAULT 'EQ')")
-            conn.commit(); conn.close()
-        
-        init_db()
-
-        def db_count(): 
-            try: return sqlite3.connect(db_path).execute("SELECT COUNT(*) FROM stocks").fetchone()[0]
-            except: return 0
-        def db_search(q): return sqlite3.connect(db_path).execute("SELECT symbol, eng_name, hindi_name, ldate, asum FROM stocks WHERE symbol LIKE ? OR eng_name LIKE ? ORDER BY symbol LIMIT 100", ("%"+q+"%", "%"+q+"%")).fetchall()
-        def db_get(sym): return sqlite3.connect(db_path).execute("SELECT * FROM stocks WHERE symbol=?", (sym,)).fetchone()
-        def db_save(sym, eng, hindi, ldate, series="EQ"):
-            asum, bk = calc(hindi)
-            c = sqlite3.connect(db_path)
-            c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hindi, ldate, asum, bk, series))
-            c.commit(); c.close()
-            return True, asum
-
-        status_txt = ft.Text("System Initialized", size=14, color="#FFFFFF", weight="bold")
-        status_bar = ft.Container(content=status_txt, bgcolor=C["primary"], padding=10, border_radius=6)
-        prg_bar, prg_txt = ft.ProgressBar(value=0, visible=False, color="#FF6F00", bgcolor="#EEEEEE"), ft.Text("", size=13, color=C["orange"])
-
-        def set_status(msg, color=None): status_txt.value, status_bar.bgcolor = msg, color or C["primary"]; page.update()
-        def set_prg(pct, msg=""): prg_bar.visible, prg_bar.value, prg_txt.value = True, pct, msg; page.update()
-        def hide_prg(): prg_bar.visible, prg_txt.value = False, ""; page.update()
-        
-        def make_field(label, hint="", value=""):
-            return ft.TextField(label=label, label_style=ft.TextStyle(size=14, color=C["primary"], weight="bold"), hint_text=hint, value=value, text_style=ft.TextStyle(size=15, color=C["black_txt"]), border_color=C["primary"], border_width=2, bgcolor=C["inp_bg"])
-        def make_header(title, bgcolor=None): 
-            return ft.Container(content=ft.Text(title, size=15, color="#FFFFFF", weight="bold"), bgcolor=bgcolor or C["primary"], padding=10, border_radius=6)
-        def make_blue_btn(text, on_click, height=50):
-            return ft.ElevatedButton(text, bgcolor=C["primary"], color="#FFFFFF", elevation=4, height=height, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=on_click)
-
-        # ── TAB 1: ORACLE ─────────────────────────────────────────────────────
-        fld_oracle = make_field("Enter Stock Symbol", value="RELIANCE")
-        result_txt = ft.Text("", size=14, color=C["black_txt"], font_family="monospace", selectable=True)
-        result_box = ft.Container(content=result_txt, bgcolor=C["res_bg"], padding=12, border_radius=8, visible=False)
-
-        def do_oracle(e):
-            q = fld_oracle.value.strip().upper()
-            row = db_get(q) or (rows := db_search(q) and db_get(rows[0][0]))
-            if row:
-                sym, eng, hi, ldt, asum, bk, *_ = row
-                ldate = parse_dt(ldt)
-                days = (datetime.now() - ldate).days if ldate else 0
-                result_txt.value = make_report(asum, days % 730, ldate, days)
-                result_box.visible = True
-                set_status(f"Analysis complete for {sym}", C["green"])
-            else: set_status("Symbol not found.", C["red"])
-            page.update()
-
-        oracle_screen = ft.Column(visible=True, controls=[
-            make_header("🔮 BHOOVALAYA ORACLE CORE"), fld_oracle,
-            make_blue_btn("🔍 RUN ORACLE PREDICTION", do_oracle), result_box
-        ])
-
-        # ── TAB 2: STOCKS ─────────────────────────────────────────────────────
-        fld_list_search, list_rows = make_field("Filter System Database"), ft.Column(spacing=4)
-        
-        def load_list(q=""):
-            list_rows.controls.clear()
-            for i, r in enumerate(db_search(q)):
-                sym, eng, hi, ldt, asum = r
-                list_rows.controls.append(ft.Container(content=ft.Column([
-                    ft.Text(f"{sym} | {eng}", weight="bold", color=C["primary"]),
-                    ft.Text(f"Hindi: {hi} | Weights: {asum} | Listed: {ldt}", color=C["green"])
-                ]), bgcolor=C["row_odd"] if i%2==0 else C["row_even"], padding=8))
-            page.update()
-
-        list_screen = ft.Column(visible=False, controls=[
-            make_header("📋 STOCK REGISTRY"), fld_list_search,
-            make_blue_btn("🔍 FILTER RECORDS", lambda e: load_list(fld_list_search.value.strip().upper())), list_rows
-        ])
-
-        # ── TAB 3: DATA ENTRY ─────────────────────────────────────────────────
-        fld_sym, fld_eng, fld_hindi, fld_ldate = make_field("Stock Symbol"), make_field("Company English Name"), make_field("Transliterated Hindi Name"), make_field("Listing Date (DD-MM-YYYY)")
-        
-        entry_screen = ft.Column(visible=False, controls=[
-            make_header("✏️ DATABASE MAINTENANCE ENTRY"), fld_sym, fld_eng,
-            make_blue_btn("🌐 CONVERT TO HINDI", lambda e: setattr(fld_hindi, 'value', get_hindi(fld_sym.value.upper(), fld_eng.value)) or page.update()),
-            fld_hindi, fld_ldate,
-            ft.Row([
-                make_blue_btn("💾 SAVE DATA", lambda e: db_save(fld_sym.value.upper(), fld_eng.value, fld_hindi.value, fld_ldate.value) and set_status("Saved Record", C["green"])),
-                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["red"], color="#FFFFFF", on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), page.update()))
-            ])
-        ])
-
-        # ── TAB 4: KUNDALI ENGINE (WITH SEPARATE STEPPED RENDERING VIEWS) ───────
-        fld_date, fld_time, fld_lat, fld_lon = make_field("Date (DD-MM-YYYY)", value=datetime.now().strftime("%d-%m-%Y")), make_field("Time (HH:MM)", value=datetime.now().strftime("%H:%M")), make_field("Latitude", value="19.0544"), make_field("Longitude", value="72.8405")
-        
-        astro_form_container = ft.Column(spacing=10)
-        
-        # Split charts layout sections explicitly
-        d1_box = ft.Container(alignment=ft.alignment.center, visible=False)
-        d9_box = ft.Container(alignment=ft.alignment.center, visible=False)
-        
-        astro_chart_view = ft.Column(visible=False, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-
-        def render_kundali_matrix(view_mode):
-            try:
-                dt = parse_dt(fld_date.value)
-                tm = fld_time.value.split(":")
-                pos, ay = calc_planet_positions(jd_from_dt(dt.year, dt.month, dt.day, int(tm[0]), int(tm[1])), float(fld_lat.value), float(fld_lon.value))
-                
-                # Instantiating clean drawing sheets
-                d1_sheet = build_diamond_chart({p: lon_to_sign_deg(l)[0] for p, l in pos.items()}, lon_to_sign_deg(pos["As"])[0], "D1 RASI")
-                d9_sheet = build_diamond_chart({p: d9_sign(l) for p, l in pos.items()}, d9_sign(pos["As"]), "D9 NAVAMSHA")
-                
-                d1_box.content = d1_sheet
-                d9_box.content = d9_sheet
-
-                if view_mode == "D1":
-                    d1_box.visible, d9_box.visible = True, False
-                    set_status("D1 Rasi Kundali View Rendered Natively!", C["green"])
-                elif view_mode == "D9":
-                    d1_box.visible, d9_box.visible = False, True
-                    set_status("D9 Navamsha Kundali View Rendered Natively!", C["green"])
-                else:
-                    d1_box.visible, d9_box.visible = True, True
-                    set_status("Both D1 & D9 Visualized Sequentially!", C["green"])
-                
-                astro_form_container.visible = False
-                astro_chart_view.visible = True
-            except Exception as ex:
-                set_status(f"Calculation Frame Error: {ex}", C["red"])
-            page.update()
-
-        def clean_astro_view(e):
-            d1_box.content = None
-            d9_box.content = None
-            astro_chart_view.visible = False
-            astro_form_container.visible = True
-            set_status("Astro views reset.", C["primary"])
-            page.update()
-
-        astro_chart_view.controls.extend([
-            ft.Row([
-                ft.ElevatedButton("D1 ONLY", bgcolor=C["primary"], color="#FFFFFF", on_click=lambda e: render_kundali_matrix("D1")),
-                ft.ElevatedButton("D9 ONLY", bgcolor=C["secondary"], color="#FFFFFF", on_click=lambda e: render_kundali_matrix("D9")),
-                ft.ElevatedButton("BOTH", bgcolor=C["green"], color="#FFFFFF", on_click=lambda e: render_kundali_matrix("BOTH"))
-            ], alignment=ft.MainAxisAlignment.CENTER),
-            ft.Divider(height=10, color=C["divider"]),
-            d1_box,
-            ft.Divider(height=15, color=C["divider"]),
-            d9_box,
-            ft.Container(height=10),
-            ft.ElevatedButton("🧹 RETURN / CLEAR FORM", bgcolor=C["red"], color="#FFFFFF", width=250, height=45, on_click=clean_astro_view)
-        ])
-
-        astro_form_container.controls.extend([
-            ft.Row([fld_date, fld_time]), ft.Row([fld_lat, fld_lon]),
-            ft.Row([
-                make_blue_btn("📍 SHOW D1", lambda e: render_kundali_matrix("D1")),
-                make_blue_btn("📐 SHOW D9", lambda e: render_kundali_matrix("D9"))
-            ], alignment=ft.MainAxisAlignment.SPACE_EVENLY),
-            make_blue_btn("🕉️ DISPLAY BOTH CHARTS TOGETHER", lambda e: render_kundali_matrix("BOTH"))
-        ])
-
-        astro_screen = ft.Column(visible=False, controls=[
-            make_header("🕉️ VEDIC CALCULATION MATRIX"),
-            astro_form_container,
-            astro_chart_view
-        ], expand=True)
-
-        # ── TAB 5: DATABASE BUILD (WITH DELETION CONFIRMATION DIALOG) ──────────
-        def execute_actual_sync(wipe_db):
-            try:
-                if wipe_db:
-                    set_status("Wiping out historical database storage...", C["orange"])
-                    if os.path.exists(db_path):
-                        os.remove(db_path)
-                    init_db() # Create clean schema instantly
-
-                set_status("Downloading data rows from NSE India...", C["accent"])
-                res = requests.get(NSE_URL, timeout=15)
-                r = csv.reader(io.StringIO(res.text)); next(r)
-                rows = list(r); total = len(rows)
-                
-                db_c = sqlite3.connect(db_path)
-                for idx, row in enumerate(rows):
-                    if not row or len(row) < 4: continue
-                    sym, eng, series, ldt = row[0].strip(), row[1].strip(), row[2].strip(), row[3].strip()
-                    if series != "EQ": continue
-                    hi = get_hindi(sym, eng)
-                    asum, bk = calc(hi)
-                    db_c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hi, ldt, asum, bk, series))
-                    if idx % 12 == 0: set_prg(idx/total, f"Indexing {sym}")
-                
-                db_c.commit(); db_c.close()
-                hide_prg()
-                set_status(f"Database Configured! Clean Sync Complete.", C["green"])
-            except Exception as ex: 
-                hide_prg()
-                set_status(f"Sync execution failed: {ex}", C["red"])
-
-        def trigger_sync_intent(e):
-            # Building interactive confirmation dialog window layout frame
-            def close_dialog(wipe_confirmed):
-                confirm_dialog.open = False
-                page.update()
-                threading.Thread(target=execute_actual_sync, args=(wipe_confirmed,), daemon=True).start()
-
-            confirm_dialog = ft.AlertDialog(
-                title=ft.Text("Confirm Database Build Action"),
-                content=ft.Text("Do you want to completely REMOVE the old database file before starting the fresh sync? (Saying 'YES' is recommended if dates are incorrect)."),
-                actions=[
-                    ft.TextButton("YES (Wipe Clean)", on_click=lambda x: close_dialog(True)),
-                    ft.TextButton("NO (Append/Update)", on_click=lambda x: close_dialog(False))
-                ],
-                actions_alignment=ft.MainAxisAlignment.END,
-            )
-            page.dialog = confirm_dialog
-            confirm_dialog.open = True
-            page.update()
-
-        db_screen = ft.Column(visible=False, controls=[
-            make_header("⚙️ SYSTEM STORAGE PANEL"),
-            make_blue_btn("⚡ EXECUTE AUTOMATED NSE SYNC", trigger_sync_intent),
-            prg_bar, prg_txt
-        ])
-
-        # ── CORE NAVIGATION INTEGRATION ────────────────────────────────────────
-        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen}
-        def show_screen(name):
-            for k, v in all_screens.items(): v.visible = (k == name)
-            page.update()
-
-        nav_bar = ft.NavigationBar(
-            destinations=[
-                ft.NavigationBarDestination(icon=ft.Icons.PSYCHOLOGY, label="Oracle"),
-                ft.NavigationBarDestination(icon=ft.Icons.FORMAT_LIST_BULLETED, label="Stocks"),
-                ft.NavigationBarDestination(icon=ft.Icons.EDIT_NOTE, label="Entry"),
-                ft.NavigationBarDestination(icon=ft.Icons.STARS, label="Kundali"),
-                ft.NavigationBarDestination(icon=ft.Icons.STORAGE, label="Database"),
-            ],
-            on_change=lambda e: show_screen(["oracle", "list", "entry", "astro", "db"][int(e.data)]),
-            bgcolor="#CDD7E6" 
-        )
-
-        page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, nav_bar)
-        set_status(f"System Operational — {db_count()} records configured.", C["green"])
-    except Exception as err:
-        page.add(ft.Container(content=ft.Text(f"Fatal Matrix Error:\n{err}"), bgcolor=C["red"]))
-        page.update()
-
-if __name__ == "__main__":
-    ft.app(target=main)
-
-import csv
-import io
-import time
-import math
-from datetime import datetime
-
-try:
-    import requests
-    REQUESTS_OK = True
-except Exception:
-    REQUESTS_OK = False
-
-import flet as ft
-import flet.canvas as cv
-
-# ── CONSTANTS ──────────────────────────────────────────────────────────────────
-AKSHARA_VALS = {
-    'अ':1,'आ':2,'इ':3,'ई':4,'उ':5,'ऊ':6,'ए':7,'ऐ':8,'ओ':9,'औ':10,
-    'क':11,'ख':12,'ग':13,'घ':14,'ङ':15,'च':16,'छ':17,'ज':18,'झ':19,'ञ':20,
-    'ट':21,'ठ':22,'ड':23,'ढ':24,'ण':25,'त':26,'थ':27,'द':28,'ध':29,'न':30,
-    'प':31,'फ':32,'ब':33,'भ':34,'म':35,'य':36,'र':37,'ल':38,'व':39,'श':40,
-    'ष':41,'स':42,'ह':43,'ि':2,'ा':2,'े':7,'ै':8,'ो':9,'ौ':10,'्':0,'ं':1
-}
-SUTRA_MAP = {
-    0:"अनंत(Ananta)",1:"शक्ति(Shakti)",2:"ज्ञान(Gnana)",
-    3:"धर्म(Dharma)",4:"वैराग्य(Vairagya)",5:"ऐश्वर्य(Aishwarya)",
-    6:"यश(Yashas)",7:"श्री(Shree)",8:"वीर्य(Veerya)"
-}
-GRAHA = {
-    0:("मंगल Mars","BULLISH",4,"Metals Defence Energy","1-7 Days","Strict stop-loss","Tuesday"),
-    1:("सूर्य Sun","BULLISH",5,"PSU Govt Energy Gold","1-4 Weeks","Enter Monday","Sunday"),
-    2:("चंद्र Moon","VOLATILE",2,"FMCG Dairy Retail","1-3 Days","Avoid overnight","Monday"),
-    3:("गुरु Jupiter","STRONGLY BULLISH",5,"Banking Education","1-6 Months","Watch retrograde","Thursday"),
-    4:("राहु Rahu","SPECULATIVE",3,"Tech Pharma Foreign","Caution","No leverage","Saturday"),
-    5:("बुध Mercury","BULLISH",4,"IT Telecom Media","1-3 Weeks","Watch retrograde","Wednesday"),
-    6:("शुक्र Venus","BULLISH",4,"FMCG Luxury Hotels","2-8 Weeks","Book at peaks","Friday"),
-    7:("केतु Ketu","BEARISH",2,"Old Economy Exit","Avoid Entry","Reduce positions","Tuesday"),
-    8:("शनि Saturn","SLOW BULLISH",3,"Infra Metals Coal","3-12 Months","No panic sell","Saturday"),
-}
-NAK = [
-    "अश्विनी","भरणी","कृत्तिका","रोहिणी","मृगशिरा","आर्द्रा",
-    "पुनर्वसु","पुष्य","आश्लेषा","मघा","पूर्वाफाल्गुनी","उत्तराफाल्गुनी",
-    "हस्त","चित्रा","स्वाति","विशाखा","अनुराधा","ज्येष्ठा",
-    "मूल","पूर्वाषाढ़ा","उत्तराषाढ़ा","श्रवण","धनिष्ठा","शतभिषा",
-    "पूर्वाभाद्रपद","उत्तराभाद्रपद","रेवती"
-]
-CURATED = {
-    "SBIN":"भारतीय स्टेट बैंक","HDFCBANK":"एचडीएफसी बैंक",
-    "ICICIBANK":"आईसीआईसीआई बैंक","AXISBANK":"एक्सिस बैंक",
-    "RELIANCE":"रिलायंस","TCS":"टाटा कंसल्टेंसी सर्विसेज",
-    "INFY":"इन्फोसिस","WIPRO":"विप्रो",
-    "NTPC":"राष्ट्रीय ताप विद्युत निगम",
-    "ONGC":"तेल और प्राकृतिक गैस निगम",
-    "TATASTEEL":"टाटा स्टील","COALINDIA":"कोल इंडिया",
-    "HINDUNILVR":"हिंदुस्तान यूनिलीवर","ITC":"आईटीसी",
-    "LT":"लार्सन एंड टुब्रो","MARUTI":"मारुति सुजुकी",
-    "TATAMOTORS":"टाटा मोटर्स","SUNPHARMA":"सन फार्मास्युटिकल",
-    "BHARTIARTL":"भारती एयरटेल","BAJFINANCE":"बजाज फाइनेंस",
-    "LICI":"भारतीय जीवन बीमा निगम","IRCTC":"भारतीय रेलवे खानपान",
-    "HAL":"हिंदुस्तान एयरोनॉटिक्स","ASIANPAINT":"एशियन पेंट्स",
-    "TITAN":"टाइटन कंपनी","ZOMATO":"जोमैटो",
-    "PNB":"पंजाब नेशनल बैंक","BEL":"भारत इलेक्ट्रॉनिक्स",
-    "HCLTECH":"एचसीएल टेक्नोलॉजीज","ADANIPORTS":"अदानी पोर्ट्स",
-    "KOTAKBANK":"कोटक महिंद्रा बैंक","DRREDDY":"डॉ रेड्डीज",
-    "CIPLA":"सिप्ला","M&M":"महिंद्रा एंड महिंद्रा",
-    "ULTRACEMCO":"अल्ट्राटेक सीमेंट","BAJAJ-AUTO":"बजाज ऑटो",
-    "POWERGRID":"पावर ग्रिड कॉर्पोरेशन","GAIL":"गेल इंडिया",
-    "BPCL":"भारत पेट्रोलियम","IOC":"इंडियन ऑयल कॉर्पोरेशन",
-    "BANKBARODA":"बैंक ऑफ बड़ौदा","CANBK":"केनरा बैंक",
-    "UNIONBANK":"यूनियन बैंक ऑफ इंडिया","YESBANK":"यस बैंक",
-    "IDFCFIRSTB":"आईडीएफसी फर्स्ट बैंक","FEDERALBNK":"फेडरल बैंक",
-    "SAIL":"स्टील अथॉरिटी ऑफ इंडिया","NMDC":"एनएमडीसी",
-    "HINDALCO":"हिंडाल्को निष्कर्ष","VEDL":"वेदांता",
-    "TATAPOWER":"टाटा पावर","ADANIPOWER":"अदानी पावर",
-    "ADANIENT":"अदानी एंटरप्राइजेज","ADANIGREEN":"अदानी ग्रीन एनर्जी",
-    "DLF":"डीएलएफ","GODREJPROP":"गोदरेज प्रॉपर्टीज",
-    "BRITANNIA":"ब्रिटानिया展望 इंडस्ट्रीज","DABUR":"डाबर इंडिया",
-    "MARICO":"मेरिको","NESTLEIND":"नेस्ले इंडिया",
-    "HEROMOTOCO":"हीरो मोटोकॉर्प","EICHERMOT":"आयशर मोटर्स",
-    "ASHOKLEY":"अशोक लेलैंड","TVSMOTOR":"टीवीएस motor",
-    "CONCOR":"कंटेनर कॉर्पोरेशन","BHEL":"भारत हेवी इलेक्ट्रिकल्स",
-    "APOLLOHOSP":"अपोलो हॉस्पिटल्स","DIVISLAB":"दिविस लेबोरेटरीज",
-    "BIOCON":"बायोकॉन","LUPIN":"ल्यूपिन",
-    "AUROPHARMA":"ऑरोबिंदो फार्मा","TORNTPHARM":"टोरेंट फार्मा",
-}
-WD = {
-    "LIMITED":"लिमिटेड","LTD":"लिमिटेड","BANK":"बैंक",
-    "INDUSTRIES":"इंडस्ट्रीज","INDUSTRY":"उद्योग",
-    "INDIA":"INDIA","INDIAN":"इंडियन","POWER":"पावर",
-    "ENERGY":"एनर्जी","FINANCE":"फाइनेंस","STEEL":"स्टील",
-    "MOTORS":"मोटर्स","MOTOR":"मोटर",
-    "TECHNOLOGIES":"टेक्नोलॉजीज","TECHNOLOGY":"टेक्नोलॉजी",
-    "AND":"एंड","&":"एंड","SERVICES":"सर्विसेज","SERVICE":"सर्विस",
-    "PHARMA":"फार्मा","PHARMACEUTICALS":"फार्मास्युटिकल्स",
-    "CEMENT":"सीमेंट","OIL":"OIL","GAS":"गैस",
-    "TELECOM":"टेलीकॉम","GROUP":"ग्रुप",
-    "CHEMICALS":"केमिकल्स","NATIONAL":"नेशनल",
-    "CORPORATION":"कॉर्पोरेशन","CORP":"कॉर्प",
-    "MEDIA":"MEDIA","HEALTHCARE":"हेल्थकेयर",
-    "CAPITAL":"कैपिटल","INSURANCE":"इंश्योरेंस",
-    "REALTY":"रियल्टी","PROPERTIES":"प्रॉपर्टीज",
-    "AUTO":"ऑटो","AUTOMOBILE":"ऑटोमोबाइल",
-    "ELECTRIC":"इलेक्ट्रिक","ELECTRONICS":"इलेक्ट्रॉनिक्स",
-    "CONSTRUCTION":"कंस्ट्रक्शन","INFRASTRUCTURE":"इन्फ्रास्ट्रक्चर",
-    "ENTERPRISES":"एंटरप्राइजेज","ENTERPRISE":"एंटरप्राइज",
-    "HOLDINGS":"होल्डिंग्स","INVESTMENTS":"इन्वेस्टमेंट्स",
-    "LABORATORIES":"लेबोरेटरीज","LABS":"लैब्स",
-    "HOSPITAL":"हॉस्पिटल","HOSPITALS":"हॉस्पिटल्स",
-    "FOODS":"फूड्स","FOOD":"फूड","BEVERAGES":"बेवरेजेज",
-    "TEXTILE":"टेक्सटाइल","TEXTILES":"टेक्सटाइल्स",
-    "FERTILIZERS":"फर्टिलाइजर्स","AGRO":"एग्रो",
-    "TRADING":"ट्रेडिंग","EXPORTS":"एक्सपोर्ट्स",
-    "SOLUTIONS":"सॉल्यूशंस","SYSTEMS":"सिस्टम्स",
-    "GLOBAL":"ग्लोबल","INTERNATIONAL":"इंटरनेशनल",
-    "MANAGEMENT":"मैनेजमेंट","CONSULTING":"कंसलिटींग",
-    "SECURITIES":"सिक्योरिटीज","PETROLEUM":"पेट्रोलियम",
-    "COMPANY":"कंपनी","SOLAR":"सोलर","RENEWABLE":"रิน्यूएबल",
-    "DIGITAL":"डिजिटल","NETWORK":"नेटवर्क","NETWORKS":"नेटवर्क्स",
-}
-PR = {
-    'A':'ए','B':'ब','C':'क','D':'ड','E':'इ','F':'फ',
-    'G':'ग','H':'ह','I':'इ','J':'ज','K':'क','L':'ल',
-    'M':'म','N':'न','O':'ओ','P':'प','Q':'क','R':'र',
-    'S':'स','T':'ट','U':'य','V':'व','W':'व','X':'क्स',
-    'Y':'य','Z':'ज'
-}
-NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
-
-# ── HIGH VISIBILITY SYSTEM BLUE COLOR PALETTE ──────────────────────────────────
-C = {
-    "bg":       "#FFFFFF",
-    "primary":  "#0D47A1",  # Dark Blue
-    "secondary":"#1565C0",  # Medium Vivid Blue
-    "accent":   "#1976D2",  # Operation Blue
-    "dark_txt": "#0D47A1",
-    "black_txt":"#1A237E",
-    "hint_txt": "#546E7A",
-    "green":    "#1B5E20",
-    "orange":   "#E65100",
-    "red":      "#B71C1C",
-    "inp_bg":   "#F0F4FA",
-    "res_bg":   "#E8EAF6",
-    "row_odd":  "#F5F7FA",
-    "row_even": "#FFFFFF",
-    "divider":  "#5C6BC0",
-}
-
-# ── HELPER FUNCTIONS ───────────────────────────────────────────────────────────
-def parse_dt(s):
-    if not s: return None
-    for f in ("%d-%m-%Y","%Y-%m-%d","%d/%m/%Y","%d-%b-%Y"):
-        try: return datetime.strptime(s.strip(), f)
-        except: pass
-    return None
-
-def get_hindi(sym, eng):
-    if sym in CURATED: return CURATED[sym]
-    if not REQUESTS_OK:
-        out = []
-        for w in eng.upper().split():
-            cw = w.strip("&.,()-/")
-            out.append(WD.get(cw, "".join(PR.get(c,"") for c in cw)))
-        return " ".join(out)
-    try:
-        url = ("https://translate.googleapis.com/translate_a/single"
-               "?client=gtx&sl=en&tl=hi&dt=t&q=" + requests.utils.quote(eng))
-        d = requests.get(url, timeout=5).json()
-        t = "".join(p[0] for p in d[0] if p[0]).strip()
-        if t and t != eng:
-            time.sleep(0.15)
-            return t
-    except: pass
-    out = []
-    for w in eng.upper().split():
-        cw = w.strip("&.,()-/")
-        if cw in WD: out.append(WD[cw]); continue
-        try:
-            r = requests.get(
-                "https://inputtools.google.com/request?text=" + cw + "&ime=transliteration_en_hi&num=1",
-                timeout=4).json()
-            out.append(r[1][0][1][0] if r[0]=="SUCCESS" else "".join(PR.get(c,"") for c in cw))
-        except: out.append("".join(PR.get(c,"") for c in cw))
-    return " ".join(out)
-
-def calc(name):
-    total, steps = 0, []
-    for c in name:
-        w = AKSHARA_VALS.get(c, 0)
-        total += w
-        if w > 0 or c == "्":
-            steps.append(c + "=" + str(w))
-        elif c == " ":
-            steps.append("|")
-    return total, " ".join(steps)
-
-def make_report(asum, tval, ldate, elapsed_days):
-    nv    = (asum % 9) or 9
-    g     = GRAHA[(nv - 1) % 9]
-    total = asum + tval
-    sutra = SUTRA_MAP.get(total % 9, "")
-    today = datetime.now()
-    nak   = NAK[today.timetuple().tm_yday % 27]
-    wday  = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][today.weekday()]
-    bars = {1:"★☆☆☆☆", 2:"★★☆☆☆", 3:"★★★☆☆", 4:"★★★★☆", 5:"★★★★★"}
-    if ldate:
-        tc = ((today.timetuple().tm_yday - ldate.timetuple().tm_yday) % 27) + 1
-        tn = ["जन्म","सम्पत","विपत","क्षेम","प्रत्यरि","साधक","वध","मित्र","परम-मित्र"]
-        tara = tn[(tc-1)%9] + (" GOOD" if tc%9 in(2,4,6,8,0) else " CAUTION")
-    else:
-        tara = "N/A"
-    S  = "─" * 30
-    S2 = "═" * 30
-    return "\n".join([
-        S2, "    BHOOVALAYA ORACLE RESULT", S2, "",
-        f"  LISTING DATE : {ldate.strftime('%d-%m-%Y') if ldate else 'N/A'}",
-        f"  DAYS LAPSED  : {elapsed_days} Days", "",
-        "STEP 1: AKSHARA WEIGHT THEORY", "  Each Hindi sound has weight:", S,
-        "STEP 2: NAVAANK CALCULATION", "  Akshara Sum = " + str(asum), "  Digital Root (1-9) = " + str(nv), S,
-        "STEP 3: TEMPORAL VIBRATION", f"  Temporal = Days % 730 = {tval}", f"  Combined Vib = {total}", S,
-        "STEP 4: SUTRA PRINCIPLE", "  " + sutra, S,
-        "STEP 5: RULING GRAHA (PLANET)", "  Navaank " + str(nv) + " → " + g[0], S2,
-        "  MARKET FORECAST", S2, "  Signal   : " + g[1], "  Strength : " + bars.get(g[2],""), "  Sectors  : " + g[3], S,
-        "STEP 6: VEDIC TIMING", f"  Nakshatra: {nak} | Tara: {tara}", S2
-    ])
-
-# ── VEDIC ASTROLOGY CALCULATIONS ──────────────────────────────────────────────
-SIGN_ABB  = ["Ar","Ta","Ge","Ca","Le","Vi","Li","Sc","Sg","Cp","Aq","Pi"]
-
-def norm360(x): return x % 360
-
-def jd_from_dt(year, month, day, hour=12, minute=0):
-    if month <= 2: year -= 1; month += 12
-    A = int(year / 100)
-    B = 2 - A + int(A / 4)
-    return (int(365.25 * (year + 4716)) + int(30.6001 * (month + 1)) + day + hour/24.0 + minute/1440.0 + B - 1524.5)
-
-def lahiri_ayanamsa(jd):
-    T = (jd - 2451545.0) / 36525.0
-    return 23.85 + 0.013611 * T + 0.000092 * T * T
-
-def calc_planet_positions(jd, lat=19.0544, lon=72.8405):
-    T = (jd - 2451545.0) / 36525.0
-    sun_t = norm360(280.46646 + 36000.76983 * T)
-    moon_t = norm360(218.3164477 + 481267.88123421 * T)
-    merc_t = norm360(252.2509 + 149474.0722 * T)
-    ven_t  = norm360(181.9798 + 58517.8160 * T)
-    mars_t = norm360(355.433 + 19140.2993 * T)
-    jup_t  = norm360(34.3515 + 3034.9057 * T)
-    sat_t  = norm360(50.0774 + 1222.1138 * T)
-    rahu_t = norm360(125.0445 - 1934.1362*T)
-    ketu_t = norm360(rahu_t + 180)
-    
-    eps     = math.radians(23.439291111 - 0.013004167*T)
-    GMST    = norm360(280.46061837 + 360.98564736629*(jd - 2451545.0))
-    LST     = math.radians(norm360(GMST + lon))
-    asc_t   = math.degrees(math.atan2(math.cos(LST), -math.sin(LST)*math.cos(eps) - math.tan(math.radians(lat))*math.sin(eps))) % 360
-    ay = lahiri_ayanamsa(jd)
-    return {
-        "As": (asc_t - ay) % 360, "Su": (sun_t  - ay) % 360, "Mo": (moon_t - ay) % 360,
-        "Me": (merc_t - ay) % 360, "Ve": (ven_t  - ay) % 360, "Ma": (mars_t - ay) % 360,
-        "Ju": (jup_t  - ay) % 360, "Sa": (sat_t  - ay) % 360, "Ra": (rahu_t - ay) % 360, "Ke": (ketu_t - ay) % 360,
-    }, ay
-
-def lon_to_sign_deg(lon): return int((lon % 360) / 30), round(lon % 30, 2)
-
-def d9_sign(lon):
-    sign, deg = lon_to_sign_deg(lon)
-    nav_num   = int(deg / (30.0 / 9))
-    start_map = {0:0, 1:9, 2:6, 3:3, 4:0, 5:9, 6:6, 7:3, 8:0, 9:9, 10:6, 11:3}
-    return (start_map[sign] + nav_num) % 12
-
-def build_diamond_chart(positions, lagna_sign, title, chart_size=300):
-    W, p = chart_size, 8
-    x0, y0, x1, y1 = p, p, W - p, W - p
-    cx, cy = W // 2, W // 2
-    
-    HOUSES_GEOM = {
-        1:  {"poly": [(cx, y0), (x1, cy), (cx, y1), (x0, cy)], "txt": (cx, cy - 40),   "planets": (cx, cy - 15)},
-        2:  {"poly": [(x0, y0), (cx, y0), (x0, cy)],           "txt": (x0 + 35, y0 + 25), "planets": (x0 + 35, y0 + 45)},
-        3:  {"poly": [(x0, y0), (x0, cy), (cx, y0)],           "txt": (x0 + 25, y0 + 55), "planets": (x0 + 25, y0 + 75)},
-        4:  {"poly": [(x0, cy), (cx, y0), (cx, cy)],           "txt": (cx - 45, cy - 15), "planets": (cx - 45, cy + 5)},
-        5:  {"poly": [(x0, y1), (x0, cy), (cx, y1)],           "txt": (x0 + 25, y1 - 55), "planets": (x0 + 25, y1 - 35)},
-        6:  {"poly": [(x0, y1), (cx, y1), (x0, cy)],           "txt": (x0 + 35, y1 - 25), "planets": (x0 + 35, y1 - 5)},
-        7:  {"poly": [(cx, y1), (x0, cy), (cx, y0), (x1, cy)], "txt": (cx, cy + 40),   "planets": (cx, cy + 55)},
-        8:  {"poly": [(x1, y1), (cx, y1), (x1, cy)],           "txt": (x1 - 35, y1 - 25), "planets": (x1 - 35, y1 - 5)},
-        9:  {"poly": [(x1, y1), (x1, cy), (cx, y1)],           "txt": (x1 - 25, y1 - 55), "planets": (x1 - 25, y1 - 35)},
-        10: {"poly": [(x1, cy), (cx, y1), (cx, cy)],           "txt": (cx + 45, cy + 15), "planets": (cx + 45, cy - 5)},
-        11: {"poly": [(x1, y0), (x1, cy), (cx, y0)],           "txt": (x1 - 25, y0 + 55), "planets": (x1 - 25, y0 + 75)},
-        12: {"poly": [(x1, y0), (cx, y0), (x1, cy)],           "txt": (x1 - 35, y0 + 25), "planets": (x1 - 35, y0 + 45)},
-    }
-    
-    sign_planets = {i: [] for i in range(12)}
-    for planet, s_idx in positions.items(): sign_planets[int(s_idx)].append(planet)
-    
-    lagna_s = int(lagna_sign)
-    def get_house_sign(h_num): return (lagna_s + h_num - 1) % 12
-
-    shapes = [cv.Fill(paint=ft.Paint(color="#FCFDFE"))]
-    for h_num, info in HOUSES_GEOM.items():
-        is_lagna = (h_num == 1)
-        bg_color = "#FFE082" if is_lagna else "#F5F7FA"
-        stroke_color = "#B71C1C" if is_lagna else "#0D47A1"
-        stroke_w = 2.0 if is_lagna else 1.2
-        pts = info["poly"]
-        path_data = [cv.Path.MoveTo(pts[0][0], pts[0][1])]
-        for pt in pts[1:]: path_data.append(cv.Path.LineTo(pt[0], pt[1]))
-        path_data.append(cv.Path.Close())
-        shapes.append(cv.Path(path_data, paint=ft.Paint(color=bg_color, style=ft.PaintingStyle.FILL)))
-        shapes.append(cv.Path(path_data, paint=ft.Paint(color=stroke_color, stroke_width=stroke_w, style=ft.PaintingStyle.STROKE)))
-
-    grid_paint = ft.Paint(color="#0D47A1", stroke_width=1.5, style=ft.PaintingStyle.STROKE)
-    shapes.extend([
-        cv.Line(x0, y0, x1, y1, paint=grid_paint), cv.Line(x1, y0, x0, y1, paint=grid_paint),
-        cv.Line(cx, y0, x0, cy, paint=grid_paint), cv.Line(x0, cy, cx, y1, paint=grid_paint),
-        cv.Line(cx, y1, x1, cy, paint=grid_paint), cv.Line(x1, cy, cx, y0, paint=grid_paint),
-        cv.Rect(x=x0, y=y0, width=W-(2*p), height=W-(2*p), paint=grid_paint)
-    ])
-
-    for h_num, info in HOUSES_GEOM.items():
-        sign_idx = get_house_sign(h_num)
-        planets_here = sign_planets.get(sign_idx, [])
-        tx, ty = info["txt"]
-        shapes.append(cv.Text(x=tx - 6, y=ty - 10, text=str(sign_idx + 1), style=ft.TextStyle(size=12, color="#1A237E", weight="bold")))
-        shapes.append(cv.Text(x=tx + 5, y=ty - 8, text=f"({SIGN_ABB[sign_idx]})", style=ft.TextStyle(size=8, color="#546E7A")))
-        if planets_here:
-            px, py = info["planets"]
-            planets_txt = " ".join(planets_here)
-            shapes.append(cv.Text(x=px - (len(planets_txt) * 3), y=py, text=planets_txt, style=ft.TextStyle(size=11, color="#B71C1C", weight="bold")))
-
-    shapes.append(cv.Text(x=cx - 30, y=cy - 8, text=title, style=ft.TextStyle(size=10, color="#FFFFFF", weight="bold", bgcolor="#0D47A1")))
-    return cv.Canvas(shapes=shapes, width=W, height=W)
-
-# ── MAIN APP INTERFACE ─────────────────────────────────────────────────────────
-def main(page: ft.Page):
-    try:
-        page.title, page.bgcolor, page.padding, page.scroll = "Bhoovalaya Cosmic System", C["bg"], 10, "auto"
-        db_path = os.path.join(os.getenv("FLET_APP_STORAGE_DATA", "."), "bhuvalaya.db")
-
-        conn = sqlite3.connect(db_path)
-        conn.execute("CREATE TABLE IF NOT EXISTS stocks(symbol TEXT PRIMARY KEY, eng_name TEXT, hindi_name TEXT, ldate TEXT, asum INTEGER, breakdown TEXT, series TEXT DEFAULT 'EQ')")
-        conn.commit(); conn.close()
-
-        def db_count(): return sqlite3.connect(db_path).execute("SELECT COUNT(*) FROM stocks").fetchone()[0]
-        def db_search(q): return sqlite3.connect(db_path).execute("SELECT symbol, eng_name, hindi_name, ldate, asum FROM stocks WHERE symbol LIKE ? OR eng_name LIKE ? ORDER BY symbol LIMIT 100", ("%"+q+"%", "%"+q+"%")).fetchall()
-        def db_get(sym): return sqlite3.connect(db_path).execute("SELECT * FROM stocks WHERE symbol=?", (sym,)).fetchone()
-        def db_save(sym, eng, hindi, ldate, series="EQ"):
-            asum, bk = calc(hindi)
-            c = sqlite3.connect(db_path)
-            c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hindi, ldate, asum, bk, series))
-            c.commit(); c.close()
-            return True, asum
-
-        status_txt = ft.Text("System Initialized", size=14, color="#FFFFFF", weight="bold")
-        status_bar = ft.Container(content=status_txt, bgcolor=C["primary"], padding=10, border_radius=6)
-        prg_bar, prg_txt = ft.ProgressBar(value=0, visible=False, color="#FF6F00", bgcolor="#EEEEEE"), ft.Text("", size=13, color=C["orange"])
-
-        def set_status(msg, color=None): status_txt.value, status_bar.bgcolor = msg, color or C["primary"]; page.update()
-        def set_prg(pct, msg=""): prg_bar.visible, prg_bar.value, prg_txt.value = True, pct, msg; page.update()
-        def hide_prg(): prg_bar.visible, prg_txt.value = False, ""; page.update()
-        
-        def make_field(label, hint="", value=""):
-            return ft.TextField(label=label, label_style=ft.TextStyle(size=14, color=C["primary"], weight="bold"), hint_text=hint, value=value, text_style=ft.TextStyle(size=15, color=C["black_txt"]), border_color=C["primary"], border_width=2, bgcolor=C["inp_bg"])
-        def make_header(title, bgcolor=None): 
-            return ft.Container(content=ft.Text(title, size=15, color="#FFFFFF", weight="bold"), bgcolor=bgcolor or C["primary"], padding=10, border_radius=6)
-        def make_blue_btn(text, on_click, height=50):
-            return ft.ElevatedButton(text, bgcolor=C["primary"], color="#FFFFFF", elevation=4, height=height, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=on_click)
-
-        # ── TAB 1: ORACLE ─────────────────────────────────────────────────────
-        fld_oracle = make_field("Enter Stock Symbol", value="RELIANCE")
-        result_txt = ft.Text("", size=14, color=C["black_txt"], font_family="monospace", selectable=True)
-        result_box = ft.Container(content=result_txt, bgcolor=C["res_bg"], padding=12, border_radius=8, visible=False)
-
-        def do_oracle(e):
-            q = fld_oracle.value.strip().upper()
-            row = db_get(q) or (rows := db_search(q) and db_get(rows[0][0]))
-            if row:
-                sym, eng, hi, ldt, asum, bk, *_ = row
-                ldate = parse_dt(ldt)
-                days = (datetime.now() - ldate).days if ldate else 0
-                result_txt.value = make_report(asum, days % 730, ldate, days)
-                result_box.visible = True
-                set_status(f"Analysis complete for {sym}", C["green"])
-            else: set_status("Symbol not found.", C["red"])
-            page.update()
-
-        oracle_screen = ft.Column(visible=True, controls=[
-            make_header("🔮 BHOOVALAYA ORACLE CORE"), fld_oracle,
-            make_blue_btn("🔍 RUN ORACLE PREDICTION", do_oracle), result_box
-        ])
-
-        # ── TAB 2: STOCKS ─────────────────────────────────────────────────────
-        fld_list_search, list_rows = make_field("Filter System Database"), ft.Column(spacing=4)
-        
-        def load_list(q=""):
-            list_rows.controls.clear()
-            for i, r in enumerate(db_search(q)):
-                sym, eng, hi, ldt, asum = r
-                list_rows.controls.append(ft.Container(content=ft.Column([
-                    ft.Text(f"{sym} | {eng}", weight="bold", color=C["primary"]),
-                    ft.Text(f"Hindi: {hi} | Weights: {asum}", color=C["green"])
-                ]), bgcolor=C["row_odd"] if i%2==0 else C["row_even"], padding=8))
-            page.update()
-
-        list_screen = ft.Column(visible=False, controls=[
-            make_header("📋 STOCK REGISTRY"), fld_list_search,
-            make_blue_btn("🔍 FILTER RECORDS", lambda e: load_list(fld_list_search.value.strip().upper())), list_rows
-        ])
-
-        # ── TAB 3: DATA ENTRY ─────────────────────────────────────────────────
-        fld_sym, fld_eng, fld_hindi, fld_ldate = make_field("Stock Symbol"), make_field("Company English Name"), make_field("Transliterated Hindi Name"), make_field("Listing Date (DD-MM-YYYY)")
-        
-        entry_screen = ft.Column(visible=False, controls=[
-            make_header("✏️ DATABASE MAINTENANCE ENTRY"), fld_sym, fld_eng,
-            make_blue_btn("🌐 CONVERT TO HINDI", lambda e: setattr(fld_hindi, 'value', get_hindi(fld_sym.value.upper(), fld_eng.value)) or page.update()),
-            fld_hindi, fld_ldate,
-            ft.Row([
-                make_blue_btn("💾 SAVE DATA", lambda e: db_save(fld_sym.value.upper(), fld_eng.value, fld_hindi.value, fld_ldate.value) and set_status("Saved Record", C["green"])),
-                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["red"], color="#FFFFFF", on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), page.update()))
-            ])
-        ])
-
-        # ── TAB 4: KUNDALI ENGINE ─────────────────────────────────────────────
-        fld_date, fld_time, fld_lat, fld_lon = make_field("Date (DD-MM-YYYY)", value=datetime.now().strftime("%d-%m-%Y")), make_field("Time (HH:MM)", value=datetime.now().strftime("%H:%M")), make_field("Latitude", value="19.0544"), make_field("Longitude", value="72.8405")
-        
-        astro_form_container = ft.Column(spacing=10)
-        astro_chart_container = ft.ListView(expand=True, spacing=20, padding=10, visible=False)
-
-        def do_astro(e):
-            try:
-                dt = parse_dt(fld_date.value)
-                tm = fld_time.value.split(":")
-                pos, ay = calc_planet_positions(jd_from_dt(dt.year, dt.month, dt.day, int(tm[0]), int(tm[1])), float(fld_lat.value), float(fld_lon.value))
-                
-                astro_chart_container.controls.clear()
-                
-                # Build separated canvas matrices
-                d1_canvas = build_diamond_chart({p: lon_to_sign_deg(l)[0] for p, l in pos.items()}, lon_to_sign_deg(pos["As"])[0], "D1 RASI")
-                d9_canvas = build_diamond_chart({p: d9_sign(l) for p, l in pos.items()}, d9_sign(pos["As"]), "D9 NAVAMSHA")
-                
-                # Display D1 Chart First
-                astro_chart_container.controls.append(make_header("📍 D1 RASI KUNDALI", bgcolor=C["primary"]))
-                astro_chart_container.controls.append(ft.Container(content=d1_canvas, alignment=ft.alignment.center, padding=10))
-                
-                # Dynamic separation barrier 
-                astro_chart_container.controls.append(ft.Divider(height=20, color=C["divider"]))
-                
-                # Display D9 Chart Below D1 Chart
-                astro_chart_container.controls.append(make_header("📐 D9 NAVAMSHA KUNDALI", bgcolor=C["secondary"]))
-                astro_chart_container.controls.append(ft.Container(content=d9_canvas, alignment=ft.alignment.center, padding=10))
-                
-                astro_chart_container.controls.append(ft.Container(height=15))
-                
-                def reset_astro_view(ev):
-                    astro_chart_container.controls.clear()
-                    astro_chart_container.visible = False
-                    astro_form_container.visible = True
-                    set_status("Charts cleared. System ready.", C["primary"])
-                    page.update()
-
-                exit_btn = ft.ElevatedButton(
-                    "🧹 CLEAR CHARTS / RETURN", 
-                    bgcolor=C["red"], 
-                    color="#FFFFFF", 
-                    height=50,
-                    style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")),
-                    on_click=reset_astro_view
-                )
-                astro_chart_container.controls.append(exit_btn)
-                
-                astro_form_container.visible = False
-                astro_chart_container.visible = True
-                set_status("Charts calculated! D1 displayed above D9.", C["green"])
-            except Exception as ex: 
-                set_status(f"Calculation Error: {ex}", C["red"])
-            page.update()
-
-        astro_form_container.controls.extend([
-            ft.Row([fld_date, fld_time]), ft.Row([fld_lat, fld_lon]),
-            make_blue_btn("🕉️ GENERATE BOTH D1 & D9 CHARTS", do_astro)
-        ])
-
-        astro_screen = ft.Column(visible=False, controls=[
-            make_header("🕉️ VEDIC CALCULATION MATRIX"),
-            astro_form_container,
-            astro_chart_container
-        ], expand=True)
-
-        # ── TAB 5: DATABASE BUILD (WITH DURATION DATE FIX) ────────────────────
-        def build_db_thread():
-            try:
-                set_status("Fetching data rows from NSE India...", C["accent"])
-                res = requests.get(NSE_URL, timeout=15)
-                r = csv.reader(io.StringIO(res.text)); next(r)
-                rows = list(r); total = len(rows)
-                db_c = sqlite3.connect(db_path)
-                for idx, row in enumerate(rows):
-                    if not row or len(row) < 4: continue
-                    # row[3] targets the valid 'Date of Listing' column in standard NSE csv maps
-                    sym, eng, series, ldt = row[0].strip(), row[1].strip(), row[2].strip(), row[3].strip()
-                    if series != "EQ": continue
-                    hi = get_hindi(sym, eng)
-                    asum, bk = calc(hi)
-                    db_c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hi, ldt, asum, bk, series))
-                    if idx % 12 == 0: set_prg(idx/total, f"Indexing {sym}")
-                db_c.commit(); db_c.close()
-                hide_prg(); set_status("System Database Synced!", C["green"])
-            except Exception as ex: hide_prg(); set_status(f"Sync failed: {ex}", C["red"])
-
-        db_screen = ft.Column(visible=False, controls=[
-            make_header("⚙️ SYSTEM STORAGE PANEL"),
-            make_blue_btn("⚡ EXECUTE AUTOMATED NSE SYNC", lambda e: threading.Thread(target=build_db_thread, daemon=True).start())
-        ])
-
-        # ── CORE NAVIGATION INTEGRATION ────────────────────────────────────────
-        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen}
-        def show_screen(name):
-            for k, v in all_screens.items(): v.visible = (k == name)
-            page.update()
-
-        nav_bar = ft.NavigationBar(
-            destinations=[
-                ft.NavigationBarDestination(icon=ft.Icons.PSYCHOLOGY, label="Oracle"),
-                ft.NavigationBarDestination(icon=ft.Icons.FORMAT_LIST_BULLETED, label="Stocks"),
-                ft.NavigationBarDestination(icon=ft.Icons.EDIT_NOTE, label="Entry"),
-                ft.NavigationBarDestination(icon=ft.Icons.STARS, label="Kundali"),
-                ft.NavigationBarDestination(icon=ft.Icons.STORAGE, label="Database"),
-            ],
-            on_change=lambda e: show_screen(["oracle", "list", "entry", "astro", "db"][int(e.data)]),
-            bgcolor="#CDD7E6" 
-        )
-
-        page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, nav_bar)
-        set_status(f"System Operational — {db_count()} records configured.", C["green"])
-    except Exception as err:
-        page.add(ft.Container(content=ft.Text(f"Fatal Matrix Error:\n{err}"), bgcolor=C["red"]))
-        page.update()
-
-if __name__ == "__main__":
-    ft.app(target=main)
-
-import csv
-import io
-import time
-import math
-from datetime import datetime
-
-try:
-    import requests
-    REQUESTS_OK = True
-except Exception:
-    REQUESTS_OK = False
-
-import flet as ft
-import flet.canvas as cv
-
-# ── CONSTANTS ──────────────────────────────────────────────────────────────────
-AKSHARA_VALS = {
-    'अ':1,'आ':2,'इ':3,'ई':4,'उ':5,'ऊ':6,'ए':7,'ऐ':8,'ओ':9,'औ':10,
-    'क':11,'ख':12,'ग':13,'घ':14,'ङ':15,'च':16,'छ':17,'ज':18,'झ':19,'ञ':20,
-    'ट':21,'ठ':22,'ड':23,'ढ':24,'ण':25,'त':26,'थ':27,'द':28,'ध':29,'न':30,
-    'प':31,'फ':32,'ब':33,'भ':34,'म':35,'य':36,'र':37,'ल':38,'व':39,'श':40,
-    'ष':41,'स':42,'ह':43,'ि':2,'ा':2,'े':7,'ै':8,'ो':9,'ौ':10,'्':0,'ं':1
-}
-SUTRA_MAP = {
-    0:"अनंत(Ananta)",1:"शक्ति(Shakti)",2:"ज्ञान(Gnana)",
-    3:"धर्म(Dharma)",4:"वैराग्य(Vairagya)",5:"ऐश्वर्य(Aishwarya)",
-    6:"यश(Yashas)",7:"श्री(Shree)",8:"वीर्य(Veerya)"
-}
-GRAHA = {
-    0:("मंगल Mars","BULLISH",4,"Metals Defence Energy","1-7 Days","Strict stop-loss","Tuesday"),
-    1:("सूर्य Sun","BULLISH",5,"PSU Govt Energy Gold","1-4 Weeks","Enter Monday","Sunday"),
-    2:("चंद्र Moon","VOLATILE",2,"FMCG Dairy Retail","1-3 Days","Avoid overnight","Monday"),
-    3:("गुरु Jupiter","STRONGLY BULLISH",5,"Banking Education","1-6 Months","Watch retrograde","Thursday"),
-    4:("राहु Rahu","SPECULATIVE",3,"Tech Pharma Foreign","Caution","No leverage","Saturday"),
-    5:("बुध Mercury","BULLISH",4,"IT Telecom Media","1-3 Weeks","Watch retrograde","Wednesday"),
-    6:("शुक्र Venus","BULLISH",4,"FMCG Luxury Hotels","2-8 Weeks","Book at peaks","Friday"),
-    7:("केतु Ketu","BEARISH",2,"Old Economy Exit","Avoid Entry","Reduce positions","Tuesday"),
-    8:("शनि Saturn","SLOW BULLISH",3,"Infra Metals Coal","3-12 Months","No panic sell","Saturday"),
-}
-NAK = [
-    "अश्विनी","भरणी","कृत्तिका","रोहिणी","मृगशिरा","आर्द्रा",
-    "पुनर्वसु","पुष्य","आश्लेषा","मघा","पूर्वाफाल्गुनी","उत्तराफाल्गुनी",
-    "हस्त","चित्रा","स्वाति","विशाखा","अनुराधा","ज्येष्ठा",
-    "मूल","पूर्वाषाढ़ा","उत्तराषाढ़ा","श्रवण","धनिष्ठा","शतभिषा",
-    "पूर्वाभाद्रपद","उत्तराभाद्रपद","रेवती"
-]
-CURATED = {
-    "SBIN":"भारतीय स्टेट बैंक","HDFCBANK":"एचडीएफसी बैंक",
-    "ICICIBANK":"आईसीआईसीआई बैंक","AXISBANK":"एक्सिस बैंक",
-    "RELIANCE":"रिलायंस","TCS":"टाटा कंसल्टेंसी सर्विसेज",
-    "INFY":"इन्फोसिस","WIPRO":"विप्रो",
-    "NTPC":"राष्ट्रीय ताप विद्युत निगम",
-    "ONGC":"तेल और प्राकृतिक गैस निगम",
-    "TATASTEEL":"टाटा स्टील","COALINDIA":"कोल इंडिया",
-    "HINDUNILVR":"हिंदुस्तान यूनिलीवर","ITC":"आईटीसी",
-    "LT":"लार्सन एंड टुब्रो","MARUTI":"मारुति सुजुकी",
-    "TATAMOTORS":"टाटा मोटर्स","SUNPHARMA":"सन फार्मास्युटिकल",
-    "BHARTIARTL":"भारती एयरटेल","BAJFINANCE":"बजाज फाइनेंस",
-    "LICI":"भारतीय जीवन बीमा निगम","IRCTC":"भारतीय रेलवे खानपान",
-    "HAL":"हिंदुस्तान एयरोनॉटिक्स","ASIANPAINT":"एशियन पेंट्स",
-    "TITAN":"टाइटन कंपनी","ZOMATO":"जोमैटो",
-    "PNB":"पंजाब नेशनल बैंक","BEL":"भारत इलेक्ट्रॉनिक्स",
-    "HCLTECH":"एचसीएल टेक्नोलॉजीज","ADANIPORTS":"अदानी पोर्ट्स",
-    "KOTAKBANK":"कोटक महिंद्रा बैंक","DRREDDY":"डॉ रेड्डीज",
-    "CIPLA":"सिप्ला","M&M":"महिंद्रा एंड महिंद्रा",
-    "ULTRACEMCO":"अल्ट्राटेक सीमेंट","BAJAJ-AUTO":"बजाज ऑटो",
-    "POWERGRID":"पावर ग्रिड कॉर्पोरेशन","GAIL":"गेल इंडिया",
-    "BPCL":"भारत पेट्रोलियम","IOC":"इंडियन ऑयल कॉर्पोरेशन",
-    "BANKBARODA":"बैंक ऑफ बड़ौदा","CANBK":"केनरा बैंक",
-    "UNIONBANK":"यूनियन बैंक ऑफ इंडिया","YESBANK":"यस बैंक",
-    "IDFCFIRSTB":"आईडीएफसी फर्स्ट बैंक","FEDERALBNK":"फेडरल बैंक",
-    "SAIL":"स्टील अथॉरिटी ऑफ इंडिया","NMDC":"एनएमडीसी",
-    "HINDALCO":"हिंडाल्को निष्कर्ष","VEDL":"वेदांता",
-    "TATAPOWER":"टाटा पावर","ADANIPOWER":"अदानी पावर",
-    "ADANIENT":"अदानी एंटरप्राइजेज","ADANIGREEN":"अदानी ग्रीन एनर्जी",
-    "DLF":"डीएलएफ","GODREJPROP":"गोदरेज प्रॉपर्टीज",
-    "BRITANNIA":"ब्रिटानिया展望 इंडस्ट्रीज","DABUR":"डाबर इंडिया",
-    "MARICO":"मेरिको","NESTLEIND":"नेस्ले इंडिया",
-    "HEROMOTOCO":"हीरो मोटोकॉर्प","EICHERMOT":"आयशर मोटर्स",
-    "ASHOKLEY":"अशोक लेलैंड","TVSMOTOR":"टीवीएस motor",
-    "CONCOR":"कंटेनर कॉर्पोरेशन","BHEL":"भारत हेवी इलेक्ट्रिकल्स",
-    "APOLLOHOSP":"अपोलो हॉस्पिटल्स","DIVISLAB":"दिविस लेबोरेटरीज",
-    "BIOCON":"बायोकॉन","LUPIN":"ल्यूपिन",
-    "AUROPHARMA":"ऑरोबिंदो फार्मा","TORNTPHARM":"टोरेंट फार्मा",
-}
-WD = {
-    "LIMITED":"लिमिटेड","LTD":"लिमिटेड","BANK":"बैंक",
-    "INDUSTRIES":"इंडस्ट्रीज","INDUSTRY":"उद्योग",
-    "INDIA":"INDIA","INDIAN":"इंडियन","POWER":"पावर",
-    "ENERGY":"एनर्जी","FINANCE":"फाइनेंस","STEEL":"स्टील",
-    "MOTORS":"मोटर्स","MOTOR":"मोटर",
-    "TECHNOLOGIES":"टेक्नोलॉजीज","TECHNOLOGY":"टेक्नोलॉजी",
-    "AND":"एंड","&":"एंड","SERVICES":"सर्विसेज","SERVICE":"सर्विस",
-    "PHARMA":"फार्मा","PHARMACEUTICALS":"फार्मास्युटिकल्स",
-    "CEMENT":"सीमेंट","OIL":"OIL","GAS":"गैस",
-    "TELECOM":"टेलीकॉम","GROUP":"ग्रुप",
-    "CHEMICALS":"केमिकल्स","NATIONAL":"नेशनल",
-    "CORPORATION":"कॉर्पोरेशन","CORP":"कॉर्प",
-    "MEDIA":"MEDIA","HEALTHCARE":"हेल्थकेयर",
-    "CAPITAL":"कैपिटल","INSURANCE":"इंश्योरेंस",
-    "REALTY":"रियल्टी","PROPERTIES":"प्रॉपर्टीज",
-    "AUTO":"ऑटो","AUTOMOBILE":"ऑटोमोबाइल",
-    "ELECTRIC":"इलेक्ट्रिक","ELECTRONICS":"इलेक्ट्रॉनिक्स",
-    "CONSTRUCTION":"कंस्ट्रक्शन","INFRASTRUCTURE":"इन्फ्रास्ट्रक्चर",
-    "ENTERPRISES":"एंटरप्राइजेज","ENTERPRISE":"एंटरप्राइज",
-    "HOLDINGS":"होल्डिंग्स","INVESTMENTS":"इन्वेस्टमेंट्स",
-    "LABORATORIES":"लेबोरेटरीज","LABS":"लैब्स",
-    "HOSPITAL":"हॉस्पिटल","HOSPITALS":"हॉस्पिटल्स",
-    "FOODS":"फूड्स","FOOD":"फूड","BEVERAGES":"बेवरेजेज",
-    "TEXTILE":"टेक्सटाइल","TEXTILES":"टेक्सटाइल्स",
-    "FERTILIZERS":"फर्टिलाइजर्स","AGRO":"एग्रो",
-    "TRADING":"ट्रेडिंग","EXPORTS":"एक्सपोर्ट्स",
-    "SOLUTIONS":"सॉल्यूशंस","SYSTEMS":"सिस्टम्स",
-    "GLOBAL":"ग्लोबल","INTERNATIONAL":"इंटरनेशनल",
-    "MANAGEMENT":"मैनेजमेंट","CONSULTING":"कंसलिटींग",
-    "SECURITIES":"सिक्योरिटीज","PETROLEUM":"पेट्रोलियम",
-    "COMPANY":"कंपनी","SOLAR":"सोलर","RENEWABLE":"रิน्यूएबल",
-    "DIGITAL":"डिजिटल","NETWORK":"नेटवर्क","NETWORKS":"नेटवर्क्स",
-}
-PR = {
-    'A':'ए','B':'ब','C':'क','D':'ड','E':'इ','F':'फ',
-    'G':'ग','H':'ह','I':'इ','J':'ज','K':'क','L':'ल',
-    'M':'म','N':'न','O':'ओ','P':'प','Q':'क','R':'र',
-    'S':'स','T':'ट','U':'य','V':'व','W':'व','X':'क्स',
-    'Y':'य','Z':'ज'
-}
-NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
-
-# ── HIGH VISIBILITY SYSTEM BLUE COLOR PALETTE ──────────────────────────────────
-C = {
-    "bg":       "#FFFFFF",
-    "primary":  "#0D47A1",  # Dark Blue
-    "secondary":"#1565C0",  # Medium Vivid Blue
-    "accent":   "#1976D2",  # Operation Blue
-    "dark_txt": "#0D47A1",
-    "black_txt":"#1A237E",
-    "hint_txt": "#546E7A",
-    "green":    "#1B5E20",
-    "orange":   "#E65100",
-    "red":      "#B71C1C",
-    "inp_bg":   "#F0F4FA",
-    "res_bg":   "#E8EAF6",
-    "row_odd":  "#F5F7FA",
-    "row_even": "#FFFFFF",
-    "divider":  "#5C6BC0",
-}
-
-# ── HELPER FUNCTIONS ───────────────────────────────────────────────────────────
-def parse_dt(s):
-    if not s: return None
-    for f in ("%d-%m-%Y","%Y-%m-%d","%d/%m/%Y","%d-%b-%Y"):
-        try: return datetime.strptime(s.strip(), f)
-        except: pass
-    return None
-
-def get_hindi(sym, eng):
-    if sym in CURATED: return CURATED[sym]
-    if not REQUESTS_OK:
-        out = []
-        for w in eng.upper().split():
-            cw = w.strip("&.,()-/")
-            out.append(WD.get(cw, "".join(PR.get(c,"") for c in cw)))
-        return " ".join(out)
-    try:
-        url = ("https://translate.googleapis.com/translate_a/single"
-               "?client=gtx&sl=en&tl=hi&dt=t&q=" + requests.utils.quote(eng))
-        d = requests.get(url, timeout=5).json()
-        t = "".join(p[0] for p in d[0] if p[0]).strip()
-        if t and t != eng:
-            time.sleep(0.15)
-            return t
-    except: pass
-    out = []
-    for w in eng.upper().split():
-        cw = w.strip("&.,()-/")
-        if cw in WD: out.append(WD[cw]); continue
-        try:
-            r = requests.get(
-                "https://inputtools.google.com/request?text=" + cw + "&ime=transliteration_en_hi&num=1",
-                timeout=4).json()
-            out.append(r[1][0][1][0] if r[0]=="SUCCESS" else "".join(PR.get(c,"") for c in cw))
-        except: out.append("".join(PR.get(c,"") for c in cw))
-    return " ".join(out)
-
-def calc(name):
-    total, steps = 0, []
-    for c in name:
-        w = AKSHARA_VALS.get(c, 0)
-        total += w
-        if w > 0 or c == "्":
-            steps.append(c + "=" + str(w))
-        elif c == " ":
-            steps.append("|")
-    return total, " ".join(steps)
-
-def make_report(asum, tval, ldate, elapsed_days):
-    nv    = (asum % 9) or 9
-    g     = GRAHA[(nv - 1) % 9]
-    total = asum + tval
-    sutra = SUTRA_MAP.get(total % 9, "")
-    today = datetime.now()
-    nak   = NAK[today.timetuple().tm_yday % 27]
-    wday  = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][today.weekday()]
-    bars = {1:"★☆☆☆☆", 2:"★★☆☆☆", 3:"★★★☆☆", 4:"★★★★☆", 5:"★★★★★"}
-    if ldate:
-        tc = ((today.timetuple().tm_yday - ldate.timetuple().tm_yday) % 27) + 1
-        tn = ["जन्म","सम्पत","विपत","क्षेम","प्रत्यरि","साधक","वध","मित्र","परम-मित्र"]
-        tara = tn[(tc-1)%9] + (" GOOD" if tc%9 in(2,4,6,8,0) else " CAUTION")
-    else:
-        tara = "N/A"
-    S  = "─" * 30
-    S2 = "═" * 30
-    return "\n".join([
-        S2, "    BHOOVALAYA ORACLE RESULT", S2, "",
-        f"  LISTING DATE : {ldate.strftime('%d-%m-%Y') if ldate else 'N/A'}",
-        f"  DAYS LAPSED  : {elapsed_days} Days", "",
-        "STEP 1: AKSHARA WEIGHT THEORY", "  Each Hindi sound has weight:", S,
-        "STEP 2: NAVAANK CALCULATION", "  Akshara Sum = " + str(asum), "  Digital Root (1-9) = " + str(nv), S,
-        "STEP 3: TEMPORAL VIBRATION", f"  Temporal = Days % 730 = {tval}", f"  Combined Vib = {total}", S,
-        "STEP 4: SUTRA PRINCIPLE", "  " + sutra, S,
-        "STEP 5: RULING GRAHA (PLANET)", "  Navaank " + str(nv) + " → " + g[0], S2,
-        "  MARKET FORECAST", S2, "  Signal   : " + g[1], "  Strength : " + bars.get(g[2],""), "  Sectors  : " + g[3], S,
-        "STEP 6: VEDIC TIMING", f"  Nakshatra: {nak} | Tara: {tara}", S2
-    ])
-
-# ── VEDIC ASTROLOGY CALCULATIONS ──────────────────────────────────────────────
-SIGN_ABB  = ["Ar","Ta","Ge","Ca","Le","Vi","Li","Sc","Sg","Cp","Aq","Pi"]
-
-def norm360(x): return x % 360
-
-def jd_from_dt(year, month, day, hour=12, minute=0):
-    if month <= 2: year -= 1; month += 12
-    A = int(year / 100)
-    B = 2 - A + int(A / 4)
-    return (int(365.25 * (year + 4716)) + int(30.6001 * (month + 1)) + day + hour/24.0 + minute/1440.0 + B - 1524.5)
-
-def lahiri_ayanamsa(jd):
-    T = (jd - 2451545.0) / 36525.0
-    return 23.85 + 0.013611 * T + 0.000092 * T * T
-
-def calc_planet_positions(jd, lat=19.0544, lon=72.8405):
-    T = (jd - 2451545.0) / 36525.0
-    sun_t = norm360(280.46646 + 36000.76983 * T)
-    moon_t = norm360(218.3164477 + 481267.88123421 * T)
-    merc_t = norm360(252.2509 + 149474.0722 * T)
-    ven_t  = norm360(181.9798 + 58517.8160 * T)
-    mars_t = norm360(355.433 + 19140.2993 * T)
-    jup_t  = norm360(34.3515 + 3034.9057 * T)
-    sat_t  = norm360(50.0774 + 1222.1138 * T)
-    rahu_t = norm360(125.0445 - 1934.1362*T)
-    ketu_t = norm360(rahu_t + 180)
-    
-    eps     = math.radians(23.439291111 - 0.013004167*T)
-    GMST    = norm360(280.46061837 + 360.98564736629*(jd - 2451545.0))
-    LST     = math.radians(norm360(GMST + lon))
-    asc_t   = math.degrees(math.atan2(math.cos(LST), -math.sin(LST)*math.cos(eps) - math.tan(math.radians(lat))*math.sin(eps))) % 360
-    ay = lahiri_ayanamsa(jd)
-    return {
-        "As": (asc_t - ay) % 360, "Su": (sun_t  - ay) % 360, "Mo": (moon_t - ay) % 360,
-        "Me": (merc_t - ay) % 360, "Ve": (ven_t  - ay) % 360, "Ma": (mars_t - ay) % 360,
-        "Ju": (jup_t  - ay) % 360, "Sa": (sat_t  - ay) % 360, "Ra": (rahu_t - ay) % 360, "Ke": (ketu_t - ay) % 360,
-    }, ay
-
-def lon_to_sign_deg(lon): return int((lon % 360) / 30), round(lon % 30, 2)
-
-def d9_sign(lon):
-    sign, deg = lon_to_sign_deg(lon)
-    nav_num   = int(deg / (30.0 / 9))
-    start_map = {0:0, 1:9, 2:6, 3:3, 4:0, 5:9, 6:6, 7:3, 8:0, 9:9, 10:6, 11:3}
-    return (start_map[sign] + nav_num) % 12
-
-def build_diamond_chart(positions, lagna_sign, title, chart_size=300):
-    W, p = chart_size, 8
-    x0, y0, x1, y1 = p, p, W - p, W - p
-    cx, cy = W // 2, W // 2
-    
-    HOUSES_GEOM = {
-        1:  {"poly": [(cx, y0), (x1, cy), (cx, y1), (x0, cy)], "txt": (cx, cy - 40),   "planets": (cx, cy - 15)},
-        2:  {"poly": [(x0, y0), (cx, y0), (x0, cy)],           "txt": (x0 + 35, y0 + 25), "planets": (x0 + 35, y0 + 45)},
-        3:  {"poly": [(x0, y0), (x0, cy), (cx, y0)],           "txt": (x0 + 25, y0 + 55), "planets": (x0 + 25, y0 + 75)},
-        4:  {"poly": [(x0, cy), (cx, y0), (cx, cy)],           "txt": (cx - 45, cy - 15), "planets": (cx - 45, cy + 5)},
-        5:  {"poly": [(x0, y1), (x0, cy), (cx, y1)],           "txt": (x0 + 25, y1 - 55), "planets": (x0 + 25, y1 - 35)},
-        6:  {"poly": [(x0, y1), (cx, y1), (x0, cy)],           "txt": (x0 + 35, y1 - 25), "planets": (x0 + 35, y1 - 5)},
-        7:  {"poly": [(cx, y1), (x0, cy), (cx, y0), (x1, cy)], "txt": (cx, cy + 40),   "planets": (cx, cy + 55)},
-        8:  {"poly": [(x1, y1), (cx, y1), (x1, cy)],           "txt": (x1 - 35, y1 - 25), "planets": (x1 - 35, y1 - 5)},
-        9:  {"poly": [(x1, y1), (x1, cy), (cx, y1)],           "txt": (x1 - 25, y1 - 55), "planets": (x1 - 25, y1 - 35)},
-        10: {"poly": [(x1, cy), (cx, y1), (cx, cy)],           "txt": (cx + 45, cy + 15), "planets": (cx + 45, cy - 5)},
-        11: {"poly": [(x1, y0), (x1, cy), (cx, y0)],           "txt": (x1 - 25, y0 + 55), "planets": (x1 - 25, y0 + 75)},
-        12: {"poly": [(x1, y0), (cx, y0), (x1, cy)],           "txt": (x1 - 35, y0 + 25), "planets": (x1 - 35, y0 + 45)},
-    }
-    
-    sign_planets = {i: [] for i in range(12)}
-    for planet, s_idx in positions.items(): sign_planets[int(s_idx)].append(planet)
-    
-    lagna_s = int(lagna_sign)
-    def get_house_sign(h_num): return (lagna_s + h_num - 1) % 12
-
-    shapes = [cv.Fill(paint=ft.Paint(color="#FCFDFE"))]
-    for h_num, info in HOUSES_GEOM.items():
-        is_lagna = (h_num == 1)
-        bg_color = "#FFE082" if is_lagna else "#F5F7FA"
-        stroke_color = "#B71C1C" if is_lagna else "#0D47A1"
-        stroke_w = 2.0 if is_lagna else 1.2
-        pts = info["poly"]
-        path_data = [cv.Path.MoveTo(pts[0][0], pts[0][1])]
-        for pt in pts[1:]: path_data.append(cv.Path.LineTo(pt[0], pt[1]))
-        path_data.append(cv.Path.Close())
-        shapes.append(cv.Path(path_data, paint=ft.Paint(color=bg_color, style=ft.PaintingStyle.FILL)))
-        shapes.append(cv.Path(path_data, paint=ft.Paint(color=stroke_color, stroke_width=stroke_w, style=ft.PaintingStyle.STROKE)))
-
-    grid_paint = ft.Paint(color="#0D47A1", stroke_width=1.5, style=ft.PaintingStyle.STROKE)
-    shapes.extend([
-        cv.Line(x0, y0, x1, y1, paint=grid_paint), cv.Line(x1, y0, x0, y1, paint=grid_paint),
-        cv.Line(cx, y0, x0, cy, paint=grid_paint), cv.Line(x0, cy, cx, y1, paint=grid_paint),
-        cv.Line(cx, y1, x1, cy, paint=grid_paint), cv.Line(x1, cy, cx, y0, paint=grid_paint),
-        cv.Rect(x=x0, y=y0, width=W-(2*p), height=W-(2*p), paint=grid_paint)
-    ])
-
-    for h_num, info in HOUSES_GEOM.items():
-        sign_idx = get_house_sign(h_num)
-        planets_here = sign_planets.get(sign_idx, [])
-        tx, ty = info["txt"]
-        shapes.append(cv.Text(x=tx - 6, y=ty - 10, text=str(sign_idx + 1), style=ft.TextStyle(size=12, color="#1A237E", weight="bold")))
-        shapes.append(cv.Text(x=tx + 5, y=ty - 8, text=f"({SIGN_ABB[sign_idx]})", style=ft.TextStyle(size=8, color="#546E7A")))
-        if planets_here:
-            px, py = info["planets"]
-            planets_txt = " ".join(planets_here)
-            shapes.append(cv.Text(x=px - (len(planets_txt) * 3), y=py, text=planets_txt, style=ft.TextStyle(size=11, color="#B71C1C", weight="bold")))
-
-    shapes.append(cv.Text(x=cx - 30, y=cy - 8, text=title, style=ft.TextStyle(size=10, color="#FFFFFF", weight="bold", bgcolor="#0D47A1")))
-    return cv.Canvas(shapes=shapes, width=W, height=W)
-
-# ── MAIN APP INTERFACE ─────────────────────────────────────────────────────────
-def main(page: ft.Page):
-    try:
-        page.title, page.bgcolor, page.padding, page.scroll = "Bhoovalaya Cosmic System", C["bg"], 10, "auto"
-        db_path = os.path.join(os.getenv("FLET_APP_STORAGE_DATA", "."), "bhuvalaya.db")
-
-        conn = sqlite3.connect(db_path)
-        conn.execute("CREATE TABLE IF NOT EXISTS stocks(symbol TEXT PRIMARY KEY, eng_name TEXT, hindi_name TEXT, ldate TEXT, asum INTEGER, breakdown TEXT, series TEXT DEFAULT 'EQ')")
-        conn.commit(); conn.close()
-
-        def db_count(): return sqlite3.connect(db_path).execute("SELECT COUNT(*) FROM stocks").fetchone()[0]
-        def db_search(q): return sqlite3.connect(db_path).execute("SELECT symbol, eng_name, hindi_name, ldate, asum FROM stocks WHERE symbol LIKE ? OR eng_name LIKE ? ORDER BY symbol LIMIT 100", ("%"+q+"%", "%"+q+"%")).fetchall()
-        def db_get(sym): return sqlite3.connect(db_path).execute("SELECT * FROM stocks WHERE symbol=?", (sym,)).fetchone()
-        def db_save(sym, eng, hindi, ldate, series="EQ"):
-            asum, bk = calc(hindi)
-            c = sqlite3.connect(db_path)
-            c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hindi, ldate, asum, bk, series))
-            c.commit(); c.close()
-            return True, asum
-
-        status_txt = ft.Text("System Initialized", size=14, color="#FFFFFF", weight="bold")
-        status_bar = ft.Container(content=status_txt, bgcolor=C["primary"], padding=10, border_radius=6)
-        prg_bar, prg_txt = ft.ProgressBar(value=0, visible=False, color="#FF6F00", bgcolor="#EEEEEE"), ft.Text("", size=13, color=C["orange"])
-
-        def set_status(msg, color=None): status_txt.value, status_bar.bgcolor = msg, color or C["primary"]; page.update()
-        def set_prg(pct, msg=""): prg_bar.visible, prg_bar.value, prg_txt.value = True, pct, msg; page.update()
-        def hide_prg(): prg_bar.visible, prg_txt.value = False, ""; page.update()
-        
-        def make_field(label, hint="", value=""):
-            return ft.TextField(label=label, label_style=ft.TextStyle(size=14, color=C["primary"], weight="bold"), hint_text=hint, value=value, text_style=ft.TextStyle(size=15, color=C["black_txt"]), border_color=C["primary"], border_width=2, bgcolor=C["inp_bg"])
-        def make_header(title, bgcolor=None): 
-            return ft.Container(content=ft.Text(title, size=15, color="#FFFFFF", weight="bold"), bgcolor=bgcolor or C["primary"], padding=10, border_radius=6)
-        def make_blue_btn(text, on_click, height=50):
-            return ft.ElevatedButton(text, bgcolor=C["primary"], color="#FFFFFF", elevation=4, height=height, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=on_click)
-
-        # ── TAB 1: ORACLE ─────────────────────────────────────────────────────
-        fld_oracle = make_field("Enter Stock Symbol", value="RELIANCE")
-        result_txt = ft.Text("", size=14, color=C["black_txt"], font_family="monospace", selectable=True)
-        result_box = ft.Container(content=result_txt, bgcolor=C["res_bg"], padding=12, border_radius=8, visible=False)
-
-        def do_oracle(e):
-            q = fld_oracle.value.strip().upper()
-            row = db_get(q) or (rows := db_search(q) and db_get(rows[0][0]))
-            if row:
-                sym, eng, hi, ldt, asum, bk, *_ = row
-                ldate = parse_dt(ldt)
-                days = (datetime.now() - ldate).days if ldate else 0
-                result_txt.value = make_report(asum, days % 730, ldate, days)
-                result_box.visible = True
-                set_status(f"Analysis complete for {sym}", C["green"])
-            else: set_status("Symbol not found.", C["red"])
-            page.update()
-
-        oracle_screen = ft.Column(visible=True, controls=[
-            make_header("🔮 BHOOVALAYA ORACLE CORE"), fld_oracle,
-            make_blue_btn("🔍 RUN ORACLE PREDICTION", do_oracle), result_box
-        ])
-
-        # ── TAB 2: STOCKS ─────────────────────────────────────────────────────
-        fld_list_search, list_rows = make_field("Filter System Database"), ft.Column(spacing=4)
-        
-        def load_list(q=""):
-            list_rows.controls.clear()
-            for i, r in enumerate(db_search(q)):
-                sym, eng, hi, ldt, asum = r
-                list_rows.controls.append(ft.Container(content=ft.Column([
-                    ft.Text(f"{sym} | {eng}", weight="bold", color=C["primary"]),
-                    ft.Text(f"Hindi: {hi} | Weights: {asum}", color=C["green"])
-                ]), bgcolor=C["row_odd"] if i%2==0 else C["row_even"], padding=8))
-            page.update()
-
-        list_screen = ft.Column(visible=False, controls=[
-            make_header("📋 STOCK REGISTRY"), fld_list_search,
-            make_blue_btn("🔍 FILTER RECORDS", lambda e: load_list(fld_list_search.value.strip().upper())), list_rows
-        ])
-
-        # ── TAB 3: DATA ENTRY ─────────────────────────────────────────────────
-        fld_sym, fld_eng, fld_hindi, fld_ldate = make_field("Stock Symbol"), make_field("Company English Name"), make_field("Transliterated Hindi Name"), make_field("Listing Date (DD-MM-YYYY)")
-        
-        entry_screen = ft.Column(visible=False, controls=[
-            make_header("✏️ DATABASE MAINTENANCE ENTRY"), fld_sym, fld_eng,
-            make_blue_btn("🌐 CONVERT TO HINDI", lambda e: setattr(fld_hindi, 'value', get_hindi(fld_sym.value.upper(), fld_eng.value)) or page.update()),
-            fld_hindi, fld_ldate,
-            ft.Row([
-                make_blue_btn("💾 SAVE DATA", lambda e: db_save(fld_sym.value.upper(), fld_eng.value, fld_hindi.value, fld_ldate.value) and set_status("Saved Record", C["green"])),
-                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["red"], color="#FFFFFF", on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), page.update()))
-            ])
-        ])
-
-        # ── TAB 4: KUNDALI ENGINE ─────────────────────────────────────────────
-        fld_date, fld_time, fld_lat, fld_lon = make_field("Date (DD-MM-YYYY)", value=datetime.now().strftime("%d-%m-%Y")), make_field("Time (HH:MM)", value=datetime.now().strftime("%H:%M")), make_field("Latitude", value="19.0544"), make_field("Longitude", value="72.8405")
-        
-        astro_form_container = ft.Column(spacing=10)
-        astro_chart_container = ft.ListView(expand=True, spacing=20, padding=10, visible=False)
-
-        def do_astro(e):
-            try:
-                dt = parse_dt(fld_date.value)
-                tm = fld_time.value.split(":")
-                pos, ay = calc_planet_positions(jd_from_dt(dt.year, dt.month, dt.day, int(tm[0]), int(tm[1])), float(fld_lat.value), float(fld_lon.value))
-                
-                astro_chart_container.controls.clear()
-                
-                # Build separated canvas matrices
-                d1_canvas = build_diamond_chart({p: lon_to_sign_deg(l)[0] for p, l in pos.items()}, lon_to_sign_deg(pos["As"])[0], "D1 RASI")
-                d9_canvas = build_diamond_chart({p: d9_sign(l) for p, l in pos.items()}, d9_sign(pos["As"]), "D9 NAVAMSHA")
-                
-                # Display D1 Chart First
-                astro_chart_container.controls.append(make_header("📍 D1 RASI KUNDALI", bgcolor=C["primary"]))
-                astro_chart_container.controls.append(ft.Container(content=d1_canvas, alignment=ft.alignment.center, padding=10))
-                
-                # Dynamic separation barrier 
-                astro_chart_container.controls.append(ft.Divider(height=20, color=C["divider"]))
-                
-                # Display D9 Chart Below D1 Chart
-                astro_chart_container.controls.append(make_header("📐 D9 NAVAMSHA KUNDALI", bgcolor=C["secondary"]))
-                astro_chart_container.controls.append(ft.Container(content=d9_canvas, alignment=ft.alignment.center, padding=10))
-                
-                astro_chart_container.controls.append(ft.Container(height=15))
-                
-                def reset_astro_view(ev):
-                    astro_chart_container.controls.clear()
-                    astro_chart_container.visible = False
-                    astro_form_container.visible = True
-                    set_status("Charts cleared. System ready.", C["primary"])
-                    page.update()
-
-                exit_btn = ft.ElevatedButton(
-                    "🧹 CLEAR CHARTS / RETURN", 
-                    bgcolor=C["red"], 
-                    color="#FFFFFF", 
-                    height=50,
-                    style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")),
-                    on_click=reset_astro_view
-                )
-                astro_chart_container.controls.append(exit_btn)
-                
-                astro_form_container.visible = False
-                astro_chart_container.visible = True
-                set_status("Charts calculated! D1 displayed above D9.", C["green"])
-            except Exception as ex: 
-                set_status(f"Calculation Error: {ex}", C["red"])
-            page.update()
-
-        astro_form_container.controls.extend([
-            ft.Row([fld_date, fld_time]), ft.Row([fld_lat, fld_lon]),
-            make_blue_btn("🕉️ GENERATE BOTH D1 & D9 CHARTS", do_astro)
-        ])
-
-        astro_screen = ft.Column(visible=False, controls=[
-            make_header("🕉️ VEDIC CALCULATION MATRIX"),
-            astro_form_container,
-            astro_chart_container
-        ], expand=True)
-
-        # ── TAB 5: DATABASE BUILD (WITH DURATION DATE FIX) ────────────────────
-        def build_db_thread():
-            try:
-                set_status("Fetching data rows from NSE India...", C["accent"])
-                res = requests.get(NSE_URL, timeout=15)
-                r = csv.reader(io.StringIO(res.text)); next(r)
-                rows = list(r); total = len(rows)
-                db_c = sqlite3.connect(db_path)
-                for idx, row in enumerate(rows):
-                    if not row or len(row) < 4: continue
-                    # row[3] targets the valid 'Date of Listing' column in standard NSE csv maps
-                    sym, eng, series, ldt = row[0].strip(), row[1].strip(), row[2].strip(), row[3].strip()
-                    if series != "EQ": continue
-                    hi = get_hindi(sym, eng)
-                    asum, bk = calc(hi)
-                    db_c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hi, ldt, asum, bk, series))
-                    if idx % 12 == 0: set_prg(idx/total, f"Indexing {sym}")
-                db_c.commit(); db_c.close()
-                hide_prg(); set_status("System Database Synced!", C["green"])
-            except Exception as ex: hide_prg(); set_status(f"Sync failed: {ex}", C["red"])
-
-        db_screen = ft.Column(visible=False, controls=[
-            make_header("⚙️ SYSTEM STORAGE PANEL"),
-            make_blue_btn("⚡ EXECUTE AUTOMATED NSE SYNC", lambda e: threading.Thread(target=build_db_thread, daemon=True).start())
-        ])
-
-        # ── CORE NAVIGATION INTEGRATION ────────────────────────────────────────
-        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen}
-        def show_screen(name):
-            for k, v in all_screens.items(): v.visible = (k == name)
-            page.update()
-
-        nav_bar = ft.NavigationBar(
-            destinations=[
-                ft.NavigationBarDestination(icon=ft.Icons.PSYCHOLOGY, label="Oracle"),
-                ft.NavigationBarDestination(icon=ft.Icons.FORMAT_LIST_BULLETED, label="Stocks"),
-                ft.NavigationBarDestination(icon=ft.Icons.EDIT_NOTE, label="Entry"),
-                ft.NavigationBarDestination(icon=ft.Icons.STARS, label="Kundali"),
-                ft.NavigationBarDestination(icon=ft.Icons.STORAGE, label="Database"),
-            ],
-            on_change=lambda e: show_screen(["oracle", "list", "entry", "astro", "db"][int(e.data)]),
-            bgcolor="#CDD7E6" 
-        )
-
-        page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, nav_bar)
-        set_status(f"System Operational — {db_count()} records configured.", C["green"])
-    except Exception as err:
-        page.add(ft.Container(content=ft.Text(f"Fatal Matrix Error:\n{err}"), bgcolor=C["red"]))
-        page.update()
-
-if __name__ == "__main__":
-    ft.app(target=main)
-
-import csv
-import ioimport os
-import sqlite3
-import threading
-import csv
-import io
-import time
-import math
-from datetime import datetime
-
-try:
-    import requests
-    REQUESTS_OK = True
-except Exception:
-    REQUESTS_OK = False
-
-import flet as ft
-import flet.canvas as cv
-
-# ── CONSTANTS ──────────────────────────────────────────────────────────────────
-AKSHARA_VALS = {
-    'अ':1,'आ':2,'इ':3,'ई':4,'उ':5,'ऊ':6,'ए':7,'ऐ':8,'ओ':9,'औ':10,
-    'क':11,'ख':12,'ग':13,'घ':14,'ङ':15,'च':16,'छ':17,'ज':18,'झ':19,'ञ':20,
-    'ट':21,'ठ':22,'ड':23,'ढ':24,'ण':25,'त':26,'थ':27,'द':28,'ध':29,'न':30,
-    'प':31,'फ':32,'ब':33,'भ':34,'म':35,'य':36,'र':37,'ल':38,'व':39,'श':40,
-    'ष':41,'स':42,'ह':43,'ि':2,'ा':2,'े':7,'ै':8,'ो':9,'ौ':10,'्':0,'ं':1
-}
-SUTRA_MAP = {
-    0:"अनंत(Ananta)",1:"शक्ति(Shakti)",2:"ज्ञान(Gnana)",
-    3:"धर्म(Dharma)",4:"वैराग्य(Vairagya)",5:"ऐश्वर्य(Aishwarya)",
-    6:"यश(Yashas)",7:"श्री(Shree)",8:"वीर्य(Veerya)"
-}
-GRAHA = {
-    0:("मंगल Mars","BULLISH",4,"Metals Defence Energy","1-7 Days","Strict stop-loss","Tuesday"),
-    1:("सूर्य Sun","BULLISH",5,"PSU Govt Energy Gold","1-4 Weeks","Enter Monday","Sunday"),
-    2:("चंद्र Moon","VOLATILE",2,"FMCG Dairy Retail","1-3 Days","Avoid overnight","Monday"),
-    3:("गुरु Jupiter","STRONGLY BULLISH",5,"Banking Education","1-6 Months","Watch retrograde","Thursday"),
-    4:("राहु Rahu","SPECULATIVE",3,"Tech Pharma Foreign","Caution","No leverage","Saturday"),
-    5:("बुध Mercury","BULLISH",4,"IT Telecom Media","1-3 Weeks","Watch retrograde","Wednesday"),
-    6:("शुक्र Venus","BULLISH",4,"FMCG Luxury Hotels","2-8 Weeks","Book at peaks","Friday"),
-    7:("केतु Ketu","BEARISH",2,"Old Economy Exit","Avoid Entry","Reduce positions","Tuesday"),
-    8:("शनि Saturn","SLOW BULLISH",3,"Infra Metals Coal","3-12 Months","No panic sell","Saturday"),
-}
-NAK = [
-    "अश्विनी","भरणी","कृत्तिका","रोहिणी","मृगशिरा","आर्द्रा",
-    "पुनर्वसु","पुष्य","आश्लेषा","मघा","पूर्वाफाल्गुनी","उत्तराफाल्गुनी",
-    "हस्त","चित्रा","स्वाति","विशाखा","अनुराधा","ज्येष्ठा",
-    "मूल","पूर्वाषाढ़ा","उत्तराषाढ़ा","श्रवण","धनिष्ठा","शतभिषा",
-    "पूर्वाभाद्रपद","उत्तराभाद्रपद","रेवती"
-]
-CURATED = {
-    "SBIN":"भारतीय स्टेट बैंक","HDFCBANK":"एचडीएफसी बैंक",
-    "ICICIBANK":"आईसीआईसीआई बैंक","AXISBANK":"एक्सिस बैंक",
-    "RELIANCE":"रिलायंस","TCS":"टाटा कंसल्टेंसी सर्विसेज",
-    "INFY":"इन्फोसिस","WIPRO":"विप्रो",
-    "NTPC":"राष्ट्रीय ताप विद्युत निगम",
-    "ONGC":"तेल और प्राकृतिक गैस निगम",
-    "TATASTEEL":"टाटा स्टील","COALINDIA":"कोल इंडिया",
-    "HINDUNILVR":"हिंदुस्तान यूनिलीवर","ITC":"आईटीसी",
-    "LT":"लार्सन एंड टुब्रो","MARUTI":"मारुति सुजुकी",
-    "TATAMOTORS":"टाटा मोटर्स","SUNPHARMA":"सन फार्मास्युटिकल",
-    "BHARTIARTL":"भारती एयरटेल","BAJFINANCE":"बजाज फाइनेंस",
-    "LICI":"भारतीय जीवन बीमा निगम","IRCTC":"भारतीय रेलवे खानपान",
-    "HAL":"हिंदुस्तान एयरोनॉटिक्स","ASIANPAINT":"एशियन पेंट्स",
-    "TITAN":"टाइटन कंपनी","ZOMATO":"जोमैटो",
-    "PNB":"पंजाब नेशनल बैंक","BEL":"भारत इलेक्ट्रॉनिक्स",
-    "HCLTECH":"एचसीएल टेक्नोलॉजीज","ADANIPORTS":"अदानी पोर्ट्स",
-    "KOTAKBANK":"कोटक महिंद्रा बैंक","DRREDDY":"डॉ रेड्डीज",
-    "CIPLA":"सिप्ला","M&M":"महिंद्रा एंड महिंद्रा",
-    "ULTRACEMCO":"अल्ट्राटेक सीमेंट","BAJAJ-AUTO":"बजाज ऑटो",
-    "POWERGRID":"पावर ग्रिड कॉर्पोरेशन","GAIL":"गेल इंडिया",
-    "BPCL":"भारत पेट्रोलियम","IOC":"इंडियन ऑयल कॉर्पोरेशन",
-    "BANKBARODA":"बैंक ऑफ बड़ौदा","CANBK":"केनरा बैंक",
-    "UNIONBANK":"यूनियन बैंक ऑफ इंडिया","YESBANK":"यस बैंक",
-    "IDFCFIRSTB":"आईडीएफसी फर्स्ट बैंक","FEDERALBNK":"फेडरल बैंक",
-    "SAIL":"स्टील अथॉरिटी ऑफ इंडिया","NMDC":"एनएमडीसी",
-    "HINDALCO":"हिंडाल्को निष्कर्ष","VEDL":"वेदांता",
-    "TATAPOWER":"टाटा पावर","ADANIPOWER":"अदानी पावर",
-    "ADANIENT":"अदानी एंटरप्राइजेज","ADANIGREEN":"अदानी ग्रीन एनर्जी",
-    "DLF":"डीएलएफ","GODREJPROP":"गोदरेज प्रॉपर्टीज",
-    "BRITANNIA":"ब्रिटानिया展望 इंडस्ट्रीज","DABUR":"डाबर इंडिया",
-    "MARICO":"मेरिको","NESTLEIND":"नेस्ले इंडिया",
-    "HEROMOTOCO":"हीरो मोटोकॉर्प","EICHERMOT":"आयशर मोटर्स",
-    "ASHOKLEY":"अशोक लेलैंड","TVSMOTOR":"टीवीएस motor",
-    "CONCOR":"कंटेनर कॉर्पोरेशन","BHEL":"भारत हेवी इलेक्ट्रिकल्स",
-    "APOLLOHOSP":"अपोलो हॉस्पिटल्स","DIVISLAB":"दिविस लेबोरेटरीज",
-    "BIOCON":"बायोकॉन","LUPIN":"ल्यूपिन",
-    "AUROPHARMA":"ऑरोबिंदो फार्मा","TORNTPHARM":"टोरेंट फार्मा",
-}
-WD = {
-    "LIMITED":"लिमिटेड","LTD":"लिमिटेड","BANK":"बैंक",
-    "INDUSTRIES":"इंडस्ट्रीज","INDUSTRY":"उद्योग",
-    "INDIA":"INDIA","INDIAN":"इंडियन","POWER":"पावर",
-    "ENERGY":"एनर्जी","FINANCE":"फाइनेंस","STEEL":"स्टील",
-    "MOTORS":"मोटर्स","MOTOR":"मोटर",
-    "TECHNOLOGIES":"टेक्नोलॉजीज","TECHNOLOGY":"टेक्नोलॉजी",
-    "AND":"एंड","&":"एंड","SERVICES":"सर्विसेज","SERVICE":"सर्विस",
-    "PHARMA":"फार्मा","PHARMACEUTICALS":"फार्मास्युटिकल्स",
-    "CEMENT":"सीमेंट","OIL":"OIL","GAS":"गैस",
-    "TELECOM":"टेलीकॉम","GROUP":"ग्रुप",
-    "CHEMICALS":"केमिकल्स","NATIONAL":"नेशनल",
-    "CORPORATION":"कॉर्पोरेशन","CORP":"कॉर्प",
-    "MEDIA":"MEDIA","HEALTHCARE":"हेल्थकेयर",
-    "CAPITAL":"कैपिटल","INSURANCE":"इंश्योरेंस",
-    "REALTY":"रियल्टी","PROPERTIES":"प्रॉपर्टीज",
-    "AUTO":"ऑटो","AUTOMOBILE":"ऑटोमोबाइल",
-    "ELECTRIC":"इलेक्ट्रिक","ELECTRONICS":"इलेक्ट्रॉनिक्स",
-    "CONSTRUCTION":"कंस्ट्रक्शन","INFRASTRUCTURE":"इन्फ्रास्ट्रक्चर",
-    "ENTERPRISES":"एंटरप्राइजेज","ENTERPRISE":"एंटरप्राइज",
-    "HOLDINGS":"होल्डिंग्स","INVESTMENTS":"इन्वेस्टमेंट्स",
-    "LABORATORIES":"लेबोरेटरीज","LABS":"लैब्स",
-    "HOSPITAL":"हॉस्पिटल","HOSPITALS":"हॉस्पिटल्स",
-    "FOODS":"फूड्स","FOOD":"फूड","BEVERAGES":"बेवरेजेज",
-    "TEXTILE":"टेक्सटाइल","TEXTILES":"टेक्सटाइल्स",
-    "FERTILIZERS":"फर्टिलाइजर्स","AGRO":"एग्रो",
-    "TRADING":"ट्रेडिंग","EXPORTS":"एक्सपोर्ट्स",
-    "SOLUTIONS":"सॉल्यूशंस","SYSTEMS":"सिस्टम्स",
-    "GLOBAL":"ग्लोबल","INTERNATIONAL":"इंटरनेशनल",
-    "MANAGEMENT":"मैनेजमेंट","CONSULTING":"कंसलिटींग",
-    "SECURITIES":"सिक्योरिटीज","PETROLEUM":"पेट्रोलियम",
-    "COMPANY":"कंपनी","SOLAR":"सोलर","RENEWABLE":"रิน्यूएबल",
-    "DIGITAL":"डिजिटल","NETWORK":"नेटवर्क","NETWORKS":"नेटवर्क्स",
-}
-PR = {
-    'A':'ए','B':'ब','C':'क','D':'ड','E':'इ','F':'फ',
-    'G':'ग','H':'ह','I':'इ','J':'ज','K':'क','L':'ल',
-    'M':'म','N':'न','O':'ओ','P':'प','Q':'क','R':'र',
-    'S':'स','T':'ट','U':'य','V':'व','W':'व','X':'क्स',
-    'Y':'य','Z':'ज'
-}
-NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
-
-# ── HIGH VISIBILITY SYSTEM BLUE COLOR PALETTE ──────────────────────────────────
-C = {
-    "bg":       "#FFFFFF",
-    "primary":  "#0D47A1",  # Dark Blue
-    "secondary":"#1565C0",  # Medium Vivid Blue
-    "accent":   "#1976D2",  # Operation Blue
-    "dark_txt": "#0D47A1",
-    "black_txt":"#1A237E",
-    "hint_txt": "#546E7A",
-    "green":    "#1B5E20",
-    "orange":   "#E65100",
-    "red":      "#B71C1C",
-    "inp_bg":   "#F0F4FA",
-    "res_bg":   "#E8EAF6",
-    "row_odd":  "#F5F7FA",
-    "row_even": "#FFFFFF",
-    "divider":  "#5C6BC0",
-}
-
-# ── HELPER FUNCTIONS ───────────────────────────────────────────────────────────
-def parse_dt(s):
-    if not s: return None
-    for f in ("%d-%m-%Y","%Y-%m-%d","%d/%m/%Y","%d-%b-%Y"):
-        try: return datetime.strptime(s.strip(), f)
-        except: pass
-    return None
-
-def get_hindi(sym, eng):
-    if sym in CURATED: return CURATED[sym]
-    if not REQUESTS_OK:
-        out = []
-        for w in eng.upper().split():
-            cw = w.strip("&.,()-/")
-            out.append(WD.get(cw, "".join(PR.get(c,"") for c in cw)))
-        return " ".join(out)
-    try:
-        url = ("https://translate.googleapis.com/translate_a/single"
-               "?client=gtx&sl=en&tl=hi&dt=t&q=" + requests.utils.quote(eng))
-        d = requests.get(url, timeout=5).json()
-        t = "".join(p[0] for p in d[0] if p[0]).strip()
-        if t and t != eng:
-            time.sleep(0.15)
-            return t
-    except: pass
-    out = []
-    for w in eng.upper().split():
-        cw = w.strip("&.,()-/")
-        if cw in WD: out.append(WD[cw]); continue
-        try:
-            r = requests.get(
-                "https://inputtools.google.com/request?text=" + cw + "&ime=transliteration_en_hi&num=1",
-                timeout=4).json()
-            out.append(r[1][0][1][0] if r[0]=="SUCCESS" else "".join(PR.get(c,"") for c in cw))
-        except: out.append("".join(PR.get(c,"") for c in cw))
-    return " ".join(out)
-
-def calc(name):
-    total, steps = 0, []
-    for c in name:
-        w = AKSHARA_VALS.get(c, 0)
-        total += w
-        if w > 0 or c == "्":
-            steps.append(c + "=" + str(w))
-        elif c == " ":
-            steps.append("|")
-    return total, " ".join(steps)
-
-def make_report(asum, tval, ldate, elapsed_days):
-    nv    = (asum % 9) or 9
-    g     = GRAHA[(nv - 1) % 9]
-    total = asum + tval
-    sutra = SUTRA_MAP.get(total % 9, "")
-    today = datetime.now()
-    nak   = NAK[today.timetuple().tm_yday % 27]
-    wday  = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][today.weekday()]
-    bars = {1:"★☆☆☆☆", 2:"★★☆☆☆", 3:"★★★☆☆", 4:"★★★★☆", 5:"★★★★★"}
-    if ldate:
-        tc = ((today.timetuple().tm_yday - ldate.timetuple().tm_yday) % 27) + 1
-        tn = ["जन्म","सम्पत","विपत","क्षेम","प्रत्यरि","साधक","वध","मित्र","परम-मित्र"]
-        tara = tn[(tc-1)%9] + (" GOOD" if tc%9 in(2,4,6,8,0) else " CAUTION")
-    else:
-        tara = "N/A"
-    S  = "─" * 30
-    S2 = "═" * 30
-    return "\n".join([
-        S2, "    BHOOVALAYA ORACLE RESULT", S2, "",
-        f"  LISTING DATE : {ldate.strftime('%d-%m-%Y') if ldate else 'N/A'}",
-        f"  DAYS LAPSED  : {elapsed_days} Days", "",
-        "STEP 1: AKSHARA WEIGHT THEORY", "  Each Hindi sound has weight:", S,
-        "STEP 2: NAVAANK CALCULATION", "  Akshara Sum = " + str(asum), "  Digital Root (1-9) = " + str(nv), S,
-        "STEP 3: TEMPORAL VIBRATION", f"  Temporal = Days % 730 = {tval}", f"  Combined Vib = {total}", S,
-        "STEP 4: SUTRA PRINCIPLE", "  " + sutra, S,
-        "STEP 5: RULING GRAHA (PLANET)", "  Navaank " + str(nv) + " → " + g[0], S2,
-        "  MARKET FORECAST", S2, "  Signal   : " + g[1], "  Strength : " + bars.get(g[2],""), "  Sectors  : " + g[3], S,
-        "STEP 6: VEDIC TIMING", f"  Nakshatra: {nak} | Tara: {tara}", S2
-    ])
-
-# ── VEDIC ASTROLOGY CALCULATIONS ──────────────────────────────────────────────
-SIGN_ABB  = ["Ar","Ta","Ge","Ca","Le","Vi","Li","Sc","Sg","Cp","Aq","Pi"]
-
-def norm360(x): return x % 360
-
-def jd_from_dt(year, month, day, hour=12, minute=0):
-    if month <= 2: year -= 1; month += 12
-    A = int(year / 100)
-    B = 2 - A + int(A / 4)
-    return (int(365.25 * (year + 4716)) + int(30.6001 * (month + 1)) + day + hour/24.0 + minute/1440.0 + B - 1524.5)
-
-def lahiri_ayanamsa(jd):
-    T = (jd - 2451545.0) / 36525.0
-    return 23.85 + 0.013611 * T + 0.000092 * T * T
-
-def calc_planet_positions(jd, lat=19.0544, lon=72.8405):
-    T = (jd - 2451545.0) / 36525.0
-    sun_t = norm360(280.46646 + 36000.76983 * T)
-    moon_t = norm360(218.3164477 + 481267.88123421 * T)
-    merc_t = norm360(252.2509 + 149474.0722 * T)
-    ven_t  = norm360(181.9798 + 58517.8160 * T)
-    mars_t = norm360(355.433 + 19140.2993 * T)
-    jup_t  = norm360(34.3515 + 3034.9057 * T)
-    sat_t  = norm360(50.0774 + 1222.1138 * T)
-    rahu_t = norm360(125.0445 - 1934.1362*T)
-    ketu_t = norm360(rahu_t + 180)
-    
-    eps     = math.radians(23.439291111 - 0.013004167*T)
-    GMST    = norm360(280.46061837 + 360.98564736629*(jd - 2451545.0))
-    LST     = math.radians(norm360(GMST + lon))
-    asc_t   = math.degrees(math.atan2(math.cos(LST), -math.sin(LST)*math.cos(eps) - math.tan(math.radians(lat))*math.sin(eps))) % 360
-    ay = lahiri_ayanamsa(jd)
-    return {
-        "As": (asc_t - ay) % 360, "Su": (sun_t  - ay) % 360, "Mo": (moon_t - ay) % 360,
-        "Me": (merc_t - ay) % 360, "Ve": (ven_t  - ay) % 360, "Ma": (mars_t - ay) % 360,
-        "Ju": (jup_t  - ay) % 360, "Sa": (sat_t  - ay) % 360, "Ra": (rahu_t - ay) % 360, "Ke": (ketu_t - ay) % 360,
-    }, ay
-
-def lon_to_sign_deg(lon): return int((lon % 360) / 30), round(lon % 30, 2)
-
-def d9_sign(lon):
-    sign, deg = lon_to_sign_deg(lon)
-    nav_num   = int(deg / (30.0 / 9))
-    start_map = {0:0, 1:9, 2:6, 3:3, 4:0, 5:9, 6:6, 7:3, 8:0, 9:9, 10:6, 11:3}
-    return (start_map[sign] + nav_num) % 12
-
-def build_diamond_chart(positions, lagna_sign, title, chart_size=300):
-    W, p = chart_size, 8
-    x0, y0, x1, y1 = p, p, W - p, W - p
-    cx, cy = W // 2, W // 2
-    
-    HOUSES_GEOM = {
-        1:  {"poly": [(cx, y0), (x1, cy), (cx, y1), (x0, cy)], "txt": (cx, cy - 40),   "planets": (cx, cy - 15)},
-        2:  {"poly": [(x0, y0), (cx, y0), (x0, cy)],           "txt": (x0 + 35, y0 + 25), "planets": (x0 + 35, y0 + 45)},
-        3:  {"poly": [(x0, y0), (x0, cy), (cx, y0)],           "txt": (x0 + 25, y0 + 55), "planets": (x0 + 25, y0 + 75)},
-        4:  {"poly": [(x0, cy), (cx, y0), (cx, cy)],           "txt": (cx - 45, cy - 15), "planets": (cx - 45, cy + 5)},
-        5:  {"poly": [(x0, y1), (x0, cy), (cx, y1)],           "txt": (x0 + 25, y1 - 55), "planets": (x0 + 25, y1 - 35)},
-        6:  {"poly": [(x0, y1), (cx, y1), (x0, cy)],           "txt": (x0 + 35, y1 - 25), "planets": (x0 + 35, y1 - 5)},
-        7:  {"poly": [(cx, y1), (x0, cy), (cx, y0), (x1, cy)], "txt": (cx, cy + 40),   "planets": (cx, cy + 55)},
-        8:  {"poly": [(x1, y1), (cx, y1), (x1, cy)],           "txt": (x1 - 35, y1 - 25), "planets": (x1 - 35, y1 - 5)},
-        9:  {"poly": [(x1, y1), (x1, cy), (cx, y1)],           "txt": (x1 - 25, y1 - 55), "planets": (x1 - 25, y1 - 35)},
-        10: {"poly": [(x1, cy), (cx, y1), (cx, cy)],           "txt": (cx + 45, cy + 15), "planets": (cx + 45, cy - 5)},
-        11: {"poly": [(x1, y0), (x1, cy), (cx, y0)],           "txt": (x1 - 25, y0 + 55), "planets": (x1 - 25, y0 + 75)},
-        12: {"poly": [(x1, y0), (cx, y0), (x1, cy)],           "txt": (x1 - 35, y0 + 25), "planets": (x1 - 35, y0 + 45)},
-    }
-    
-    sign_planets = {i: [] for i in range(12)}
-    for planet, s_idx in positions.items(): sign_planets[int(s_idx)].append(planet)
-    
-    lagna_s = int(lagna_sign)
-    def get_house_sign(h_num): return (lagna_s + h_num - 1) % 12
-
-    shapes = [cv.Fill(paint=ft.Paint(color="#FCFDFE"))]
-    for h_num, info in HOUSES_GEOM.items():
-        is_lagna = (h_num == 1)
-        bg_color = "#FFE082" if is_lagna else "#F5F7FA"
-        stroke_color = "#B71C1C" if is_lagna else "#0D47A1"
-        stroke_w = 2.0 if is_lagna else 1.2
-        pts = info["poly"]
-        path_data = [cv.Path.MoveTo(pts[0][0], pts[0][1])]
-        for pt in pts[1:]: path_data.append(cv.Path.LineTo(pt[0], pt[1]))
-        path_data.append(cv.Path.Close())
-        shapes.append(cv.Path(path_data, paint=ft.Paint(color=bg_color, style=ft.PaintingStyle.FILL)))
-        shapes.append(cv.Path(path_data, paint=ft.Paint(color=stroke_color, stroke_width=stroke_w, style=ft.PaintingStyle.STROKE)))
-
-    grid_paint = ft.Paint(color="#0D47A1", stroke_width=1.5, style=ft.PaintingStyle.STROKE)
-    shapes.extend([
-        cv.Line(x0, y0, x1, y1, paint=grid_paint), cv.Line(x1, y0, x0, y1, paint=grid_paint),
-        cv.Line(cx, y0, x0, cy, paint=grid_paint), cv.Line(x0, cy, cx, y1, paint=grid_paint),
-        cv.Line(cx, y1, x1, cy, paint=grid_paint), cv.Line(x1, cy, cx, y0, paint=grid_paint),
-        cv.Rect(x=x0, y=y0, width=W-(2*p), height=W-(2*p), paint=grid_paint)
-    ])
-
-    for h_num, info in HOUSES_GEOM.items():
-        sign_idx = get_house_sign(h_num)
-        planets_here = sign_planets.get(sign_idx, [])
-        tx, ty = info["txt"]
-        shapes.append(cv.Text(x=tx - 6, y=ty - 10, text=str(sign_idx + 1), style=ft.TextStyle(size=12, color="#1A237E", weight="bold")))
-        shapes.append(cv.Text(x=tx + 5, y=ty - 8, text=f"({SIGN_ABB[sign_idx]})", style=ft.TextStyle(size=8, color="#546E7A")))
-        if planets_here:
-            px, py = info["planets"]
-            planets_txt = " ".join(planets_here)
-            shapes.append(cv.Text(x=px - (len(planets_txt) * 3), y=py, text=planets_txt, style=ft.TextStyle(size=11, color="#B71C1C", weight="bold")))
-
-    shapes.append(cv.Text(x=cx - 30, y=cy - 8, text=title, style=ft.TextStyle(size=10, color="#FFFFFF", weight="bold", bgcolor="#0D47A1")))
-    return cv.Canvas(shapes=shapes, width=W, height=W)
-
-# ── MAIN APP INTERFACE ─────────────────────────────────────────────────────────
-def main(page: ft.Page):
-    try:
-        page.title, page.bgcolor, page.padding, page.scroll = "Bhoovalaya Cosmic System", C["bg"], 10, "auto"
-        db_path = os.path.join(os.getenv("FLET_APP_STORAGE_DATA", "."), "bhuvalaya.db")
-
-        conn = sqlite3.connect(db_path)
-        conn.execute("CREATE TABLE IF NOT EXISTS stocks(symbol TEXT PRIMARY KEY, eng_name TEXT, hindi_name TEXT, ldate TEXT, asum INTEGER, breakdown TEXT, series TEXT DEFAULT 'EQ')")
-        conn.commit(); conn.close()
-
-        def db_count(): return sqlite3.connect(db_path).execute("SELECT COUNT(*) FROM stocks").fetchone()[0]
-        def db_search(q): return sqlite3.connect(db_path).execute("SELECT symbol, eng_name, hindi_name, ldate, asum FROM stocks WHERE symbol LIKE ? OR eng_name LIKE ? ORDER BY symbol LIMIT 100", ("%"+q+"%", "%"+q+"%")).fetchall()
-        def db_get(sym): return sqlite3.connect(db_path).execute("SELECT * FROM stocks WHERE symbol=?", (sym,)).fetchone()
-        def db_save(sym, eng, hindi, ldate, series="EQ"):
-            asum, bk = calc(hindi)
-            c = sqlite3.connect(db_path)
-            c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hindi, ldate, asum, bk, series))
-            c.commit(); c.close()
-            return True, asum
-
-        status_txt = ft.Text("System Initialized", size=14, color="#FFFFFF", weight="bold")
-        status_bar = ft.Container(content=status_txt, bgcolor=C["primary"], padding=10, border_radius=6)
-        prg_bar, prg_txt = ft.ProgressBar(value=0, visible=False, color="#FF6F00", bgcolor="#EEEEEE"), ft.Text("", size=13, color=C["orange"])
-
-        def set_status(msg, color=None): status_txt.value, status_bar.bgcolor = msg, color or C["primary"]; page.update()
-        def set_prg(pct, msg=""): prg_bar.visible, prg_bar.value, prg_txt.value = True, pct, msg; page.update()
-        def hide_prg(): prg_bar.visible, prg_txt.value = False, ""; page.update()
-        
-        def make_field(label, hint="", value=""):
-            return ft.TextField(label=label, label_style=ft.TextStyle(size=14, color=C["primary"], weight="bold"), hint_text=hint, value=value, text_style=ft.TextStyle(size=15, color=C["black_txt"]), border_color=C["primary"], border_width=2, bgcolor=C["inp_bg"])
-        def make_header(title, bgcolor=None): 
-            return ft.Container(content=ft.Text(title, size=15, color="#FFFFFF", weight="bold"), bgcolor=bgcolor or C["primary"], padding=10, border_radius=6)
-        def make_blue_btn(text, on_click, height=50):
-            return ft.ElevatedButton(text, bgcolor=C["primary"], color="#FFFFFF", elevation=4, height=height, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=on_click)
-
-        # ── TAB 1: ORACLE ─────────────────────────────────────────────────────
-        fld_oracle = make_field("Enter Stock Symbol", value="RELIANCE")
-        result_txt = ft.Text("", size=14, color=C["black_txt"], font_family="monospace", selectable=True)
-        result_box = ft.Container(content=result_txt, bgcolor=C["res_bg"], padding=12, border_radius=8, visible=False)
-
-        def do_oracle(e):
-            q = fld_oracle.value.strip().upper()
-            row = db_get(q) or (rows := db_search(q) and db_get(rows[0][0]))
-            if row:
-                sym, eng, hi, ldt, asum, bk, *_ = row
-                ldate = parse_dt(ldt)
-                days = (datetime.now() - ldate).days if ldate else 0
-                result_txt.value = make_report(asum, days % 730, ldate, days)
-                result_box.visible = True
-                set_status(f"Analysis complete for {sym}", C["green"])
-            else: set_status("Symbol not found.", C["red"])
-            page.update()
-
-        oracle_screen = ft.Column(visible=True, controls=[
-            make_header("🔮 BHOOVALAYA ORACLE CORE"), fld_oracle,
-            make_blue_btn("🔍 RUN ORACLE PREDICTION", do_oracle), result_box
-        ])
-
-        # ── TAB 2: STOCKS ─────────────────────────────────────────────────────
-        fld_list_search, list_rows = make_field("Filter System Database"), ft.Column(spacing=4)
-        
-        def load_list(q=""):
-            list_rows.controls.clear()
-            for i, r in enumerate(db_search(q)):
-                sym, eng, hi, ldt, asum = r
-                list_rows.controls.append(ft.Container(content=ft.Column([
-                    ft.Text(f"{sym} | {eng}", weight="bold", color=C["primary"]),
-                    ft.Text(f"Hindi: {hi} | Weights: {asum}", color=C["green"])
-                ]), bgcolor=C["row_odd"] if i%2==0 else C["row_even"], padding=8))
-            page.update()
-
-        list_screen = ft.Column(visible=False, controls=[
-            make_header("📋 STOCK REGISTRY"), fld_list_search,
-            make_blue_btn("🔍 FILTER RECORDS", lambda e: load_list(fld_list_search.value.strip().upper())), list_rows
-        ])
-
-        # ── TAB 3: DATA ENTRY ─────────────────────────────────────────────────
-        fld_sym, fld_eng, fld_hindi, fld_ldate = make_field("Stock Symbol"), make_field("Company English Name"), make_field("Transliterated Hindi Name"), make_field("Listing Date (DD-MM-YYYY)")
-        
-        entry_screen = ft.Column(visible=False, controls=[
-            make_header("✏️ DATABASE MAINTENANCE ENTRY"), fld_sym, fld_eng,
-            make_blue_btn("🌐 CONVERT TO HINDI", lambda e: setattr(fld_hindi, 'value', get_hindi(fld_sym.value.upper(), fld_eng.value)) or page.update()),
-            fld_hindi, fld_ldate,
-            ft.Row([
-                make_blue_btn("💾 SAVE DATA", lambda e: db_save(fld_sym.value.upper(), fld_eng.value, fld_hindi.value, fld_ldate.value) and set_status("Saved Record", C["green"])),
-                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["red"], color="#FFFFFF", on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), page.update()))
-            ])
-        ])
-
-        # ── TAB 4: KUNDALI ENGINE ─────────────────────────────────────────────
-        fld_date, fld_time, fld_lat, fld_lon = make_field("Date (DD-MM-YYYY)", value=datetime.now().strftime("%d-%m-%Y")), make_field("Time (HH:MM)", value=datetime.now().strftime("%H:%M")), make_field("Latitude", value="19.0544"), make_field("Longitude", value="72.8405")
-        
-        astro_form_container = ft.Column(spacing=10)
-        astro_chart_container = ft.ListView(expand=True, spacing=20, padding=10, visible=False)
-
-        def do_astro(e):
-            try:
-                dt = parse_dt(fld_date.value)
-                tm = fld_time.value.split(":")
-                pos, ay = calc_planet_positions(jd_from_dt(dt.year, dt.month, dt.day, int(tm[0]), int(tm[1])), float(fld_lat.value), float(fld_lon.value))
-                
-                astro_chart_container.controls.clear()
-                
-                # Build separated canvas matrices
-                d1_canvas = build_diamond_chart({p: lon_to_sign_deg(l)[0] for p, l in pos.items()}, lon_to_sign_deg(pos["As"])[0], "D1 RASI")
-                d9_canvas = build_diamond_chart({p: d9_sign(l) for p, l in pos.items()}, d9_sign(pos["As"]), "D9 NAVAMSHA")
-                
-                # Display D1 Chart First
-                astro_chart_container.controls.append(make_header("📍 D1 RASI KUNDALI", bgcolor=C["primary"]))
-                astro_chart_container.controls.append(ft.Container(content=d1_canvas, alignment=ft.alignment.center, padding=10))
-                
-                # Dynamic separation barrier 
-                astro_chart_container.controls.append(ft.Divider(height=20, color=C["divider"]))
-                
-                # Display D9 Chart Below D1 Chart
-                astro_chart_container.controls.append(make_header("📐 D9 NAVAMSHA KUNDALI", bgcolor=C["secondary"]))
-                astro_chart_container.controls.append(ft.Container(content=d9_canvas, alignment=ft.alignment.center, padding=10))
-                
-                astro_chart_container.controls.append(ft.Container(height=15))
-                
-                def reset_astro_view(ev):
-                    astro_chart_container.controls.clear()
-                    astro_chart_container.visible = False
-                    astro_form_container.visible = True
-                    set_status("Charts cleared. System ready.", C["primary"])
-                    page.update()
-
-                exit_btn = ft.ElevatedButton(
-                    "🧹 CLEAR CHARTS / RETURN", 
-                    bgcolor=C["red"], 
-                    color="#FFFFFF", 
-                    height=50,
-                    style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")),
-                    on_click=reset_astro_view
-                )
-                astro_chart_container.controls.append(exit_btn)
-                
-                astro_form_container.visible = False
-                astro_chart_container.visible = True
-                set_status("Charts calculated! D1 displayed above D9.", C["green"])
-            except Exception as ex: 
-                set_status(f"Calculation Error: {ex}", C["red"])
-            page.update()
-
-        astro_form_container.controls.extend([
-            ft.Row([fld_date, fld_time]), ft.Row([fld_lat, fld_lon]),
-            make_blue_btn("🕉️ GENERATE BOTH D1 & D9 CHARTS", do_astro)
-        ])
-
-        astro_screen = ft.Column(visible=False, controls=[
-            make_header("🕉️ VEDIC CALCULATION MATRIX"),
-            astro_form_container,
-            astro_chart_container
-        ], expand=True)
-
-        # ── TAB 5: DATABASE BUILD (WITH DURATION DATE FIX) ────────────────────
-        def build_db_thread():
-            try:
-                set_status("Fetching data rows from NSE India...", C["accent"])
-                res = requests.get(NSE_URL, timeout=15)
-                r = csv.reader(io.StringIO(res.text)); next(r)
-                rows = list(r); total = len(rows)
-                db_c = sqlite3.connect(db_path)
-                for idx, row in enumerate(rows):
-                    if not row or len(row) < 4: continue
-                    # row[3] targets the valid 'Date of Listing' column in standard NSE csv maps
-                    sym, eng, series, ldt = row[0].strip(), row[1].strip(), row[2].strip(), row[3].strip()
-                    if series != "EQ": continue
-                    hi = get_hindi(sym, eng)
-                    asum, bk = calc(hi)
-                    db_c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hi, ldt, asum, bk, series))
-                    if idx % 12 == 0: set_prg(idx/total, f"Indexing {sym}")
-                db_c.commit(); db_c.close()
-                hide_prg(); set_status("System Database Synced!", C["green"])
-            except Exception as ex: hide_prg(); set_status(f"Sync failed: {ex}", C["red"])
-
-        db_screen = ft.Column(visible=False, controls=[
-            make_header("⚙️ SYSTEM STORAGE PANEL"),
-            make_blue_btn("⚡ EXECUTE AUTOMATED NSE SYNC", lambda e: threading.Thread(target=build_db_thread, daemon=True).start())
-        ])
-
-        # ── CORE NAVIGATION INTEGRATION ────────────────────────────────────────
-        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen}
-        def show_screen(name):
-            for k, v in all_screens.items(): v.visible = (k == name)
-            page.update()
-
-        nav_bar = ft.NavigationBar(
-            destinations=[
-                ft.NavigationBarDestination(icon=ft.Icons.PSYCHOLOGY, label="Oracle"),
-                ft.NavigationBarDestination(icon=ft.Icons.FORMAT_LIST_BULLETED, label="Stocks"),
-                ft.NavigationBarDestination(icon=ft.Icons.EDIT_NOTE, label="Entry"),
-                ft.NavigationBarDestination(icon=ft.Icons.STARS, label="Kundali"),
-                ft.NavigationBarDestination(icon=ft.Icons.STORAGE, label="Database"),
-            ],
-            on_change=lambda e: show_screen(["oracle", "list", "entry", "astro", "db"][int(e.data)]),
-            bgcolor="#CDD7E6" 
-        )
-
-        page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, nav_bar)
-        set_status(f"System Operational — {db_count()} records configured.", C["green"])
-    except Exception as err:
-        page.add(ft.Container(content=ft.Text(f"Fatal Matrix Error:\n{err}"), bgcolor=C["red"]))
-        page.update()
-
-if __name__ == "__main__":
-    ft.app(target=main)
-
-import time
-import math
-from datetime import datetime
-
-try:
-    import requests
-    REQUESTS_OK = True
-except Exception:
-    REQUESTS_OK = False
-
-import flet as ft
-import flet.canvas as cv
-
-# ── CONSTANTS ──────────────────────────────────────────────────────────────────
-AKSHARA_VALS = {
-    'अ':1,'आ':2,'इ':3,'ई':4,'उ':5,'ऊ':6,'ए':7,'ऐ':8,'ओ':9,'औ':10,
-    'क':11,'ख':12,'ग':13,'घ':14,'ङ':15,'च':16,'छ':17,'ज':18,'झ':19,'ञ':20,
-    'ट':21,'ठ':22,'ड':23,'ढ':24,'ण':25,'त':26,'थ':27,'द':28,'ध':29,'न':30,
-    'प':31,'फ':32,'ब':33,'भ':34,'म':35,'य':36,'र':37,'ल':38,'व':39,'श':40,
-    'ष':41,'स':42,'ह':43,'ि':2,'ा':2,'े':7,'ै':8,'ो':9,'ौ':10,'्':0,'ं':1
-}
-SUTRA_MAP = {
-    0:"अनंत(Ananta)",1:"शक्ति(Shakti)",2:"ज्ञान(Gnana)",
-    3:"धर्म(Dharma)",4:"वैराग्य(Vairagya)",5:"ऐश्वर्य(Aishwarya)",
-    6:"यश(Yashas)",7:"श्री(Shree)",8:"वीर्य(Veerya)"
-}
-GRAHA = {
-    0:("मंगल Mars","BULLISH",4,"Metals Defence Energy","1-7 Days","Strict stop-loss","Tuesday"),
-    1:("सूर्य Sun","BULLISH",5,"PSU Govt Energy Gold","1-4 Weeks","Enter Monday","Sunday"),
-    2:("चंद्र Moon","VOLATILE",2,"FMCG Dairy Retail","1-3 Days","Avoid overnight","Monday"),
-    3:("गुरु Jupiter","STRONGLY BULLISH",5,"Banking Education","1-6 Months","Watch retrograde","Thursday"),
-    4:("राहु Rahu","SPECULATIVE",3,"Tech Pharma Foreign","Caution","No leverage","Saturday"),
-    5:("बुध Mercury","BULLISH",4,"IT Telecom Media","1-3 Weeks","Watch retrograde","Wednesday"),
-    6:("शुक्र Venus","BULLISH",4,"FMCG Luxury Hotels","2-8 Weeks","Book at peaks","Friday"),
-    7:("केतु Ketu","BEARISH",2,"Old Economy Exit","Avoid Entry","Reduce positions","Tuesday"),
-    8:("शनि Saturn","SLOW BULLISH",3,"Infra Metals Coal","3-12 Months","No panic sell","Saturday"),
-}
-NAK = [
-    "अश्विनी","भरणी","कृत्तिका","रोहिणी","मृगशिरा","आर्द्रा",
-    "पुनर्वसु","पुष्य","आश्लेषा","मघा","पूर्वाफाल्गुनी","उत्तराफाल्गुनी",
-    "हस्त","चित्रा","स्वाति","विशाखा","अनुराधा","ज्येष्ठा",
-    "मूल","पूर्वाषाढ़ा","उत्तराषाढ़ा","श्रवण","धनिष्ठा","शतभिषा",
-    "पूर्वाभाद्रपद","उत्तराभाद्रपद","रेवती"
-]
-CURATED = {
-    "SBIN":"भारतीय स्टेट बैंक","HDFCBANK":"एचडीएफसी बैंक",
-    "ICICIBANK":"आईसीआईसीआई बैंक","AXISBANK":"एक्सिस बैंक",
-    "RELIANCE":"रिलायंस","TCS":"टाटा कंसल्टेंसी सर्विसेज",
-    "INFY":"इन्फोसिस","WIPRO":"विप्रो",
-    "NTPC":"राष्ट्रीय ताप विद्युत निगम",
-    "ONGC":"तेल और प्राकृतिक गैस निगम",
-    "TATASTEEL":"टाटा स्टील","COALINDIA":"कोल इंडिया",
-    "HINDUNILVR":"हिंदुस्तान यूनिलीवर","ITC":"आईटीसी",
-    "LT":"लार्सन एंड टुब्रो","MARUTI":"मारुति सुजुकी",
-    "TATAMOTORS":"टाटा मोटर्स","SUNPHARMA":"सन फार्मास्युटिकल",
-    "BHARTIARTL":"भारती एयरटेल","BAJFINANCE":"बजाज फाइनेंस",
-    "LICI":"भारतीय जीवन बीमा निगम","IRCTC":"भारतीय रेलवे खानपान",
-    "HAL":"हिंदुस्तान एयरोनॉटिक्स","ASIANPAINT":"एशियन पेंट्स",
-    "TITAN":"टाइटन कंपनी","ZOMATO":"जोमैटो",
-    "PNB":"पंजाब नेशनल बैंक","BEL":"भारत इलेक्ट्रॉनिक्स",
-    "HCLTECH":"एचसीएल टेक्नोलॉजीज","ADANIPORTS":"अदानी पोर्ट्स",
-    "KOTAKBANK":"कोटक महिंद्रा बैंक","DRREDDY":"डॉ रेड्डीज",
-    "CIPLA":"सिप्ला","M&M":"महिंद्रा एंड महिंद्रा",
-    "ULTRACEMCO":"अल्ट्राटेक सीमेंट","BAJAJ-AUTO":"बजाज ऑटो",
-    "POWERGRID":"पावर ग्रिड कॉर्पोरेशन","GAIL":"गेल इंडिया",
-    "BPCL":"भारत पेट्रोलियम","IOC":"इंडियन ऑयल कॉर्पोरेशन",
-    "BANKBARODA":"बैंक ऑफ बड़ौदा","CANBK":"केनरा बैंक",
-    "UNIONBANK":"यूनियन बैंक ऑफ इंडिया","YESBANK":"यस बैंक",
-    "IDFCFIRSTB":"आईडीएफसी फर्स्ट बैंक","FEDERALBNK":"फेडरल बैंक",
-    "SAIL":"स्टील अथॉरिटी ऑफ इंडिया","NMDC":"एनएमडीसी",
-    "HINDALCO":"हिंडाल्को निष्कर्ष","VEDL":"वेदांता",
-    "TATAPOWER":"टाटा पावर","ADANIPOWER":"अदानी पावर",
-    "ADANIENT":"अदानी एंटरप्राइजेज","ADANIGREEN":"अदानी ग्रीन एनर्जी",
-    "DLF":"डीएलएफ","GODREJPROP":"गोदरेज प्रॉपर्टीज",
-    "BRITANNIA":"ब्रिटानिया展望 इंडस्ट्रीज","DABUR":"डाबर इंडिया",
-    "MARICO":"मेरिको","NESTLEIND":"नेस्ले इंडिया",
-    "HEROMOTOCO":"हीरो मोटोकॉर्प","EICHERMOT":"आयशर मोटर्स",
-    "ASHOKLEY":"अशोक लेलैंड","TVSMOTOR":"टीवीएस motor",
-    "CONCOR":"कंटेनर कॉर्पोरेशन","BHEL":"भारत हेवी इलेक्ट्रिकल्स",
-    "APOLLOHOSP":"अपोलो हॉस्पिटल्स","DIVISLAB":"दिविस लेबोरेटरीज",
-    "BIOCON":"बायोकॉन","LUPIN":"ल्यूपिन",
-    "AUROPHARMA":"ऑरोबिंदो फार्मा","TORNTPHARM":"टोरेंट फार्मा",
-}
-WD = {
-    "LIMITED":"लिमिटेड","LTD":"लिमिटेड","BANK":"बैंक",
-    "INDUSTRIES":"इंडस्ट्रीज","INDUSTRY":"उद्योग",
-    "INDIA":"INDIA","INDIAN":"इंडियन","POWER":"पावर",
-    "ENERGY":"एनर्जी","FINANCE":"फाइनेंस","STEEL":"स्टील",
-    "MOTORS":"मोटर्स","MOTOR":"मोटर",
-    "TECHNOLOGIES":"टेक्नोलॉजीज","TECHNOLOGY":"टेक्नोलॉजी",
-    "AND":"एंड","&":"एंड","SERVICES":"सर्विसेज","SERVICE":"सर्विस",
-    "PHARMA":"फार्मा","PHARMACEUTICALS":"फार्मास्युटिकल्स",
-    "CEMENT":"सीमेंट","OIL":"OIL","GAS":"गैस",
-    "TELECOM":"टेलीकॉम","GROUP":"ग्रुप",
-    "CHEMICALS":"केमिकल्स","NATIONAL":"नेशनल",
-    "CORPORATION":"कॉर्पोरेशन","CORP":"कॉर्प",
-    "MEDIA":"MEDIA","HEALTHCARE":"हेल्थकेयर",
-    "CAPITAL":"कैपिटल","INSURANCE":"इंश्योरेंस",
-    "REALTY":"रियल्टी","PROPERTIES":"प्रॉपर्टीज",
-    "AUTO":"ऑटो","AUTOMOBILE":"ऑटोमोबाइल",
-    "ELECTRIC":"इलेक्ट्रिक","ELECTRONICS":"इलेक्ट्रॉनिक्स",
-    "CONSTRUCTION":"कंस्ट्रक्शन","INFRASTRUCTURE":"इन्फ्रास्ट्रक्चर",
-    "ENTERPRISES":"एंटरप्राइजेज","ENTERPRISE":"एंटरप्राइज",
-    "HOLDINGS":"होल्डिंग्स","INVESTMENTS":"इन्वेस्टमेंट्स",
-    "LABORATORIES":"लेबोरेटरीज","LABS":"लैब्स",
-    "HOSPITAL":"हॉस्पिटल","HOSPITALS":"हॉस्पिटल्स",
-    "FOODS":"फूड्स","FOOD":"फूड","BEVERAGES":"बेवरेजेज",
-    "TEXTILE":"टेक्सटाइल","TEXTILES":"टेक्सटाइल्स",
-    "FERTILIZERS":"फर्टिलाइजर्स","AGRO":"एग्रो",
-    "TRADING":"ट्रेडिंग","EXPORTS":"एक्सपोर्ट्स",
-    "SOLUTIONS":"सॉल्यूशंस","SYSTEMS":"सिस्टम्स",
-    "GLOBAL":"ग्लोबल","INTERNATIONAL":"इंटरनेशनल",
-    "MANAGEMENT":"मैनेजमेंट","CONSULTING":"कंसलिटींग",
-    "SECURITIES":"सिक्योरिटीज","PETROLEUM":"पेट्रोलियम",
-    "COMPANY":"कंपनी","SOLAR":"सोलर","RENEWABLE":"रิน्यूएबल",
-    "DIGITAL":"डिजिटल","NETWORK":"नेटवर्क","NETWORKS":"नेटवर्क्स",
-}
-PR = {
-    'A':'ए','B':'ब','C':'क','D':'ड','E':'इ','F':'फ',
-    'G':'ग','H':'ह','I':'इ','J':'ज','K':'क','L':'ल',
-    'M':'म','N':'न','O':'ओ','P':'प','Q':'क','R':'र',
-    'S':'स','T':'ट','U':'य','V':'व','W':'व','X':'क्स',
-    'Y':'य','Z':'ज'
-}
-NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
-
-# ── HIGH VISIBILITY SYSTEM BLUE COLOR PALETTE ──────────────────────────────────
-C = {
-    "bg":       "#FFFFFF",
-    "primary":  "#0D47A1",  # Dark Blue
-    "secondary":"#1565C0",  # Medium Vivid Blue
-    "accent":   "#1976D2",  # Operation Blue
-    "dark_txt": "#0D47A1",
-    "black_txt":"#1A237E",
-    "hint_txt": "#546E7A",
-    "green":    "#1B5E20",
-    "orange":   "#E65100",
-    "red":      "#B71C1C",
-    "inp_bg":   "#F0F4FA",
-    "res_bg":   "#E8EAF6",
-    "row_odd":  "#F5F7FA",
-    "row_even": "#FFFFFF",
-    "divider":  "#5C6BC0",
-}
-
-# ── HELPER FUNCTIONS ───────────────────────────────────────────────────────────
-def parse_dt(s):
-    if not s: return None
-    for f in ("%d-%m-%Y","%Y-%m-%d","%d/%m/%Y","%d-%b-%Y"):
-        try: return datetime.strptime(s.strip(), f)
-        except: pass
-    return None
-
-def get_hindi(sym, eng):
-    if sym in CURATED: return CURATED[sym]
-    if not REQUESTS_OK:
-        out = []
-        for w in eng.upper().split():
-            cw = w.strip("&.,()-/")
-            out.append(WD.get(cw, "".join(PR.get(c,"") for c in cw)))
-        return " ".join(out)
-    try:
-        url = ("https://translate.googleapis.com/translate_a/single"
-               "?client=gtx&sl=en&tl=hi&dt=t&q=" + requests.utils.quote(eng))
-        d = requests.get(url, timeout=5).json()
-        t = "".join(p[0] for p in d[0] if p[0]).strip()
-        if t and t != eng:
-            time.sleep(0.15)
-            return t
-    except: pass
-    out = []
-    for w in eng.upper().split():
-        cw = w.strip("&.,()-/")
-        if cw in WD: out.append(WD[cw]); continue
-        try:
-            r = requests.get(
-                "https://inputtools.google.com/request?text=" + cw + "&ime=transliteration_en_hi&num=1",
-                timeout=4).json()
-            out.append(r[1][0][1][0] if r[0]=="SUCCESS" else "".join(PR.get(c,"") for c in cw))
-        except: out.append("".join(PR.get(c,"") for c in cw))
-    return " ".join(out)
-
-def calc(name):
-    total, steps = 0, []
-    for c in name:
-        w = AKSHARA_VALS.get(c, 0)
-        total += w
-        if w > 0 or c == "्":
-            steps.append(c + "=" + str(w))
-        elif c == " ":
-            steps.append("|")
-    return total, " ".join(steps)
-
-def make_report(asum, tval, ldate, elapsed_days):
-    nv    = (asum % 9) or 9
-    g     = GRAHA[(nv - 1) % 9]
-    total = asum + tval
-    sutra = SUTRA_MAP.get(total % 9, "")
-    today = datetime.now()
-    nak   = NAK[today.timetuple().tm_yday % 27]
-    wday  = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][today.weekday()]
-    bars = {1:"★☆☆☆☆", 2:"★★☆☆☆", 3:"★★★☆☆", 4:"★★★★☆", 5:"★★★★★"}
-    if ldate:
-        tc = ((today.timetuple().tm_yday - ldate.timetuple().tm_yday) % 27) + 1
-        tn = ["जन्म","सम्पत","विपत","क्षेम","प्रत्यरि","साधक","वध","मित्र","परम-मित्र"]
-        tara = tn[(tc-1)%9] + (" GOOD" if tc%9 in(2,4,6,8,0) else " CAUTION")
-    else:
-        tara = "N/A"
-    S  = "─" * 30
-    S2 = "═" * 30
-    return "\n".join([
-        S2, "    BHOOVALAYA ORACLE RESULT", S2, "",
-        f"  LISTING DATE : {ldate.strftime('%d-%m-%Y') if ldate else 'N/A'}",
-        f"  DAYS LAPSED  : {elapsed_days} Days", "",
-        "STEP 1: AKSHARA WEIGHT THEORY", "  Each Hindi sound has weight:", S,
-        "STEP 2: NAVAANK CALCULATION", "  Akshara Sum = " + str(asum), "  Digital Root (1-9) = " + str(nv), S,
-        "STEP 3: TEMPORAL VIBRATION", f"  Temporal = Days % 730 = {tval}", f"  Combined Vib = {total}", S,
-        "STEP 4: SUTRA PRINCIPLE", "  " + sutra, S,
-        "STEP 5: RULING GRAHA (PLANET)", "  Navaank " + str(nv) + " → " + g[0], S2,
-        "  MARKET FORECAST", S2, "  Signal   : " + g[1], "  Strength : " + bars.get(g[2],""), "  Sectors  : " + g[3], S,
-        "STEP 6: VEDIC TIMING", f"  Nakshatra: {nak} | Tara: {tara}", S2
-    ])
-
-# ── VEDIC ASTROLOGY CALCULATIONS ──────────────────────────────────────────────
-SIGN_ABB  = ["Ar","Ta","Ge","Ca","Le","Vi","Li","Sc","Sg","Cp","Aq","Pi"]
-
-def norm360(x): return x % 360
-
-def jd_from_dt(year, month, day, hour=12, minute=0):
-    if month <= 2: year -= 1; month += 12
-    A = int(year / 100)
-    B = 2 - A + int(A / 4)
-    return (int(365.25 * (year + 4716)) + int(30.6001 * (month + 1)) + day + hour/24.0 + minute/1440.0 + B - 1524.5)
-
-def lahiri_ayanamsa(jd):
-    T = (jd - 2451545.0) / 36525.0
-    return 23.85 + 0.013611 * T + 0.000092 * T * T
-
-def calc_planet_positions(jd, lat=19.0544, lon=72.8405):
-    T = (jd - 2451545.0) / 36525.0
-    sun_t = norm360(280.46646 + 36000.76983 * T)
-    moon_t = norm360(218.3164477 + 481267.88123421 * T)
-    merc_t = norm360(252.2509 + 149474.0722 * T)
-    ven_t  = norm360(181.9798 + 58517.8160 * T)
-    mars_t = norm360(355.433 + 19140.2993 * T)
-    jup_t  = norm360(34.3515 + 3034.9057 * T)
-    sat_t  = norm360(50.0774 + 1222.1138 * T)
-    rahu_t = norm360(125.0445 - 1934.1362*T)
-    ketu_t = norm360(rahu_t + 180)
-    
-    eps     = math.radians(23.439291111 - 0.013004167*T)
-    GMST    = norm360(280.46061837 + 360.98564736629*(jd - 2451545.0))
-    LST     = math.radians(norm360(GMST + lon))
-    asc_t   = math.degrees(math.atan2(math.cos(LST), -math.sin(LST)*math.cos(eps) - math.tan(math.radians(lat))*math.sin(eps))) % 360
-    ay = lahiri_ayanamsa(jd)
-    return {
-        "As": (asc_t - ay) % 360, "Su": (sun_t  - ay) % 360, "Mo": (moon_t - ay) % 360,
-        "Me": (merc_t - ay) % 360, "Ve": (ven_t  - ay) % 360, "Ma": (mars_t - ay) % 360,
-        "Ju": (jup_t  - ay) % 360, "Sa": (sat_t  - ay) % 360, "Ra": (rahu_t - ay) % 360, "Ke": (ketu_t - ay) % 360,
-    }, ay
-
-def lon_to_sign_deg(lon): return int((lon % 360) / 30), round(lon % 30, 2)
-
-def d9_sign(lon):
-    sign, deg = lon_to_sign_deg(lon)
-    nav_num   = int(deg / (30.0 / 9))
-    start_map = {0:0, 1:9, 2:6, 3:3, 4:0, 5:9, 6:6, 7:3, 8:0, 9:9, 10:6, 11:3}
-    return (start_map[sign] + nav_num) % 12
-
-def build_diamond_chart(positions, lagna_sign, title, chart_size=300):
-    W, p = chart_size, 8
-    x0, y0, x1, y1 = p, p, W - p, W - p
-    cx, cy = W // 2, W // 2
-    
-    HOUSES_GEOM = {
-        1:  {"poly": [(cx, y0), (x1, cy), (cx, y1), (x0, cy)], "txt": (cx, cy - 40),   "planets": (cx, cy - 15)},
-        2:  {"poly": [(x0, y0), (cx, y0), (x0, cy)],           "txt": (x0 + 35, y0 + 25), "planets": (x0 + 35, y0 + 45)},
-        3:  {"poly": [(x0, y0), (x0, cy), (cx, y0)],           "txt": (x0 + 25, y0 + 55), "planets": (x0 + 25, y0 + 75)},
-        4:  {"poly": [(x0, cy), (cx, y0), (cx, cy)],           "txt": (cx - 45, cy - 15), "planets": (cx - 45, cy + 5)},
-        5:  {"poly": [(x0, y1), (x0, cy), (cx, y1)],           "txt": (x0 + 25, y1 - 55), "planets": (x0 + 25, y1 - 35)},
-        6:  {"poly": [(x0, y1), (cx, y1), (x0, cy)],           "txt": (x0 + 35, y1 - 25), "planets": (x0 + 35, y1 - 5)},
-        7:  {"poly": [(cx, y1), (x0, cy), (cx, y0), (x1, cy)], "txt": (cx, cy + 40),   "planets": (cx, cy + 55)},
-        8:  {"poly": [(x1, y1), (cx, y1), (x1, cy)],           "txt": (x1 - 35, y1 - 25), "planets": (x1 - 35, y1 - 5)},
-        9:  {"poly": [(x1, y1), (x1, cy), (cx, y1)],           "txt": (x1 - 25, y1 - 55), "planets": (x1 - 25, y1 - 35)},
-        10: {"poly": [(x1, cy), (cx, y1), (cx, cy)],           "txt": (cx + 45, cy + 15), "planets": (cx + 45, cy - 5)},
-        11: {"poly": [(x1, y0), (x1, cy), (cx, y0)],           "txt": (x1 - 25, y0 + 55), "planets": (x1 - 25, y0 + 75)},
-        12: {"poly": [(x1, y0), (cx, y0), (x1, cy)],           "txt": (x1 - 35, y0 + 25), "planets": (x1 - 35, y0 + 45)},
-    }
-    
-    sign_planets = {i: [] for i in range(12)}
-    for planet, s_idx in positions.items(): sign_planets[int(s_idx)].append(planet)
-    
-    lagna_s = int(lagna_sign)
-    def get_house_sign(h_num): return (lagna_s + h_num - 1) % 12
-
-    shapes = [cv.Fill(paint=ft.Paint(color="#FCFDFE"))]
-    for h_num, info in HOUSES_GEOM.items():
-        is_lagna = (h_num == 1)
-        bg_color = "#FFE082" if is_lagna else "#F5F7FA"
-        stroke_color = "#B71C1C" if is_lagna else "#0D47A1"
-        stroke_w = 2.0 if is_lagna else 1.2
-        pts = info["poly"]
-        path_data = [cv.Path.MoveTo(pts[0][0], pts[0][1])]
-        for pt in pts[1:]: path_data.append(cv.Path.LineTo(pt[0], pt[1]))
-        path_data.append(cv.Path.Close())
-        shapes.append(cv.Path(path_data, paint=ft.Paint(color=bg_color, style=ft.PaintingStyle.FILL)))
-        shapes.append(cv.Path(path_data, paint=ft.Paint(color=stroke_color, stroke_width=stroke_w, style=ft.PaintingStyle.STROKE)))
-
-    grid_paint = ft.Paint(color="#0D47A1", stroke_width=1.5, style=ft.PaintingStyle.STROKE)
-    shapes.extend([
-        cv.Line(x0, y0, x1, y1, paint=grid_paint), cv.Line(x1, y0, x0, y1, paint=grid_paint),
-        cv.Line(cx, y0, x0, cy, paint=grid_paint), cv.Line(x0, cy, cx, y1, paint=grid_paint),
-        cv.Line(cx, y1, x1, cy, paint=grid_paint), cv.Line(x1, cy, cx, y0, paint=grid_paint),
-        cv.Rect(x=x0, y=y0, width=W-(2*p), height=W-(2*p), paint=grid_paint)
-    ])
-
-    for h_num, info in HOUSES_GEOM.items():
-        sign_idx = get_house_sign(h_num)
-        planets_here = sign_planets.get(sign_idx, [])
-        tx, ty = info["txt"]
-        shapes.append(cv.Text(x=tx - 6, y=ty - 10, text=str(sign_idx + 1), style=ft.TextStyle(size=12, color="#1A237E", weight="bold")))
-        shapes.append(cv.Text(x=tx + 5, y=ty - 8, text=f"({SIGN_ABB[sign_idx]})", style=ft.TextStyle(size=8, color="#546E7A")))
-        if planets_here:
-            px, py = info["planets"]
-            planets_txt = " ".join(planets_here)
-            shapes.append(cv.Text(x=px - (len(planets_txt) * 3), y=py, text=planets_txt, style=ft.TextStyle(size=11, color="#B71C1C", weight="bold")))
-
-    shapes.append(cv.Text(x=cx - 30, y=cy - 8, text=title, style=ft.TextStyle(size=10, color="#FFFFFF", weight="bold", bgcolor="#0D47A1")))
-    return cv.Canvas(shapes=shapes, width=W, height=W)
-
-# ── MAIN APP INTERFACE ─────────────────────────────────────────────────────────
-def main(page: ft.Page):
-    try:
-        page.title, page.bgcolor, page.padding, page.scroll = "Bhoovalaya Cosmic System", C["bg"], 10, "auto"
-        db_path = os.path.join(os.getenv("FLET_APP_STORAGE_DATA", "."), "bhuvalaya.db")
-
-        conn = sqlite3.connect(db_path)
-        conn.execute("CREATE TABLE IF NOT EXISTS stocks(symbol TEXT PRIMARY KEY, eng_name TEXT, hindi_name TEXT, ldate TEXT, asum INTEGER, breakdown TEXT, series TEXT DEFAULT 'EQ')")
-        conn.commit(); conn.close()
-
-        def db_count(): return sqlite3.connect(db_path).execute("SELECT COUNT(*) FROM stocks").fetchone()[0]
-        def db_search(q): return sqlite3.connect(db_path).execute("SELECT symbol, eng_name, hindi_name, ldate, asum FROM stocks WHERE symbol LIKE ? OR eng_name LIKE ? ORDER BY symbol LIMIT 100", ("%"+q+"%", "%"+q+"%")).fetchall()
-        def db_get(sym): return sqlite3.connect(db_path).execute("SELECT * FROM stocks WHERE symbol=?", (sym,)).fetchone()
-        def db_save(sym, eng, hindi, ldate, series="EQ"):
-            asum, bk = calc(hindi)
-            c = sqlite3.connect(db_path)
-            c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hindi, ldate, asum, bk, series))
-            c.commit(); c.close()
-            return True, asum
-
-        status_txt = ft.Text("System Initialized", size=14, color="#FFFFFF", weight="bold")
-        status_bar = ft.Container(content=status_txt, bgcolor=C["primary"], padding=10, border_radius=6)
-        prg_bar, prg_txt = ft.ProgressBar(value=0, visible=False, color="#FF6F00", bgcolor="#EEEEEE"), ft.Text("", size=13, color=C["orange"])
-
-        def set_status(msg, color=None): status_txt.value, status_bar.bgcolor = msg, color or C["primary"]; page.update()
-        def set_prg(pct, msg=""): prg_bar.visible, prg_bar.value, prg_txt.value = True, pct, msg; page.update()
-        def hide_prg(): prg_bar.visible, prg_txt.value = False, ""; page.update()
-        
-        def make_field(label, hint="", value=""):
-            return ft.TextField(label=label, label_style=ft.TextStyle(size=14, color=C["primary"], weight="bold"), hint_text=hint, value=value, text_style=ft.TextStyle(size=15, color=C["black_txt"]), border_color=C["primary"], border_width=2, bgcolor=C["inp_bg"])
-        def make_header(title, bgcolor=None): 
-            return ft.Container(content=ft.Text(title, size=15, color="#FFFFFF", weight="bold"), bgcolor=bgcolor or C["primary"], padding=10, border_radius=6)
-        def make_blue_btn(text, on_click, height=50):
-            return ft.ElevatedButton(text, bgcolor=C["primary"], color="#FFFFFF", elevation=4, height=height, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=on_click)
-
-        # ── TAB 1: ORACLE ─────────────────────────────────────────────────────
-        fld_oracle = make_field("Enter Stock Symbol", value="RELIANCE")
-        result_txt = ft.Text("", size=14, color=C["black_txt"], font_family="monospace", selectable=True)
-        result_box = ft.Container(content=result_txt, bgcolor=C["res_bg"], padding=12, border_radius=8, visible=False)
-
-        def do_oracle(e):
-            q = fld_oracle.value.strip().upper()
-            row = db_get(q) or (rows := db_search(q) and db_get(rows[0][0]))
-            if row:
-                sym, eng, hi, ldt, asum, bk, *_ = row
-                ldate = parse_dt(ldt)
-                days = (datetime.now() - ldate).days if ldate else 0
-                result_txt.value = make_report(asum, days % 730, ldate, days)
-                result_box.visible = True
-                set_status(f"Analysis complete for {sym}", C["green"])
-            else: set_status("Symbol not found.", C["red"])
-            page.update()
-
-        oracle_screen = ft.Column(visible=True, controls=[
-            make_header("🔮 BHOOVALAYA ORACLE CORE"), fld_oracle,
-            make_blue_btn("🔍 RUN ORACLE PREDICTION", do_oracle), result_box
-        ])
-
-        # ── TAB 2: STOCKS ─────────────────────────────────────────────────────
-        fld_list_search, list_rows = make_field("Filter System Database"), ft.Column(spacing=4)
-        
-        def load_list(q=""):
-            list_rows.controls.clear()
-            for i, r in enumerate(db_search(q)):
-                sym, eng, hi, ldt, asum = r
-                list_rows.controls.append(ft.Container(content=ft.Column([
-                    ft.Text(f"{sym} | {eng}", weight="bold", color=C["primary"]),
-                    ft.Text(f"Hindi: {hi} | Weights: {asum}", color=C["green"])
-                ]), bgcolor=C["row_odd"] if i%2==0 else C["row_even"], padding=8))
-            page.update()
-
-        list_screen = ft.Column(visible=False, controls=[
-            make_header("📋 STOCK REGISTRY"), fld_list_search,
-            make_blue_btn("🔍 FILTER RECORDS", lambda e: load_list(fld_list_search.value.strip().upper())), list_rows
-        ])
-
-        # ── TAB 3: DATA ENTRY ─────────────────────────────────────────────────
-        fld_sym, fld_eng, fld_hindi, fld_ldate = make_field("Stock Symbol"), make_field("Company English Name"), make_field("Transliterated Hindi Name"), make_field("Listing Date (DD-MM-YYYY)")
-        
-        entry_screen = ft.Column(visible=False, controls=[
-            make_header("✏️ DATABASE MAINTENANCE ENTRY"), fld_sym, fld_eng,
-            make_blue_btn("🌐 CONVERT TO HINDI", lambda e: setattr(fld_hindi, 'value', get_hindi(fld_sym.value.upper(), fld_eng.value)) or page.update()),
-            fld_hindi, fld_ldate,
-            ft.Row([
-                make_blue_btn("💾 SAVE DATA", lambda e: db_save(fld_sym.value.upper(), fld_eng.value, fld_hindi.value, fld_ldate.value) and set_status("Saved Record", C["green"])),
-                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["red"], color="#FFFFFF", on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), page.update()))
-            ])
-        ])
-
-        # ── TAB 4: KUNDALI ENGINE ─────────────────────────────────────────────
-        fld_date, fld_time, fld_lat, fld_lon = make_field("Date (DD-MM-YYYY)", value=datetime.now().strftime("%d-%m-%Y")), make_field("Time (HH:MM)", value=datetime.now().strftime("%H:%M")), make_field("Latitude", value="19.0544"), make_field("Longitude", value="72.8405")
-        
-        astro_form_container = ft.Column(spacing=10)
-        astro_chart_container = ft.ListView(expand=True, spacing=20, padding=10, visible=False)
-
-        def do_astro(e):
-            try:
-                dt = parse_dt(fld_date.value)
-                tm = fld_time.value.split(":")
-                pos, ay = calc_planet_positions(jd_from_dt(dt.year, dt.month, dt.day, int(tm[0]), int(tm[1])), float(fld_lat.value), float(fld_lon.value))
-                
-                astro_chart_container.controls.clear()
-                
-                # Build separated canvas matrices
-                d1_canvas = build_diamond_chart({p: lon_to_sign_deg(l)[0] for p, l in pos.items()}, lon_to_sign_deg(pos["As"])[0], "D1 RASI")
-                d9_canvas = build_diamond_chart({p: d9_sign(l) for p, l in pos.items()}, d9_sign(pos["As"]), "D9 NAVAMSHA")
-                
-                # Display D1 Chart First
-                astro_chart_container.controls.append(make_header("📍 D1 RASI KUNDALI", bgcolor=C["primary"]))
-                astro_chart_container.controls.append(ft.Container(content=d1_canvas, alignment=ft.alignment.center, padding=10))
-                
-                # Dynamic separation barrier 
-                astro_chart_container.controls.append(ft.Divider(height=20, color=C["divider"]))
-                
-                # Display D9 Chart Below D1 Chart
-                astro_chart_container.controls.append(make_header("📐 D9 NAVAMSHA KUNDALI", bgcolor=C["secondary"]))
-                astro_chart_container.controls.append(ft.Container(content=d9_canvas, alignment=ft.alignment.center, padding=10))
-                
-                astro_chart_container.controls.append(ft.Container(height=15))
-                
-                def reset_astro_view(ev):
-                    astro_chart_container.controls.clear()
-                    astro_chart_container.visible = False
-                    astro_form_container.visible = True
-                    set_status("Charts cleared. System ready.", C["primary"])
-                    page.update()
-
-                exit_btn = ft.ElevatedButton(
-                    "🧹 CLEAR CHARTS / RETURN", 
-                    bgcolor=C["red"], 
-                    color="#FFFFFF", 
-                    height=50,
-                    style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")),
-                    on_click=reset_astro_view
-                )
-                astro_chart_container.controls.append(exit_btn)
-                
-                astro_form_container.visible = False
-                astro_chart_container.visible = True
-                set_status("Charts calculated! D1 displayed above D9.", C["green"])
-            except Exception as ex: 
-                set_status(f"Calculation Error: {ex}", C["red"])
-            page.update()
-
-        astro_form_container.controls.extend([
-            ft.Row([fld_date, fld_time]), ft.Row([fld_lat, fld_lon]),
-            make_blue_btn("🕉️ GENERATE BOTH D1 & D9 CHARTS", do_astro)
-        ])
-
-        astro_screen = ft.Column(visible=False, controls=[
-            make_header("🕉️ VEDIC CALCULATION MATRIX"),
-            astro_form_container,
-            astro_chart_container
-        ], expand=True)
-
-        # ── TAB 5: DATABASE BUILD (WITH DURATION DATE FIX) ────────────────────
-        def build_db_thread():
-            try:
-                set_status("Fetching data rows from NSE India...", C["accent"])
-                res = requests.get(NSE_URL, timeout=15)
-                r = csv.reader(io.StringIO(res.text)); next(r)
-                rows = list(r); total = len(rows)
-                db_c = sqlite3.connect(db_path)
-                for idx, row in enumerate(rows):
-                    if not row or len(row) < 4: continue
-                    # row[3] targets the valid 'Date of Listing' column in standard NSE csv maps
-                    sym, eng, series, ldt = row[0].strip(), row[1].strip(), row[2].strip(), row[3].strip()
-                    if series != "EQ": continue
-                    hi = get_hindi(sym, eng)
-                    asum, bk = calc(hi)
-                    db_c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hi, ldt, asum, bk, series))
-                    if idx % 12 == 0: set_prg(idx/total, f"Indexing {sym}")
-                db_c.commit(); db_c.close()
-                hide_prg(); set_status("System Database Synced!", C["green"])
-            except Exception as ex: hide_prg(); set_status(f"Sync failed: {ex}", C["red"])
-
-        db_screen = ft.Column(visible=False, controls=[
-            make_header("⚙️ SYSTEM STORAGE PANEL"),
-            make_blue_btn("⚡ EXECUTE AUTOMATED NSE SYNC", lambda e: threading.Thread(target=build_db_thread, daemon=True).start())
-        ])
-
-        # ── CORE NAVIGATION INTEGRATION ────────────────────────────────────────
-        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen}
-        def show_screen(name):
-            for k, v in all_screens.items(): v.visible = (k == name)
-            page.update()
-
-        nav_bar = ft.NavigationBar(
-            destinations=[
-                ft.NavigationBarDestination(icon=ft.Icons.PSYCHOLOGY, label="Oracle"),
-                ft.NavigationBarDestination(icon=ft.Icons.FORMAT_LIST_BULLETED, label="Stocks"),
-                ft.NavigationBarDestination(icon=ft.Icons.EDIT_NOTE, label="Entry"),
-                ft.NavigationBarDestination(icon=ft.Icons.STARS, label="Kundali"),
-                ft.NavigationBarDestination(icon=ft.Icons.STORAGE, label="Database"),
-            ],
-            on_change=lambda e: show_screen(["oracle", "list", "entry", "astro", "db"][int(e.data)]),
-            bgcolor="#CDD7E6" 
-        )
-
-        page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, nav_bar)
-        set_status(f"System Operational — {db_count()} records configured.", C["green"])
-    except Exception as err:
-        page.add(ft.Container(content=ft.Text(f"Fatal Matrix Error:\n{err}"), bgcolor=C["red"]))
-        page.update()
-
-if __name__ == "__main__":
-    ft.app(target=main)
-
-import threadingimport osimport os
-import sqlite3
-import threading
-import csv
-import io
-import time
-import math
-from datetime import datetime
-
-try:
-    import requests
-    REQUESTS_OK = True
-except Exception:
-    REQUESTS_OK = False
-
-import flet as ft
-import flet.canvas as cv
-
-# ── CONSTANTS ──────────────────────────────────────────────────────────────────
-AKSHARA_VALS = {
-    'अ':1,'आ':2,'इ':3,'ई':4,'उ':5,'ऊ':6,'ए':7,'ऐ':8,'ओ':9,'औ':10,
-    'क':11,'ख':12,'ग':13,'घ':14,'ङ':15,'च':16,'छ':17,'ज':18,'झ':19,'ञ':20,
-    'ट':21,'ठ':22,'ड':23,'ढ':24,'ण':25,'त':26,'थ':27,'द':28,'ध':29,'न':30,
-    'प':31,'फ':32,'ब':33,'भ':34,'म':35,'य':36,'र':37,'ल':38,'व':39,'श':40,
-    'ष':41,'स':42,'ह':43,'ि':2,'ा':2,'े':7,'ै':8,'ो':9,'ौ':10,'्':0,'ं':1
-}
-SUTRA_MAP = {
-    0:"अनंत(Ananta)",1:"शक्ति(Shakti)",2:"ज्ञान(Gnana)",
-    3:"धर्म(Dharma)",4:"वैराग्य(Vairagya)",5:"ऐश्वर्य(Aishwarya)",
-    6:"यश(Yashas)",7:"श्री(Shree)",8:"वीर्य(Veerya)"
-}
-GRAHA = {
-    0:("मंगल Mars","BULLISH",4,"Metals Defence Energy","1-7 Days","Strict stop-loss","Tuesday"),
-    1:("सूर्य Sun","BULLISH",5,"PSU Govt Energy Gold","1-4 Weeks","Enter Monday","Sunday"),
-    2:("चंद्र Moon","VOLATILE",2,"FMCG Dairy Retail","1-3 Days","Avoid overnight","Monday"),
-    3:("गुरु Jupiter","STRONGLY BULLISH",5,"Banking Education","1-6 Months","Watch retrograde","Thursday"),
-    4:("राहु Rahu","SPECULATIVE",3,"Tech Pharma Foreign","Caution","No leverage","Saturday"),
-    5:("बुध Mercury","BULLISH",4,"IT Telecom Media","1-3 Weeks","Watch retrograde","Wednesday"),
-    6:("शुक्र Venus","BULLISH",4,"FMCG Luxury Hotels","2-8 Weeks","Book at peaks","Friday"),
-    7:("केतु Ketu","BEARISH",2,"Old Economy Exit","Avoid Entry","Reduce positions","Tuesday"),
-    8:("शनि Saturn","SLOW BULLISH",3,"Infra Metals Coal","3-12 Months","No panic sell","Saturday"),
-}
-NAK = [
-    "अश्विनी","भरणी","कृत्तिका","रोहिणी","मृगशिरा","आर्द्रा",
-    "पुनर्वसु","पुष्य","आश्लेषा","मघा","पूर्वाफाल्गुनी","उत्तराफाल्गुनी",
-    "हस्त","चित्रा","स्वाति","विशाखा","अनुराधा","ज्येष्ठा",
-    "मूल","पूर्वाषाढ़ा","उत्तराषाढ़ा","श्रवण","धनिष्ठा","शतभिषा",
-    "पूर्वाभाद्रपद","उत्तराभाद्रपद","रेवती"
-]
-CURATED = {
-    "SBIN":"भारतीय स्टेट बैंक","HDFCBANK":"एचडीएफसी बैंक",
-    "ICICIBANK":"आईसीआईसीआई बैंक","AXISBANK":"एक्सिस बैंक",
-    "RELIANCE":"रिलायंस","TCS":"टाटा कंसल्टेंसी सर्विसेज",
-    "INFY":"इन्फोसिस","WIPRO":"विप्रो",
-    "NTPC":"राष्ट्रीय ताप विद्युत निगम",
-    "ONGC":"तेल और प्राकृतिक गैस निगम",
-    "TATASTEEL":"टाटा स्टील","COALINDIA":"कोल इंडिया",
-    "HINDUNILVR":"हिंदुस्तान यूनिलीवर","ITC":"आईटीसी",
-    "LT":"लार्सन एंड टुब्रो","MARUTI":"मारुति सुजुकी",
-    "TATAMOTORS":"टाटा मोटर्स","SUNPHARMA":"सन फार्मास्युटिकल",
-    "BHARTIARTL":"भारती एयरटेल","BAJFINANCE":"बजाज फाइनेंस",
-    "LICI":"भारतीय जीवन बीमा निगम","IRCTC":"भारतीय रेलवे खानपान",
-    "HAL":"हिंदुस्तान एयरोनॉटिक्स","ASIANPAINT":"एशियन पेंट्स",
-    "TITAN":"टाइटन कंपनी","ZOMATO":"जोमैटो",
-    "PNB":"पंजाब नेशनल बैंक","BEL":"भारत इलेक्ट्रॉनिक्स",
-    "HCLTECH":"एचसीएल टेक्नोलॉजीज","ADANIPORTS":"अदानी पोर्ट्स",
-    "KOTAKBANK":"कोटक महिंद्रा बैंक","DRREDDY":"डॉ रेड्डीज",
-    "CIPLA":"सिप्ला","M&M":"महिंद्रा एंड महिंद्रा",
-    "ULTRACEMCO":"अल्ट्राटेक सीमेंट","BAJAJ-AUTO":"बजाज ऑटो",
-    "POWERGRID":"पावर ग्रिड कॉर्पोरेशन","GAIL":"गेल इंडिया",
-    "BPCL":"भारत पेट्रोलियम","IOC":"इंडियन ऑयल कॉर्पोरेशन",
-    "BANKBARODA":"बैंक ऑफ बड़ौदा","CANBK":"केनरा बैंक",
-    "UNIONBANK":"यूनियन बैंक ऑफ इंडिया","YESBANK":"यस बैंक",
-    "IDFCFIRSTB":"आईडीएफसी फर्स्ट बैंक","FEDERALBNK":"फेडरल बैंक",
-    "SAIL":"स्टील अथॉरिटी ऑफ इंडिया","NMDC":"एनएमडीसी",
-    "HINDALCO":"हिंडाल्को निष्कर्ष","VEDL":"वेदांता",
-    "TATAPOWER":"टाटा पावर","ADANIPOWER":"अदानी पावर",
-    "ADANIENT":"अदानी एंटरप्राइजेज","ADANIGREEN":"अदानी ग्रीन एनर्जी",
-    "DLF":"डीएलएफ","GODREJPROP":"गोदरेज प्रॉपर्टीज",
-    "BRITANNIA":"ब्रिटानिया展望 इंडस्ट्रीज","DABUR":"डाबर इंडिया",
-    "MARICO":"मेरिको","NESTLEIND":"नेस्ले इंडिया",
-    "HEROMOTOCO":"हीरो मोटोकॉर्प","EICHERMOT":"आयशर मोटर्स",
-    "ASHOKLEY":"अशोक लेलैंड","TVSMOTOR":"टीवीएस motor",
-    "CONCOR":"कंटेनर कॉर्पोरेशन","BHEL":"भारत हेवी इलेक्ट्रिकल्स",
-    "APOLLOHOSP":"अपोलो हॉस्पिटल्स","DIVISLAB":"दिविस लेबोरेटरीज",
-    "BIOCON":"बायोकॉन","LUPIN":"ल्यूपिन",
-    "AUROPHARMA":"ऑरोबिंदो फार्मा","TORNTPHARM":"टोरेंट फार्मा",
-}
-WD = {
-    "LIMITED":"लिमिटेड","LTD":"लिमिटेड","BANK":"बैंक",
-    "INDUSTRIES":"इंडस्ट्रीज","INDUSTRY":"उद्योग",
-    "INDIA":"INDIA","INDIAN":"इंडियन","POWER":"पावर",
-    "ENERGY":"एनर्जी","FINANCE":"फाइनेंस","STEEL":"स्टील",
-    "MOTORS":"मोटर्स","MOTOR":"मोटर",
-    "TECHNOLOGIES":"टेक्नोलॉजीज","TECHNOLOGY":"टेक्नोलॉजी",
-    "AND":"एंड","&":"एंड","SERVICES":"सर्विसेज","SERVICE":"सर्विस",
-    "PHARMA":"फार्मा","PHARMACEUTICALS":"फार्मास्युटिकल्स",
-    "CEMENT":"सीमेंट","OIL":"OIL","GAS":"गैस",
-    "TELECOM":"टेलीकॉम","GROUP":"ग्रुप",
-    "CHEMICALS":"केमिकल्स","NATIONAL":"नेशनल",
-    "CORPORATION":"कॉर्पोरेशन","CORP":"कॉर्प",
-    "MEDIA":"MEDIA","HEALTHCARE":"हेल्थकेयर",
-    "CAPITAL":"कैपिटल","INSURANCE":"इंश्योरेंस",
-    "REALTY":"रियल्टी","PROPERTIES":"प्रॉपर्टीज",
-    "AUTO":"ऑटो","AUTOMOBILE":"ऑटोमोबाइल",
-    "ELECTRIC":"इलेक्ट्रिक","ELECTRONICS":"इलेक्ट्रॉनिक्स",
-    "CONSTRUCTION":"कंस्ट्रक्शन","INFRASTRUCTURE":"इन्फ्रास्ट्रक्चर",
-    "ENTERPRISES":"एंटरप्राइजेज","ENTERPRISE":"एंटरप्राइज",
-    "HOLDINGS":"होल्डिंग्स","INVESTMENTS":"इन्वेस्टमेंट्स",
-    "LABORATORIES":"लेबोरेटरीज","LABS":"लैब्स",
-    "HOSPITAL":"हॉस्पिटल","HOSPITALS":"हॉस्पिटल्स",
-    "FOODS":"फूड्स","FOOD":"फूड","BEVERAGES":"बेवरेजेज",
-    "TEXTILE":"टेक्सटाइल","TEXTILES":"टेक्सटाइल्स",
-    "FERTILIZERS":"फर्टिलाइजर्स","AGRO":"एग्रो",
-    "TRADING":"ट्रेडिंग","EXPORTS":"एक्सपोर्ट्स",
-    "SOLUTIONS":"सॉल्यूशंस","SYSTEMS":"सिस्टम्स",
-    "GLOBAL":"ग्लोबल","INTERNATIONAL":"इंटरनेशनल",
-    "MANAGEMENT":"मैनेजमेंट","CONSULTING":"कंसलिटींग",
-    "SECURITIES":"सिक्योरिटीज","PETROLEUM":"पेट्रोलियम",
-    "COMPANY":"कंपनी","SOLAR":"सोलर","RENEWABLE":"रิน्यूएबल",
-    "DIGITAL":"डिजिटल","NETWORK":"नेटवर्क","NETWORKS":"नेटवर्क्स",
-}
-PR = {
-    'A':'ए','B':'ब','C':'क','D':'ड','E':'इ','F':'फ',
-    'G':'ग','H':'ह','I':'इ','J':'ज','K':'क','L':'ल',
-    'M':'म','N':'न','O':'ओ','P':'प','Q':'क','R':'र',
-    'S':'स','T':'ट','U':'य','V':'व','W':'व','X':'क्स',
-    'Y':'य','Z':'ज'
-}
-NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
-
-# ── HIGH VISIBILITY SYSTEM BLUE COLOR PALETTE ──────────────────────────────────
-C = {
-    "bg":       "#FFFFFF",
-    "primary":  "#0D47A1",  # Dark Blue
-    "secondary":"#1565C0",  # Medium Vivid Blue
-    "accent":   "#1976D2",  # Operation Blue
-    "dark_txt": "#0D47A1",
-    "black_txt":"#1A237E",
-    "hint_txt": "#546E7A",
-    "green":    "#1B5E20",
-    "orange":   "#E65100",
-    "red":      "#B71C1C",
-    "inp_bg":   "#F0F4FA",
-    "res_bg":   "#E8EAF6",
-    "row_odd":  "#F5F7FA",
-    "row_even": "#FFFFFF",
-    "divider":  "#5C6BC0",
-}
-
-# ── HELPER FUNCTIONS ───────────────────────────────────────────────────────────
-def parse_dt(s):
-    if not s: return None
-    for f in ("%d-%m-%Y","%Y-%m-%d","%d/%m/%Y","%d-%b-%Y"):
-        try: return datetime.strptime(s.strip(), f)
-        except: pass
-    return None
-
-def get_hindi(sym, eng):
-    if sym in CURATED: return CURATED[sym]
-    if not REQUESTS_OK:
-        out = []
-        for w in eng.upper().split():
-            cw = w.strip("&.,()-/")
-            out.append(WD.get(cw, "".join(PR.get(c,"") for c in cw)))
-        return " ".join(out)
-    try:
-        url = ("https://translate.googleapis.com/translate_a/single"
-               "?client=gtx&sl=en&tl=hi&dt=t&q=" + requests.utils.quote(eng))
-        d = requests.get(url, timeout=5).json()
-        t = "".join(p[0] for p in d[0] if p[0]).strip()
-        if t and t != eng:
-            time.sleep(0.15)
-            return t
-    except: pass
-    out = []
-    for w in eng.upper().split():
-        cw = w.strip("&.,()-/")
-        if cw in WD: out.append(WD[cw]); continue
-        try:
-            r = requests.get(
-                "https://inputtools.google.com/request?text=" + cw + "&ime=transliteration_en_hi&num=1",
-                timeout=4).json()
-            out.append(r[1][0][1][0] if r[0]=="SUCCESS" else "".join(PR.get(c,"") for c in cw))
-        except: out.append("".join(PR.get(c,"") for c in cw))
-    return " ".join(out)
-
-def calc(name):
-    total, steps = 0, []
-    for c in name:
-        w = AKSHARA_VALS.get(c, 0)
-        total += w
-        if w > 0 or c == "्":
-            steps.append(c + "=" + str(w))
-        elif c == " ":
-            steps.append("|")
-    return total, " ".join(steps)
-
-def make_report(asum, tval, ldate, elapsed_days):
-    nv    = (asum % 9) or 9
-    g     = GRAHA[(nv - 1) % 9]
-    total = asum + tval
-    sutra = SUTRA_MAP.get(total % 9, "")
-    today = datetime.now()
-    nak   = NAK[today.timetuple().tm_yday % 27]
-    wday  = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][today.weekday()]
-    bars = {1:"★☆☆☆☆", 2:"★★☆☆☆", 3:"★★★☆☆", 4:"★★★★☆", 5:"★★★★★"}
-    if ldate:
-        tc = ((today.timetuple().tm_yday - ldate.timetuple().tm_yday) % 27) + 1
-        tn = ["जन्म","सम्पत","विपत","क्षेम","प्रत्यरि","साधक","वध","मित्र","परम-मित्र"]
-        tara = tn[(tc-1)%9] + (" GOOD" if tc%9 in(2,4,6,8,0) else " CAUTION")
-    else:
-        tara = "N/A"
-    S  = "─" * 30
-    S2 = "═" * 30
-    return "\n".join([
-        S2, "    BHOOVALAYA ORACLE RESULT", S2, "",
-        f"  LISTING DATE : {ldate.strftime('%d-%m-%Y') if ldate else 'N/A'}",
-        f"  DAYS LAPSED  : {elapsed_days} Days", "",
-        "STEP 1: AKSHARA WEIGHT THEORY", "  Each Hindi sound has weight:", S,
-        "STEP 2: NAVAANK CALCULATION", "  Akshara Sum = " + str(asum), "  Digital Root (1-9) = " + str(nv), S,
-        "STEP 3: TEMPORAL VIBRATION", f"  Temporal = Days % 730 = {tval}", f"  Combined Vib = {total}", S,
-        "STEP 4: SUTRA PRINCIPLE", "  " + sutra, S,
-        "STEP 5: RULING GRAHA (PLANET)", "  Navaank " + str(nv) + " → " + g[0], S2,
-        "  MARKET FORECAST", S2, "  Signal   : " + g[1], "  Strength : " + bars.get(g[2],""), "  Sectors  : " + g[3], S,
-        "STEP 6: VEDIC TIMING", f"  Nakshatra: {nak} | Tara: {tara}", S2
-    ])
-
-# ── VEDIC ASTROLOGY CALCULATIONS ──────────────────────────────────────────────
-SIGN_ABB  = ["Ar","Ta","Ge","Ca","Le","Vi","Li","Sc","Sg","Cp","Aq","Pi"]
-
-def norm360(x): return x % 360
-
-def jd_from_dt(year, month, day, hour=12, minute=0):
-    if month <= 2: year -= 1; month += 12
-    A = int(year / 100)
-    B = 2 - A + int(A / 4)
-    return (int(365.25 * (year + 4716)) + int(30.6001 * (month + 1)) + day + hour/24.0 + minute/1440.0 + B - 1524.5)
-
-def lahiri_ayanamsa(jd):
-    T = (jd - 2451545.0) / 36525.0
-    return 23.85 + 0.013611 * T + 0.000092 * T * T
-
-def calc_planet_positions(jd, lat=19.0544, lon=72.8405):
-    T = (jd - 2451545.0) / 36525.0
-    sun_t = norm360(280.46646 + 36000.76983 * T)
-    moon_t = norm360(218.3164477 + 481267.88123421 * T)
-    merc_t = norm360(252.2509 + 149474.0722 * T)
-    ven_t  = norm360(181.9798 + 58517.8160 * T)
-    mars_t = norm360(355.433 + 19140.2993 * T)
-    jup_t  = norm360(34.3515 + 3034.9057 * T)
-    sat_t  = norm360(50.0774 + 1222.1138 * T)
-    rahu_t = norm360(125.0445 - 1934.1362*T)
-    ketu_t = norm360(rahu_t + 180)
-    
-    eps     = math.radians(23.439291111 - 0.013004167*T)
-    GMST    = norm360(280.46061837 + 360.98564736629*(jd - 2451545.0))
-    LST     = math.radians(norm360(GMST + lon))
-    asc_t   = math.degrees(math.atan2(math.cos(LST), -math.sin(LST)*math.cos(eps) - math.tan(math.radians(lat))*math.sin(eps))) % 360
-    ay = lahiri_ayanamsa(jd)
-    return {
-        "As": (asc_t - ay) % 360, "Su": (sun_t  - ay) % 360, "Mo": (moon_t - ay) % 360,
-        "Me": (merc_t - ay) % 360, "Ve": (ven_t  - ay) % 360, "Ma": (mars_t - ay) % 360,
-        "Ju": (jup_t  - ay) % 360, "Sa": (sat_t  - ay) % 360, "Ra": (rahu_t - ay) % 360, "Ke": (ketu_t - ay) % 360,
-    }, ay
-
-def lon_to_sign_deg(lon): return int((lon % 360) / 30), round(lon % 30, 2)
-
-def d9_sign(lon):
-    sign, deg = lon_to_sign_deg(lon)
-    nav_num   = int(deg / (30.0 / 9))
-    start_map = {0:0, 1:9, 2:6, 3:3, 4:0, 5:9, 6:6, 7:3, 8:0, 9:9, 10:6, 11:3}
-    return (start_map[sign] + nav_num) % 12
-
-def build_diamond_chart(positions, lagna_sign, title, chart_size=300):
-    W, p = chart_size, 8
-    x0, y0, x1, y1 = p, p, W - p, W - p
-    cx, cy = W // 2, W // 2
-    
-    HOUSES_GEOM = {
-        1:  {"poly": [(cx, y0), (x1, cy), (cx, y1), (x0, cy)], "txt": (cx, cy - 40),   "planets": (cx, cy - 15)},
-        2:  {"poly": [(x0, y0), (cx, y0), (x0, cy)],           "txt": (x0 + 35, y0 + 25), "planets": (x0 + 35, y0 + 45)},
-        3:  {"poly": [(x0, y0), (x0, cy), (cx, y0)],           "txt": (x0 + 25, y0 + 55), "planets": (x0 + 25, y0 + 75)},
-        4:  {"poly": [(x0, cy), (cx, y0), (cx, cy)],           "txt": (cx - 45, cy - 15), "planets": (cx - 45, cy + 5)},
-        5:  {"poly": [(x0, y1), (x0, cy), (cx, y1)],           "txt": (x0 + 25, y1 - 55), "planets": (x0 + 25, y1 - 35)},
-        6:  {"poly": [(x0, y1), (cx, y1), (x0, cy)],           "txt": (x0 + 35, y1 - 25), "planets": (x0 + 35, y1 - 5)},
-        7:  {"poly": [(cx, y1), (x0, cy), (cx, y0), (x1, cy)], "txt": (cx, cy + 40),   "planets": (cx, cy + 55)},
-        8:  {"poly": [(x1, y1), (cx, y1), (x1, cy)],           "txt": (x1 - 35, y1 - 25), "planets": (x1 - 35, y1 - 5)},
-        9:  {"poly": [(x1, y1), (x1, cy), (cx, y1)],           "txt": (x1 - 25, y1 - 55), "planets": (x1 - 25, y1 - 35)},
-        10: {"poly": [(x1, cy), (cx, y1), (cx, cy)],           "txt": (cx + 45, cy + 15), "planets": (cx + 45, cy - 5)},
-        11: {"poly": [(x1, y0), (x1, cy), (cx, y0)],           "txt": (x1 - 25, y0 + 55), "planets": (x1 - 25, y0 + 75)},
-        12: {"poly": [(x1, y0), (cx, y0), (x1, cy)],           "txt": (x1 - 35, y0 + 25), "planets": (x1 - 35, y0 + 45)},
-    }
-    
-    sign_planets = {i: [] for i in range(12)}
-    for planet, s_idx in positions.items(): sign_planets[int(s_idx)].append(planet)
-    
-    lagna_s = int(lagna_sign)
-    def get_house_sign(h_num): return (lagna_s + h_num - 1) % 12
-
-    shapes = [cv.Fill(paint=ft.Paint(color="#FCFDFE"))]
-    for h_num, info in HOUSES_GEOM.items():
-        is_lagna = (h_num == 1)
-        bg_color = "#FFE082" if is_lagna else "#F5F7FA"
-        stroke_color = "#B71C1C" if is_lagna else "#0D47A1"
-        stroke_w = 2.0 if is_lagna else 1.2
-        pts = info["poly"]
-        path_data = [cv.Path.MoveTo(pts[0][0], pts[0][1])]
-        for pt in pts[1:]: path_data.append(cv.Path.LineTo(pt[0], pt[1]))
-        path_data.append(cv.Path.Close())
-        shapes.append(cv.Path(path_data, paint=ft.Paint(color=bg_color, style=ft.PaintingStyle.FILL)))
-        shapes.append(cv.Path(path_data, paint=ft.Paint(color=stroke_color, stroke_width=stroke_w, style=ft.PaintingStyle.STROKE)))
-
-    grid_paint = ft.Paint(color="#0D47A1", stroke_width=1.5, style=ft.PaintingStyle.STROKE)
-    shapes.extend([
-        cv.Line(x0, y0, x1, y1, paint=grid_paint), cv.Line(x1, y0, x0, y1, paint=grid_paint),
-        cv.Line(cx, y0, x0, cy, paint=grid_paint), cv.Line(x0, cy, cx, y1, paint=grid_paint),
-        cv.Line(cx, y1, x1, cy, paint=grid_paint), cv.Line(x1, cy, cx, y0, paint=grid_paint),
-        cv.Rect(x=x0, y=y0, width=W-(2*p), height=W-(2*p), paint=grid_paint)
-    ])
-
-    for h_num, info in HOUSES_GEOM.items():
-        sign_idx = get_house_sign(h_num)
-        planets_here = sign_planets.get(sign_idx, [])
-        tx, ty = info["txt"]
-        shapes.append(cv.Text(x=tx - 6, y=ty - 10, text=str(sign_idx + 1), style=ft.TextStyle(size=12, color="#1A237E", weight="bold")))
-        shapes.append(cv.Text(x=tx + 5, y=ty - 8, text=f"({SIGN_ABB[sign_idx]})", style=ft.TextStyle(size=8, color="#546E7A")))
-        if planets_here:
-            px, py = info["planets"]
-            planets_txt = " ".join(planets_here)
-            shapes.append(cv.Text(x=px - (len(planets_txt) * 3), y=py, text=planets_txt, style=ft.TextStyle(size=11, color="#B71C1C", weight="bold")))
-
-    shapes.append(cv.Text(x=cx - 30, y=cy - 8, text=title, style=ft.TextStyle(size=10, color="#FFFFFF", weight="bold", bgcolor="#0D47A1")))
-    return cv.Canvas(shapes=shapes, width=W, height=W)
-
-# ── MAIN APP INTERFACE ─────────────────────────────────────────────────────────
-def main(page: ft.Page):
-    try:
-        page.title, page.bgcolor, page.padding, page.scroll = "Bhoovalaya Cosmic System", C["bg"], 10, "auto"
-        db_path = os.path.join(os.getenv("FLET_APP_STORAGE_DATA", "."), "bhuvalaya.db")
-
-        conn = sqlite3.connect(db_path)
-        conn.execute("CREATE TABLE IF NOT EXISTS stocks(symbol TEXT PRIMARY KEY, eng_name TEXT, hindi_name TEXT, ldate TEXT, asum INTEGER, breakdown TEXT, series TEXT DEFAULT 'EQ')")
-        conn.commit(); conn.close()
-
-        def db_count(): return sqlite3.connect(db_path).execute("SELECT COUNT(*) FROM stocks").fetchone()[0]
-        def db_search(q): return sqlite3.connect(db_path).execute("SELECT symbol, eng_name, hindi_name, ldate, asum FROM stocks WHERE symbol LIKE ? OR eng_name LIKE ? ORDER BY symbol LIMIT 100", ("%"+q+"%", "%"+q+"%")).fetchall()
-        def db_get(sym): return sqlite3.connect(db_path).execute("SELECT * FROM stocks WHERE symbol=?", (sym,)).fetchone()
-        def db_save(sym, eng, hindi, ldate, series="EQ"):
-            asum, bk = calc(hindi)
-            c = sqlite3.connect(db_path)
-            c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hindi, ldate, asum, bk, series))
-            c.commit(); c.close()
-            return True, asum
-
-        status_txt = ft.Text("System Initialized", size=14, color="#FFFFFF", weight="bold")
-        status_bar = ft.Container(content=status_txt, bgcolor=C["primary"], padding=10, border_radius=6)
-        prg_bar, prg_txt = ft.ProgressBar(value=0, visible=False, color="#FF6F00", bgcolor="#EEEEEE"), ft.Text("", size=13, color=C["orange"])
-
-        def set_status(msg, color=None): status_txt.value, status_bar.bgcolor = msg, color or C["primary"]; page.update()
-        def set_prg(pct, msg=""): prg_bar.visible, prg_bar.value, prg_txt.value = True, pct, msg; page.update()
-        def hide_prg(): prg_bar.visible, prg_txt.value = False, ""; page.update()
-        
-        def make_field(label, hint="", value=""):
-            return ft.TextField(label=label, label_style=ft.TextStyle(size=14, color=C["primary"], weight="bold"), hint_text=hint, value=value, text_style=ft.TextStyle(size=15, color=C["black_txt"]), border_color=C["primary"], border_width=2, bgcolor=C["inp_bg"])
-        def make_header(title, bgcolor=None): 
-            return ft.Container(content=ft.Text(title, size=15, color="#FFFFFF", weight="bold"), bgcolor=bgcolor or C["primary"], padding=10, border_radius=6)
-        def make_blue_btn(text, on_click, height=50):
-            return ft.ElevatedButton(text, bgcolor=C["primary"], color="#FFFFFF", elevation=4, height=height, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=on_click)
-
-        # ── TAB 1: ORACLE ─────────────────────────────────────────────────────
-        fld_oracle = make_field("Enter Stock Symbol", value="RELIANCE")
-        result_txt = ft.Text("", size=14, color=C["black_txt"], font_family="monospace", selectable=True)
-        result_box = ft.Container(content=result_txt, bgcolor=C["res_bg"], padding=12, border_radius=8, visible=False)
-
-        def do_oracle(e):
-            q = fld_oracle.value.strip().upper()
-            row = db_get(q) or (rows := db_search(q) and db_get(rows[0][0]))
-            if row:
-                sym, eng, hi, ldt, asum, bk, *_ = row
-                ldate = parse_dt(ldt)
-                days = (datetime.now() - ldate).days if ldate else 0
-                result_txt.value = make_report(asum, days % 730, ldate, days)
-                result_box.visible = True
-                set_status(f"Analysis complete for {sym}", C["green"])
-            else: set_status("Symbol not found.", C["red"])
-            page.update()
-
-        oracle_screen = ft.Column(visible=True, controls=[
-            make_header("🔮 BHOOVALAYA ORACLE CORE"), fld_oracle,
-            make_blue_btn("🔍 RUN ORACLE PREDICTION", do_oracle), result_box
-        ])
-
-        # ── TAB 2: STOCKS ─────────────────────────────────────────────────────
-        fld_list_search, list_rows = make_field("Filter System Database"), ft.Column(spacing=4)
-        
-        def load_list(q=""):
-            list_rows.controls.clear()
-            for i, r in enumerate(db_search(q)):
-                sym, eng, hi, ldt, asum = r
-                list_rows.controls.append(ft.Container(content=ft.Column([
-                    ft.Text(f"{sym} | {eng}", weight="bold", color=C["primary"]),
-                    ft.Text(f"Hindi: {hi} | Weights: {asum}", color=C["green"])
-                ]), bgcolor=C["row_odd"] if i%2==0 else C["row_even"], padding=8))
-            page.update()
-
-        list_screen = ft.Column(visible=False, controls=[
-            make_header("📋 STOCK REGISTRY"), fld_list_search,
-            make_blue_btn("🔍 FILTER RECORDS", lambda e: load_list(fld_list_search.value.strip().upper())), list_rows
-        ])
-
-        # ── TAB 3: DATA ENTRY ─────────────────────────────────────────────────
-        fld_sym, fld_eng, fld_hindi, fld_ldate = make_field("Stock Symbol"), make_field("Company English Name"), make_field("Transliterated Hindi Name"), make_field("Listing Date (DD-MM-YYYY)")
-        
-        entry_screen = ft.Column(visible=False, controls=[
-            make_header("✏️ DATABASE MAINTENANCE ENTRY"), fld_sym, fld_eng,
-            make_blue_btn("🌐 CONVERT TO HINDI", lambda e: setattr(fld_hindi, 'value', get_hindi(fld_sym.value.upper(), fld_eng.value)) or page.update()),
-            fld_hindi, fld_ldate,
-            ft.Row([
-                make_blue_btn("💾 SAVE DATA", lambda e: db_save(fld_sym.value.upper(), fld_eng.value, fld_hindi.value, fld_ldate.value) and set_status("Saved Record", C["green"])),
-                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["red"], color="#FFFFFF", on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), page.update()))
-            ])
-        ])
-
-        # ── TAB 4: KUNDALI ENGINE ─────────────────────────────────────────────
-        fld_date, fld_time, fld_lat, fld_lon = make_field("Date (DD-MM-YYYY)", value=datetime.now().strftime("%d-%m-%Y")), make_field("Time (HH:MM)", value=datetime.now().strftime("%H:%M")), make_field("Latitude", value="19.0544"), make_field("Longitude", value="72.8405")
-        
-        astro_form_container = ft.Column(spacing=10)
-        astro_chart_container = ft.ListView(expand=True, spacing=20, padding=10, visible=False)
-
-        def do_astro(e):
-            try:
-                dt = parse_dt(fld_date.value)
-                tm = fld_time.value.split(":")
-                pos, ay = calc_planet_positions(jd_from_dt(dt.year, dt.month, dt.day, int(tm[0]), int(tm[1])), float(fld_lat.value), float(fld_lon.value))
-                
-                astro_chart_container.controls.clear()
-                
-                # Build separated canvas matrices
-                d1_canvas = build_diamond_chart({p: lon_to_sign_deg(l)[0] for p, l in pos.items()}, lon_to_sign_deg(pos["As"])[0], "D1 RASI")
-                d9_canvas = build_diamond_chart({p: d9_sign(l) for p, l in pos.items()}, d9_sign(pos["As"]), "D9 NAVAMSHA")
-                
-                # Display D1 Chart First
-                astro_chart_container.controls.append(make_header("📍 D1 RASI KUNDALI", bgcolor=C["primary"]))
-                astro_chart_container.controls.append(ft.Container(content=d1_canvas, alignment=ft.alignment.center, padding=10))
-                
-                # Dynamic separation barrier 
-                astro_chart_container.controls.append(ft.Divider(height=20, color=C["divider"]))
-                
-                # Display D9 Chart Below D1 Chart
-                astro_chart_container.controls.append(make_header("📐 D9 NAVAMSHA KUNDALI", bgcolor=C["secondary"]))
-                astro_chart_container.controls.append(ft.Container(content=d9_canvas, alignment=ft.alignment.center, padding=10))
-                
-                astro_chart_container.controls.append(ft.Container(height=15))
-                
-                def reset_astro_view(ev):
-                    astro_chart_container.controls.clear()
-                    astro_chart_container.visible = False
-                    astro_form_container.visible = True
-                    set_status("Charts cleared. System ready.", C["primary"])
-                    page.update()
-
-                exit_btn = ft.ElevatedButton(
-                    "🧹 CLEAR CHARTS / RETURN", 
-                    bgcolor=C["red"], 
-                    color="#FFFFFF", 
-                    height=50,
-                    style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")),
-                    on_click=reset_astro_view
-                )
-                astro_chart_container.controls.append(exit_btn)
-                
-                astro_form_container.visible = False
-                astro_chart_container.visible = True
-                set_status("Charts calculated! D1 displayed above D9.", C["green"])
-            except Exception as ex: 
-                set_status(f"Calculation Error: {ex}", C["red"])
-            page.update()
-
-        astro_form_container.controls.extend([
-            ft.Row([fld_date, fld_time]), ft.Row([fld_lat, fld_lon]),
-            make_blue_btn("🕉️ GENERATE BOTH D1 & D9 CHARTS", do_astro)
-        ])
-
-        astro_screen = ft.Column(visible=False, controls=[
-            make_header("🕉️ VEDIC CALCULATION MATRIX"),
-            astro_form_container,
-            astro_chart_container
-        ], expand=True)
-
-        # ── TAB 5: DATABASE BUILD (WITH DURATION DATE FIX) ────────────────────
-        def build_db_thread():
-            try:
-                set_status("Fetching data rows from NSE India...", C["accent"])
-                res = requests.get(NSE_URL, timeout=15)
-                r = csv.reader(io.StringIO(res.text)); next(r)
-                rows = list(r); total = len(rows)
-                db_c = sqlite3.connect(db_path)
-                for idx, row in enumerate(rows):
-                    if not row or len(row) < 4: continue
-                    # row[3] targets the valid 'Date of Listing' column in standard NSE csv maps
-                    sym, eng, series, ldt = row[0].strip(), row[1].strip(), row[2].strip(), row[3].strip()
-                    if series != "EQ": continue
-                    hi = get_hindi(sym, eng)
-                    asum, bk = calc(hi)
-                    db_c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hi, ldt, asum, bk, series))
-                    if idx % 12 == 0: set_prg(idx/total, f"Indexing {sym}")
-                db_c.commit(); db_c.close()
-                hide_prg(); set_status("System Database Synced!", C["green"])
-            except Exception as ex: hide_prg(); set_status(f"Sync failed: {ex}", C["red"])
-
-        db_screen = ft.Column(visible=False, controls=[
-            make_header("⚙️ SYSTEM STORAGE PANEL"),
-            make_blue_btn("⚡ EXECUTE AUTOMATED NSE SYNC", lambda e: threading.Thread(target=build_db_thread, daemon=True).start())
-        ])
-
-        # ── CORE NAVIGATION INTEGRATION ────────────────────────────────────────
-        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen}
-        def show_screen(name):
-            for k, v in all_screens.items(): v.visible = (k == name)
-            page.update()
-
-        nav_bar = ft.NavigationBar(
-            destinations=[
-                ft.NavigationBarDestination(icon=ft.Icons.PSYCHOLOGY, label="Oracle"),
-                ft.NavigationBarDestination(icon=ft.Icons.FORMAT_LIST_BULLETED, label="Stocks"),
-                ft.NavigationBarDestination(icon=ft.Icons.EDIT_NOTE, label="Entry"),
-                ft.NavigationBarDestination(icon=ft.Icons.STARS, label="Kundali"),
-                ft.NavigationBarDestination(icon=ft.Icons.STORAGE, label="Database"),
-            ],
-            on_change=lambda e: show_screen(["oracle", "list", "entry", "astro", "db"][int(e.data)]),
-            bgcolor="#CDD7E6" 
-        )
-
-        page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, nav_bar)
-        set_status(f"System Operational — {db_count()} records configured.", C["green"])
-    except Exception as err:
-        page.add(ft.Container(content=ft.Text(f"Fatal Matrix Error:\n{err}"), bgcolor=C["red"]))
-        page.update()
-
-if __name__ == "__main__":
-    ft.app(target=main)
-
-import sqlite3
-import threading
-import csv
-import io
-import time
-import math
-from datetime import datetime
-
-try:
-    import requests
-    REQUESTS_OK = True
-except Exception:
-    REQUESTS_OK = False
-
-import flet as ft
-import flet.canvas as cv
-
-# ── CONSTANTS ──────────────────────────────────────────────────────────────────
-AKSHARA_VALS = {
-    'अ':1,'आ':2,'इ':3,'ई':4,'उ':5,'ऊ':6,'ए':7,'ऐ':8,'ओ':9,'औ':10,
-    'क':11,'ख':12,'ग':13,'घ':14,'ङ':15,'च':16,'छ':17,'ज':18,'झ':19,'ञ':20,
-    'ट':21,'ठ':22,'ड':23,'ढ':24,'ण':25,'त':26,'थ':27,'द':28,'ध':29,'न':30,
-    'प':31,'फ':32,'ब':33,'भ':34,'म':35,'य':36,'र':37,'ल':38,'व':39,'श':40,
-    'ष':41,'स':42,'ह':43,'ि':2,'ा':2,'े':7,'ै':8,'ो':9,'ौ':10,'्':0,'ं':1
-}
-SUTRA_MAP = {
-    0:"अनंत(Ananta)",1:"शक्ति(Shakti)",2:"ज्ञान(Gnana)",
-    3:"धर्म(Dharma)",4:"वैराग्य(Vairagya)",5:"ऐश्वर्य(Aishwarya)",
-    6:"यश(Yashas)",7:"श्री(Shree)",8:"वीर्य(Veerya)"
-}
-GRAHA = {
-    0:("मंगल Mars","BULLISH",4,"Metals Defence Energy","1-7 Days","Strict stop-loss","Tuesday"),
-    1:("सूर्य Sun","BULLISH",5,"PSU Govt Energy Gold","1-4 Weeks","Enter Monday","Sunday"),
-    2:("चंद्र Moon","VOLATILE",2,"FMCG Dairy Retail","1-3 Days","Avoid overnight","Monday"),
-    3:("गुरु Jupiter","STRONGLY BULLISH",5,"Banking Education","1-6 Months","Watch retrograde","Thursday"),
-    4:("राहु Rahu","SPECULATIVE",3,"Tech Pharma Foreign","Caution","No leverage","Saturday"),
-    5:("बुध Mercury","BULLISH",4,"IT Telecom Media","1-3 Weeks","Watch retrograde","Wednesday"),
-    6:("शुक्र Venus","BULLISH",4,"FMCG Luxury Hotels","2-8 Weeks","Book at peaks","Friday"),
-    7:("केतु Ketu","BEARISH",2,"Old Economy Exit","Avoid Entry","Reduce positions","Tuesday"),
-    8:("शनि Saturn","SLOW BULLISH",3,"Infra Metals Coal","3-12 Months","No panic sell","Saturday"),
-}
-NAK = [
-    "अश्विनी","भरणी","कृत्तिका","रोहिणी","मृगशिरा","आर्द्रा",
-    "पुनर्वसु","पुष्य","आश्लेषा","मघा","पूर्वाफाल्गुनी","उत्तराफाल्गुनी",
-    "हस्त","चित्रा","स्वाति","विशाखा","अनुराधा","ज्येष्ठा",
-    "मूल","पूर्वाषाढ़ा","उत्तराषाढ़ा","श्रवण","धनिष्ठा","शतभिषा",
-    "पूर्वाभाद्रपद","उत्तराभाद्रपद","रेवती"
-]
-CURATED = {
-    "SBIN":"भारतीय स्टेट बैंक","HDFCBANK":"एचडीएफसी बैंक",
-    "ICICIBANK":"आईसीआईसीआई बैंक","AXISBANK":"एक्सिस बैंक",
-    "RELIANCE":"रिलायंस","TCS":"टाटा कंसल्टेंसी सर्विसेज",
-    "INFY":"इन्फोसिस","WIPRO":"विप्रो",
-    "NTPC":"राष्ट्रीय ताप विद्युत निगम",
-    "ONGC":"तेल और प्राकृतिक गैस निगम",
-    "TATASTEEL":"टाटा स्टील","COALINDIA":"कोल इंडिया",
-    "HINDUNILVR":"हिंदुस्तान यूनिलीवर","ITC":"आईटीसी",
-    "LT":"लार्सन एंड टुब्रो","MARUTI":"मारुति सुजुकी",
-    "TATAMOTORS":"टाटा मोटर्स","SUNPHARMA":"सन फार्मास्युटिकल",
-    "BHARTIARTL":"भारती एयरटेल","BAJFINANCE":"बजाज फाइनेंस",
-    "LICI":"भारतीय जीवन बीमा निगम","IRCTC":"भारतीय रेलवे खानपान",
-    "HAL":"हिंदुस्तान एयरोनॉटिक्स","ASIANPAINT":"एशियन पेंट्स",
-    "TITAN":"टाइटन कंपनी","ZOMATO":"जोमैटो",
-    "PNB":"पंजाब नेशनल बैंक","BEL":"भारत इलेक्ट्रॉनिक्स",
-    "HCLTECH":"एचसीएल टेक्नोलॉजीज","ADANIPORTS":"अदानी पोर्ट्स",
-    "KOTAKBANK":"कोटक महिंद्रा बैंक","DRREDDY":"डॉ रेड्डीज",
-    "CIPLA":"सिप्ला","M&M":"महिंद्रा एंड महिंद्रा",
-    "ULTRACEMCO":"अल्ट्राटेक सीमेंट","BAJAJ-AUTO":"बजाज ऑटो",
-    "POWERGRID":"पावर ग्रिड कॉर्पोरेशन","GAIL":"गेल इंडिया",
-    "BPCL":"भारत पेट्रोलियम","IOC":"इंडियन ऑयल कॉर्पोरेशन",
-    "BANKBARODA":"बैंक ऑफ बड़ौदा","CANBK":"केनरा बैंक",
-    "UNIONBANK":"यूनियन बैंक ऑफ इंडिया","YESBANK":"यस बैंक",
-    "IDFCFIRSTB":"आईडीएफसी फर्स्ट बैंक","FEDERALBNK":"फेडरल बैंक",
-    "SAIL":"स्टील अथॉरिटी ऑफ इंडिया","NMDC":"एनएमडीसी",
-    "HINDALCO":"हिंडाल्को निष्कर्ष","VEDL":"वेदांता",
-    "TATAPOWER":"टाटा पावर","ADANIPOWER":"अदानी पावर",
-    "ADANIENT":"अदानी एंटरप्राइजेज","ADANIGREEN":"अदानी ग्रीन एनर्जी",
-    "DLF":"डीएलएफ","GODREJPROP":"गोदरेज प्रॉपर्टीज",
-    "BRITANNIA":"ब्रिटानिया इंडस्ट्रीज","DABUR":"डाबर इंडिया",
-    "MARICO":"मेरिको","NESTLEIND":"नेस्ले इंडिया",
-    "HEROMOTOCO":"हीरो मोटोकॉर्प","EICHERMOT":"आयशर मोटर्स",
-    "ASHOKLEY":"अशोक लेलैंड","TVSMOTOR":"टीवीएस motor",
-    "CONCOR":"कंटेनर कॉर्पोरेशन","BHEL":"भारत हेवी इलेक्ट्रिकल्स",
-    "APOLLOHOSP":"अपोलो हॉस्पिटल्स","DIVISLAB":"दिविस लेबोरेटरीज",
-    "BIOCON":"बायोकॉन","LUPIN":"ल्यूपिन",
-    "AUROPHARMA":"ऑरोबिंदो फार्मा","TORNTPHARM":"टोरेंट फार्मा",
-}
-WD = {
-    "LIMITED":"लिमिटेड","LTD":"लिमिटेड","BANK":"बैंक",
-    "INDUSTRIES":"इंडस्ट्रीज","INDUSTRY":"उद्योग",
-    "INDIA":"INDIA","INDIAN":"इंडियन","POWER":"पावर",
-    "ENERGY":"एनर्जी","FINANCE":"फाइनेंस","STEEL":"स्टील",
-    "MOTORS":"मोटर्स","MOTOR":"मोटर",
-    "TECHNOLOGIES":"टेक्नोलॉजीज","TECHNOLOGY":"टेक्नोलॉजी",
-    "AND":"एंड","&":"एंड","SERVICES":"सर्विसेज","SERVICE":"सर्विस",
-    "PHARMA":"फार्मा","PHARMACEUTICALS":"फार्मास्युटिकल्स",
-    "CEMENT":"सीमेंट","OIL":"OIL","GAS":"गैस",
-    "TELECOM":"टेलीकॉम","GROUP":"ग्रुप",
-    "CHEMICALS":"केमिकल्स","NATIONAL":"नेशनल",
-    "CORPORATION":"कॉर्पोरेशन","CORP":"कॉर्प",
-    "MEDIA":"MEDIA","HEALTHCARE":"हेल्थकेयर",
-    "CAPITAL":"कैपिटल","INSURANCE":"इंश्योरेंस",
-    "REALTY":"रियल्टी","PROPERTIES":"प्रॉपर्टीज",
-    "AUTO":"ऑटो","AUTOMOBILE":"ऑटोमोबाइल",
-    "ELECTRIC":"इलेक्ट्रिक","ELECTRONICS":"इलेक्ट्रॉनिक्स",
-    "CONSTRUCTION":"कंस्ट्रक्शन","INFRASTRUCTURE":"इन्फ्रास्ट्रक्चर",
-    "ENTERPRISES":"एंटरप्राइजेज","ENTERPRISE":"एंटरप्राइज",
-    "HOLDINGS":"होल्डिंग्स","INVESTMENTS":"इन्वेस्टमेंट्स",
-    "LABORATORIES":"लेबोरेटरीज","LABS":"लैब्स",
-    "HOSPITAL":"हॉस्पिटल","HOSPITALS":"हॉस्पिटल्स",
-    "FOODS":"फूड्स","FOOD":"फूड","BEVERAGES":"बेवरेजेज",
-    "TEXTILE":"टेक्सटाइल","TEXTILES":"टेक्सटाइल्स",
-    "FERTILIZERS":"फर्टिलाइजर्स","AGRO":"एग्रो",
-    "TRADING":"ट्रेडिंग","EXPORTS":"एक्सपोर्ट्स",
-    "SOLUTIONS":"सॉल्यूशंस","SYSTEMS":"सिस्टम्स",
-    "GLOBAL":"ग्लोबल","INTERNATIONAL":"इंटरनेशनल",
-    "MANAGEMENT":"मैनेजमेंट","CONSULTING":"कंसलिटींग",
-    "SECURITIES":"सिक्योरिटीज","PETROLEUM":"पेट्रोलियम",
-    "COMPANY":"कंपनी","SOLAR":"सोलर","RENEWABLE":"रिन्यूएबल",
-    "DIGITAL":"डिजिटल","NETWORK":"नेटवर्क","NETWORKS":"नेटवर्क्स",
-}
-PR = {
-    'A':'ए','B':'ब','C':'क','D':'ड','E':'इ','F':'फ',
-    'G':'ग','H':'ह','I':'इ','J':'ज','K':'क','L':'ल',
-    'M':'म','N':'न','O':'ओ','P':'प','Q':'क','R':'र',
-    'S':'स','T':'ट','U':'य','V':'व','W':'व','X':'क्स',
-    'Y':'य','Z':'ज'
-}
-NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
-
-# ── HIGH VISIBILITY SYSTEM BLUE COLOR PALETTE ──────────────────────────────────
-C = {
-    "bg":       "#FFFFFF",
-    "primary":  "#0D47A1",  # Dark Blue
-    "secondary":"#1565C0",  # Medium Vivid Blue
-    "accent":   "#1976D2",  # Operation Blue
-    "dark_txt": "#0D47A1",
-    "black_txt":"#1A237E",
-    "hint_txt": "#546E7A",
-    "green":    "#1B5E20",
-    "orange":   "#E65100",
-    "red":      "#B71C1C",
-    "inp_bg":   "#F0F4FA",
-    "res_bg":   "#E8EAF6",
-    "row_odd":  "#F5F7FA",
-    "row_even": "#FFFFFF",
-    "divider":  "#5C6BC0",
-}
-
-# ── HELPER FUNCTIONS ───────────────────────────────────────────────────────────
-def parse_dt(s):
-    if not s: return None
-    for f in ("%d-%m-%Y","%Y-%m-%d","%d/%m/%Y","%d-%b-%Y"):
-        try: return datetime.strptime(s.strip(), f)
-        except: pass
-    return None
-
-def get_hindi(sym, eng):
-    if sym in CURATED: return CURATED[sym]
-    if not REQUESTS_OK:
-        out = []
-        for w in eng.upper().split():
-            cw = w.strip("&.,()-/")
-            out.append(WD.get(cw, "".join(PR.get(c,"") for c in cw)))
-        return " ".join(out)
-    try:
-        url = ("https://translate.googleapis.com/translate_a/single"
-               "?client=gtx&sl=en&tl=hi&dt=t&q=" + requests.utils.quote(eng))
-        d = requests.get(url, timeout=5).json()
-        t = "".join(p[0] for p in d[0] if p[0]).strip()
-        if t and t != eng:
-            time.sleep(0.15)
-            return t
-    except: pass
-    out = []
-    for w in eng.upper().split():
-        cw = w.strip("&.,()-/")
-        if cw in WD: out.append(WD[cw]); continue
-        try:
-            r = requests.get(
-                "https://inputtools.google.com/request?text=" + cw + "&ime=transliteration_en_hi&num=1",
-                timeout=4).json()
-            out.append(r[1][0][1][0] if r[0]=="SUCCESS" else "".join(PR.get(c,"") for c in cw))
-        except: out.append("".join(PR.get(c,"") for c in cw))
-    return " ".join(out)
-
-def calc(name):
-    total, steps = 0, []
-    for c in name:
-        w = AKSHARA_VALS.get(c, 0)
-        total += w
-        if w > 0 or c == "्":
-            steps.append(c + "=" + str(w))
-        elif c == " ":
-            steps.append("|")
-    return total, " ".join(steps)
-
-def make_report(asum, tval, ldate, elapsed_days):
-    nv    = (asum % 9) or 9
-    g     = GRAHA[(nv - 1) % 9]
-    total = asum + tval
-    sutra = SUTRA_MAP.get(total % 9, "")
-    today = datetime.now()
-    nak   = NAK[today.timetuple().tm_yday % 27]
-    wday  = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][today.weekday()]
-    bars = {1:"★☆☆☆☆", 2:"★★☆☆☆", 3:"★★★☆☆", 4:"★★★★☆", 5:"★★★★★"}
-    if ldate:
-        tc = ((today.timetuple().tm_yday - ldate.timetuple().tm_yday) % 27) + 1
-        tn = ["जन्म","सम्पत","विपत","क्षेम","प्रत्यरि","साधक","वध","मित्र","परम-मित्र"]
-        tara = tn[(tc-1)%9] + (" GOOD" if tc%9 in(2,4,6,8,0) else " CAUTION")
-    else:
-        tara = "N/A"
-    S  = "─" * 30
-    S2 = "═" * 30
-    return "\n".join([
-        S2, "    BHOOVALAYA ORACLE RESULT", S2, "",
-        f"  LISTING DATE : {ldate.strftime('%d-%m-%Y') if ldate else 'N/A'}",
-        f"  DAYS LAPSED  : {elapsed_days} Days", "",
-        "STEP 1: AKSHARA WEIGHT THEORY", "  Each Hindi sound has weight:", S,
-        "STEP 2: NAVAANK CALCULATION", "  Akshara Sum = " + str(asum), "  Digital Root (1-9) = " + str(nv), S,
-        "STEP 3: TEMPORAL VIBRATION", f"  Temporal = Days % 730 = {tval}", f"  Combined Vib = {total}", S,
-        "STEP 4: SUTRA PRINCIPLE", "  " + sutra, S,
-        "STEP 5: RULING GRAHA (PLANET)", "  Navaank " + str(nv) + " → " + g[0], S2,
-        "  MARKET FORECAST", S2, "  Signal   : " + g[1], "  Strength : " + bars.get(g[2],""), "  Sectors  : " + g[3], S,
-        "STEP 6: VEDIC TIMING", f"  Nakshatra: {nak} | Tara: {tara}", S2
-    ])
-
-# ── VEDIC ASTROLOGY CALCULATIONS ──────────────────────────────────────────────
-SIGN_ABB  = ["Ar","Ta","Ge","Ca","Le","Vi","Li","Sc","Sg","Cp","Aq","Pi"]
-
-def norm360(x): return x % 360
-
-def jd_from_dt(year, month, day, hour=12, minute=0):
-    if month <= 2: year -= 1; month += 12
-    A = int(year / 100)
-    B = 2 - A + int(A / 4)
-    return (int(365.25 * (year + 4716)) + int(30.6001 * (month + 1)) + day + hour/24.0 + minute/1440.0 + B - 1524.5)
-
-def lahiri_ayanamsa(jd):
-    T = (jd - 2451545.0) / 36525.0
-    return 23.85 + 0.013611 * T + 0.000092 * T * T
-
-def calc_planet_positions(jd, lat=19.0544, lon=72.8405):
-    T = (jd - 2451545.0) / 36525.0
-    sun_t = norm360(280.46646 + 36000.76983 * T)
-    moon_t = norm360(218.3164477 + 481267.88123421 * T)
-    merc_t = norm360(252.2509 + 149474.0722 * T)
-    ven_t  = norm360(181.9798 + 58517.8160 * T)
-    mars_t = norm360(355.433 + 19140.2993 * T)
-    jup_t  = norm360(34.3515 + 3034.9057 * T)
-    sat_t  = norm360(50.0774 + 1222.1138 * T)
-    rahu_t = norm360(125.0445 - 1934.1362*T)
-    ketu_t = norm360(rahu_t + 180)
-    
-    eps     = math.radians(23.439291111 - 0.013004167*T)
-    GMST    = norm360(280.46061837 + 360.98564736629*(jd - 2451545.0))
-    LST     = math.radians(norm360(GMST + lon))
-    asc_t   = math.degrees(math.atan2(math.cos(LST), -math.sin(LST)*math.cos(eps) - math.tan(math.radians(lat))*math.sin(eps))) % 360
-    ay = lahiri_ayanamsa(jd)
-    return {
-        "As": (asc_t - ay) % 360, "Su": (sun_t  - ay) % 360, "Mo": (moon_t - ay) % 360,
-        "Me": (merc_t - ay) % 360, "Ve": (ven_t  - ay) % 360, "Ma": (mars_t - ay) % 360,
-        "Ju": (jup_t  - ay) % 360, "Sa": (sat_t  - ay) % 360, "Ra": (rahu_t - ay) % 360, "Ke": (ketu_t - ay) % 360,
-    }, ay
-
-def lon_to_sign_deg(lon): return int((lon % 360) / 30), round(lon % 30, 2)
-
-def d9_sign(lon):
-    sign, deg = lon_to_sign_deg(lon)
-    nav_num   = int(deg / (30.0 / 9))
-    start_map = {0:0, 1:9, 2:6, 3:3, 4:0, 5:9, 6:6, 7:3, 8:0, 9:9, 10:6, 11:3}
-    return (start_map[sign] + nav_num) % 12
-
-def build_diamond_chart(positions, lagna_sign, title, chart_size=300):
-    W, p = chart_size, 8
-    x0, y0, x1, y1 = p, p, W - p, W - p
-    cx, cy = W // 2, W // 2
-    
-    HOUSES_GEOM = {
-        1:  {"poly": [(cx, y0), (x1, cy), (cx, y1), (x0, cy)], "txt": (cx, cy - 40),   "planets": (cx, cy - 15)},
-        2:  {"poly": [(x0, y0), (cx, y0), (x0, cy)],           "txt": (x0 + 35, y0 + 25), "planets": (x0 + 35, y0 + 45)},
-        3:  {"poly": [(x0, y0), (x0, cy), (cx, y0)],           "txt": (x0 + 25, y0 + 55), "planets": (x0 + 25, y0 + 75)},
-        4:  {"poly": [(x0, cy), (cx, y0), (cx, cy)],           "txt": (cx - 45, cy - 15), "planets": (cx - 45, cy + 5)},
-        5:  {"poly": [(x0, y1), (x0, cy), (cx, y1)],           "txt": (x0 + 25, y1 - 55), "planets": (x0 + 25, y1 - 35)},
-        6:  {"poly": [(x0, y1), (cx, y1), (x0, cy)],           "txt": (x0 + 35, y1 - 25), "planets": (x0 + 35, y1 - 5)},
-        7:  {"poly": [(cx, y1), (x0, cy), (cx, y0), (x1, cy)], "txt": (cx, cy + 40),   "planets": (cx, cy + 55)},
-        8:  {"poly": [(x1, y1), (cx, y1), (x1, cy)],           "txt": (x1 - 35, y1 - 25), "planets": (x1 - 35, y1 - 5)},
-        9:  {"poly": [(x1, y1), (x1, cy), (cx, y1)],           "txt": (x1 - 25, y1 - 55), "planets": (x1 - 25, y1 - 35)},
-        10: {"poly": [(x1, cy), (cx, y1), (cx, cy)],           "txt": (cx + 45, cy + 15), "planets": (cx + 45, cy - 5)},
-        11: {"poly": [(x1, y0), (x1, cy), (cx, y0)],           "txt": (x1 - 25, y0 + 55), "planets": (x1 - 25, y0 + 75)},
-        12: {"poly": [(x1, y0), (cx, y0), (x1, cy)],           "txt": (x1 - 35, y0 + 25), "planets": (x1 - 35, y0 + 45)},
-    }
-    
-    sign_planets = {i: [] for i in range(12)}
-    for planet, s_idx in positions.items(): sign_planets[int(s_idx)].append(planet)
-    
-    lagna_s = int(lagna_sign)
-    def get_house_sign(h_num): return (lagna_s + h_num - 1) % 12
-
-    shapes = [cv.Fill(paint=ft.Paint(color="#FCFDFE"))]
-    for h_num, info in HOUSES_GEOM.items():
-        is_lagna = (h_num == 1)
-        bg_color = "#FFE082" if is_lagna else "#F5F7FA"
-        stroke_color = "#B71C1C" if is_lagna else "#0D47A1"
-        stroke_w = 2.0 if is_lagna else 1.2
-        pts = info["poly"]
-        path_data = [cv.Path.MoveTo(pts[0][0], pts[0][1])]
-        for pt in pts[1:]: path_data.append(cv.Path.LineTo(pt[0], pt[1]))
-        path_data.append(cv.Path.Close())
-        shapes.append(cv.Path(path_data, paint=ft.Paint(color=bg_color, style=ft.PaintingStyle.FILL)))
-        shapes.append(cv.Path(path_data, paint=ft.Paint(color=stroke_color, stroke_width=stroke_w, style=ft.PaintingStyle.STROKE)))
-
-    grid_paint = ft.Paint(color="#0D47A1", stroke_width=1.5, style=ft.PaintingStyle.STROKE)
-    shapes.extend([
-        cv.Line(x0, y0, x1, y1, paint=grid_paint), cv.Line(x1, y0, x0, y1, paint=grid_paint),
-        cv.Line(cx, y0, x0, cy, paint=grid_paint), cv.Line(x0, cy, cx, y1, paint=grid_paint),
-        cv.Line(cx, y1, x1, cy, paint=grid_paint), cv.Line(x1, cy, cx, y0, paint=grid_paint),
-        cv.Rect(x=x0, y=y0, width=W-(2*p), height=W-(2*p), paint=grid_paint)
-    ])
-
-    for h_num, info in HOUSES_GEOM.items():
-        sign_idx = get_house_sign(h_num)
-        planets_here = sign_planets.get(sign_idx, [])
-        tx, ty = info["txt"]
-        shapes.append(cv.Text(x=tx - 6, y=ty - 10, text=str(sign_idx + 1), style=ft.TextStyle(size=12, color="#1A237E", weight="bold")))
-        shapes.append(cv.Text(x=tx + 5, y=ty - 8, text=f"({SIGN_ABB[sign_idx]})", style=ft.TextStyle(size=8, color="#546E7A")))
-        if planets_here:
-            px, py = info["planets"]
-            planets_txt = " ".join(planets_here)
-            shapes.append(cv.Text(x=px - (len(planets_txt) * 3), y=py, text=planets_txt, style=ft.TextStyle(size=11, color="#B71C1C", weight="bold")))
-
-    shapes.append(cv.Text(x=cx - 30, y=cy - 8, text=title, style=ft.TextStyle(size=10, color="#FFFFFF", weight="bold", bgcolor="#0D47A1")))
-    return cv.Canvas(shapes=shapes, width=W, height=W)
-
-# ── MAIN APP INTERFACE ─────────────────────────────────────────────────────────
-def main(page: ft.Page):
-    try:
-        page.title, page.bgcolor, page.padding, page.scroll = "Bhoovalaya Cosmic System", C["bg"], 10, "auto"
-        db_path = os.path.join(os.getenv("FLET_APP_STORAGE_DATA", "."), "bhuvalaya.db")
-
-        conn = sqlite3.connect(db_path)
-        conn.execute("CREATE TABLE IF NOT EXISTS stocks(symbol TEXT PRIMARY KEY, eng_name TEXT, hindi_name TEXT, ldate TEXT, asum INTEGER, breakdown TEXT, series TEXT DEFAULT 'EQ')")
-        conn.commit(); conn.close()
-
-        def db_count(): return sqlite3.connect(db_path).execute("SELECT COUNT(*) FROM stocks").fetchone()[0]
-        def db_search(q): return sqlite3.connect(db_path).execute("SELECT symbol, eng_name, hindi_name, ldate, asum FROM stocks WHERE symbol LIKE ? OR eng_name LIKE ? ORDER BY symbol LIMIT 100", ("%"+q+"%", "%"+q+"%")).fetchall()
-        def db_get(sym): return sqlite3.connect(db_path).execute("SELECT * FROM stocks WHERE symbol=?", (sym,)).fetchone()
-        def db_save(sym, eng, hindi, ldate, series="EQ"):
-            asum, bk = calc(hindi)
-            c = sqlite3.connect(db_path)
-            c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hindi, ldate, asum, bk, series))
-            c.commit(); c.close()
-            return True, asum
-
-        status_txt = ft.Text("System Initialized", size=14, color="#FFFFFF", weight="bold")
-        status_bar = ft.Container(content=status_txt, bgcolor=C["primary"], padding=10, border_radius=6)
-        prg_bar, prg_txt = ft.ProgressBar(value=0, visible=False, color="#FF6F00", bgcolor="#EEEEEE"), ft.Text("", size=13, color=C["orange"])
-
-        def set_status(msg, color=None): status_txt.value, status_bar.bgcolor = msg, color or C["primary"]; page.update()
-        def set_prg(pct, msg=""): prg_bar.visible, prg_bar.value, prg_txt.value = True, pct, msg; page.update()
-        def hide_prg(): prg_bar.visible, prg_txt.value = False, ""; page.update()
-        
-        def make_field(label, hint="", value=""):
-            return ft.TextField(label=label, label_style=ft.TextStyle(size=14, color=C["primary"], weight="bold"), hint_text=hint, value=value, text_style=ft.TextStyle(size=15, color=C["black_txt"]), border_color=C["primary"], border_width=2, bgcolor=C["inp_bg"])
-        def make_header(title, bgcolor=None): 
-            return ft.Container(content=ft.Text(title, size=15, color="#FFFFFF", weight="bold"), bgcolor=bgcolor or C["primary"], padding=10, border_radius=6)
-        def make_blue_btn(text, on_click, height=50):
-            return ft.ElevatedButton(text, bgcolor=C["primary"], color="#FFFFFF", elevation=4, height=height, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=on_click)
-
-        # ── TAB 1: ORACLE ─────────────────────────────────────────────────────
-        fld_oracle = make_field("Enter Stock Symbol", value="RELIANCE")
-        result_txt = ft.Text("", size=14, color=C["black_txt"], font_family="monospace", selectable=True)
-        result_box = ft.Container(content=result_txt, bgcolor=C["res_bg"], padding=12, border_radius=8, visible=False)
-
-        def do_oracle(e):
-            q = fld_oracle.value.strip().upper()
-            row = db_get(q) or (rows := db_search(q) and db_get(rows[0][0]))
-            if row:
-                sym, eng, hi, ldt, asum, bk, *_ = row
-                ldate = parse_dt(ldt)
-                days = (datetime.now() - ldate).days if ldate else 0
-                result_txt.value = make_report(asum, days % 730, ldate, days)
-                result_box.visible = True
-                set_status(f"Analysis complete for {sym}", C["green"])
-            else: set_status("Symbol not found.", C["red"])
-            page.update()
-
-        oracle_screen = ft.Column(visible=True, controls=[
-            make_header("🔮 BHOOVALAYA ORACLE CORE"), fld_oracle,
-            make_blue_btn("🔍 RUN ORACLE PREDICTION", do_oracle), result_box
-        ])
-
-        # ── TAB 2: STOCKS ─────────────────────────────────────────────────────
-        fld_list_search, list_rows = make_field("Filter System Database"), ft.Column(spacing=4)
-        
-        def load_list(q=""):
-            list_rows.controls.clear()
-            for i, r in enumerate(db_search(q)):
-                sym, eng, hi, ldt, asum = r
-                list_rows.controls.append(ft.Container(content=ft.Column([
-                    ft.Text(f"{sym} | {eng}", weight="bold", color=C["primary"]),
-                    ft.Text(f"Hindi: {hi} | Weights: {asum}", color=C["green"])
-                ]), bgcolor=C["row_odd"] if i%2==0 else C["row_even"], padding=8))
-            page.update()
-
-        list_screen = ft.Column(visible=False, controls=[
-            make_header("📋 STOCK REGISTRY"), fld_list_search,
-            make_blue_btn("🔍 FILTER RECORDS", lambda e: load_list(fld_list_search.value.strip().upper())), list_rows
-        ])
-
-        # ── TAB 3: DATA ENTRY ─────────────────────────────────────────────────
-        fld_sym, fld_eng, fld_hindi, fld_ldate = make_field("Stock Symbol"), make_field("Company English Name"), make_field("Transliterated Hindi Name"), make_field("Listing Date (DD-MM-YYYY)")
-        
-        entry_screen = ft.Column(visible=False, controls=[
-            make_header("✏️ DATABASE MAINTENANCE ENTRY"), fld_sym, fld_eng,
-            make_blue_btn("🌐 CONVERT TO HINDI", lambda e: setattr(fld_hindi, 'value', get_hindi(fld_sym.value.upper(), fld_eng.value)) or page.update()),
-            fld_hindi, fld_ldate,
-            ft.Row([
-                make_blue_btn("💾 SAVE DATA", lambda e: db_save(fld_sym.value.upper(), fld_eng.value, fld_hindi.value, fld_ldate.value) and set_status("Saved Record", C["green"])),
-                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["red"], color="#FFFFFF", on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), page.update()))
-            ])
-        ])
-
-        # ── TAB 4: KUNDALI ENGINE (VERTICAL STRUCTURAL LIST SEPARATION) ───────
-        fld_date, fld_time, fld_lat, fld_lon = make_field("Date (DD-MM-YYYY)", value=datetime.now().strftime("%d-%m-%Y")), make_field("Time (HH:MM)", value=datetime.now().strftime("%H:%M")), make_field("Latitude", value="19.0544"), make_field("Longitude", value="72.8405")
-        
-        astro_form_container = ft.Column(spacing=10)
-        
-        # Using ft.ListView prevents charts from compressing or overlapping vertically
-        astro_chart_container = ft.ListView(expand=True, spacing=20, padding=10, visible=False)
-
-        def do_astro(e):
-            try:
-                dt = parse_dt(fld_date.value)
-                tm = fld_time.value.split(":")
-                pos, ay = calc_planet_positions(jd_from_dt(dt.year, dt.month, dt.day, int(tm[0]), int(tm[1])), float(fld_lat.value), float(fld_lon.value))
-                
-                astro_chart_container.controls.clear()
-                
-                # Build separated canvas matrices
-                d1_canvas = build_diamond_chart({p: lon_to_sign_deg(l)[0] for p, l in pos.items()}, lon_to_sign_deg(pos["As"])[0], "D1 RASI")
-                d9_canvas = build_diamond_chart({p: d9_sign(l) for p, l in pos.items()}, d9_sign(pos["As"]), "D9 NAVAMSHA")
-                
-                # Add D1 Rasi elements sequentially
-                astro_chart_container.controls.append(make_header("📍 D1 RASI KUNDALI", bgcolor=C["primary"]))
-                astro_chart_container.controls.append(ft.Container(content=d1_canvas, alignment=ft.alignment.center, padding=10))
-                
-                # Add explicit structural spacer block 
-                astro_chart_container.controls.append(ft.Divider(height=15, color=C["divider"]))
-                
-                # Add D9 Navamsha elements sequentially
-                astro_chart_container.controls.append(make_header("📐 D9 NAVAMSHA KUNDALI", bgcolor=C["secondary"]))
-                astro_chart_container.controls.append(ft.Container(content=d9_canvas, alignment=ft.alignment.center, padding=10))
-                
-                # Add bottom operational spacing margin
-                astro_chart_container.controls.append(ft.Container(height=10))
-                
-                def reset_astro_view(ev):
-                    astro_chart_container.controls.clear()
-                    astro_chart_container.visible = False
-                    astro_form_container.visible = True
-                    set_status("Charts cleared. System ready.", C["primary"])
-                    page.update()
-
-                exit_btn = ft.ElevatedButton(
-                    "🧹 CLEAR CHARTS / RETURN", 
-                    bgcolor=C["red"], 
-                    color="#FFFFFF", 
-                    height=50,
-                    style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")),
-                    on_click=reset_astro_view
-                )
-                astro_chart_container.controls.append(exit_btn)
-                
-                astro_form_container.visible = False
-                astro_chart_container.visible = True
-                set_status("D1 & D9 Charts rendered vertically!", C["green"])
-            except Exception as ex: 
-                set_status(f"Calculation Error: {ex}", C["red"])
-            page.update()
-
-        astro_form_container.controls.extend([
-            ft.Row([fld_date, fld_time]), ft.Row([fld_lat, fld_lon]),
-            make_blue_btn("🕉️ GENERATE BOTH D1 & D9 CHARTS", do_astro)
-        ])
-
-        astro_screen = ft.Column(visible=False, controls=[
-            make_header("🕉️ VEDIC CALCULATION MATRIX"),
-            astro_form_container,
-            astro_chart_container
-        ], expand=True)
-
-        # ── TAB 5: DATABASE BUILD ─────────────────────────────────────────────
-        def build_db_thread():
-            try:
-                set_status("Fetching data rows from NSE India...", C["accent"])
-                res = requests.get(NSE_URL, timeout=15)
-                r = csv.reader(io.StringIO(res.text)); next(r)
-                rows = list(r); total = len(rows)
-                db_c = sqlite3.connect(db_path)
-                for idx, row in enumerate(rows):
-                    if not row or len(row) < 7: continue
-                    sym, eng, series, ldt = row[0].strip(), row[1].strip(), row[2].strip(), row[6].strip()
-                    if series != "EQ": continue
-                    hi = get_hindi(sym, eng)
-                    asum, bk = calc(hi)
-                    db_c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hi, ldt, asum, bk, series))
-                    if idx % 12 == 0: set_prg(idx/total, f"Indexing {sym}")
-                db_c.commit(); db_c.close()
-                hide_prg(); set_status("System Database Synced!", C["green"])
-            except Exception as ex: hide_prg(); set_status(f"Sync failed: {ex}", C["red"])
-
-        db_screen = ft.Column(visible=False, controls=[
-            make_header("⚙️ SYSTEM STORAGE PANEL"),
-            make_blue_btn("⚡ EXECUTE AUTOMATED NSE SYNC", lambda e: threading.Thread(target=build_db_thread, daemon=True).start())
-        ])
-
-        # ── CORE NAVIGATION INTEGRATION ────────────────────────────────────────
-        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen}
-        def show_screen(name):
-            for k, v in all_screens.items(): v.visible = (k == name)
-            page.update()
-
-        nav_bar = ft.NavigationBar(
-            destinations=[
-                ft.NavigationBarDestination(icon=ft.Icons.PSYCHOLOGY, label="Oracle"),
-                ft.NavigationBarDestination(icon=ft.Icons.FORMAT_LIST_BULLETED, label="Stocks"),
-                ft.NavigationBarDestination(icon=ft.Icons.EDIT_NOTE, label="Entry"),
-                ft.NavigationBarDestination(icon=ft.Icons.STARS, label="Kundali"),
-                ft.NavigationBarDestination(icon=ft.Icons.STORAGE, label="Database"),
-            ],
-            on_change=lambda e: show_screen(["oracle", "list", "entry", "astro", "db"][int(e.data)]),
-            bgcolor="#CDD7E6" 
-        )
-
-        page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, nav_bar)
-        set_status(f"System Operational — {db_count()} records configured.", C["green"])
-    except Exception as err:
-        page.add(ft.Container(content=ft.Text(f"Fatal Matrix Error:\n{err}"), bgcolor=C["red"]))
-        page.update()
-
-if __name__ == "__main__":
-    ft.app(target=main)
-
-import csv
-import io
-import time
-import math
-from datetime import datetime
-
-try:
-    import requests
-    REQUESTS_OK = True
-except Exception:
-    REQUESTS_OK = False
-
-import flet as ft
-import flet.canvas as cv
-
-# ── CONSTANTS ──────────────────────────────────────────────────────────────────
-AKSHARA_VALS = {
-    'अ':1,'आ':2,'इ':3,'ई':4,'उ':5,'ऊ':6,'ए':7,'ऐ':8,'ओ':9,'औ':10,
-    'क':11,'ख':12,'ग':13,'घ':14,'ङ':15,'च':16,'छ':17,'ज':18,'झ':19,'ञ':20,
-    'ट':21,'ठ':22,'ड':23,'ढ':24,'ण':25,'त':26,'थ':27,'द':28,'ध':29,'न':30,
-    'प':31,'फ':32,'ब':33,'भ':34,'म':35,'य':36,'र':37,'ल':38,'व':39,'श':40,
-    'ष':41,'स':42,'ह':43,'ि':2,'ा':2,'े':7,'ै':8,'ो':9,'ौ':10,'्':0,'ं':1
-}
-SUTRA_MAP = {
-    0:"अनंत(Ananta)",1:"शक्ति(Shakti)",2:"ज्ञान(Gnana)",
-    3:"धर्म(Dharma)",4:"वैराग्य(Vairagya)",5:"ऐश्वर्य(Aishwarya)",
-    6:"यश(Yashas)",7:"श्री(Shree)",8:"वीर्य(Veerya)"
-}
-GRAHA = {
-    0:("मंगल Mars","BULLISH",4,"Metals Defence Energy","1-7 Days","Strict stop-loss","Tuesday"),
-    1:("सूर्य Sun","BULLISH",5,"PSU Govt Energy Gold","1-4 Weeks","Enter Monday","Sunday"),
-    2:("चंद्र Moon","VOLATILE",2,"FMCG Dairy Retail","1-3 Days","Avoid overnight","Monday"),
-    3:("गुरु Jupiter","STRONGLY BULLISH",5,"Banking Education","1-6 Months","Watch retrograde","Thursday"),
-    4:("राहु Rahu","SPECULATIVE",3,"Tech Pharma Foreign","Caution","No leverage","Saturday"),
-    5:("बुध Mercury","BULLISH",4,"IT Telecom Media","1-3 Weeks","Watch retrograde","Wednesday"),
-    6:("शुक्र Venus","BULLISH",4,"FMCG Luxury Hotels","2-8 Weeks","Book at peaks","Friday"),
-    7:("केतु Ketu","BEARISH",2,"Old Economy Exit","Avoid Entry","Reduce positions","Tuesday"),
-    8:("शनि Saturn","SLOW BULLISH",3,"Infra Metals Coal","3-12 Months","No panic sell","Saturday"),
-}
-NAK = [
-    "अश्विनी","भरणी","कृत्तिका","रोहिणी","मृगशिरा","आर्द्रा",
-    "पुनर्वसु","पुष्य","आश्लेषा","मघा","पूर्वाफाल्गुनी","उत्तराफाल्गुनी",
-    "हस्त","चित्रा","स्वाति","विशाखा","अनुराधा","ज्येष्ठा",
-    "मूल","पूर्वाषाढ़ा","उत्तराषाढ़ा","श्रवण","धनिष्ठा","शतभिषा",
-    "पूर्वाभाद्रपद","उत्तराभाद्रपद","रेवती"
-]
-CURATED = {
-    "SBIN":"भारतीय स्टेट बैंक","HDFCBANK":"एचडीएफसी बैंक",
-    "ICICIBANK":"आईसीआईसीआई बैंक","AXISBANK":"एक्सिस बैंक",
-    "RELIANCE":"रिलायंस","TCS":"टाटा कंसल्टेंसी सर्विसेज",
-    "INFY":"इन्फोसिस","WIPRO":"विप्रो",
-    "NTPC":"राष्ट्रीय ताप विद्युत निगम",
-    "ONGC":"तेल और प्राकृतिक गैस निगम",
-    "TATASTEEL":"टाटा स्टील","COALINDIA":"कोल इंडिया",
-    "HINDUNILVR":"हिंदुस्तान यूनिलीवर","ITC":"आईटीसी",
-    "LT":"लार्सन एंड टुब्रो","MARUTI":"मारुति सुजुकी",
-    "TATAMOTORS":"टाटा मोटर्स","SUNPHARMA":"सन फार्मास्युटिकल",
-    "BHARTIARTL":"भारती एयरटेल","BAJFINANCE":"बजाज फाइनेंस",
-    "LICI":"भारतीय जीवन बीमा निगम","IRCTC":"भारतीय रेलवे खानपान",
-    "HAL":"हिंदुस्तान एयरोनॉटिक्स","ASIANPAINT":"एशियन पेंट्स",
-    "TITAN":"टाइटन कंपनी","ZOMATO":"जोमैटो",
-    "PNB":"पंजाब नेशनल बैंक","BEL":"भारत इलेक्ट्रॉनिक्स",
-    "HCLTECH":"एचसीएल टेक्नोलॉजीज","ADANIPORTS":"अदानी पोर्ट्स",
-    "KOTAKBANK":"कोटक महिंद्रा बैंक","DRREDDY":"डॉ रेड्डीज",
-    "CIPLA":"सिप्ला","M&M":"महिंद्रा एंड महिंद्रा",
-    "ULTRACEMCO":"अल्ट्राटेक सीमेंट","BAJAJ-AUTO":"बजाज ऑटो",
-    "POWERGRID":"पावर ग्रिड कॉर्पोरेशन","GAIL":"गेल इंडिया",
-    "BPCL":"भारत पेट्रोलियम","IOC":"इंडियन ऑयल कॉर्पोरेशन",
-    "BANKBARODA":"बैंक ऑफ बड़ौदा","CANBK":"केनरा बैंक",
-    "UNIONBANK":"यूनियन बैंक ऑफ इंडिया","YESBANK":"यस बैंक",
-    "IDFCFIRSTB":"आईडीएफसी फर्स्ट बैंक","FEDERALBNK":"फेडरल बैंक",
-    "SAIL":"स्टील अथॉरिटी ऑफ इंडिया","NMDC":"एनएमडीसी",
-    "HINDALCO":"हिंडाल्को निष्कर्ष","VEDL":"वेदांता",
-    "TATAPOWER":"टाटा पावर","ADANIPOWER":"अदानी पावर",
-    "ADANIENT":"अदानी एंटरप्राइजेज","ADANIGREEN":"अदानी ग्रीन एनर्जी",
-    "DLF":"डीएलएफ","GODREJPROP":"गोदरेज प्रॉपर्टीज",
-    "BRITANNIA":"ब्रिटानिया इंडस्ट्रीज","DABUR":"डाबर इंडिया",
-    "MARICO":"मेरिको","NESTLEIND":"नेस्ले इंडिया",
-    "HEROMOTOCO":"हीरो मोटोकॉर्प","EICHERMOT":"आयशर मोटर्स",
-    "ASHOKLEY":"अशोक लेलैंड","TVSMOTOR":"टीवीएस motor",
-    "CONCOR":"कंटेनर कॉर्पोरेशन","BHEL":"भारत हेवी इलेक्ट्रिकल्स",
-    "APOLLOHOSP":"अपोलो हॉस्पिटल्स","DIVISLAB":"दिविस लेबोरेटरीज",
-    "BIOCON":"बायोकॉन","LUPIN":"ल्यूपिन",
-    "AUROPHARMA":"ऑरोबिंदो फार्मा","TORNTPHARM":"टोरेंट फार्मा",
-}
-WD = {
-    "LIMITED":"लिमिटेड","LTD":"लिमिटेड","BANK":"बैंक",
-    "INDUSTRIES":"इंडस्ट्रीज","INDUSTRY":"उद्योग",
-    "INDIA":"INDIA","INDIAN":"इंडियन","POWER":"पावर",
+    "INDIA":"इंडिया","INDIAN":"इंडियन","POWER":"पावर",
     "ENERGY":"एनर्जी","FINANCE":"फाइनेंस","STEEL":"स्टील",
     "MOTORS":"मोटर्स","MOTOR":"मोटर",
     "TECHNOLOGIES":"टेक्नोलॉजीज","TECHNOLOGY":"टेक्नोलॉजी",
@@ -3938,7 +104,7 @@ WD = {
     "REALTY":"रियल्टी","PROPERTIES":"प्रॉपर्टीज",
     "AUTO":"ऑटो","AUTOMOBILE":"ऑटोमोबाइल",
     "ELECTRIC":"इलेक्ट्रिक","ELECTRONICS":"इलेक्ट्रॉनिक्स",
-    "CONSTRUCTION":"कंструкक्शन","INFRASTRUCTURE":"इन्फ्रास्ट्रक्चर",
+    "CONSTRUCTION":"कंस्ट्रक्शन","INFRASTRUCTURE":"इन्फ्रास्ट्रक्चर",
     "ENTERPRISES":"एंटरप्राइजेज","ENTERPRISE":"एंटरप्राइज",
     "HOLDINGS":"होल्डिंग्स","INVESTMENTS":"इन्वेस्टमेंट्स",
     "LABORATORIES":"लेबोरेटरीज","LABS":"लैब्स",
@@ -3949,7 +115,7 @@ WD = {
     "TRADING":"ट्रेडिंग","EXPORTS":"एक्सपोर्ट्स",
     "SOLUTIONS":"सॉल्यूशंस","SYSTEMS":"सिस्टम्स",
     "GLOBAL":"ग्लोबल","INTERNATIONAL":"इंटरनेशनल",
-    "MANAGEMENT":"मैनेजमेंट","CONSULTING":"कंसलिटींग",
+    "MANAGEMENT":"मैनेजमेंट","CONSULTING":"कंसULTING",
     "SECURITIES":"सिक्योरिटीज","PETROLEUM":"पेट्रोलियम",
     "COMPANY":"कंपनी","SOLAR":"सोलर","RENEWABLE":"रिन्यूएबल",
     "DIGITAL":"डिजिटल","NETWORK":"नेटवर्क","NETWORKS":"नेटवर्क्स",
@@ -4030,7 +196,7 @@ def calc(name):
             steps.append("|")
     return total, " ".join(steps)
 
-def make_report(asum, tval, ldate, elapsed_days):
+def make_report(asum, tval, ldate):
     nv    = (asum % 9) or 9
     g     = GRAHA[(nv - 1) % 9]
     total = asum + tval
@@ -4038,7 +204,7 @@ def make_report(asum, tval, ldate, elapsed_days):
     today = datetime.now()
     nak   = NAK[today.timetuple().tm_yday % 27]
     wday  = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][today.weekday()]
-    bars  = {1:"★☆☆☆☆",2:"★★☆☆•",3:"★★★☆☆",4:"★★★★☆",5:"★★★★★"}
+    bars  = {1:"★☆☆☆☆",2:"★★☆☆☆",3:"★★★☆☆",4:"★★★★☆",5:"★★★★★"}
     if ldate:
         tc = ((today.timetuple().tm_yday - ldate.timetuple().tm_yday) % 27) + 1
         tn = ["जन्म","सम्पत","विपत","क्षेम","प्रत्यरि","साधक","वध","मित्र","परम-मित्र"]
@@ -4049,8 +215,6 @@ def make_report(asum, tval, ldate, elapsed_days):
     S2 = "═" * 30
     return "\n".join([
         S2, "    BHOOVALAYA ORACLE RESULT", S2, "",
-        f"  LISTING DATE : {ldate.strftime('%d-%m-%Y') if ldate else 'N/A'}",
-        f"  DAYS LAPSED  : {elapsed_days} Days", "",
         "STEP 1: AKSHARA WEIGHT THEORY", "  (Siribhoovalaya — Jain Text)",
         "  Each Hindi sound has weight:", "  अ=1 आ=2 इ=3 ई=4 उ=5 ऊ=6",
         "  ए=7 ऐ=8 ओ=9 क=11 ब=33 र=37", "  (64 Akshara × weight = sum)", S,
@@ -4058,8 +222,7 @@ def make_report(asum, tval, ldate, elapsed_days):
         "  Akshara Sum = " + str(asum), "  Digital Root (1-9) = " + str(nv),
         "  " + _navaank_steps(asum), S,
         "STEP 3: TEMPORAL VIBRATION", "  (Jupiter Cycle = 730 days)",
-        "  Days elapsed since listing = " + str(elapsed_days),
-        "  Temporal = Days % 730 = " + str(tval),
+        "  Days elapsed since listing", "  Temporal = Days % 730 = " + str(tval),
         "  Combined = " + str(asum) + " + " + str(tval) + " = " + str(total),
         "  Sutra Index = " + str(total) + " % 9 = " + str(total % 9), S,
         "STEP 4: SUTRA PRINCIPLE", "  (Bhoovalaya Cosmic Principle)", "  " + sutra, S,
@@ -4087,7 +250,11 @@ def _navaank_steps(n):
 # ── VEDIC ASTROLOGY CALCULATIONS ──────────────────────────────────────────────
 SIGN_ABB  = ["Ar","Ta","Ge","Ca","Le","Vi","Li","Sc","Sg","Cp","Aq","Pi"]
 SIGN_HI   = ["मेष","वृष","मिथुन","कर्क","सिंह","कन्या","तुला","वृश्चिक","धनु","मकर","कुंभ","मीन"]
-PLANET_NAMES = {"As":"Lagna","Su":"Sun","Mo":"Moon","Ma":"Mars","Me":"Mercury","Ju":"Jupiter","Ve":"Venus","Sa":"Saturn","Ra":"Rahu","Ke":"Ketu"}
+SIGN_FULL = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"]
+PLANET_NAMES = {
+    "As":"Lagna","Su":"Sun-सूर्य","Mo":"Moon-चंद्र","Ma":"Mars-मंगल","Me":"Mercury-बुध",
+    "Ju":"Jupiter-गुरु","Ve":"Venus-शुक्र","Sa":"Saturn-शनि","Ra":"Rahu-राहु","Ke":"Ketu-केतु"
+}
 
 def norm360(x): return x % 360
 
@@ -4103,31 +270,60 @@ def lahiri_ayanamsa(jd):
     T = (jd - 2451545.0) / 36525.0
     return 23.85 + 0.013611 * T + 0.000092 * T * T
 
-def calc_planet_positions(jd, lat=19.0544, lon=72.8405):
+def calc_planet_positions(jd, lat=19.076, lon=72.877):
     T = (jd - 2451545.0) / 36525.0
-    sun_t = norm360(280.46646 + 36000.76983 * T)
-    moon_t = norm360(218.3164477 + 481267.88123421 * T)
-    merc_t = norm360(252.2509 + 149474.0722 * T)
-    ven_t  = norm360(181.9798 + 58517.8160 * T)
-    mars_t = norm360(355.433 + 19140.2993 * T)
-    jup_t  = norm360(34.3515 + 3034.9057 * T)
-    sat_t  = norm360(50.0774 + 1222.1138 * T)
-    rahu_t = norm360(125.0445 - 1934.1362*T)
+    # Sun
+    L0   = norm360(280.46646 + 36000.76983 * T)
+    M_su = math.radians(norm360(357.52911 + 35999.05029 * T))
+    C_su = ((1.914602 - 0.004817*T - 0.000014*T*T) * math.sin(M_su) + (0.019993 - 0.000101*T) * math.sin(2*M_su) + 0.000289 * math.sin(3*M_su))
+    sun_t = norm360(L0 + C_su)
+    # Moon
+    L_mo  = norm360(218.3164477 + 481267.88123421 * T)
+    D_mo  = math.radians(norm360(297.8501921 + 445267.1114034 * T))
+    M_mo  = math.radians(norm360(134.9633964 + 477198.8675055 * T))
+    M_su2 = math.radians(norm360(357.5291092 + 35999.0502909 * T))
+    moon_t = norm360(L_mo + 6.289 * math.sin(M_mo) - 1.274 * math.sin(2*D_mo - M_mo) + 0.658 * math.sin(2*D_mo) - 0.214 * math.sin(M_mo) - 0.186 * math.sin(M_su2))
+    # Mercury
+    L_me  = norm360(252.2509 + 149474.0722 * T)
+    M_me  = math.radians(norm360(168.6562 + 149472.5153 * T))
+    merc_t = norm360(L_me + 23.440*math.sin(M_me) + 2.912*math.sin(2*M_me) + 0.513*math.sin(3*M_me))
+    # Venus
+    L_ve  = norm360(181.9798 + 58517.8160 * T)
+    M_ve  = math.radians(norm360(212.9346 + 58517.8039 * T))
+    ven_t  = norm360(L_ve + 47.682*math.sin(M_ve) + 1.319*math.sin(2*M_ve))
+    # Mars
+    L_ma  = norm360(355.433 + 19140.2993 * T)
+    M_ma  = math.radians(norm360(19.373 + 19140.2973 * T))
+    mars_t = norm360(L_ma + 10.691*math.sin(M_ma) + 0.623*math.sin(2*M_ma) + 0.050*math.sin(3*M_ma))
+    # Jupiter
+    L_ju  = norm360(34.3515 + 3034.9057 * T)
+    M_ju  = math.radians(norm360(20.9961 + 3034.9056 * T))
+    jup_t  = norm360(L_ju + 5.555*math.sin(M_ju) + 0.168*math.sin(2*M_ju))
+    # Saturn
+    L_sa  = norm360(50.0774 + 1222.1138 * T)
+    M_sa  = math.radians(norm360(317.0207 + 1221.5515 * T))
+    sat_t  = norm360(L_sa + 6.393*math.sin(M_sa) + 0.170*math.sin(2*M_sa))
+    # Nodes
+    rahu_t = norm360(125.0445 - 1934.1362*T + 0.0020708*T*T)
     ketu_t = norm360(rahu_t + 180)
-    
+    # Lagna
     eps     = math.radians(23.439291111 - 0.013004167*T)
-    GMST    = norm360(280.46061837 + 360.98564736629*(jd - 2451545.0))
+    GMST    = norm360(280.46061837 + 360.98564736629*(jd - 2451545.0) + 0.000387933*T*T)
     LST     = math.radians(norm360(GMST + lon))
-    asc_t   = math.degrees(math.atan2(math.cos(LST), -math.sin(LST)*math.cos(eps) - math.tan(math.radians(lat))*math.sin(eps))) % 360
+    lat_r   = math.radians(lat)
+    asc_t   = math.degrees(math.atan2(math.cos(LST), -math.sin(LST)*math.cos(eps) - math.tan(lat_r)*math.sin(eps))) % 360
 
     ay = lahiri_ayanamsa(jd)
-    return {
+    sid = {
         "As": (asc_t - ay) % 360, "Su": (sun_t  - ay) % 360, "Mo": (moon_t - ay) % 360,
         "Me": (merc_t - ay) % 360, "Ve": (ven_t  - ay) % 360, "Ma": (mars_t - ay) % 360,
         "Ju": (jup_t  - ay) % 360, "Sa": (sat_t  - ay) % 360, "Ra": (rahu_t - ay) % 360, "Ke": (ketu_t - ay) % 360,
-    }, ay
+    }
+    return sid, ay
 
-def lon_to_sign_deg(lon): return int((lon % 360) / 30), round(lon % 30, 2)
+def lon_to_sign_deg(lon):
+    lon = lon % 360
+    return int(lon / 30), round(lon % 30, 2)
 
 def d9_sign(lon):
     sign, deg = lon_to_sign_deg(lon)
@@ -4135,9 +331,12 @@ def d9_sign(lon):
     start_map = {0:0, 1:9, 2:6, 3:3, 4:0, 5:9, 6:6, 7:3, 8:0, 9:9, 10:6, 11:3}
     return (start_map[sign] + nav_num) % 12
 
+# ── ADVANCED CANVAS ENGINE: NORTH INDIAN VEDIC CHART ─────────────────────────────
 def build_diamond_chart(positions, lagna_sign, title, chart_size=320):
-    W, p = chart_size, 8
-    x0, y0, x1, y1 = p, p, W - p, W - p
+    W = chart_size
+    p = 8  # Padding
+    x0, y0 = p, p
+    x1, y1 = W - p, W - p
     cx, cy = W // 2, W // 2
     
     HOUSES_GEOM = {
@@ -4156,29 +355,37 @@ def build_diamond_chart(positions, lagna_sign, title, chart_size=320):
     }
     
     sign_planets = {i: [] for i in range(12)}
-    for planet, s_idx in positions.items(): sign_planets[int(s_idx)].append(planet)
-    
+    for planet, s_idx in positions.items():
+        sign_planets[int(s_idx)].append(planet)
+
     lagna_s = int(lagna_sign)
     def get_house_sign(h_num): return (lagna_s + h_num - 1) % 12
 
     shapes = [cv.Fill(paint=ft.Paint(color="#FCFDFE"))]
+
     for h_num, info in HOUSES_GEOM.items():
         is_lagna = (h_num == 1)
         bg_color = "#FFF8E1" if is_lagna else "#F4F8FA"
         stroke_color = "#B71C1C" if is_lagna else "#1A237E"
         stroke_w = 2.0 if is_lagna else 1.2
+
         pts = info["poly"]
         path_data = [cv.Path.MoveTo(pts[0][0], pts[0][1])]
-        for pt in pts[1:]: path_data.append(cv.Path.LineTo(pt[0], pt[1]))
+        for pt in pts[1:]:
+            path_data.append(cv.Path.LineTo(pt[0], pt[1]))
         path_data.append(cv.Path.Close())
+
         shapes.append(cv.Path(path_data, paint=ft.Paint(color=bg_color, style=ft.PaintingStyle.FILL)))
         shapes.append(cv.Path(path_data, paint=ft.Paint(color=stroke_color, stroke_width=stroke_w, style=ft.PaintingStyle.STROKE)))
 
     grid_paint = ft.Paint(color="#1A237E", stroke_width=1.5, style=ft.PaintingStyle.STROKE)
     shapes.extend([
-        cv.Line(x0, y0, x1, y1, paint=grid_paint), cv.Line(x1, y0, x0, y1, paint=grid_paint),
-        cv.Line(cx, y0, x0, cy, paint=grid_paint), cv.Line(x0, cy, cx, y1, paint=grid_paint),
-        cv.Line(cx, y1, x1, cy, paint=grid_paint), cv.Line(x1, cy, cx, y0, paint=grid_paint),
+        cv.Line(x0, y0, x1, y1, paint=grid_paint),
+        cv.Line(x1, y0, x0, y1, paint=grid_paint),
+        cv.Line(cx, y0, x0, cy, paint=grid_paint),
+        cv.Line(x0, cy, cx, y1, paint=grid_paint),
+        cv.Line(cx, y1, x1, cy, paint=grid_paint),
+        cv.Line(x1, cy, cx, y0, paint=grid_paint),
         cv.Rect(x=x0, y=y0, width=W-(2*p), height=W-(2*p), paint=grid_paint)
     ])
 
@@ -4186,8 +393,11 @@ def build_diamond_chart(positions, lagna_sign, title, chart_size=320):
         sign_idx = get_house_sign(h_num)
         planets_here = sign_planets.get(sign_idx, [])
         tx, ty = info["txt"]
-        shapes.append(cv.Text(x=tx - 6, y=ty - 10, text=str(sign_idx + 1), style=ft.TextStyle(size=12, color="#263238", weight="bold")))
+        sign_num_str = str(sign_idx + 1)
+        
+        shapes.append(cv.Text(x=tx - 6, y=ty - 10, text=sign_num_str, style=ft.TextStyle(size=12, color="#263238", weight="bold")))
         shapes.append(cv.Text(x=tx + 5, y=ty - 8, text=f"({SIGN_ABB[sign_idx]})", style=ft.TextStyle(size=8, color="#78909C")))
+
         if planets_here:
             px, py = info["planets"]
             planets_txt = " ".join(planets_here)
@@ -4199,180 +409,333 @@ def build_diamond_chart(positions, lagna_sign, title, chart_size=320):
 # ── MAIN APP ───────────────────────────────────────────────────────────────────
 def main(page: ft.Page):
     try:
-        page.title, page.bgcolor, page.padding, page.scroll = "Bhoovalaya Oracle", C["bg"], 8, "auto"
-        db_path = os.path.join(os.getenv("FLET_APP_STORAGE_DATA", "."), "bhuvalaya.db")
+        page.title   = "Bhoovalaya Oracle"
+        page.bgcolor = C["bg"]
+        page.padding = 8
+        page.scroll  = "auto"
 
-        # Database Setup
-        conn = sqlite3.connect(db_path)
-        conn.execute("""CREATE TABLE IF NOT EXISTS stocks(
-            symbol TEXT PRIMARY KEY, eng_name TEXT, hindi_name TEXT, ldate TEXT, asum INTEGER, breakdown TEXT, series TEXT DEFAULT 'EQ')""")
-        conn.commit()
-        conn.close()
+        storage = os.getenv("FLET_APP_STORAGE_DATA", ".")
+        db_path = os.path.join(storage, "bhuvalaya.db")
 
-        def db_count(): return sqlite3.connect(db_path).execute("SELECT COUNT(*) FROM stocks").fetchone()[0]
-        def db_search(q): return sqlite3.connect(db_path).execute("SELECT symbol, eng_name, hindi_name, ldate, asum FROM stocks WHERE symbol LIKE ? OR eng_name LIKE ? ORDER BY symbol LIMIT 100", ("%"+q+"%", "%"+q+"%")).fetchall()
-        def db_get(sym): return sqlite3.connect(db_path).execute("SELECT * FROM stocks WHERE symbol=?", (sym,)).fetchone()
+        try:
+            conn = sqlite3.connect(db_path)
+            conn.execute("""CREATE TABLE IF NOT EXISTS stocks(
+                symbol      TEXT PRIMARY KEY,
+                eng_name    TEXT,
+                hindi_name  TEXT,
+                ldate       TEXT,
+                asum        INTEGER,
+                breakdown   TEXT,
+                series      TEXT DEFAULT 'EQ')""")
+            conn.commit()
+            conn.close()
+        except: pass
+
+        def db_count():
+            try: return sqlite3.connect(db_path).execute("SELECT COUNT(*) FROM stocks").fetchone()[0]
+            except: return 0
+
+        def db_search(q):
+            try:
+                conn = sqlite3.connect(db_path)
+                rows = conn.execute("SELECT symbol, eng_name, hindi_name, ldate, asum FROM stocks WHERE symbol LIKE ? OR eng_name LIKE ? ORDER BY symbol LIMIT 100", ("%" + q + "%", "%" + q + "%")).fetchall()
+                conn.close()
+                return rows
+            except: return []
+
+        def db_get(sym):
+            try:
+                conn = sqlite3.connect(db_path)
+                row  = conn.execute("SELECT * FROM stocks WHERE symbol=?", (sym,)).fetchone()
+                conn.close()
+                return row
+            except: return None
+
         def db_save(sym, eng, hindi, ldate, series="EQ"):
             asum, bk = calc(hindi)
             try:
-                c = sqlite3.connect(db_path)
-                c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hindi, ldate, asum, bk, series))
-                c.commit(); c.close()
+                conn = sqlite3.connect(db_path)
+                conn.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hindi, ldate, asum, bk, series))
+                conn.commit()
+                conn.close()
                 return True, asum
             except Exception as ex: return False, str(ex)
 
+        def db_delete(sym):
+            try:
+                conn = sqlite3.connect(db_path)
+                conn.execute("DELETE FROM stocks WHERE symbol=?", (sym,))
+                conn.commit()
+                conn.close()
+                return True
+            except: return False
+
         status_txt = ft.Text("Loading...", size=15, color="#FFFFFF", weight="bold")
         status_bar = ft.Container(content=status_txt, bgcolor=C["secondary"], padding=10, border_radius=6)
-        prg_bar, prg_txt = ft.ProgressBar(value=0, visible=False, color="#FF6F00", bgcolor="#EEEEEE"), ft.Text("", size=14, color=C["orange"], weight="bold")
+        prg_bar  = ft.ProgressBar(value=0, visible=False, color="#FF6F00", bgcolor="#EEEEEE")
+        prg_txt  = ft.Text("", size=14, color=C["orange"], weight="bold")
 
-        def set_status(msg, color=None): status_txt.value, status_bar.bgcolor = msg, color or C["secondary"]; page.update()
-        def set_prg(pct, msg=""): prg_bar.visible, prg_bar.value, prg_txt.value = True, pct, msg; page.update()
-        def hide_prg(): prg_bar.visible, prg_txt.value = False, ""; page.update()
+        def set_status(msg, color=None):
+            status_txt.value   = msg
+            status_bar.bgcolor = color or C["secondary"]
+            page.update()
+
+        def set_prg(pct, msg=""):
+            prg_bar.visible, prg_bar.value, prg_txt.value = True, pct, msg
+            page.update()
+
+        def hide_prg():
+            prg_bar.visible, prg_txt.value = False, ""
+            page.update()
+
         def make_field(label, hint="", value="", multiline=False):
-            return ft.TextField(label=label, label_style=ft.TextStyle(size=14, color=C["primary"]), hint_text=hint, hint_style=ft.TextStyle(size=13, color=C["hint_txt"]), value=value, text_style=ft.TextStyle(size=16, color=C["black_txt"], weight="bold"), border_color=C["primary"], focused_border_color=C["accent"], border_width=2, bgcolor=C["inp_bg"], multiline=multiline, min_lines=1 if not multiline else 2)
-        def make_header(title, bgcolor=None): return ft.Container(content=ft.Text(title, size=16, color="#FFFFFF", weight="bold"), bgcolor=bgcolor or C["primary"], padding=ft.padding.symmetric(horizontal=12, vertical=8), border_radius=6)
+            return ft.TextField(
+                label=label, label_style=ft.TextStyle(size=14, color=C["primary"]),
+                hint_text=hint, hint_style=ft.TextStyle(size=13, color=C["hint_txt"]),
+                value=value, text_size=16, text_style=ft.TextStyle(size=16, color=C["black_txt"], weight="bold"),
+                border_color=C["primary"], focused_border_color=C["accent"], border_width=2,
+                bgcolor=C["inp_bg"], cursor_color=C["primary"], multiline=multiline, min_lines=1 if not multiline else 2
+            )
+
+        def make_header(title, bgcolor=None):
+            return ft.Container(content=ft.Text(title, size=16, color="#FFFFFF", weight="bold"), bgcolor=bgcolor or C["primary"], padding=ft.padding.symmetric(horizontal=12, vertical=8), border_radius=6)
 
         # ── SCREEN 1: ORACLE SEARCH ───────────────────────────────────────────
-        fld_oracle = make_field("NSE Stock Symbol or Name", hint="Example: RELIANCE or TCS", value="RELIANCE")
+        fld_oracle = make_field("NSE Stock Symbol or Name", hint="Example: RELIANCE or TCS or SBIN", value="RELIANCE")
         result_txt = ft.Text("", size=15, color=C["dark_txt"], selectable=True, font_family="monospace")
         result_box = ft.Container(content=result_txt, bgcolor=C["res_bg"], padding=14, border_radius=8, border=ft.Border(top=ft.BorderSide(2, C["primary"]), bottom=ft.BorderSide(2, C["primary"]), left=ft.BorderSide(2, C["primary"]), right=ft.BorderSide(2, C["primary"])), visible=False)
 
         def do_oracle(e):
             q = fld_oracle.value.strip().upper()
-            if not q: set_status("Enter a stock symbol.", C["red"]); return
-            if db_count() < 1: set_status("Database empty! Build database first.", C["red"]); return
-            
-            row = db_get(q) or (rows := db_search(q) and db_get(rows[0][0]))
+            if not q:
+                set_status("Enter a stock symbol.", C["red"])
+                return
+            set_status("Searching: " + q + " ...", C["accent"])
+            if db_count() < 5:
+                set_status("Database empty! Tap BUILD DATABASE.", C["red"])
+                result_txt.value = "DATABASE IS EMPTY\n\nGo to Database tab and\ntap BUILD DATABASE button."
+                result_box.visible = True
+                page.update()
+                return
+            row = db_get(q)
+            if not row:
+                rows = db_search(q)
+                if rows: row = db_get(rows[0][0])
             if row:
                 sym, eng, hi, ldt, asum, bk, *_ = row
                 ldate = parse_dt(ldt)
-                days_lapsed = (datetime.now() - ldate).days if ldate else 0
-                tval  = days_lapsed % 730
-                rep   = make_report(asum, tval, ldate, days_lapsed)
-                set_status(f"Calculated: {sym}", C["green"])
-                result_txt.value = rep
+                days  = (datetime.now() - ldate).days if ldate else 0
+                tval  = days % 730
+                rep   = make_report(asum, tval, ldate)
+                set_status("Found: " + sym, C["green"])
+                result_txt.value = f"━" * 30 + f"\nSYMBOL  : {sym}\nCOMPANY : {eng}\nHINDI   : {hi}\nLISTED  : {ldt}\n" + f"━" * 30 + f"\nAKSHARA SUM  = {asum}\nTEMPORAL MOD = {tval}\nCOMBINED VIB = {asum + tval}\nNAVAANK      = {(asum % 9) or 9}\n\n{rep}"
                 result_box.visible = True
             else:
-                set_status(f"Not found: {q}", C["red"])
+                set_status("Not found: " + q, C["red"])
+                result_txt.value = f"'{q}' NOT FOUND\n\nTry: RELIANCE TCS SBIN"
+                result_box.visible = True
             page.update()
 
         oracle_screen = ft.Column(visible=True, controls=[
-            make_header("🔮 BHOOVALAYA ORACLE ENGINE"), ft.Divider(height=4, color=C["divider"]),
+            make_header("🔮  ORACLE ANALYSIS"), ft.Divider(height=4, color=C["divider"]),
+            ft.Text("Enter Stock Symbol or Name:", size=15, color=C["black_txt"], weight="bold"),
             fld_oracle,
-            ft.ElevatedButton("🔍 SEARCH AND PREDICT", bgcolor=C["primary"], color="#FFFFFF", elevation=4, height=52, style=ft.ButtonStyle(text_style=ft.TextStyle(size=16, weight="bold")), on_click=do_oracle),
+            ft.ElevatedButton("🔍  SEARCH AND CALCULATE", bgcolor=C["green"], color="#FFFFFF", height=52, style=ft.ButtonStyle(text_style=ft.TextStyle(size=17, weight="bold")), on_click=do_oracle),
             ft.Divider(height=6, color=C["divider"]), result_box
         ])
 
         # ── SCREEN 2: STOCK LIST ──────────────────────────────────────────────
-        fld_list_search, list_rows, list_count_txt = make_field("Search Symbol or Company Name"), ft.Column(controls=[], spacing=2), ft.Text("", size=14, color=C["primary"], weight="bold")
-        
+        fld_list_search = make_field("Search Symbol or Company Name", hint="Leave blank to show first 100 stocks")
+        list_rows = ft.Column(controls=[], spacing=2)
+        list_count_txt = ft.Text("", size=14, color=C["primary"], weight="bold")
+
         def load_list(q=""):
             list_rows.controls.clear()
-            rows = db_search(q)
-            list_count_txt.value = f"Showing {len(rows)} stocks"
+            rows = db_search(q) if q else db_search("")
+            list_count_txt.value = f"Showing {len(rows)} stocks" + (f" matching '{q}'" if q else " (first 100)")
             for i, r in enumerate(rows):
                 sym, eng, hi, ldt, asum = r
-                list_rows.controls.append(ft.Container(
+                bg = C["row_odd"] if i % 2 == 0 else C["row_even"]
+                row_ctrl = ft.Container(
                     content=ft.Column([
-                        ft.Row([ft.Container(content=ft.Text(sym, size=14, color="#FFFFFF", weight="bold"), bgcolor=C["primary"], padding=4, border_radius=4), ft.Text(f"Listed: {ldt}", size=12, color=C["hint_txt"]), ft.Text(f"Akshara: {asum}", size=12, color=C["accent"])]),
-                        ft.Text(eng, size=13, color=C["black_txt"], weight="bold"), ft.Text(hi, size=14, color=C["green"], weight="bold"),
-                        ft.Row([ft.TextButton("✏️ Edit", on_click=lambda e, s=sym: load_edit(s)), ft.TextButton("🔮 Analyze", on_click=lambda e, s=sym: (setattr(fld_oracle, 'value', s), show_screen("oracle"), do_oracle(e)))])
-                    ]), bgcolor=C["row_odd"] if i%2==0 else C["row_even"], padding=8, border_radius=6))
+                        ft.Row([
+                            ft.Container(content=ft.Text(sym, size=15, color="#FFFFFF", weight="bold"), bgcolor=C["primary"], padding=ft.padding.symmetric(horizontal=10, vertical=4), border_radius=4),
+                            ft.Text(ldt, size=12, color=C["hint_txt"]),
+                            ft.Text(f"Ak:{asum}", size=12, color=C["accent"]),
+                        ]),
+                        ft.Text(eng, size=14, color=C["black_txt"], weight="bold"),
+                        ft.Text(hi, size=15, color=C["primary"], weight="bold"),
+                        ft.Row([
+                            ft.TextButton("✏️ Edit", style=ft.ButtonStyle(color=C["accent"]), on_click=lambda e, s=sym: load_edit(s)),
+                            ft.TextButton("🔮 Analyse", style=ft.ButtonStyle(color=C["green"]), on_click=lambda e, s=sym: (setattr(fld_oracle, 'value', s), show_screen("oracle"), do_oracle(e))),
+                        ]),
+                    ], spacing=2), bgcolor=bg, padding=8, border_radius=6, border=ft.Border(bottom=ft.BorderSide(1, C["divider"])))
+                list_rows.controls.append(row_ctrl)
             page.update()
 
         list_screen = ft.Column(visible=False, controls=[
-            make_header("📋 NSE EQUITY STOCK LIST"), fld_list_search,
+            make_header("📋 STOCK LIST (NSE India)"), ft.Divider(height=4, color=C["divider"]), fld_list_search,
             ft.Row([
-                ft.ElevatedButton("🔍 SEARCH", bgcolor=C["primary"], color="#FFFFFF", elevation=4, on_click=lambda e: load_list(fld_list_search.value.strip().upper())),
-                ft.ElevatedButton("📋 SHOW ALL", bgcolor=C["accent"], color="#FFFFFF", elevation=4, on_click=lambda e: load_list(""))
-            ]), list_count_txt, list_rows
+                ft.ElevatedButton("🔍 Search", bgcolor=C["primary"], color="#FFFFFF", height=46, on_click=lambda e: load_list(fld_list_search.value.strip().upper())),
+                ft.ElevatedButton("📋 Show All", bgcolor=C["accent"], color="#FFFFFF", height=46, on_click=lambda e: load_list("")),
+            ]), list_count_txt, ft.Divider(height=4, color=C["divider"]), list_rows
         ])
 
         # ── SCREEN 3: DATA ENTRY ──────────────────────────────────────────────
-        fld_sym, fld_eng, fld_hindi, fld_ldate, fld_series = make_field("Symbol *"), make_field("English Name *"), make_field("Hindi Name *"), make_field("Listing Date (DD-MM-YYYY)"), make_field("Series", value="EQ")
-        entry_status, akshara_preview = ft.Text("", size=14, color=C["green"], weight="bold"), ft.Container(content=ft.Text(""), bgcolor=C["res_bg"], padding=8, visible=False)
+        fld_sym, fld_eng, fld_hindi, fld_ldate, fld_series = make_field("Symbol *"), make_field("English Company Name *"), make_field("Hindi Name *"), make_field("Listing Date (DD-MM-YYYY)"), make_field("Series", value="EQ")
+        entry_status = ft.Text("", size=15, color=C["green"], weight="bold")
+        akshara_preview = ft.Container(content=ft.Text("", size=14, color=C["dark_txt"]), bgcolor=C["res_bg"], padding=10, border_radius=6, visible=False)
 
         def load_edit(sym):
             row = db_get(sym)
             if row:
-                fld_sym.value, fld_eng.value, fld_hindi.value, fld_ldate.value, fld_series.value = row[0], row[1], row[2], row[3], row[6]
+                fld_sym.value, fld_eng.value, fld_hindi.value, fld_ldate.value, fld_series.value = row[0], row[1], row[2], row[3], row[6] if len(row)>6 else "EQ"
                 fld_sym.disabled = True
+                asum, bk = calc(row[2])
+                akshara_preview.content.value, akshara_preview.visible = f"Akshara Sum = {asum}\n{bk[:80]}", True
+                entry_status.value, entry_status.color = f"Loaded: {sym} — Edit and tap UPDATE", C["accent"]
                 show_screen("entry")
 
+        def do_transliterate(e):
+            eng, sym = fld_eng.value.strip(), fld_sym.value.strip().upper()
+            if not eng: return
+            entry_status.value, entry_status.color = "Translating...", C["accent"]
+            page.update()
+            hi = get_hindi(sym, eng)
+            fld_hindi.value = hi
+            asum, bk = calc(hi)
+            akshara_preview.content.value, akshara_preview.visible = f"Akshara Sum = {asum}\n{bk[:80]}", True
+            entry_status.value, entry_status.color = "Hindi name generated!", C["green"]
+            page.update()
+
+        def do_save(e):
+            sym, eng, hindi, ldate, series = fld_sym.value.strip().upper(), fld_eng.value.strip(), fld_hindi.value.strip(), fld_ldate.value.strip(), fld_series.value.strip() or "EQ"
+            if not sym or not eng or not hindi: return
+            ok, val = db_save(sym, eng, hindi, ldate, series)
+            entry_status.value, entry_status.color = (f"Saved! {sym} Akshara={val}", C["green"]) if ok else (f"Failed: {val}", C["red"])
+            if ok: fld_sym.disabled = False
+            page.update()
+
         entry_screen = ft.Column(visible=False, controls=[
-            make_header("✏️ MANAGE STOCK DATA ENTRY"), fld_sym, fld_eng,
-            ft.ElevatedButton("🌐 AUTO TRANSLITERATE HINDI", bgcolor=C["accent"], color="#FFFFFF", elevation=4, on_click=lambda e: (setattr(fld_hindi, 'value', get_hindi(fld_sym.value.upper(), fld_eng.value)), setattr(akshara_preview.content, 'value', f"Weight: {calc(fld_hindi.value)[0]}"), setattr(akshara_preview, 'visible', True), page.update())),
-            fld_hindi, akshara_preview, fld_ldate, fld_series, entry_status,
+            make_header("✏️ MANAGE STOCK ENTRY"), ft.Divider(height=4, color=C["divider"]),
+            fld_sym, fld_eng, ft.ElevatedButton("🌐 AUTO TRANSLITERATE HINDI", bgcolor=C["accent"], color="#FFFFFF", on_click=do_transliterate),
+            fld_hindi, ft.ElevatedButton("👁️ PREVIEW SOUND WEIGHTS", bgcolor=C["secondary"], color="#FFFFFF", on_click=lambda e: (asum:=calc(fld_hindi.value.strip())) and setattr(akshara_preview.content,'value',f"Akshara: {asum[0]}\n{asum[1]}") or setattr(akshara_preview,'visible',True) or page.update()),
+            akshara_preview, fld_ldate, fld_series, entry_status,
             ft.Row([
-                ft.ElevatedButton("💾 SAVE NEW", bgcolor=C["green"], color="#FFFFFF", elevation=4, on_click=lambda e: db_save(fld_sym.value.upper(), fld_eng.value, fld_hindi.value, fld_ldate.value, fld_series.value) and set_status("Saved!", C["green"])),
-                ft.ElevatedButton("🔄 UPDATE", bgcolor=C["primary"], color="#FFFFFF", elevation=4, on_click=lambda e: db_save(fld_sym.value.upper(), fld_eng.value, fld_hindi.value, fld_ldate.value, fld_series.value) and set_status("Updated!", C["green"])),
-                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["hint_txt"], color="#FFFFFF", elevation=4, on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_sym,'disabled',False), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), page.update()))
+                ft.ElevatedButton("💾 SAVE NEW", bgcolor=C["green"], color="#FFFFFF", on_click=do_save),
+                ft.ElevatedButton("🔄 UPDATE", bgcolor=C["primary"], color="#FFFFFF", on_click=do_save),
+                ft.ElevatedButton("❌ DELETE", bgcolor=C["red"], color="#FFFFFF", on_click=lambda e: db_delete(fld_sym.value.strip().upper()) and setattr(entry_status,'value',"Deleted!") or page.update()),
+                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["hint_txt"], color="#FFFFFF", on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_sym,'disabled',False), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), setattr(akshara_preview,'visible',False), page.update())),
             ])
         ])
 
         # ── SCREEN 4: ASTRO CHART ────────────────────────────────────────────
-        fld_date, fld_time, fld_lat, fld_lon = make_field("Date", value=datetime.now().strftime("%d-%m-%Y")), make_field("Time", value=datetime.now().strftime("%H:%M")), make_field("Latitude", value="19.0544"), make_field("Longitude", value="72.8405")
-        astro_chart_container = ft.Column(spacing=20, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+        fld_date = make_field("Date (DD-MM-YYYY)", value=datetime.now().strftime("%d-%m-%Y"))
+        fld_time = make_field("Time (HH:MM)", value=datetime.now().strftime("%H:%M"))
+        fld_lat  = make_field("Latitude (Decimal)", value="19.076")
+        fld_lon  = make_field("Longitude (Decimal)", value="72.877")
+        astro_chart_container = ft.Column(spacing=15, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
         def do_astro(e):
             try:
                 dt = parse_dt(fld_date.value)
-                tm = fld_time.value.split(":")
-                pos, ay = calc_planet_positions(jd_from_dt(dt.year, dt.month, dt.day, int(tm[0]), int(tm[1])), float(fld_lat.value), float(fld_lon.value))
+                tm = fld_time.value.strip().split(":")
+                hh, mm = int(tm[0]), int(tm[1])
+                lat, lon = float(fld_lat.value), float(fld_lon.value)
+                jd = jd_from_dt(dt.year, dt.month, dt.day, hh, mm)
+                pos, ay = calc_planet_positions(jd, lat, lon)
+                
+                d1_pos = {p: lon_to_sign_deg(l)[0] for p, l in pos.items()}
+                d9_pos = {p: d9_sign(l) for p, l in pos.items()}
+                
+                lagna_idx = d1_pos["As"]
+                lagna_d9  = d9_pos["As"]
+
                 astro_chart_container.controls.clear()
                 
-                # Render D1 Rasi Chart
-                astro_chart_container.controls.append(make_header("📍 D1 RASI CHART", bgcolor=C["primary"]))
-                astro_chart_container.controls.append(ft.Container(content=build_diamond_chart({p: lon_to_sign_deg(l)[0] for p, l in pos.items()}, lon_to_sign_deg(pos["As"])[0], "D1 RASI")))
+                astro_chart_container.controls.append(ft.Text("✨ SIDEREAL AYANAMSA (LAHIRI): " + str(round(ay, 4)) + "°", size=13, color=C["primary"], weight="bold"))
+                astro_chart_container.controls.append(build_diamond_chart(d1_pos, lagna_idx, "D1 RASI"))
+                astro_chart_container.controls.append(build_diamond_chart(d9_pos, lagna_d9, "D9 NAVAMSHA"))
                 
-                # Split Divider
-                astro_chart_container.controls.append(ft.Divider(height=10, color=C["divider"]))
-                
-                # Render D9 Navamsha Chart strictly separated
-                astro_chart_container.controls.append(make_header("📐 D9 NAVAMSHA CHART", bgcolor=C["secondary"]))
-                astro_chart_container.controls.append(ft.Container(content=build_diamond_chart({p: d9_sign(l) for p, l in pos.items()}, d9_sign(pos["As"]), "D9 NAVAMSHA")))
-                set_status("Charts Drawn!", C["green"])
-            except Exception as ex: set_status(f"Error: {ex}", C["red"])
+                set_status("Charts Calculated Successfully!", C["green"])
+            except Exception as ex:
+                set_status(f"Error: {str(ex)}", C["red"])
+            page.update()
 
         astro_screen = ft.Column(visible=False, controls=[
-            make_header("🕉️ VEDIC KUNDALI ENGINES"), ft.Row([fld_date, fld_time]), ft.Row([fld_lat, fld_lon]),
-            ft.ElevatedButton("🕉️ GENERATE SEPARATE CHARTS", bgcolor=C["green"], color="#FFFFFF", elevation=4, height=52, on_click=do_astro),
-            astro_chart_container
+            make_header("🕉️ VEDIC KUNDALI ENGINES"), ft.Divider(height=4, color=C["divider"]),
+            ft.Row([fld_date, fld_time]), ft.Row([fld_lat, fld_lon]),
+            ft.ElevatedButton("🕉️ GENERATE NORTH INDIAN CHARTS", bgcolor=C["primary"], color="#FFFFFF", height=50, on_click=do_astro),
+            ft.Divider(height=6, color=C["divider"]), astro_chart_container
         ])
 
-        # ── SCREEN 5: DATABASE BUILD ─────────────────────────────────────────
+        # ── SCREEN 5: DATABASE BUILD (STRICT HEADER-BASED PARSING) ─────
         def build_db_thread():
             try:
-                set_status("Downloading official listing dates from NSE India...", C["accent"])
+                set_status("Downloading NSE Data...", C["accent"])
                 res = requests.get(NSE_URL, timeout=15)
-                r = csv.reader(io.StringIO(res.text))
-                next(r) # skip header row
-                rows = list(r)
+                
+                lines = res.text.splitlines()
+                reader = csv.DictReader(lines)
+                
+                # कॉलम्स के नामों को क्लीन (Strip) कर रहे हैं ताकि कोई स्पेस न रहे
+                reader.fieldnames = [f.strip().upper() for f in reader.fieldnames] if reader.fieldnames else []
+                
+                rows = list(reader)
                 total = len(rows)
                 
-                db_c = sqlite3.connect(db_path)
+                if not reader.fieldnames or "SYMBOL" not in reader.fieldnames:
+                    raise Exception("Invalid CSV Header structure from NSE.")
+
+                conn = sqlite3.connect(db_path)
                 for idx, row in enumerate(rows):
-                    if not row or len(row) < 7: continue
-                    sym, eng, series, ldt = row[0].strip(), row[1].strip(), row[2].strip(), row[6].strip()
-                    if series != "EQ": continue
+                    clean_row = {k.strip().upper(): v.strip() for k, v in row.items() if k}
                     
-                    # Store data along with official listing date (ldt) from Column 7
+                    sym = clean_row.get("SYMBOL", "")
+                    eng = clean_row.get("NAME OF COMPANY", "") or clean_row.get("COMPANY NAME", "")
+                    series = clean_row.get("SERIES", "EQ")
+                    
+                    if series != "EQ" or not sym: 
+                        continue
+                    
+                    # सीधे कॉलम के नाम "DATE OF LISTING" से तारीख उठाएगा
+                    ldt = clean_row.get("DATE OF LISTING", "").strip()
+                    
+                    # सुरक्षा जांच: अगर तारीख की जगह गलती से ISIN नंबर या Face Value (जैसे 10) आ जाए
+                    if "INE" in ldt or len(ldt) <= 4:
+                        ldt = ""
+                        for val in clean_row.values():
+                            if "-" in val and not val.startswith("INE") and len(val) >= 9:
+                                ldt = val
+                                break
+                    
                     hi = get_hindi(sym, eng)
+                    if "LIMITED" in eng.upper() and not hi.endswith("लिमिटेड"):
+                        hi = hi.replace("लिमिटेड", "").strip() + " लिमिटेड"
+                    
                     asum, bk = calc(hi)
-                    db_c.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hi, ldt, asum, bk, series))
-                    if idx % 10 == 0: set_prg(idx/total, f"Processing {sym} ({ldt})")
-                db_c.commit(); db_c.close()
-                hide_prg(); set_status(f"Success! Database complete.", C["green"])
-            except Exception as ex: hide_prg(); set_status(f"Failed: {ex}", C["red"])
+                    conn.execute("INSERT OR REPLACE INTO stocks VALUES(?,?,?,?,?,?,?)", (sym, eng, hi, ldt, asum, bk, series))
+                    
+                    if idx % 10 == 0:
+                        set_prg(idx/total, f"Processing {idx}/{total}: {sym}")
+                        
+                conn.commit()
+                conn.close()
+                hide_prg()
+                set_status(f"Success! {db_count()} stocks loaded perfectly.", C["green"])
+            except Exception as ex:
+                hide_prg()
+                set_status(f"Build failed: {str(ex)}", C["red"])
 
         db_screen = ft.Column(visible=False, controls=[
-            make_header("⚙️ ENGINE SYSTEM SETUP"),
-            ft.ElevatedButton("⚡ BUILD AUTOMATED DATABASE WITH NSE DATES", bgcolor=C["orange"], color="#FFFFFF", elevation=4, height=54, on_click=lambda e: threading.Thread(target=build_db_thread, daemon=True).start()),
+            make_header("⚙️ DATABASE AND ENGINE SETUP"), ft.Divider(height=4, color=C["divider"]),
+            ft.ElevatedButton("⚡ BUILD AUTOMATED DATABASE", bgcolor=C["orange"], color="#FFFFFF", height=54, on_click=lambda e: threading.Thread(target=build_db_thread, daemon=True).start()),
             prg_bar, prg_txt
         ])
 
-        # ── NAVIGATION INTERACTION CONTROL ─────────────────────────────────────
+        # ── NAVIGATION CONTROL ────────────────────────────────────────────────
         all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen}
+        
         def show_screen(name):
             for k, v in all_screens.items(): v.visible = (k == name)
             page.update()
@@ -4390,9 +753,14 @@ def main(page: ft.Page):
         )
 
         page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, nav_bar)
-        set_status(f"Engine Ready — {db_count()} stocks configured.", C["green"])
+        
+        n = db_count()
+        if n < 5: set_status("No database. Go to Database tab.", C["red"])
+        else: set_status(f"Ready — {n} stocks loaded.", C["green"])
+
     except Exception as err:
-        page.add(ft.Container(content=ft.Text(f"Fatal Setup Error:\n{err}", color="#FFFFFF"), bgcolor=C["red"], padding=20))
+        page.controls.clear()
+        page.add(ft.Container(content=ft.Text(f"STARTUP ERROR:\n{str(err)}", size=15, color="#FFFFFF"), bgcolor=C["red"], padding=20))
         page.update()
 
 if __name__ == "__main__":

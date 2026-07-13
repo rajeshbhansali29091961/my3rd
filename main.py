@@ -1,7 +1,5 @@
 import os
 import sqlite3
-import threadingimport os
-import sqlite3
 import threading
 import csv
 import io

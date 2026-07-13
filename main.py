@@ -1,9 +1,6 @@
 import os
 import sqlite3
 import threading
-import csvimport os
-import sqlite3
-import threading
 import csv
 import io
 import time

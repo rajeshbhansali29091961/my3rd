@@ -66,7 +66,7 @@ def phonetic_transliterate(text):
 
 # ── NSE fetch ─────────────────────────────────────────────────────────────────
 
-NSE_CSV_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
+NSE_CSV_URL = "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv"
 DB_PATH = os.path.join("assets", "bhuvalaya_oracle.db")
 
 

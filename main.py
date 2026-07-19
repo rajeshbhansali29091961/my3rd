@@ -986,7 +986,7 @@ PR = {
     'S':'स','T':'ट','U':'य','V':'व','W':'व','X':'क्स',
     'Y':'य','Z':'ज'
 }
-NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
+NSE_URL = "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv"
 
 # ── COLORS ─────────────────────────────────────────────────────────────────────
 C = {

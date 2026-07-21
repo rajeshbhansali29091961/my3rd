@@ -737,7 +737,7 @@ def main(page: ft.Page):
                 astro_chart_container.controls.clear()
                 
                 astro_chart_container.controls.append(ft.Text("✨ SIDEREAL AYANAMSA (LAHIRI): " + str(round(ay, 4)) + "°", size=13, color=C["primary"], weight="bold"))
-                astro_chart_container.controls.append(build_dual_diamond_chart(d1_pos, lagna_idx, d9_pos, lagna_d9))
+                astro_chart_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9))
                 
                 set_status("Charts Calculated Successfully!", C["green"])
             except Exception as ex:

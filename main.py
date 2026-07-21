@@ -719,6 +719,10 @@ def main(page: ft.Page):
         fld_lon  = make_field("Longitude (Decimal)", value="72.877")
         astro_chart_container = ft.Column(spacing=15, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
+        def do_astro_close(e):
+            astro_chart_container.controls.clear()
+            page.update()
+
         def do_astro(e):
             try:
                 dt = parse_dt(fld_date.value)
@@ -738,6 +742,8 @@ def main(page: ft.Page):
                 
                 astro_chart_container.controls.append(ft.Text("✨ SIDEREAL AYANAMSA (LAHIRI): " + str(round(ay, 4)) + "°", size=13, color=C["primary"], weight="bold"))
                 astro_chart_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9))
+                astro_chart_container.controls.append(ft.Container(height=8))
+                astro_chart_container.controls.append(ft.ElevatedButton("✖  CLOSE CHARTS", bgcolor=C["red"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_astro_close))
                 
                 set_status("Charts Calculated Successfully!", C["green"])
             except Exception as ex:

@@ -266,6 +266,14 @@ def jd_from_dt(year, month, day, hour=12, minute=0):
     B = 2 - A + int(A / 4)
     return (int(365.25 * (year + 4716)) + int(30.6001 * (month + 1)) + day + hour/24.0 + minute/1440.0 + B - 1524.5)
 
+IST_OFFSET_HOURS = 5.5  # India Standard Time = UTC + 5:30
+
+def jd_ut_from_ist(year, month, day, hour, minute):
+    """Julian Day formulas (and GMST/Ascendant) require UT. Our date/time fields and
+    datetime.now() are IST (UTC+5:30), so subtract the offset to get true UT before use."""
+    jd_local = jd_from_dt(year, month, day, hour, minute)
+    return jd_local - (IST_OFFSET_HOURS / 24.0)
+
 def lahiri_ayanamsa(jd):
     T = (jd - 2451545.0) / 36525.0
     return 23.85 + 0.013611 * T + 0.000092 * T * T
@@ -332,9 +340,10 @@ def d9_sign(lon):
     return (start_map[sign] + nav_num) % 12
 
 # ── ADVANCED CANVAS ENGINE: NORTH INDIAN VEDIC CHART ─────────────────────────────
-def _diamond_shapes(positions, lagna_sign, title, chart_size=320, y_off=0, add_fill=None):
+def _diamond_shapes(positions, lagna_sign, title, chart_size=320, y_off=0, add_fill=None, retro=None):
     if add_fill is None:
         add_fill = (y_off == 0)
+    retro = retro or set()
     W = chart_size
     p = 8  # Padding
     x0, y0 = p, p + y_off
@@ -402,28 +411,28 @@ def _diamond_shapes(positions, lagna_sign, title, chart_size=320, y_off=0, add_f
 
         if planets_here:
             px, py = info["planets"]
-            planets_txt = " ".join(planets_here)
+            planets_txt = " ".join(p + ("(R)" if p in retro else "") for p in planets_here)
             shapes.append(cv.Text(x=px - (len(planets_txt) * 3), y=py, text=planets_txt, style=ft.TextStyle(size=11, color="#D32F2F", weight="bold")))
 
     shapes.append(cv.Text(x=cx - 30, y=cy - 8, text=title, style=ft.TextStyle(size=10, color="#1A237E", weight="bold", bgcolor="#E8EAF6")))
     return shapes
 
 
-def build_diamond_chart(positions, lagna_sign, title, chart_size=320):
-    shapes = _diamond_shapes(positions, lagna_sign, title, chart_size, y_off=0)
+def build_diamond_chart(positions, lagna_sign, title, chart_size=320, retro=None):
+    shapes = _diamond_shapes(positions, lagna_sign, title, chart_size, y_off=0, retro=retro)
     return cv.Canvas(shapes=shapes, width=chart_size, height=chart_size)
 
 
-def build_dual_diamond_chart(d1_pos, lagna_d1, d9_pos, lagna_d9, chart_size=320, gap=30):
+def build_dual_diamond_chart(d1_pos, lagna_d1, d9_pos, lagna_d9, chart_size=320, gap=30, retro=None):
     """Draws D1 and D9 stacked on ONE canvas (avoids the Android multi-canvas rendering bug)."""
     shapes = []
-    shapes.extend(_diamond_shapes(d1_pos, lagna_d1, "D1 RASI", chart_size, y_off=0))
-    shapes.extend(_diamond_shapes(d9_pos, lagna_d9, "D9 NAVAMSHA", chart_size, y_off=chart_size + gap))
+    shapes.extend(_diamond_shapes(d1_pos, lagna_d1, "D1 RASI", chart_size, y_off=0, retro=retro))
+    shapes.extend(_diamond_shapes(d9_pos, lagna_d9, "D9 NAVAMSHA", chart_size, y_off=chart_size + gap, retro=retro))
     total_h = (chart_size * 2) + gap
     return cv.Canvas(shapes=shapes, width=chart_size, height=total_h)
 
 
-def build_dual_diamond_chart_with_bars(d1_pos, lagna_d1, d9_pos, lagna_d9, chart_size=320, gap=30, bar_h=36, bar_color="#1A237E"):
+def build_dual_diamond_chart_with_bars(d1_pos, lagna_d1, d9_pos, lagna_d9, chart_size=320, gap=30, bar_h=36, bar_color="#1A237E", retro=None):
     """Same single-canvas D1+D9 chart, but with a blue title bar overlaid above each diamond
     (still only ONE cv.Canvas control underneath, so the Android dual-canvas bug is avoided)."""
     y1 = bar_h
@@ -431,8 +440,8 @@ def build_dual_diamond_chart_with_bars(d1_pos, lagna_d1, d9_pos, lagna_d9, chart
     total_h = y2 + chart_size
 
     shapes = []
-    shapes.extend(_diamond_shapes(d1_pos, lagna_d1, "D1 RASI", chart_size, y_off=y1, add_fill=True))
-    shapes.extend(_diamond_shapes(d9_pos, lagna_d9, "D9 NAVAMSHA", chart_size, y_off=y2, add_fill=False))
+    shapes.extend(_diamond_shapes(d1_pos, lagna_d1, "D1 RASI", chart_size, y_off=y1, add_fill=True, retro=retro))
+    shapes.extend(_diamond_shapes(d9_pos, lagna_d9, "D9 NAVAMSHA", chart_size, y_off=y2, add_fill=False, retro=retro))
     canvas = cv.Canvas(shapes=shapes, width=chart_size, height=total_h)
 
     def _bar(text, top):
@@ -468,9 +477,71 @@ def main(page: ft.Page):
                 asum        INTEGER,
                 breakdown   TEXT,
                 series      TEXT DEFAULT 'EQ')""")
+            conn.execute("""CREATE TABLE IF NOT EXISTS planet_rules(
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                rule_type   TEXT NOT NULL,
+                planet      TEXT NOT NULL,
+                house_d1    INTEGER,
+                house_d9    INTEGER,
+                retro_only  INTEGER DEFAULT 0,
+                signal      TEXT NOT NULL,
+                weight      REAL DEFAULT 1.0,
+                note        TEXT)""")
             conn.commit()
             conn.close()
         except: pass
+
+        def rule_add(rule_type, planet, house_d1, house_d9, retro_only, signal, weight, note):
+            conn = sqlite3.connect(db_path)
+            conn.execute("INSERT INTO planet_rules(rule_type,planet,house_d1,house_d9,retro_only,signal,weight,note) VALUES(?,?,?,?,?,?,?,?)",
+                         (rule_type, planet, house_d1, house_d9, 1 if retro_only else 0, signal, weight, note))
+            conn.commit(); conn.close()
+
+        def rule_delete(rule_id):
+            conn = sqlite3.connect(db_path)
+            conn.execute("DELETE FROM planet_rules WHERE id=?", (rule_id,))
+            conn.commit(); conn.close()
+
+        def rule_list():
+            conn = sqlite3.connect(db_path)
+            rows = conn.execute("SELECT id,rule_type,planet,house_d1,house_d9,retro_only,signal,weight,note FROM planet_rules ORDER BY id").fetchall()
+            conn.close()
+            return rows
+
+        def get_house_num(sign_idx, lagna_sign_idx):
+            """Convert a raw sign index (0-11) to a house number (1-12) relative to the lagna."""
+            return ((int(sign_idx) - int(lagna_sign_idx)) % 12) + 1
+
+        def evaluate_rules(d1_pos, d9_pos, lagna_d1, lagna_d9, retro_set):
+            """Runs all stored rules against the current chart and returns (matches, net_score)."""
+            houses_d1 = {p: get_house_num(s, lagna_d1) for p, s in d1_pos.items() if p != "As"}
+            houses_d9 = {p: get_house_num(s, lagna_d9) for p, s in d9_pos.items() if p != "As"}
+            matches, score = [], 0.0
+            for (rid, rtype, planet, hd1, hd9, retro_only, signal, weight, note) in rule_list():
+                planets_to_check = [planet] if planet != "ANY" else list(houses_d1.keys())
+                for pl in planets_to_check:
+                    if retro_only and pl not in retro_set:
+                        continue
+                    ok = False
+                    if rtype == "D1_HOUSE" and houses_d1.get(pl) == hd1:
+                        ok = True
+                    elif rtype == "D9_HOUSE" and houses_d9.get(pl) == hd9:
+                        ok = True
+                    elif rtype == "D1_D9_COMPARE" and houses_d1.get(pl) == hd1 and houses_d9.get(pl) == hd9:
+                        ok = True
+                    if ok:
+                        matches.append((pl, rtype, signal, weight, note))
+                        score += weight if signal == "BUY" else (-weight if signal == "SELL" else 0)
+            return matches, score
+
+        def is_retrograde(jd, planet_key, lat=19.076, lon=72.877):
+            pos_prev, _ = calc_planet_positions(jd - 1, lat, lon)
+            pos_now,  _ = calc_planet_positions(jd, lat, lon)
+            diff = (pos_now[planet_key] - pos_prev[planet_key] + 540) % 360 - 180
+            return diff < 0
+
+        def get_retrograde_set(jd, lat=19.076, lon=72.877):
+            return {p for p in ["Su","Mo","Ma","Me","Ju","Ve","Sa","Ra","Ke"] if is_retrograde(jd, p, lat, lon)}
 
         def db_count():
             try: return sqlite3.connect(db_path).execute("SELECT COUNT(*) FROM stocks").fetchone()[0]
@@ -590,22 +661,42 @@ def main(page: ft.Page):
             # ── D1 / D9 VEDIC CHART AT TIME OF THIS CALCULATION (single combined canvas) ──
             try:
                 calc_time = datetime.now()
-                jd = jd_from_dt(calc_time.year, calc_time.month, calc_time.day, calc_time.hour, calc_time.minute)
+                jd = jd_ut_from_ist(calc_time.year, calc_time.month, calc_time.day, calc_time.hour, calc_time.minute)
                 pos, ay = calc_planet_positions(jd, 19.076, 72.877)  # NSE Mumbai reference coords
 
                 d1_pos = {p: lon_to_sign_deg(l)[0] for p, l in pos.items()}
                 d9_pos = {p: d9_sign(l) for p, l in pos.items()}
                 lagna_idx = d1_pos["As"]
                 lagna_d9  = d9_pos["As"]
+                retro_set = get_retrograde_set(jd, 19.076, 72.877)
 
                 oracle_astro_container.controls.clear()
                 oracle_astro_container.controls.append(ft.Divider(height=6, color=C["divider"]))
                 oracle_astro_container.controls.append(make_header("🕉️ VEDIC KUNDALI AT TIME OF CALCULATION"))
                 oracle_astro_container.controls.append(ft.Text(
-                    "📅 " + calc_time.strftime("%d-%m-%Y %H:%M") + "   ✨ Ayanamsa (Lahiri): " + str(round(ay, 4)) + "°",
+                    "📅 " + calc_time.strftime("%d-%m-%Y %H:%M") + "   ✨ Ayanamsa (Lahiri): " + str(round(ay, 4)) + "°" +
+                    ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else ""),
                     size=13, color=C["primary"], weight="bold"
                 ))
-                oracle_astro_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9))
+                oracle_astro_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set))
+
+                # ── CUSTOM RULES: BUY/SELL RECOMMENDATION ──────────────────
+                matches, score = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
+                if score > 0:
+                    rec_text, rec_color = f"🟢 CUSTOM RULES: NET BUY  (score {score:+.1f})", C["green"]
+                elif score < 0:
+                    rec_text, rec_color = f"🔴 CUSTOM RULES: NET SELL  (score {score:+.1f})", C["red"]
+                else:
+                    rec_text, rec_color = "⚪ CUSTOM RULES: NEUTRAL / no matching rules", C["black_txt"]
+                oracle_astro_container.controls.append(ft.Container(height=10))
+                oracle_astro_container.controls.append(ft.Container(
+                    content=ft.Text(rec_text, size=15, color="#FFFFFF", weight="bold"),
+                    bgcolor=rec_color, padding=12, border_radius=8, alignment=ft.alignment.center
+                ))
+                if matches:
+                    detail = "\n".join(f"• {pl}  [{rt}]  → {sig}  (w={w})  {nt or ''}" for pl, rt, sig, w, nt in matches)
+                    oracle_astro_container.controls.append(ft.Text(detail, size=11, color=C["black_txt"], selectable=True))
+
                 oracle_astro_container.controls.append(ft.Container(height=8))
                 oracle_astro_container.controls.append(ft.ElevatedButton("⬅  BACK TO ORACLE SEARCH", bgcolor=C["primary"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_oracle_back))
                 oracle_astro_container.visible = True
@@ -729,7 +820,7 @@ def main(page: ft.Page):
                 tm = fld_time.value.strip().split(":")
                 hh, mm = int(tm[0]), int(tm[1])
                 lat, lon = float(fld_lat.value), float(fld_lon.value)
-                jd = jd_from_dt(dt.year, dt.month, dt.day, hh, mm)
+                jd = jd_ut_from_ist(dt.year, dt.month, dt.day, hh, mm)
                 pos, ay = calc_planet_positions(jd, lat, lon)
                 
                 d1_pos = {p: lon_to_sign_deg(l)[0] for p, l in pos.items()}
@@ -737,11 +828,15 @@ def main(page: ft.Page):
                 
                 lagna_idx = d1_pos["As"]
                 lagna_d9  = d9_pos["As"]
+                retro_set = get_retrograde_set(jd, lat, lon)
 
                 astro_chart_container.controls.clear()
                 
-                astro_chart_container.controls.append(ft.Text("✨ SIDEREAL AYANAMSA (LAHIRI): " + str(round(ay, 4)) + "°", size=13, color=C["primary"], weight="bold"))
-                astro_chart_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9))
+                astro_chart_container.controls.append(ft.Text(
+                    "✨ SIDEREAL AYANAMSA (LAHIRI): " + str(round(ay, 4)) + "°" +
+                    ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else ""),
+                    size=13, color=C["primary"], weight="bold"))
+                astro_chart_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set))
                 astro_chart_container.controls.append(ft.Container(height=8))
                 astro_chart_container.controls.append(ft.ElevatedButton("✖  CLOSE CHARTS", bgcolor=C["red"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_astro_close))
                 
@@ -821,8 +916,72 @@ def main(page: ft.Page):
             prg_bar, prg_txt
         ])
 
+        # ── SCREEN 6: CUSTOM D1/D9 RULES ────────────────────────────────────
+        PLANET_OPTS = ["ANY", "Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa", "Ra", "Ke"]
+        fld_rule_type   = ft.Dropdown(label="Rule Type", value="D9_HOUSE",
+                                        options=[ft.dropdown.Option(o) for o in ["D1_HOUSE", "D9_HOUSE", "D1_D9_COMPARE"]])
+        fld_rule_planet = ft.Dropdown(label="Planet", value="ANY",
+                                        options=[ft.dropdown.Option(o) for o in PLANET_OPTS])
+        fld_rule_h1     = make_field("D1 House (1-12)", hint="Leave blank if not used")
+        fld_rule_h9     = make_field("D9 House (1-12)", hint="Leave blank if not used")
+        fld_rule_retro  = ft.Checkbox(label="Apply only when planet is Retrograde", value=False)
+        fld_rule_signal = ft.Dropdown(label="Signal", value="BUY",
+                                        options=[ft.dropdown.Option(o) for o in ["BUY", "SELL", "NEUTRAL"]])
+        fld_rule_weight = make_field("Weight", value="1.0")
+        fld_rule_note   = make_field("Note (optional)", hint="e.g. Jupiter own house — strength")
+
+        rules_list_col = ft.Column(spacing=6)
+
+        def refresh_rules_list():
+            rules_list_col.controls.clear()
+            rows = rule_list()
+            if not rows:
+                rules_list_col.controls.append(ft.Text("No custom rules yet. Add one above.", size=12, color=C["black_txt"]))
+            for (rid, rtype, planet, hd1, hd9, retro_only, signal, weight, note) in rows:
+                sig_color = C["red"] if signal == "SELL" else (C["green"] if signal == "BUY" else C["black_txt"])
+                desc = f"#{rid}  [{rtype}]  {planet}  D1H:{hd1 or '-'}  D9H:{hd9 or '-'}  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
+                rules_list_col.controls.append(
+                    ft.Row([
+                        ft.Text(desc, size=12, color=sig_color, expand=True),
+                        ft.IconButton(icon=ft.Icons.DELETE, icon_color=C["red"], on_click=lambda e, rid=rid: do_delete_rule(rid))
+                    ])
+                )
+            page.update()
+
+        def do_delete_rule(rid):
+            rule_delete(rid)
+            set_status(f"Rule #{rid} deleted.", C["orange"])
+            refresh_rules_list()
+
+        def do_add_rule(e):
+            try:
+                h1 = int(fld_rule_h1.value) if fld_rule_h1.value and fld_rule_h1.value.strip() else None
+                h9 = int(fld_rule_h9.value) if fld_rule_h9.value and fld_rule_h9.value.strip() else None
+                w  = float(fld_rule_weight.value) if fld_rule_weight.value and fld_rule_weight.value.strip() else 1.0
+                if h1 is not None and not (1 <= h1 <= 12): raise ValueError("D1 House must be 1-12")
+                if h9 is not None and not (1 <= h9 <= 12): raise ValueError("D9 House must be 1-12")
+                rule_add(fld_rule_type.value, fld_rule_planet.value, h1, h9, fld_rule_retro.value, fld_rule_signal.value, w, fld_rule_note.value)
+                set_status("Rule added.", C["green"])
+                fld_rule_h1.value = ""; fld_rule_h9.value = ""; fld_rule_note.value = ""
+                refresh_rules_list()
+            except Exception as ex:
+                set_status(f"Rule error: {str(ex)}", C["red"])
+                page.update()
+
+        rules_screen = ft.Column(visible=False, scroll="auto", controls=[
+            make_header("📜 CUSTOM D1 / D9 RULES"), ft.Divider(height=4, color=C["divider"]),
+            ft.Text("Define your own planet-in-house rules. These drive the BUY/SELL recommendation shown under CALCULATE ASTRO in Oracle.", size=12, color=C["black_txt"]),
+            fld_rule_type, fld_rule_planet,
+            ft.Row([fld_rule_h1, fld_rule_h9]),
+            fld_rule_retro, fld_rule_signal, fld_rule_weight, fld_rule_note,
+            ft.ElevatedButton("➕ ADD RULE", bgcolor=C["primary"], color="#FFFFFF", height=48, on_click=do_add_rule),
+            ft.Divider(height=6, color=C["divider"]),
+            ft.Text("EXISTING RULES:", size=13, weight="bold", color=C["black_txt"]),
+            rules_list_col
+        ])
+
         # ── NAVIGATION CONTROL ────────────────────────────────────────────────
-        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen}
+        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen, "rules": rules_screen}
         
         def show_screen(name):
             for k, v in all_screens.items(): v.visible = (k == name)
@@ -835,13 +994,16 @@ def main(page: ft.Page):
                 ft.NavigationBarDestination(icon=ft.Icons.EDIT_NOTE, label="Entry"),
                 ft.NavigationBarDestination(icon=ft.Icons.STARS, label="Kundali"),
                 ft.NavigationBarDestination(icon=ft.Icons.STORAGE, label="Database"),
+                ft.NavigationBarDestination(icon=ft.Icons.RULE, label="Rules"),
             ],
-            on_change=lambda e: show_screen(["oracle", "list", "entry", "astro", "db"][int(e.data)]),
+            on_change=lambda e: show_screen(["oracle", "list", "entry", "astro", "db", "rules"][int(e.data)]),
             bgcolor="#E8EAF6"
         )
 
-        page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, nav_bar)
-        
+        page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, rules_screen, nav_bar)
+
+        refresh_rules_list()
+
         n = db_count()
         if n < 5: set_status("No database. Go to Database tab.", C["red"])
         else: set_status(f"Ready — {n} stocks loaded.", C["green"])

@@ -1057,6 +1057,13 @@ RULE TYPES EXPLAINED
 • D1_D9_COMPARE — fires only when BOTH the D1 house AND D9 house match (strongest confirmation)
 • VARGOTTAMA — fires when D1 sign = D9 sign for that planet
 
+CHART COLOR CODING (on the D1/D9 diamond charts themselves)
+• Red — normal planet, no special condition
+• Orange "(R)" — retrograde
+• Teal "(V)" — Vargottama (same rashi in D1 and D9)
+• Purple "(R,V)" — both retrograde and Vargottama at once
+A legend with these same colors appears just below every chart.
+
 Tap "📦 LOAD EXAMPLE RULES" to add a 12-rule starter pack covering the patterns above, then edit/delete individual rules to match your own approach."""
 
         help_dialog = ft.AlertDialog(

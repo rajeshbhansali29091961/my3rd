@@ -1066,29 +1066,24 @@ A legend with these same colors appears just below every chart.
 
 Tap "📦 LOAD EXAMPLE RULES" to add a 12-rule starter pack covering the patterns above, then edit/delete individual rules to match your own approach."""
 
-        help_dialog = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("📖 Financial Astrology — Help & Reference", size=16, weight="bold"),
-            content=ft.Container(
-                content=ft.Column([ft.Text(HELP_TEXT, size=12.5, color=C["black_txt"], selectable=True)], scroll="auto"),
-                width=340, height=440
-            ),
-            actions=[ft.TextButton("Close", on_click=lambda e: close_help_dialog())]
+        help_panel = ft.Container(
+            content=ft.Column([
+                ft.Text(HELP_TEXT, size=12.5, color=C["black_txt"], selectable=True),
+                ft.ElevatedButton("✖  CLOSE HELP", bgcolor=C["red"], color="#FFFFFF", height=42, on_click=lambda e: do_toggle_help(False))
+            ], scroll="auto"),
+            bgcolor="#F4F8FA", border=ft.Border(top=ft.BorderSide(2, C["accent"]), bottom=ft.BorderSide(2, C["accent"]), left=ft.BorderSide(2, C["accent"]), right=ft.BorderSide(2, C["accent"])),
+            border_radius=8, padding=12, height=420, visible=False
         )
 
-        def close_help_dialog():
-            help_dialog.open = False
-            page.update()
-
-        def do_show_help(e):
-            page.dialog = help_dialog
-            help_dialog.open = True
+        def do_toggle_help(show):
+            help_panel.visible = show
             page.update()
 
         rules_screen = ft.Column(visible=False, scroll="auto", controls=[
             make_header("📜 CUSTOM D1 / D9 RULES"), ft.Divider(height=4, color=C["divider"]),
             ft.Text("Define your own planet-in-house rules. These drive the BUY/SELL recommendation shown under CALCULATE ASTRO in Oracle.", size=12, color=C["black_txt"]),
-            ft.ElevatedButton("📖 HELP / REFERENCE GUIDE", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=do_show_help),
+            ft.ElevatedButton("📖 HELP / REFERENCE GUIDE", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=lambda e: do_toggle_help(True)),
+            help_panel,
             fld_rule_type, fld_rule_planet,
             ft.Row([fld_rule_h1, fld_rule_h9]),
             fld_rule_retro, fld_rule_signal, fld_rule_weight, fld_rule_note,

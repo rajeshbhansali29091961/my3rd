@@ -340,10 +340,11 @@ def d9_sign(lon):
     return (start_map[sign] + nav_num) % 12
 
 # ── ADVANCED CANVAS ENGINE: NORTH INDIAN VEDIC CHART ─────────────────────────────
-def _diamond_shapes(positions, lagna_sign, title, chart_size=320, y_off=0, add_fill=None, retro=None):
+def _diamond_shapes(positions, lagna_sign, title, chart_size=320, y_off=0, add_fill=None, retro=None, vargottama=None):
     if add_fill is None:
         add_fill = (y_off == 0)
     retro = retro or set()
+    vargottama = vargottama or set()
     W = chart_size
     p = 8  # Padding
     x0, y0 = p, p + y_off
@@ -411,28 +412,44 @@ def _diamond_shapes(positions, lagna_sign, title, chart_size=320, y_off=0, add_f
 
         if planets_here:
             px, py = info["planets"]
-            planets_txt = " ".join(p + ("(R)" if p in retro else "") for p in planets_here)
-            shapes.append(cv.Text(x=px - (len(planets_txt) * 3), y=py, text=planets_txt, style=ft.TextStyle(size=11, color="#D32F2F", weight="bold")))
+            tokens = []
+            for pl in planets_here:
+                is_retro = pl in retro
+                is_varg  = pl in vargottama
+                if is_retro and is_varg:
+                    label, color = pl + "(R,V)", "#6A1B9A"   # purple — retrograde AND vargottama
+                elif is_retro:
+                    label, color = pl + "(R)", "#EF6C00"     # orange — retrograde
+                elif is_varg:
+                    label, color = pl + "(V)", "#00838F"     # teal — vargottama
+                else:
+                    label, color = pl, "#D32F2F"             # red — normal
+                tokens.append((label, color))
+            total_w = sum(len(lbl) * 6 for lbl, _ in tokens) + max(0, len(tokens) - 1) * 4
+            tx_cursor = px - total_w // 2
+            for lbl, color in tokens:
+                shapes.append(cv.Text(x=tx_cursor, y=py, text=lbl, style=ft.TextStyle(size=11, color=color, weight="bold")))
+                tx_cursor += len(lbl) * 6 + 4
 
     shapes.append(cv.Text(x=cx - 30, y=cy - 8, text=title, style=ft.TextStyle(size=10, color="#1A237E", weight="bold", bgcolor="#E8EAF6")))
     return shapes
 
 
-def build_diamond_chart(positions, lagna_sign, title, chart_size=320, retro=None):
-    shapes = _diamond_shapes(positions, lagna_sign, title, chart_size, y_off=0, retro=retro)
+def build_diamond_chart(positions, lagna_sign, title, chart_size=320, retro=None, vargottama=None):
+    shapes = _diamond_shapes(positions, lagna_sign, title, chart_size, y_off=0, retro=retro, vargottama=vargottama)
     return cv.Canvas(shapes=shapes, width=chart_size, height=chart_size)
 
 
-def build_dual_diamond_chart(d1_pos, lagna_d1, d9_pos, lagna_d9, chart_size=320, gap=30, retro=None):
+def build_dual_diamond_chart(d1_pos, lagna_d1, d9_pos, lagna_d9, chart_size=320, gap=30, retro=None, vargottama=None):
     """Draws D1 and D9 stacked on ONE canvas (avoids the Android multi-canvas rendering bug)."""
     shapes = []
-    shapes.extend(_diamond_shapes(d1_pos, lagna_d1, "D1 RASI", chart_size, y_off=0, retro=retro))
-    shapes.extend(_diamond_shapes(d9_pos, lagna_d9, "D9 NAVAMSHA", chart_size, y_off=chart_size + gap, retro=retro))
+    shapes.extend(_diamond_shapes(d1_pos, lagna_d1, "D1 RASI", chart_size, y_off=0, retro=retro, vargottama=vargottama))
+    shapes.extend(_diamond_shapes(d9_pos, lagna_d9, "D9 NAVAMSHA", chart_size, y_off=chart_size + gap, retro=retro, vargottama=vargottama))
     total_h = (chart_size * 2) + gap
     return cv.Canvas(shapes=shapes, width=chart_size, height=total_h)
 
 
-def build_dual_diamond_chart_with_bars(d1_pos, lagna_d1, d9_pos, lagna_d9, chart_size=320, gap=30, bar_h=36, bar_color="#1A237E", retro=None):
+def build_dual_diamond_chart_with_bars(d1_pos, lagna_d1, d9_pos, lagna_d9, chart_size=320, gap=30, bar_h=36, bar_color="#1A237E", retro=None, vargottama=None):
     """Same single-canvas D1+D9 chart, but with a blue title bar overlaid above each diamond
     (still only ONE cv.Canvas control underneath, so the Android dual-canvas bug is avoided)."""
     y1 = bar_h
@@ -440,8 +457,8 @@ def build_dual_diamond_chart_with_bars(d1_pos, lagna_d1, d9_pos, lagna_d9, chart
     total_h = y2 + chart_size
 
     shapes = []
-    shapes.extend(_diamond_shapes(d1_pos, lagna_d1, "D1 RASI", chart_size, y_off=y1, add_fill=True, retro=retro))
-    shapes.extend(_diamond_shapes(d9_pos, lagna_d9, "D9 NAVAMSHA", chart_size, y_off=y2, add_fill=False, retro=retro))
+    shapes.extend(_diamond_shapes(d1_pos, lagna_d1, "D1 RASI", chart_size, y_off=y1, add_fill=True, retro=retro, vargottama=vargottama))
+    shapes.extend(_diamond_shapes(d9_pos, lagna_d9, "D9 NAVAMSHA", chart_size, y_off=y2, add_fill=False, retro=retro, vargottama=vargottama))
     canvas = cv.Canvas(shapes=shapes, width=chart_size, height=total_h)
 
     def _bar(text, top):
@@ -454,7 +471,18 @@ def build_dual_diamond_chart_with_bars(d1_pos, lagna_d1, d9_pos, lagna_d9, chart
     bar1 = _bar("📊  D1 — RASI CHART", 0)
     bar2 = _bar("📊  D9 — NAVAMSHA CHART", y2 - bar_h)
 
-    return ft.Stack(controls=[canvas, bar1, bar2], width=chart_size, height=total_h)
+    stack = ft.Stack(controls=[canvas, bar1, bar2], width=chart_size, height=total_h)
+
+    legend = ft.Row(
+        controls=[
+            ft.Text("■ Normal", size=10, color="#D32F2F", weight="bold"),
+            ft.Text("■ (R) Retrograde", size=10, color="#EF6C00", weight="bold"),
+            ft.Text("■ (V) Vargottama", size=10, color="#00838F", weight="bold"),
+            ft.Text("■ (R,V) Both", size=10, color="#6A1B9A", weight="bold"),
+        ],
+        alignment=ft.MainAxisAlignment.CENTER, wrap=True, spacing=12
+    )
+    return ft.Column(controls=[stack, ft.Container(height=6), legend], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
 # ── MAIN APP ───────────────────────────────────────────────────────────────────
 def main(page: ft.Page):
@@ -528,6 +556,8 @@ def main(page: ft.Page):
                     elif rtype == "D9_HOUSE" and houses_d9.get(pl) == hd9:
                         ok = True
                     elif rtype == "D1_D9_COMPARE" and houses_d1.get(pl) == hd1 and houses_d9.get(pl) == hd9:
+                        ok = True
+                    elif rtype == "VARGOTTAMA" and d1_pos.get(pl) is not None and d1_pos.get(pl) == d9_pos.get(pl):
                         ok = True
                     if ok:
                         matches.append((pl, rtype, signal, weight, note))
@@ -669,16 +699,18 @@ def main(page: ft.Page):
                 lagna_idx = d1_pos["As"]
                 lagna_d9  = d9_pos["As"]
                 retro_set = get_retrograde_set(jd, 19.076, 72.877)
+                vargottama_set = {p for p in d1_pos if p != "As" and d1_pos.get(p) == d9_pos.get(p)}
 
                 oracle_astro_container.controls.clear()
                 oracle_astro_container.controls.append(ft.Divider(height=6, color=C["divider"]))
                 oracle_astro_container.controls.append(make_header("🕉️ VEDIC KUNDALI AT TIME OF CALCULATION"))
                 oracle_astro_container.controls.append(ft.Text(
                     "📅 " + calc_time.strftime("%d-%m-%Y %H:%M") + "   ✨ Ayanamsa (Lahiri): " + str(round(ay, 4)) + "°" +
-                    ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else ""),
+                    ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
+                    ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else ""),
                     size=13, color=C["primary"], weight="bold"
                 ))
-                oracle_astro_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set))
+                oracle_astro_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
 
                 # ── CUSTOM RULES: BUY/SELL RECOMMENDATION ──────────────────
                 matches, score = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
@@ -829,14 +861,16 @@ def main(page: ft.Page):
                 lagna_idx = d1_pos["As"]
                 lagna_d9  = d9_pos["As"]
                 retro_set = get_retrograde_set(jd, lat, lon)
+                vargottama_set = {p for p in d1_pos if p != "As" and d1_pos.get(p) == d9_pos.get(p)}
 
                 astro_chart_container.controls.clear()
                 
                 astro_chart_container.controls.append(ft.Text(
                     "✨ SIDEREAL AYANAMSA (LAHIRI): " + str(round(ay, 4)) + "°" +
-                    ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else ""),
+                    ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
+                    ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else ""),
                     size=13, color=C["primary"], weight="bold"))
-                astro_chart_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set))
+                astro_chart_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
                 astro_chart_container.controls.append(ft.Container(height=8))
                 astro_chart_container.controls.append(ft.ElevatedButton("✖  CLOSE CHARTS", bgcolor=C["red"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_astro_close))
                 
@@ -919,11 +953,11 @@ def main(page: ft.Page):
         # ── SCREEN 6: CUSTOM D1/D9 RULES ────────────────────────────────────
         PLANET_OPTS = ["ANY", "Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa", "Ra", "Ke"]
         fld_rule_type   = ft.Dropdown(label="Rule Type", value="D9_HOUSE",
-                                        options=[ft.dropdown.Option(o) for o in ["D1_HOUSE", "D9_HOUSE", "D1_D9_COMPARE"]])
+                                        options=[ft.dropdown.Option(o) for o in ["D1_HOUSE", "D9_HOUSE", "D1_D9_COMPARE", "VARGOTTAMA"]])
         fld_rule_planet = ft.Dropdown(label="Planet", value="ANY",
                                         options=[ft.dropdown.Option(o) for o in PLANET_OPTS])
-        fld_rule_h1     = make_field("D1 House (1-12)", hint="Leave blank if not used")
-        fld_rule_h9     = make_field("D9 House (1-12)", hint="Leave blank if not used")
+        fld_rule_h1     = make_field("D1 House (1-12)", hint="Leave blank if not used / VARGOTTAMA")
+        fld_rule_h9     = make_field("D9 House (1-12)", hint="Leave blank if not used / VARGOTTAMA")
         fld_rule_retro  = ft.Checkbox(label="Apply only when planet is Retrograde", value=False)
         fld_rule_signal = ft.Dropdown(label="Signal", value="BUY",
                                         options=[ft.dropdown.Option(o) for o in ["BUY", "SELL", "NEUTRAL"]])
@@ -936,7 +970,7 @@ def main(page: ft.Page):
             rules_list_col.controls.clear()
             rows = rule_list()
             if not rows:
-                rules_list_col.controls.append(ft.Text("No custom rules yet. Add one above.", size=12, color=C["black_txt"]))
+                rules_list_col.controls.append(ft.Text("No custom rules yet. Add one above, or tap LOAD EXAMPLE RULES.", size=12, color=C["black_txt"]))
             for (rid, rtype, planet, hd1, hd9, retro_only, signal, weight, note) in rows:
                 sig_color = C["red"] if signal == "SELL" else (C["green"] if signal == "BUY" else C["black_txt"])
                 desc = f"#{rid}  [{rtype}]  {planet}  D1H:{hd1 or '-'}  D9H:{hd9 or '-'}  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
@@ -968,13 +1002,91 @@ def main(page: ft.Page):
                 set_status(f"Rule error: {str(ex)}", C["red"])
                 page.update()
 
+        EXAMPLE_RULE_PACK = [
+            # (rule_type, planet, house_d1, house_d9, retro_only, signal, weight, note)
+            ("D1_HOUSE",      "Ju", 11, None, 0, "BUY",  2.0, "Jupiter D1 11th — gains/profits house"),
+            ("D9_HOUSE",      "Ju", None, 11, 0, "BUY",  2.0, "Jupiter D9 11th — navamsha confirms gains"),
+            ("D1_D9_COMPARE", "Ju", 11, 11,   0, "BUY",  3.0, "Jupiter strong in D1 & D9 11th — very strong bullish"),
+            ("VARGOTTAMA",    "Ju", None, None, 0, "BUY", 3.0, "Jupiter Vargottama — amplified benefic strength"),
+            ("D1_HOUSE",      "Ve", 2,  None, 0, "BUY",  1.5, "Venus D1 2nd — wealth/liquidity"),
+            ("D1_HOUSE",      "Ma", 8,  None, 0, "SELL", 2.0, "Mars D1 8th — classic sudden-crash placement"),
+            ("D1_HOUSE",      "Sa", 6,  None, 0, "SELL", 1.5, "Saturn D1 6th — debt/obstacle pressure"),
+            ("D9_HOUSE",      "Me", 3,  None, 1, "SELL", 2.0, "Mercury retrograde in D9 3rd — trade/comm volatility"),
+            ("D1_HOUSE",      "Ra", 11, None, 0, "BUY",  1.5, "Rahu D1 11th — speculative sudden gains (volatile)"),
+            ("D1_HOUSE",      "Ke", 12, None, 0, "SELL", 1.5, "Ketu D1 12th — losses/isolation"),
+            ("D1_HOUSE",      "Su", 10, None, 0, "BUY",  1.0, "Sun D1 10th — leadership/PSU strength"),
+            ("D1_HOUSE",      "Sa", 8,  None, 1, "SELL", 1.5, "Saturn retrograde D1 8th — prolonged structural correction"),
+        ]
+
+        def do_load_example_rules(e):
+            for (rt, pl, h1, h9, ro, sig, w, nt) in EXAMPLE_RULE_PACK:
+                rule_add(rt, pl, h1, h9, ro, sig, w, nt)
+            set_status(f"Loaded {len(EXAMPLE_RULE_PACK)} example rules.", C["green"])
+            refresh_rules_list()
+
+        HELP_TEXT = """HOW THE BUY/SELL SIGNAL WORKS
+The 🟢 NET BUY / 🔴 NET SELL / ⚪ NEUTRAL banner in Oracle (under CALCULATE ASTRO) is computed by adding up every rule below that matches the current chart: +weight for BUY rules, -weight for SELL rules, 0 for NEUTRAL. This is a reference tool based on conventional interpretations, not a validated predictive model — use it as one input, not a standalone signal.
+
+KEY HOUSES FOR WEALTH (D1 and D9 both)
+• 2nd — liquid wealth, banking, accumulated value
+• 5th — speculation, trading, IPOs
+• 9th — fortune, long-term growth
+• 11th — gains, profits, income (most-watched house)
+• 6th, 8th, 12th (dusthanas) — debt/obstacles, sudden crashes/liability, losses — generally bearish
+
+PLANET → MARKET MEANING
+• Jupiter (Ju): expansion, banking, overall bullishness → strong in 2nd/5th/9th/11th
+• Venus (Ve): currency, consumer/luxury, comfort → strong in 2nd/11th
+• Mercury (Me): trade, IT, quick transactions → watch closely if retrograde
+• Sun (Su): authority, government/PSU, energy → strong in 10th/11th
+• Moon (Mo): public sentiment, FMCG/retail liquidity → strong in 4th/11th
+• Mars (Ma): energy sector, aggression, sudden moves → 8th is the classic sudden-crash placement
+• Saturn (Sa): structure, old-economy, discipline, delay → steady in 3rd/11th, drags in 1st/6th/8th
+• Rahu (Ra): speculation, sudden gains, unconventional/tech sectors → 11th = sudden windfall (volatile)
+• Ketu (Ke): sudden loss, detachment, liquidation → bearish in 8th/12th
+
+RETROGRADE — TWO SCHOOLS OF THOUGHT
+Most trading-desk convention treats Mercury retrograde as a caution period (miscommunication, contract issues, volatility) — often bearish for IT/trade stocks. Some traditional astrologers instead argue a retrograde planet acts stronger, not weaker. Given this genuine disagreement, treat retrograde as a volatility multiplier and let your own rule's Signal/Weight decide the direction. Note: Rahu/Ketu are always calculated as retrograde (their mean motion never goes direct), so a "retrograde only" rule on them will basically always fire.
+
+VARGOTTAMA
+When a planet sits in the SAME rashi/sign in both D1 and D9 (regardless of house number), it's considered to triple/amplify that planet's natural result — good or bad. Use the VARGOTTAMA rule type for this (house fields not needed).
+
+RULE TYPES EXPLAINED
+• D1_HOUSE — fires when a planet is in the given D1 house
+• D9_HOUSE — fires when a planet is in the given D9 house
+• D1_D9_COMPARE — fires only when BOTH the D1 house AND D9 house match (strongest confirmation)
+• VARGOTTAMA — fires when D1 sign = D9 sign for that planet
+
+Tap "📦 LOAD EXAMPLE RULES" to add a 12-rule starter pack covering the patterns above, then edit/delete individual rules to match your own approach."""
+
+        help_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("📖 Financial Astrology — Help & Reference", size=16, weight="bold"),
+            content=ft.Container(
+                content=ft.Column([ft.Text(HELP_TEXT, size=12.5, color=C["black_txt"], selectable=True)], scroll="auto"),
+                width=340, height=440
+            ),
+            actions=[ft.TextButton("Close", on_click=lambda e: close_help_dialog())]
+        )
+
+        def close_help_dialog():
+            help_dialog.open = False
+            page.update()
+
+        def do_show_help(e):
+            page.dialog = help_dialog
+            help_dialog.open = True
+            page.update()
+
         rules_screen = ft.Column(visible=False, scroll="auto", controls=[
             make_header("📜 CUSTOM D1 / D9 RULES"), ft.Divider(height=4, color=C["divider"]),
             ft.Text("Define your own planet-in-house rules. These drive the BUY/SELL recommendation shown under CALCULATE ASTRO in Oracle.", size=12, color=C["black_txt"]),
+            ft.ElevatedButton("📖 HELP / REFERENCE GUIDE", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=do_show_help),
             fld_rule_type, fld_rule_planet,
             ft.Row([fld_rule_h1, fld_rule_h9]),
             fld_rule_retro, fld_rule_signal, fld_rule_weight, fld_rule_note,
             ft.ElevatedButton("➕ ADD RULE", bgcolor=C["primary"], color="#FFFFFF", height=48, on_click=do_add_rule),
+            ft.ElevatedButton("📦 LOAD EXAMPLE RULES (financial astrology starter pack)", bgcolor=C["orange"], color="#FFFFFF", height=44, on_click=do_load_example_rules),
             ft.Divider(height=6, color=C["divider"]),
             ft.Text("EXISTING RULES:", size=13, weight="bold", color=C["black_txt"]),
             rules_list_col

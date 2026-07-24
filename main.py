@@ -1187,17 +1187,20 @@ Tap "📦 LOAD EXAMPLE RULES" to add a 12-rule starter pack covering the pattern
             page.update()
 
         def do_exit_yes(e):
-            # Best-effort close. Known Flet limitation: this may not fully kill the
-            # process once compiled into an Android APK — if so, use the phone's
-            # Back button or app-switcher as the reliable fallback.
+            # page.window.destroy()/close() only ask Flutter's window layer to close,
+            # which is known to not always kill the underlying process once compiled
+            # into an Android APK. Try the graceful route first, then fall back to a
+            # hard OS-level process kill that works regardless of Flutter's state,
+            # since the Python interpreter runs in the same process as the app on Android.
             try:
                 page.window.destroy()
             except Exception:
-                try:
-                    page.window.close()
-                except Exception:
-                    pass
-            page.update()
+                pass
+            try:
+                page.window.close()
+            except Exception:
+                pass
+            os._exit(0)
 
         exit_button = ft.Container(
             content=ft.Column([

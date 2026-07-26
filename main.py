@@ -226,25 +226,43 @@ def quick_verdict(asum, ldt_str):
 # ── RAMAL PRASHNA (Arabic/Persian geomancy, cast at the moment of the question) ──
 # The 16 Ramal Shakals mapped to binary tuples (Top to Bottom: Agni, Vayu, Jala, Prithvi)
 # 1 = Single Dot (Odd/Fire/Air aspect), 0 = Double Dot or Line (Even/Water/Earth aspect)
-RAMAL_SHAKALS = {
-    (1, 0, 0, 0): {"name": "Lahan (लहान)", "nature": "Mitrik (Inward)", "bias": "Bullish"},
-    (1, 1, 0, 0): {"name": "Kajjul Dakhil (कज्जुल दाखिल)", "nature": "Mitrik (Inward)", "bias": "Bullish"},
-    (1, 0, 1, 0): {"name": "Nasrut-Kharij (नसरुत खारिज)", "nature": "Kharij (Outward)", "bias": "Bearish"},
-    (0, 1, 1, 0): {"name": "Ukla (उकला)", "nature": "Nishasht (Neutral)", "bias": "Sideways"},
-    (1, 1, 1, 1): {"name": "Jamat (जमात)", "nature": "Mitrik (Inward)", "bias": "Strong Bullish"},
-    (0, 0, 0, 0): {"name": "Tariq (तारीक़)", "nature": "Kharij (Outward)", "bias": "Bearish"},
-    (1, 0, 0, 1): {"name": "Humra (हुमरा)", "nature": "Kharij (Fire)", "bias": "Volatile / Bearish"},
-    (0, 1, 1, 1): {"name": "Nafki (नफ़की)", "nature": "Kharij (Outward)", "bias": "Bearish"},
+RAMAL_DICTIONARY = {
+    (1, 1, 1, 1): {"name": "Jamat (जमात)", "nature": "Mitrik (Inward)", "element": "Agni", "bias": "Strong Bullish"},
+    (0, 0, 0, 0): {"name": "Tariq (तारीक़)", "nature": "Kharij (Outward)", "element": "Prithvi", "bias": "Bearish"},
+    (1, 0, 0, 0): {"name": "Lahan (लहान)", "nature": "Mitrik (Inward)", "element": "Jala", "bias": "Bullish"},
+    (0, 1, 1, 1): {"name": "Nafki (नफ़की)", "nature": "Kharij (Outward)", "element": "Vayu", "bias": "Bearish"},
+    (1, 1, 0, 0): {"name": "Kajjul (कज्जुल)", "nature": "Mitrik (Inward)", "element": "Agni", "bias": "Bullish"},
+    (0, 0, 1, 1): {"name": "Uqla (उक़ला)", "nature": "Nishasht (Neutral)", "element": "Prithvi", "bias": "Sideways"},
+    (1, 0, 1, 0): {"name": "Nasrut-Kharij (नसरुत खारिज)", "nature": "Kharij (Outward)", "element": "Vayu", "bias": "Bearish"},
+    (0, 1, 0, 1): {"name": "Nasrut-Dakhil (नसरुत दाखिल)", "nature": "Mitrik (Inward)", "element": "Jala", "bias": "Bullish"},
+    (1, 0, 0, 1): {"name": "Humra (हुमरा)", "nature": "Kharij (Fire)", "element": "Agni", "bias": "Volatile / Bearish"},
+    (0, 1, 1, 0): {"name": "Bayaz (बयाज़)", "nature": "Mitrik (Inward)", "element": "Jala", "bias": "Bullish"},
+    (1, 1, 0, 1): {"name": "Nusra (नुसरा)", "nature": "Mitrik (Inward)", "element": "Vayu", "bias": "Bullish"},
+    (0, 0, 1, 0): {"name": "Kosa (कोसा)", "nature": "Kharij (Outward)", "element": "Prithvi", "bias": "Bearish"},
+    (1, 1, 1, 0): {"name": "Fath (फथ)", "nature": "Mitrik (Inward)", "element": "Agni", "bias": "Bullish"},
+    (0, 1, 0, 0): {"name": "Rahu (राहु)", "nature": "Kharij (Outward)", "element": "Vayu", "bias": "Bearish"},
+    (1, 0, 1, 1): {"name": "Munkis (मुंकिस)", "nature": "Kharij (Outward)", "element": "Prithvi", "bias": "Volatile / Bearish"},
+    (0, 0, 0, 1): {"name": "Ijtima (इजतिमा)", "nature": "Mitrik (Inward)", "element": "Jala", "bias": "Bullish"},
 }
 
 def ramal_add(fig1, fig2):
     """Ramal Parity Addition (XOR equivalent): Odd+Odd=Even, Odd+Even=Odd."""
     return tuple((a + b) % 2 for a, b in zip(fig1, fig2))
 
+def get_ramal_info(figure_tuple):
+    return RAMAL_DICTIONARY.get(figure_tuple, {"name": f"Shakal {figure_tuple}", "nature": "Unknown", "element": "Mixed", "bias": "Neutral"})
+
+RAMAL_HOUSE_DESC = [
+    "1st House (Trader/Self)", "2nd House (Capital/Profit)", "3rd House (Trade Action)", "4th House (Stock Base)",
+    "5th House (Speculation)", "6th House (Risks/Obstacles)", "7th House (Counter-party)", "8th House (Sudden Moves)",
+    "9th House (Market Trend)", "10th House (Executive Flow)", "11th House (Net Gain/Target)", "12th House (Losses/Traps)",
+    "13th House (Right Witness)", "14th House (Left Witness)", "15th House (The Judge)", "16th House (Final Outcome)",
+]
+
 def cast_ramal_chart():
-    """Casts a fresh Ramal Prashna chart for right now (random mother figures via
-    disc-spin simulation), derives daughters/nephews/witnesses/judge, and returns
-    the key houses plus the Judge (15th house) verdict info."""
+    """Casts a fresh full 16-house Ramal Prashna chart for right now (random mother
+    figures via disc-spin simulation): 4 Mothers -> 4 Daughters (transpose) -> 4
+    Nephews -> 2 Witnesses -> Judge (15th) -> Final Outcome/Reconciler (16th)."""
     mothers = [tuple(random.choice([0, 1]) for _ in range(4)) for _ in range(4)]
     daughters = [tuple(mothers[col][row] for col in range(4)) for row in range(4)]
     nephews = [
@@ -253,26 +271,35 @@ def cast_ramal_chart():
         ramal_add(daughters[0], daughters[1]),
         ramal_add(daughters[2], daughters[3]),
     ]
-    chart = mothers + daughters + nephews
-    witness_1 = ramal_add(chart[0], chart[1])
-    witness_2 = ramal_add(chart[2], chart[3])
-    judge = ramal_add(witness_1, witness_2)
-    judge_info = RAMAL_SHAKALS.get(judge, {"name": "Complex Shakal", "nature": "Neutral", "bias": "Neutral"})
+    right_witness = ramal_add(nephews[0], nephews[1])
+    left_witness  = ramal_add(nephews[2], nephews[3])
+    judge = ramal_add(right_witness, left_witness)
+    final_result = ramal_add(mothers[0], judge)
+
+    grid = mothers + daughters + nephews + [right_witness, left_witness, judge, final_result]
+    judge_info = get_ramal_info(judge)
+    final_info = get_ramal_info(final_result)
     return {
-        "house_1_trader": chart[0], "house_2_wealth": chart[1],
-        "house_5_speculation": chart[4], "house_10_trend": chart[9],
+        "grid": grid, "grid_desc": RAMAL_HOUSE_DESC,
+        "house_1_trader": mothers[0], "house_2_capital": mothers[1],
+        "house_3_trade_action": mothers[2], "house_4_stock_base": mothers[3],
+        "house_5_speculation": daughters[0], "house_9_market_trend": nephews[0],
+        "house_11_net_gain": nephews[2], "house_12_losses": nephews[3],
         "judge": judge, "judge_info": judge_info,
+        "final_result": final_result, "final_info": final_info,
     }
 
-def ramal_recommendation(bias):
-    """Since we don't ask BUY/SELL intent (stock name/action shouldn't be re-asked),
-    give both the buy-side and sell-side reading from the same cast Judge figure."""
-    if bias in ("Bullish", "Strong Bullish"):
-        return ("BUY", "🟢 FAVORABLE TO BUY — Reason: inward (Mitrik) energy suggests wealth accumulation. Avoid fresh SELL/short here.")
-    elif bias in ("Bearish", "Volatile / Bearish"):
-        return ("SELL", "🔴 FAVORABLE TO SELL / AVOID FRESH BUY — Reason: outward (Kharij) energy suggests price depletion or a false breakout risk.")
+def ramal_recommendation(judge_info, final_info):
+    """Stricter than Judge-alone: requires Judge (15th) AND Final Outcome (16th) to
+    AGREE on nature (Mitrik/Kharij) for a high-confidence call, matching the fuller
+    16-house tradition. We still don't ask BUY/SELL intent, so both readings are given."""
+    j_nature, f_nature = judge_info["nature"], final_info["nature"]
+    if j_nature.startswith("Mitrik") and f_nature.startswith("Mitrik"):
+        return ("BUY", "🟢 HIGH-PROBABILITY BUY (Strong Teji Alignment) — both Judge and Final Outcome show inward energy accumulation. Favors BUY; avoid fresh SELL here.")
+    elif j_nature.startswith("Kharij"):
+        return ("SELL", "🔴 AVOID BUYING (Mandi Warning) — Judge shows outward energy depletion, a potential price dump or trap. Favors SELL/short over fresh BUY.")
     else:
-        return ("NEUTRAL", "⚪ WAIT / CONSOLIDATION — Reason: neutral Prashna figures suggest sideways chop; wait for clearer confirmation.")
+        return ("NEUTRAL", "⚪ NEUTRAL / WAIT FOR CONFIRMATION — mixed or non-agreeing Shakal signature; avoid trading without price-action support.")
 
 def get_hindi(sym, eng):
     if sym in CURATED: return CURATED[sym]
@@ -908,8 +935,8 @@ def main(page: ft.Page):
                 page.update()
                 return
             cast = cast_ramal_chart()
-            ji = cast["judge_info"]
-            direction, ramal_line = ramal_recommendation(ji["bias"])
+            ji, fi = cast["judge_info"], cast["final_info"]
+            direction, ramal_line = ramal_recommendation(ji, fi)
             ramal_color = {"BUY": C["green"], "SELL": C["red"], "NEUTRAL": C["black_txt"]}[direction]
 
             # Cross-check against the Bhoovalaya combined direction (Step 8) for this same stock
@@ -921,16 +948,17 @@ def main(page: ft.Page):
             else:
                 club_note = "⚠️ Ramal and Bhoovalaya DISAGREE (Ramal=" + direction + " vs Bhoovalaya=" + bhoovalaya_dir + ") — treat with extra caution."
 
+            grid_lines = "\n".join(
+                f"{cast['grid_desc'][i]:<26}: {cast['grid'][i]}" for i in range(16)
+            )
+
             ramal_container.controls.clear()
             ramal_container.controls.append(ft.Divider(height=6, color=C["divider"]))
             ramal_container.controls.append(make_header("🎲 RAMAL PRASHNA — " + sym))
-            ramal_container.controls.append(ft.Text("📅 Cast at: " + datetime.now().strftime("%d-%m-%Y %H:%M:%S"), size=12, color=C["hint_txt"]))
-            ramal_container.controls.append(ft.Text(
-                f"1st House (Trader): {cast['house_1_trader']}   2nd House (Wealth): {cast['house_2_wealth']}\n"
-                f"5th House (Speculation): {cast['house_5_speculation']}   10th House (Trend): {cast['house_10_trend']}",
-                size=11, color=C["black_txt"], font_family="monospace"
-            ))
-            ramal_container.controls.append(ft.Text("15th House (The Judge): " + ji["name"] + "  [" + ji["nature"] + "]", size=13, weight="bold", color=C["primary"]))
+            ramal_container.controls.append(ft.Text("📅 Cast at: " + datetime.now().strftime("%d-%m-%Y %H:%M:%S") + "  (full 16-house chart)", size=12, color=C["hint_txt"]))
+            ramal_container.controls.append(ft.Text(grid_lines, size=10.5, color=C["black_txt"], font_family="monospace", selectable=True))
+            ramal_container.controls.append(ft.Text("15th House (Judge): " + ji["name"] + "  [" + ji["nature"] + "]", size=13, weight="bold", color=C["primary"]))
+            ramal_container.controls.append(ft.Text("16th House (Final Outcome): " + fi["name"] + "  [" + fi["nature"] + "]", size=13, weight="bold", color=C["primary"]))
             ramal_container.controls.append(ft.Container(
                 content=ft.Text(ramal_line, size=14, color="#FFFFFF", weight="bold"),
                 bgcolor=ramal_color, padding=12, border_radius=8, alignment=ft.alignment.center
@@ -1354,7 +1382,11 @@ Each nakshatra also has a real, classical ruling planet (the "Nakshatra Lord", s
 Treat this whole step as an additional caution flag to weigh alongside Graha, Bandha, and your own Rules — not a standalone reason to act.
 
 RAMAL PRASHNA (in Oracle, below Calculate Astro)
-Ramal is a separate Persian/Arabic geomancy system (also used in some Indian traditions), cast fresh at the exact moment you ask the question — like a horary chart. Tapping "🎲 RAMAL PRASHNA" never re-asks for the stock; it uses whichever stock you already searched above. It randomly casts 4 "Mother" figures, derives Daughters and Nephews from them, then combines everything down to a final "Judge" figure (15th house) that carries a Bullish/Bearish/Sideways bias. Since we don't ask BUY or SELL intent either, the result shows both readings from the same cast: favorable-to-buy, favorable-to-sell, or wait/consolidate.
+Ramal is a separate Persian/Arabic geomancy system (also used in some Indian traditions), cast fresh at the exact moment you ask the question — like a horary chart. Tapping "🎲 RAMAL PRASHNA" never re-asks for the stock; it uses whichever stock you already searched above.
+
+It randomly casts 4 "Mother" figures (simulating a disc-spin), derives 4 Daughters (by transposing the Mothers) and 4 Nephews, then 2 Witnesses, then the 15th house "Judge", and finally the 16th house "Final Outcome" (Mother 1 combined with the Judge) — the complete classical 16-house chart, with all 16 possible Shakal figures properly named (not a partial set). Since we don't ask BUY or SELL intent, the result shows both readings from the same cast.
+
+The verdict requires the Judge (15th) AND Final Outcome (16th) to agree in nature (both Mitrik/inward) for a high-confidence BUY call — a stricter, closer-to-tradition check than using the Judge alone. If the Judge shows Kharij (outward) energy, that's read as a caution against buying regardless of the Final Outcome. Anything else lands as neutral/wait.
 
 Ramal is then cross-checked against Bhoovalaya's own combined direction (Step 8) for the same stock — if both agree, it's flagged as higher-confidence; if they disagree, that's flagged too, rather than picking one silently. Because Ramal is randomly re-cast at the moment of asking, tapping it again later (or for the same stock on a different day) can genuinely give a different reading — that's expected behavior for a Prashna-style system, not a bug.
 

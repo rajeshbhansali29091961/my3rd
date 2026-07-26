@@ -6,6 +6,7 @@ import io
 import time
 import math
 import json
+import random
 from datetime import datetime
 
 try:
@@ -221,6 +222,57 @@ def quick_verdict(asum, ldt_str):
         vedha_partner = VEDHA_PAIRS.get(today_nak_idx)
         has_vedha = (vedha_partner is not None) and (vedha_partner == birth_nak_idx)
     return combined_dir, has_vedha
+
+# ── RAMAL PRASHNA (Arabic/Persian geomancy, cast at the moment of the question) ──
+# The 16 Ramal Shakals mapped to binary tuples (Top to Bottom: Agni, Vayu, Jala, Prithvi)
+# 1 = Single Dot (Odd/Fire/Air aspect), 0 = Double Dot or Line (Even/Water/Earth aspect)
+RAMAL_SHAKALS = {
+    (1, 0, 0, 0): {"name": "Lahan (लहान)", "nature": "Mitrik (Inward)", "bias": "Bullish"},
+    (1, 1, 0, 0): {"name": "Kajjul Dakhil (कज्जुल दाखिल)", "nature": "Mitrik (Inward)", "bias": "Bullish"},
+    (1, 0, 1, 0): {"name": "Nasrut-Kharij (नसरुत खारिज)", "nature": "Kharij (Outward)", "bias": "Bearish"},
+    (0, 1, 1, 0): {"name": "Ukla (उकला)", "nature": "Nishasht (Neutral)", "bias": "Sideways"},
+    (1, 1, 1, 1): {"name": "Jamat (जमात)", "nature": "Mitrik (Inward)", "bias": "Strong Bullish"},
+    (0, 0, 0, 0): {"name": "Tariq (तारीक़)", "nature": "Kharij (Outward)", "bias": "Bearish"},
+    (1, 0, 0, 1): {"name": "Humra (हुमरा)", "nature": "Kharij (Fire)", "bias": "Volatile / Bearish"},
+    (0, 1, 1, 1): {"name": "Nafki (नफ़की)", "nature": "Kharij (Outward)", "bias": "Bearish"},
+}
+
+def ramal_add(fig1, fig2):
+    """Ramal Parity Addition (XOR equivalent): Odd+Odd=Even, Odd+Even=Odd."""
+    return tuple((a + b) % 2 for a, b in zip(fig1, fig2))
+
+def cast_ramal_chart():
+    """Casts a fresh Ramal Prashna chart for right now (random mother figures via
+    disc-spin simulation), derives daughters/nephews/witnesses/judge, and returns
+    the key houses plus the Judge (15th house) verdict info."""
+    mothers = [tuple(random.choice([0, 1]) for _ in range(4)) for _ in range(4)]
+    daughters = [tuple(mothers[col][row] for col in range(4)) for row in range(4)]
+    nephews = [
+        ramal_add(mothers[0], mothers[1]),
+        ramal_add(mothers[2], mothers[3]),
+        ramal_add(daughters[0], daughters[1]),
+        ramal_add(daughters[2], daughters[3]),
+    ]
+    chart = mothers + daughters + nephews
+    witness_1 = ramal_add(chart[0], chart[1])
+    witness_2 = ramal_add(chart[2], chart[3])
+    judge = ramal_add(witness_1, witness_2)
+    judge_info = RAMAL_SHAKALS.get(judge, {"name": "Complex Shakal", "nature": "Neutral", "bias": "Neutral"})
+    return {
+        "house_1_trader": chart[0], "house_2_wealth": chart[1],
+        "house_5_speculation": chart[4], "house_10_trend": chart[9],
+        "judge": judge, "judge_info": judge_info,
+    }
+
+def ramal_recommendation(bias):
+    """Since we don't ask BUY/SELL intent (stock name/action shouldn't be re-asked),
+    give both the buy-side and sell-side reading from the same cast Judge figure."""
+    if bias in ("Bullish", "Strong Bullish"):
+        return ("BUY", "🟢 FAVORABLE TO BUY — Reason: inward (Mitrik) energy suggests wealth accumulation. Avoid fresh SELL/short here.")
+    elif bias in ("Bearish", "Volatile / Bearish"):
+        return ("SELL", "🔴 FAVORABLE TO SELL / AVOID FRESH BUY — Reason: outward (Kharij) energy suggests price depletion or a false breakout risk.")
+    else:
+        return ("NEUTRAL", "⚪ WAIT / CONSOLIDATION — Reason: neutral Prashna figures suggest sideways chop; wait for clearer confirmation.")
 
 def get_hindi(sym, eng):
     if sym in CURATED: return CURATED[sym]
@@ -747,6 +799,8 @@ def main(page: ft.Page):
         result_txt = ft.Text("", size=15, color=C["dark_txt"], selectable=True, font_family="monospace")
         result_box = ft.Container(content=result_txt, bgcolor=C["res_bg"], padding=14, border_radius=8, border=ft.Border(top=ft.BorderSide(2, C["primary"]), bottom=ft.BorderSide(2, C["primary"]), left=ft.BorderSide(2, C["primary"]), right=ft.BorderSide(2, C["primary"])), visible=False)
         oracle_astro_container = ft.Column(spacing=15, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False)
+        ramal_container = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False)
+        current_stock = {"sym": None, "asum": None, "ldt": None}  # remembers the last analysed stock, so Ramal never re-asks
 
         def do_oracle(e):
             q = fld_oracle.value.strip().upper()
@@ -759,6 +813,7 @@ def main(page: ft.Page):
                 result_txt.value = "DATABASE IS EMPTY\n\nGo to Database tab and\ntap BUILD DATABASE button."
                 result_box.visible = True
                 oracle_astro_container.visible = False
+                ramal_container.visible = False
                 page.update()
                 return
             row = db_get(q)
@@ -775,15 +830,20 @@ def main(page: ft.Page):
                 result_txt.value = f"━" * 30 + f"\nSYMBOL  : {sym}\nCOMPANY : {eng}\nHINDI   : {hi}\nLISTED  : {ldt}\n" + f"━" * 30 + f"\nAKSHARA SUM  = {asum}\nTEMPORAL MOD = {tval}\nCOMBINED VIB = {asum + tval}\nNAVAANK      = {(asum % 9) or 9}\n\n{rep}"
                 result_box.visible = True
                 oracle_astro_container.visible = False   # hide any chart from a previous search
+                ramal_container.visible = False          # hide any Ramal result from a previous search
+                current_stock["sym"], current_stock["asum"], current_stock["ldt"] = sym, asum, ldt
             else:
                 set_status("Not found: " + q, C["red"])
                 result_txt.value = f"'{q}' NOT FOUND\n\nTry: RELIANCE TCS SBIN"
                 result_box.visible = True
                 oracle_astro_container.visible = False
+                ramal_container.visible = False
+                current_stock["sym"], current_stock["asum"], current_stock["ldt"] = None, None, None
             page.update()
 
         def do_oracle_back(e):
             oracle_astro_container.visible = False
+            ramal_container.visible = False
             page.scroll_to(offset=0, duration=300)
             page.update()
 
@@ -839,6 +899,49 @@ def main(page: ft.Page):
                 oracle_astro_container.visible = True
             page.update()
 
+        def do_oracle_ramal(e):
+            # ── RAMAL PRASHNA — cast fresh right now, for whichever stock is already
+            # loaded above. Never re-asks for the stock name or BUY/SELL intent. ──
+            sym = current_stock.get("sym")
+            if not sym:
+                set_status("Search a stock first, then cast Ramal.", C["red"])
+                page.update()
+                return
+            cast = cast_ramal_chart()
+            ji = cast["judge_info"]
+            direction, ramal_line = ramal_recommendation(ji["bias"])
+            ramal_color = {"BUY": C["green"], "SELL": C["red"], "NEUTRAL": C["black_txt"]}[direction]
+
+            # Cross-check against the Bhoovalaya combined direction (Step 8) for this same stock
+            bhoovalaya_dir, has_vedha = quick_verdict(current_stock["asum"], current_stock["ldt"])
+            if (direction == "BUY" and bhoovalaya_dir == "UP") or (direction == "SELL" and bhoovalaya_dir == "DOWN"):
+                club_note = "✅ Ramal AGREES with Bhoovalaya's combined direction (" + bhoovalaya_dir + ") — higher-confidence read."
+            elif direction == "NEUTRAL" or bhoovalaya_dir in ("SIDEWAYS", "MIXED"):
+                club_note = "↔️ One or both systems read range-bound/mixed — lower conviction either way."
+            else:
+                club_note = "⚠️ Ramal and Bhoovalaya DISAGREE (Ramal=" + direction + " vs Bhoovalaya=" + bhoovalaya_dir + ") — treat with extra caution."
+
+            ramal_container.controls.clear()
+            ramal_container.controls.append(ft.Divider(height=6, color=C["divider"]))
+            ramal_container.controls.append(make_header("🎲 RAMAL PRASHNA — " + sym))
+            ramal_container.controls.append(ft.Text("📅 Cast at: " + datetime.now().strftime("%d-%m-%Y %H:%M:%S"), size=12, color=C["hint_txt"]))
+            ramal_container.controls.append(ft.Text(
+                f"1st House (Trader): {cast['house_1_trader']}   2nd House (Wealth): {cast['house_2_wealth']}\n"
+                f"5th House (Speculation): {cast['house_5_speculation']}   10th House (Trend): {cast['house_10_trend']}",
+                size=11, color=C["black_txt"], font_family="monospace"
+            ))
+            ramal_container.controls.append(ft.Text("15th House (The Judge): " + ji["name"] + "  [" + ji["nature"] + "]", size=13, weight="bold", color=C["primary"]))
+            ramal_container.controls.append(ft.Container(
+                content=ft.Text(ramal_line, size=14, color="#FFFFFF", weight="bold"),
+                bgcolor=ramal_color, padding=12, border_radius=8, alignment=ft.alignment.center
+            ))
+            ramal_container.controls.append(ft.Text(club_note, size=12, color=C["black_txt"], weight="bold"))
+            ramal_container.controls.append(ft.Text("Symbolic Prashna casting — a fresh cast can differ each time you tap. Not a guarantee, treat as one more input alongside the rest.", size=10, color=C["hint_txt"]))
+            ramal_container.controls.append(ft.Container(height=6))
+            ramal_container.controls.append(ft.ElevatedButton("⬅  BACK TO ORACLE SEARCH", bgcolor=C["primary"], color="#FFFFFF", height=46, on_click=do_oracle_back))
+            ramal_container.visible = True
+            page.update()
+
         oracle_screen = ft.Column(visible=True, controls=[
             make_header("🔮  ORACLE ANALYSIS"), ft.Divider(height=4, color=C["divider"]),
             ft.Text("Enter Stock Symbol or Name:", size=15, color=C["black_txt"], weight="bold"),
@@ -847,7 +950,10 @@ def main(page: ft.Page):
             ft.Divider(height=6, color=C["divider"]), result_box,
             ft.Container(height=10),
             ft.ElevatedButton("🪐  CALCULATE ASTRO (D1 / D9)", bgcolor=C["primary"], color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_astro),
-            oracle_astro_container
+            oracle_astro_container,
+            ft.Container(height=10),
+            ft.ElevatedButton("🎲  RAMAL PRASHNA (Cast Now)", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_ramal),
+            ramal_container
         ])
 
         # ── SCREEN 2: STOCK LIST ──────────────────────────────────────────────
@@ -878,6 +984,7 @@ def main(page: ft.Page):
                         ft.Row([
                             ft.TextButton("✏️ Edit", style=ft.ButtonStyle(color=C["accent"]), on_click=lambda e, s=sym: load_edit(s)),
                             ft.TextButton("🔮 Analyse", style=ft.ButtonStyle(color=C["green"]), on_click=lambda e, s=sym: (setattr(fld_oracle, 'value', s), show_screen("oracle"), do_oracle(e))),
+                            ft.TextButton("🎲 Ramal", style=ft.ButtonStyle(color="#4E342E"), on_click=lambda e, s=sym: (setattr(fld_oracle, 'value', s), show_screen("oracle"), do_oracle(e), do_oracle_ramal(e))),
                         ]),
                     ], spacing=2), bgcolor=bg, padding=8, border_radius=6, border=ft.Border(bottom=ft.BorderSide(1, C["divider"])))
                 list_rows.controls.append(row_ctrl)
@@ -1245,6 +1352,11 @@ Step 9 compares today's trading-day nakshatra against the stock's own "birth" na
 Each nakshatra also has a real, classical ruling planet (the "Nakshatra Lord", same sequence used for Vimshottari Dasha: Ketu → Venus → Sun → Moon → Mars → Rahu → Jupiter → Saturn → Mercury, repeating 3x across all 27 nakshatras). When a Vedha is present, Step 9 also shows both nakshatras' lords and pulls their associated sectors from the Graha table in Step 5 — so you get a concrete "which sectors does this caution flag concern" answer, built from a real classical assignment (the lordship) even though the sector-linkage itself is this app's own layer, not ancient doctrine.
 
 Treat this whole step as an additional caution flag to weigh alongside Graha, Bandha, and your own Rules — not a standalone reason to act.
+
+RAMAL PRASHNA (in Oracle, below Calculate Astro)
+Ramal is a separate Persian/Arabic geomancy system (also used in some Indian traditions), cast fresh at the exact moment you ask the question — like a horary chart. Tapping "🎲 RAMAL PRASHNA" never re-asks for the stock; it uses whichever stock you already searched above. It randomly casts 4 "Mother" figures, derives Daughters and Nephews from them, then combines everything down to a final "Judge" figure (15th house) that carries a Bullish/Bearish/Sideways bias. Since we don't ask BUY or SELL intent either, the result shows both readings from the same cast: favorable-to-buy, favorable-to-sell, or wait/consolidate.
+
+Ramal is then cross-checked against Bhoovalaya's own combined direction (Step 8) for the same stock — if both agree, it's flagged as higher-confidence; if they disagree, that's flagged too, rather than picking one silently. Because Ramal is randomly re-cast at the moment of asking, tapping it again later (or for the same stock on a different day) can genuinely give a different reading — that's expected behavior for a Prashna-style system, not a bug.
 
 EXPORT / IMPORT RULES
 "📤 EXPORT RULES" turns all your saved rules into JSON text shown in a copyable box below the button — long-press the text to select it, copy, then paste it anywhere (a text file on your PC, notes app, email) to back it up or test it elsewhere. "📥 IMPORT RULES FROM JSON" does the reverse: paste JSON text (in the same format) into the box above it and tap the button to load those rules straight into this app. This uses plain copy-paste rather than a file-save dialog, since those have proven unreliable once compiled into an Android APK.

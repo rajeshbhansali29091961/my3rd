@@ -206,7 +206,52 @@ def fetch_nse_quote(symbol):
         "prev_close": pi.get("previousClose"),
         "week_high": wk.get("max"),
         "week_low": wk.get("min"),
+        "source": "NSE India",
     }
+
+def fetch_yahoo_quote(symbol):
+    """Fallback quote source when NSE blocks the request — Yahoo Finance's chart
+    API (the same data source the popular 'yfinance' library uses under the hood).
+    No API key needed, and far more permissive than NSE for simple lookups.
+    NSE-listed stocks use the '.NS' suffix on Yahoo Finance."""
+    if not REQUESTS_OK:
+        raise RuntimeError("The 'requests' library is not available in this build.")
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"}
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS"
+    resp = requests.get(url, headers=headers, timeout=8)
+    resp.raise_for_status()
+    data = resp.json()
+    result = (data.get("chart") or {}).get("result")
+    if not result:
+        raise RuntimeError("No data returned for this symbol on Yahoo Finance (it may not be listed under '.NS').")
+    meta = result[0].get("meta", {}) or {}
+    last_price = meta.get("regularMarketPrice")
+    prev_close = meta.get("previousClose") or meta.get("chartPreviousClose")
+    change = pchange = None
+    try:
+        if last_price is not None and prev_close:
+            change = round(last_price - prev_close, 2)
+            pchange = round((change / prev_close) * 100, 2)
+    except (TypeError, ZeroDivisionError):
+        pass
+    return {
+        "last_price": last_price, "change": change, "pchange": pchange,
+        "prev_close": prev_close,
+        "week_high": meta.get("fiftyTwoWeekHigh"), "week_low": meta.get("fiftyTwoWeekLow"),
+        "source": "Yahoo Finance",
+    }
+
+def fetch_stock_quote(symbol):
+    """Tries NSE first (primary source); if it's blocked or errors out, falls
+    back to Yahoo Finance automatically for the same symbol. Raises only if
+    BOTH sources fail, with both error reasons included."""
+    try:
+        return fetch_nse_quote(symbol)
+    except Exception as nse_err:
+        try:
+            return fetch_yahoo_quote(symbol)
+        except Exception as yahoo_err:
+            raise RuntimeError(f"NSE failed ({nse_err}); Yahoo Finance fallback also failed ({yahoo_err})")
 
 # ── COLORS ─────────────────────────────────────────────────────────────────────
 C = {
@@ -1054,15 +1099,15 @@ def main(page: ft.Page):
         def do_fetch_price(sym):
             price_popup.controls.clear()
             price_popup.controls.append(ft.Divider(height=4, color=C["divider"]))
-            price_popup.controls.append(ft.Text(f"⏳ Fetching live price for {sym} from NSE...", size=13, color=C["accent"]))
+            price_popup.controls.append(ft.Text(f"⏳ Fetching live price for {sym} (NSE, then Yahoo Finance as fallback)...", size=13, color=C["accent"]))
             price_popup.visible = True
             page.scroll_to(offset=0, duration=200)
             page.update()
 
             def worker():
                 try:
-                    q = fetch_nse_quote(sym)
-                    lp, chg, pchg = q["last_price"], q["change"], q["pchange"]
+                    q = fetch_stock_quote(sym)
+                    lp, chg, pchg, src = q["last_price"], q["change"], q["pchange"], q.get("source", "Unknown")
                     try:
                         chg_f = float(chg) if chg is not None else None
                         pchg_f = float(pchg) if pchg is not None else None
@@ -1073,7 +1118,7 @@ def main(page: ft.Page):
                         chg_color = C["black_txt"]
                     price_popup.controls.clear()
                     price_popup.controls.append(ft.Divider(height=4, color=C["divider"]))
-                    price_popup.controls.append(make_header("💰 " + sym + " — LIVE PRICE (NSE)"))
+                    price_popup.controls.append(make_header("💰 " + sym + " — LIVE PRICE"))
                     price_popup.controls.append(ft.Text(
                         f"Current Trading Price : ₹{lp}" + change_str,
                         size=15, weight="bold", color=chg_color
@@ -1081,13 +1126,13 @@ def main(page: ft.Page):
                     price_popup.controls.append(ft.Text(f"Yesterday's Close      : ₹{q['prev_close']}", size=13, color=C["black_txt"]))
                     price_popup.controls.append(ft.Text(f"52-Week High           : ₹{q['week_high']}", size=13, color=C["green"]))
                     price_popup.controls.append(ft.Text(f"52-Week Low            : ₹{q['week_low']}", size=13, color=C["red"]))
-                    price_popup.controls.append(ft.Text("Source: NSE India live quote API. Can be delayed a few minutes — verify on your broker's terminal before trading.", size=10, color=C["hint_txt"]))
+                    price_popup.controls.append(ft.Text(f"Source: {src}" + (" (NSE was unreachable, used fallback)" if src != "NSE India" else "") + ". Can be delayed a few minutes — verify on your broker's terminal before trading.", size=10, color=C["hint_txt"]))
                     price_popup.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["red"], color="#FFFFFF", height=40, on_click=do_close_price_popup))
                 except Exception as ex:
                     price_popup.controls.clear()
                     price_popup.controls.append(ft.Divider(height=4, color=C["divider"]))
                     price_popup.controls.append(ft.Text(
-                        f"⚠️ Could not fetch live price for {sym}.\nReason: {str(ex)}\n\nNSE sometimes blocks automated requests — try again in a moment, or check your internet connection.",
+                        f"⚠️ Could not fetch live price for {sym}.\nReason: {str(ex)}\n\nBoth NSE and the Yahoo Finance fallback were tried. Try again in a moment, or check your internet connection.",
                         size=12, color=C["red"]
                     ))
                     price_popup.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["red"], color="#FFFFFF", height=40, on_click=do_close_price_popup))
@@ -1509,7 +1554,7 @@ Each nakshatra also has a real, classical ruling planet (the "Nakshatra Lord", s
 Treat this whole step as an additional caution flag to weigh alongside Graha, Bandha, and your own Rules — not a standalone reason to act.
 
 LIVE PRICE (in Stocks list, next to Ramal)
-Tap "💰 Price" on any stock row to fetch its current trading price, change vs previous close, yesterday's closing price, and 52-week high/low directly from NSE's live quote API. It runs in the background so the list stays responsive while fetching, and shows the result as a panel at the top of the Stocks screen. NSE occasionally blocks automated requests — if that happens, the panel shows the error and you can simply try again in a moment. Treat this as a quick reference, not a substitute for checking your broker's terminal before actually placing a trade.
+Tap "💰 Price" on any stock row to fetch its current trading price, change vs previous close, yesterday's closing price, and 52-week high/low. It tries NSE's live quote API first; if NSE blocks the request (it does this unpredictably to automated requests), it automatically falls back to Yahoo Finance for the same stock — no action needed from you. The panel tells you which source actually answered. It runs in the background so the list stays responsive while fetching. If both sources fail, the panel shows the error and you can simply try again in a moment. Treat this as a quick reference, not a substitute for checking your broker's terminal before actually placing a trade.
 
 RAMAL PRASHNA (in Oracle, below Calculate Astro)
 Ramal is a separate Persian/Arabic geomancy system (also used in some Indian traditions), cast fresh at the exact moment you ask the question — like a horary chart. Tapping "🎲 RAMAL PRASHNA" never re-asks for the stock; it uses whichever stock you already searched above.

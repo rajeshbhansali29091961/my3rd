@@ -801,10 +801,13 @@ def main(page: ft.Page):
             return ((int(sign_idx) - int(lagna_sign_idx)) % 12) + 1
 
         def evaluate_rules(d1_pos, d9_pos, lagna_d1, lagna_d9, retro_set):
-            """Runs all stored rules against the current chart and returns (matches, net_score)."""
+            """Runs all stored rules against the current chart and returns (matches, net_score, avoid_matches).
+            AVOID rules are kept separate from the BUY/SELL numeric score — a single genuine
+            AVOID match should be a hard caution flag, not something that can be outweighed
+            by a pile of small BUY-weighted rules elsewhere."""
             houses_d1 = {p: get_house_num(s, lagna_d1) for p, s in d1_pos.items() if p != "As"}
             houses_d9 = {p: get_house_num(s, lagna_d9) for p, s in d9_pos.items() if p != "As"}
-            matches, score = [], 0.0
+            matches, avoid_matches, score = [], [], 0.0
             for (rid, rtype, planet, hd1, hd9, retro_only, signal, weight, note) in rule_list():
                 planets_to_check = [planet] if planet != "ANY" else list(houses_d1.keys())
                 for pl in planets_to_check:
@@ -817,12 +820,22 @@ def main(page: ft.Page):
                         ok = True
                     elif rtype == "D1_D9_COMPARE" and houses_d1.get(pl) == hd1 and houses_d9.get(pl) == hd9:
                         ok = True
+                    elif rtype == "D1_D9_SAME_HOUSE" and houses_d1.get(pl) is not None and houses_d1.get(pl) == houses_d9.get(pl):
+                        ok = True
                     elif rtype == "VARGOTTAMA" and d1_pos.get(pl) is not None and d1_pos.get(pl) == d9_pos.get(pl):
                         ok = True
+                    elif rtype == "D1_RASHI" and d1_pos.get(pl) is not None and (d1_pos.get(pl) + 1) == hd1:
+                        ok = True
+                    elif rtype == "D9_RASHI" and d9_pos.get(pl) is not None and (d9_pos.get(pl) + 1) == hd9:
+                        ok = True
                     if ok:
-                        matches.append((pl, rtype, signal, weight, note))
-                        score += weight if signal == "BUY" else (-weight if signal == "SELL" else 0)
-            return matches, score
+                        entry = (pl, rtype, signal, weight, note)
+                        if signal == "AVOID":
+                            avoid_matches.append(entry)
+                        else:
+                            matches.append(entry)
+                            score += weight if signal == "BUY" else (-weight if signal == "SELL" else 0)
+            return matches, score, avoid_matches
 
         def is_retrograde(jd, planet_key, lat=19.076, lon=72.877):
             pos_prev, _ = calc_planet_positions(jd - 1, lat, lon)
@@ -999,9 +1012,11 @@ def main(page: ft.Page):
                 ))
                 oracle_astro_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
 
-                # ── CUSTOM RULES: BUY/SELL RECOMMENDATION ──────────────────
-                matches, score = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
-                if score > 0:
+                # ── CUSTOM RULES: BUY/SELL/AVOID RECOMMENDATION ──────────────
+                matches, score, avoid_matches = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
+                if avoid_matches:
+                    rec_text, rec_color = f"🚫 CUSTOM RULES: AVOID THIS STOCK TODAY  ({len(avoid_matches)} avoid-rule match{'es' if len(avoid_matches) != 1 else ''})", "#212121"
+                elif score > 0:
                     rec_text, rec_color = f"🟢 CUSTOM RULES: NET BUY  (score {score:+.1f})", C["green"]
                 elif score < 0:
                     rec_text, rec_color = f"🔴 CUSTOM RULES: NET SELL  (score {score:+.1f})", C["red"]
@@ -1012,6 +1027,9 @@ def main(page: ft.Page):
                     content=ft.Text(rec_text, size=15, color="#FFFFFF", weight="bold"),
                     bgcolor=rec_color, padding=12, border_radius=8, alignment=ft.alignment.center
                 ))
+                if avoid_matches:
+                    avoid_detail = "\n".join(f"🚫 {pl}  [{rt}]  {nt or ''}" for pl, rt, sig, w, nt in avoid_matches)
+                    oracle_astro_container.controls.append(ft.Text(avoid_detail, size=11, color=C["red"], weight="bold", selectable=True))
                 if matches:
                     detail = "\n".join(f"• {pl}  [{rt}]  → {sig}  (w={w})  {nt or ''}" for pl, rt, sig, w, nt in matches)
                     oracle_astro_container.controls.append(ft.Text(detail, size=11, color=C["black_txt"], selectable=True))
@@ -1366,15 +1384,17 @@ def main(page: ft.Page):
 
         # ── SCREEN 6: CUSTOM D1/D9 RULES ────────────────────────────────────
         PLANET_OPTS = ["ANY", "Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa", "Ra", "Ke"]
+        RASHI_NAMES = ["1=Aries", "2=Taurus", "3=Gemini", "4=Cancer", "5=Leo", "6=Virgo",
+                       "7=Libra", "8=Scorpio", "9=Sagittarius", "10=Capricorn", "11=Aquarius", "12=Pisces"]
         fld_rule_type   = ft.Dropdown(label="Rule Type", value="D9_HOUSE",
-                                        options=[ft.dropdown.Option(o) for o in ["D1_HOUSE", "D9_HOUSE", "D1_D9_COMPARE", "VARGOTTAMA"]])
+                                        options=[ft.dropdown.Option(o) for o in ["D1_HOUSE", "D9_HOUSE", "D1_D9_COMPARE", "D1_D9_SAME_HOUSE", "VARGOTTAMA", "D1_RASHI", "D9_RASHI"]])
         fld_rule_planet = ft.Dropdown(label="Planet", value="ANY",
                                         options=[ft.dropdown.Option(o) for o in PLANET_OPTS])
-        fld_rule_h1     = make_field("D1 House (1-12)", hint="Leave blank if not used / VARGOTTAMA")
-        fld_rule_h9     = make_field("D9 House (1-12)", hint="Leave blank if not used / VARGOTTAMA")
+        fld_rule_h1     = make_field("D1 House (1-12) OR D1 Rashi number", hint="HOUSE rules: house# counted from Lagna. RASHI rules: " + ", ".join(RASHI_NAMES[:4]) + "...")
+        fld_rule_h9     = make_field("D9 House (1-12) OR D9 Rashi number", hint="Same numbering as above, applied to the D9 (Navamsha) chart")
         fld_rule_retro  = ft.Checkbox(label="Apply only when planet is Retrograde", value=False)
         fld_rule_signal = ft.Dropdown(label="Signal", value="BUY",
-                                        options=[ft.dropdown.Option(o) for o in ["BUY", "SELL", "NEUTRAL"]])
+                                        options=[ft.dropdown.Option(o) for o in ["BUY", "SELL", "AVOID", "NEUTRAL"]])
         fld_rule_weight = make_field("Weight", value="1.0")
         fld_rule_note   = make_field("Note (optional)", hint="e.g. Jupiter own house — strength")
 
@@ -1386,11 +1406,14 @@ def main(page: ft.Page):
             if not rows:
                 rules_list_col.controls.append(ft.Text("No custom rules yet. Add one above, or tap LOAD EXAMPLE RULES.", size=12, color=C["black_txt"]))
             for (rid, rtype, planet, hd1, hd9, retro_only, signal, weight, note) in rows:
-                sig_color = C["red"] if signal == "SELL" else (C["green"] if signal == "BUY" else C["black_txt"])
-                desc = f"#{rid}  [{rtype}]  {planet}  D1H:{hd1 or '-'}  D9H:{hd9 or '-'}  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
+                sig_color = {"SELL": C["red"], "BUY": C["green"], "AVOID": "#212121"}.get(signal, C["black_txt"])
+                is_rashi = rtype in ("D1_RASHI", "D9_RASHI")
+                label1 = "D1 Rashi" if rtype == "D1_RASHI" else "D1H"
+                label2 = "D9 Rashi" if rtype == "D9_RASHI" else "D9H"
+                desc = f"#{rid}  [{rtype}]  {planet}  {label1}:{hd1 or '-'}  {label2}:{hd9 or '-'}  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
                 rules_list_col.controls.append(
                     ft.Row([
-                        ft.Text(desc, size=12, color=sig_color, expand=True),
+                        ft.Text(desc, size=12, color=sig_color, weight="bold" if signal == "AVOID" else None, expand=True),
                         ft.IconButton(icon=ft.Icons.DELETE, icon_color=C["red"], on_click=lambda e, rid=rid: do_delete_rule(rid))
                     ])
                 )
@@ -1406,8 +1429,8 @@ def main(page: ft.Page):
                 h1 = int(fld_rule_h1.value) if fld_rule_h1.value and fld_rule_h1.value.strip() else None
                 h9 = int(fld_rule_h9.value) if fld_rule_h9.value and fld_rule_h9.value.strip() else None
                 w  = float(fld_rule_weight.value) if fld_rule_weight.value and fld_rule_weight.value.strip() else 1.0
-                if h1 is not None and not (1 <= h1 <= 12): raise ValueError("D1 House must be 1-12")
-                if h9 is not None and not (1 <= h9 <= 12): raise ValueError("D9 House must be 1-12")
+                if h1 is not None and not (1 <= h1 <= 12): raise ValueError("D1 field must be 1-12 (house# from Lagna, or 1-12=Aries..Pisces for a RASHI rule)")
+                if h9 is not None and not (1 <= h9 <= 12): raise ValueError("D9 field must be 1-12 (house# from Lagna, or 1-12=Aries..Pisces for a RASHI rule)")
                 rule_add(fld_rule_type.value, fld_rule_planet.value, h1, h9, fld_rule_retro.value, fld_rule_signal.value, w, fld_rule_note.value)
                 set_status("Rule added.", C["green"])
                 fld_rule_h1.value = ""; fld_rule_h9.value = ""; fld_rule_note.value = ""
@@ -1418,18 +1441,24 @@ def main(page: ft.Page):
 
         EXAMPLE_RULE_PACK = [
             # (rule_type, planet, house_d1, house_d9, retro_only, signal, weight, note)
-            ("D1_HOUSE",      "Ju", 11, None, 0, "BUY",  2.0, "Jupiter D1 11th — gains/profits house"),
-            ("D9_HOUSE",      "Ju", None, 11, 0, "BUY",  2.0, "Jupiter D9 11th — navamsha confirms gains"),
-            ("D1_D9_COMPARE", "Ju", 11, 11,   0, "BUY",  3.0, "Jupiter strong in D1 & D9 11th — very strong bullish"),
-            ("VARGOTTAMA",    "Ju", None, None, 0, "BUY", 3.0, "Jupiter Vargottama — amplified benefic strength"),
-            ("D1_HOUSE",      "Ve", 2,  None, 0, "BUY",  1.5, "Venus D1 2nd — wealth/liquidity"),
-            ("D1_HOUSE",      "Ma", 8,  None, 0, "SELL", 2.0, "Mars D1 8th — classic sudden-crash placement"),
-            ("D1_HOUSE",      "Sa", 6,  None, 0, "SELL", 1.5, "Saturn D1 6th — debt/obstacle pressure"),
-            ("D9_HOUSE",      "Me", 3,  None, 1, "SELL", 2.0, "Mercury retrograde in D9 3rd — trade/comm volatility"),
-            ("D1_HOUSE",      "Ra", 11, None, 0, "BUY",  1.5, "Rahu D1 11th — speculative sudden gains (volatile)"),
-            ("D1_HOUSE",      "Ke", 12, None, 0, "SELL", 1.5, "Ketu D1 12th — losses/isolation"),
-            ("D1_HOUSE",      "Su", 10, None, 0, "BUY",  1.0, "Sun D1 10th — leadership/PSU strength"),
-            ("D1_HOUSE",      "Sa", 8,  None, 1, "SELL", 1.5, "Saturn retrograde D1 8th — prolonged structural correction"),
+            ("D1_HOUSE",      "Ju", 11, None, 0, "BUY",  2.0, "Jupiter in D1 11th house from Lagna — gains/profits house"),
+            ("D9_HOUSE",      "Ju", None, 11, 0, "BUY",  2.0, "Jupiter in D9 11th house — navamsha confirms gains"),
+            ("D1_D9_COMPARE", "Ju", 11, 11,   0, "BUY",  3.0, "Jupiter strong in BOTH D1 & D9 11th — very strong bullish confirmation"),
+            ("D1_D9_SAME_HOUSE", "Ju", None, None, 0, "BUY", 2.0, "Jupiter holds the SAME house number in both D1 & D9 (whatever that house is) — consistent placement, generally strengthens Jupiter's result either way"),
+            ("D1_D9_SAME_HOUSE", "ANY", None, None, 0, "NEUTRAL", 0.5, "ANY planet with matching D1/D9 house — logged for reference, doesn't move the score by default; raise the weight/change signal once you've tested this yourself"),
+            ("VARGOTTAMA",    "Ju", None, None, 0, "BUY", 3.0, "Jupiter Vargottama (same rashi in D1 & D9) — amplified benefic strength"),
+            ("D1_RASHI",      "Ju", 9,  None, 0, "BUY",  2.0, "Jupiter sitting in Sagittarius (its own rashi, #9) in D1 — own-sign strength, regardless of house"),
+            ("D9_RASHI",      "Ve", 7,  None, 0, "BUY",  1.5, "Venus in Libra (#7, its own rashi) in D9 — strong Venus signification (finance/luxury) in the navamsha"),
+            ("D1_HOUSE",      "Ve", 2,  None, 0, "BUY",  1.5, "Venus D1 2nd house — wealth/liquidity"),
+            ("D1_HOUSE",      "Ma", 8,  None, 0, "SELL", 2.0, "Mars D1 8th house — classic sudden-crash placement"),
+            ("D1_HOUSE",      "Ma", 8,  None, 1, "AVOID", 1.0, "Mars RETROGRADE in D1 8th — high-risk combination, sit this one out entirely"),
+            ("D1_HOUSE",      "Sa", 6,  None, 0, "SELL", 1.5, "Saturn D1 6th house — debt/obstacle pressure"),
+            ("D1_D9_COMPARE", "Sa", 8,  8,    1, "AVOID", 1.0, "Saturn retrograde AND afflicted in BOTH D1 & D9 8th house — strong caution, avoid new positions"),
+            ("D9_HOUSE",      "Me", 3,  None, 1, "SELL", 2.0, "Mercury retrograde in D9 3rd house — trade/communication volatility"),
+            ("D1_HOUSE",      "Ra", 11, None, 0, "BUY",  1.5, "Rahu D1 11th house — speculative sudden gains (volatile)"),
+            ("D1_HOUSE",      "Ke", 12, None, 0, "SELL", 1.5, "Ketu D1 12th house — losses/isolation"),
+            ("D1_HOUSE",      "Su", 10, None, 0, "BUY",  1.0, "Sun D1 10th house — leadership/PSU strength"),
+            ("D1_HOUSE",      "Sa", 8,  None, 1, "SELL", 1.5, "Saturn retrograde D1 8th house — prolonged structural correction"),
         ]
 
         def do_load_example_rules(e):
@@ -1484,8 +1513,19 @@ def main(page: ft.Page):
                 set_status(f"Import error: {str(ex)}", C["red"])
                 page.update()
 
-        HELP_TEXT = """HOW THE BUY/SELL SIGNAL WORKS
-The 🟢 NET BUY / 🔴 NET SELL / ⚪ NEUTRAL banner in Oracle (under CALCULATE ASTRO) is computed by adding up every rule below that matches the current chart: +weight for BUY rules, -weight for SELL rules, 0 for NEUTRAL. This is a reference tool based on conventional interpretations, not a validated predictive model — use it as one input, not a standalone signal.
+        HELP_TEXT = """HOW THE BUY/SELL/AVOID SIGNAL WORKS
+The banner in Oracle (under CALCULATE ASTRO) is computed by adding up every rule below that matches the current chart: +weight for BUY rules, -weight for SELL rules, 0 for NEUTRAL. AVOID rules work differently on purpose — see below. This is a reference tool based on conventional interpretations, not a validated predictive model — use it as one input, not a standalone signal.
+
+HOUSE vs RASHI — THE MOST IMPORTANT DISTINCTION TO UNDERSTAND
+These are two different things, and mixing them up is the #1 source of confusion:
+• HOUSE (Bhava) — counted starting from the Ascendant (Lagna), 1st house = wherever the Lagna itself sits, then 2nd, 3rd... 12th going around. This is RELATIVE to that specific chart's Ascendant.
+• RASHI (sign) — the fixed zodiac sign itself: 1=Aries, 2=Taurus, 3=Gemini, 4=Cancer, 5=Leo, 6=Virgo, 7=Libra, 8=Scorpio, 9=Sagittarius, 10=Capricorn, 11=Aquarius, 12=Pisces. This is ABSOLUTE — Aries is always Aries no matter what the Lagna is.
+
+A FULLY WORKED EXAMPLE (numbers, not just theory):
+Say the Ascendant (Lagna) for this chart falls in Aries (rashi #1). Say Jupiter sits in Sagittarius (rashi #9).
+• Jupiter's HOUSE = count from Lagna's sign to Jupiter's sign, inclusive of the start: Aries(1)→Taurus(2)→...→Sagittarius(9) = 9 signs along = Jupiter is in the 9th HOUSE.
+• Jupiter's RASHI is simply Sagittarius (#9) — regardless of house, because Sagittarius is Jupiter's own sign (Jupiter "rules" Sagittarius), this is called Swakshetra (own-sign) and is considered a strong, stable placement in its own right.
+So the exact same planet position gives you TWO separate facts you can build rules from: "Jupiter in 9th house" (a D1_HOUSE rule with value 9) AND "Jupiter in Sagittarius" (a D1_RASHI rule with value 9 — yes, both happen to be 9 here, but that's a coincidence of this specific example; house and rashi numbers do NOT generally match for other planets or other Lagnas).
 
 KEY HOUSES FOR WEALTH (D1 and D9 both)
 • 2nd — liquid wealth, banking, accumulated value
@@ -1511,11 +1551,17 @@ Most trading-desk convention treats Mercury retrograde as a caution period (misc
 VARGOTTAMA
 When a planet sits in the SAME rashi/sign in both D1 and D9 (regardless of house number), it's considered to triple/amplify that planet's natural result — good or bad. Use the VARGOTTAMA rule type for this (house fields not needed).
 
+THE "AVOID" SIGNAL — HOW IT'S DIFFERENT FROM SELL
+BUY and SELL both feed into one numeric tug-of-war score — a handful of small BUY rules can outweigh one SELL rule. AVOID is deliberately NOT part of that tally. It's meant for placements you consider serious enough that no amount of other-rule positivity should paper over them (e.g. a retrograde malefic sitting in a genuinely dangerous house). If even ONE of your AVOID rules matches, the banner switches to "🚫 AVOID THIS STOCK TODAY" regardless of what the BUY/SELL score says — you'll still see the numeric score's detail below it, but the headline is the AVOID warning. Use it sparingly, for placements you've personally found reliably bad — that's the whole point of letting you set your OWN experienced rules rather than a fixed formula.
+
 RULE TYPES EXPLAINED
-• D1_HOUSE — fires when a planet is in the given D1 house
-• D9_HOUSE — fires when a planet is in the given D9 house
-• D1_D9_COMPARE — fires only when BOTH the D1 house AND D9 house match (strongest confirmation)
-• VARGOTTAMA — fires when D1 sign = D9 sign for that planet
+• D1_HOUSE — fires when a planet is in the given HOUSE (counted from Lagna) in the D1 (Rasi) chart
+• D9_HOUSE — fires when a planet is in the given HOUSE (counted from Lagna) in the D9 (Navamsha) chart
+• D1_D9_COMPARE — fires only when BOTH the D1 house AND D9 house match the SPECIFIC values you enter (e.g. only 11th-and-11th) — the strongest, most exact confirmation
+• D1_D9_SAME_HOUSE — a more general version of the above: fires whenever a planet's D1 house number EQUALS its D9 house number, whatever that number happens to be (11th-11th, or 3rd-3rd, or any other matching pair) — no house values need to be entered for this type. Use D1_D9_COMPARE when you care about one specific house; use D1_D9_SAME_HOUSE when you just want to flag "this planet's house position is consistent across both charts," regardless of which house it is.
+• VARGOTTAMA — fires when D1 rashi = D9 rashi for that planet (house fields not needed) — note this is about the SIGN matching, which is a different, separate concept from D1_D9_SAME_HOUSE matching on HOUSE NUMBER (see the House vs Rashi section above)
+• D1_RASHI — fires when a planet sits in the given absolute RASHI (1=Aries...12=Pisces) in the D1 chart, regardless of which house that rashi falls in for this particular Lagna
+• D9_RASHI — same as above, but checked in the D9 (Navamsha) chart
 
 CHART COLOR CODING (on the D1/D9 diamond charts themselves)
 • Red — normal planet, no special condition
@@ -1568,7 +1614,7 @@ Ramal is then cross-checked against Bhoovalaya's own combined direction (Step 8)
 EXPORT / IMPORT RULES
 "📤 EXPORT RULES" turns all your saved rules into JSON text shown in a copyable box below the button — long-press the text to select it, copy, then paste it anywhere (a text file on your PC, notes app, email) to back it up or test it elsewhere. "📥 IMPORT RULES FROM JSON" does the reverse: paste JSON text (in the same format) into the box above it and tap the button to load those rules straight into this app. This uses plain copy-paste rather than a file-save dialog, since those have proven unreliable once compiled into an Android APK.
 
-Tap "📦 LOAD EXAMPLE RULES" to add a 12-rule starter pack covering the patterns above, then edit/delete individual rules to match your own approach."""
+Tap "📦 LOAD EXAMPLE RULES" to add an 18-rule starter pack covering the patterns above, then edit/delete individual rules to match your own approach."""
 
         help_screen = ft.Column(visible=False, scroll="auto", controls=[
             make_header("📖 HELP / REFERENCE GUIDE"), ft.Divider(height=4, color=C["divider"]),

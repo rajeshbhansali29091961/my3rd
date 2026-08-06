@@ -863,14 +863,28 @@ def main(page: ft.Page):
             try: return sqlite3.connect(db_path).execute("SELECT COUNT(*) FROM stocks").fetchone()[0]
             except: return 0
 
-        def db_search(q, portfolio_only=False):
+        def db_search(q, portfolio_only=False, letter=None):
             try:
                 conn = sqlite3.connect(db_path)
-                base = "SELECT symbol, eng_name, hindi_name, ldate, asum, portfolio FROM stocks WHERE (symbol LIKE ? OR eng_name LIKE ?)"
-                if portfolio_only:
-                    base += " AND portfolio=1"
-                base += " ORDER BY portfolio DESC, symbol LIMIT 200"
-                rows = conn.execute(base, ("%" + q + "%", "%" + q + "%")).fetchall()
+                if letter:
+                    # Query the database directly for this letter — never truncated by
+                    # the general LIMIT below, since a letter's own count is naturally small.
+                    base = "SELECT symbol, eng_name, hindi_name, ldate, asum, portfolio FROM stocks WHERE symbol LIKE ?"
+                    params = [letter.upper() + "%"]
+                    if q:
+                        base += " AND (symbol LIKE ? OR eng_name LIKE ?)"
+                        params += ["%" + q + "%", "%" + q + "%"]
+                    if portfolio_only:
+                        base += " AND portfolio=1"
+                    base += " ORDER BY portfolio DESC, symbol LIMIT 500"
+                    rows = conn.execute(base, params).fetchall()
+                else:
+                    base = "SELECT symbol, eng_name, hindi_name, ldate, asum, portfolio FROM stocks WHERE (symbol LIKE ? OR eng_name LIKE ?)"
+                    params = ["%" + q + "%", "%" + q + "%"]
+                    if portfolio_only:
+                        base += " AND portfolio=1"
+                    base += " ORDER BY portfolio DESC, symbol LIMIT 200"
+                    rows = conn.execute(base, params).fetchall()
                 conn.close()
                 return rows
             except: return []
@@ -1177,11 +1191,9 @@ def main(page: ft.Page):
 
         def load_list(q=""):
             list_rows.controls.clear()
-            rows = db_search(q, portfolio_only=fld_portfolio_only.value)
+            rows = db_search(q, portfolio_only=fld_portfolio_only.value, letter=selected_letter["value"])
             if fld_up_only.value:
                 rows = [r for r in rows if quick_verdict(r[4], r[3])[0] == "UP"]
-            if selected_letter["value"]:
-                rows = [r for r in rows if r[0] and r[0][0].upper() == selected_letter["value"]]
             current_list_symbols.clear()
             filter_note = " matching '" + q + "'" if q else (
                 " (Portfolio only)" if fld_portfolio_only.value else " (first 200)")

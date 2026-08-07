@@ -1020,6 +1020,8 @@ def main(page: ft.Page):
                 result_box.visible = True
                 oracle_astro_container.visible = False   # hide any chart from a previous search
                 ramal_container.visible = False          # hide any Ramal result from a previous search
+                if current_stock.get("sym") != sym:
+                    do_stop_auto_astro_silently()  # a genuinely new stock — don't keep auto-recalculating the old one
                 current_stock["sym"], current_stock["asum"], current_stock["ldt"] = sym, asum, ldt
             else:
                 set_status("Not found: " + q, C["red"])
@@ -1137,6 +1139,68 @@ def main(page: ft.Page):
             ramal_container.visible = True
             page.update()
 
+        # ── AUTO ASTRO — recalculate D1/D9 + custom-rule verdict every N minutes ──
+        auto_astro_state = {"running": False, "stop_event": None}
+        fld_auto_interval = make_field("Auto Astro Interval (minutes)", value="5")
+        auto_astro_status_txt = ft.Text("Auto Astro: OFF", size=12, color=C["hint_txt"])
+
+        def auto_astro_loop(interval_seconds, stop_event, sym_at_start):
+            while not stop_event.is_set():
+                if stop_event.wait(interval_seconds):
+                    break  # stop was requested during the wait — exit immediately, don't run one more cycle
+                if current_stock.get("sym") != sym_at_start:
+                    break  # the user searched a different stock — this loop's job is done, do_oracle already stopped it
+                do_oracle_astro(None)
+
+        def do_toggle_auto_astro(e):
+            if auto_astro_state["running"]:
+                if auto_astro_state["stop_event"]:
+                    auto_astro_state["stop_event"].set()
+                auto_astro_state["running"] = False
+                btn_auto_astro.text = "▶  START AUTO ASTRO"
+                btn_auto_astro.bgcolor = C["green"]
+                auto_astro_status_txt.value = "Auto Astro: OFF"
+                set_status("Auto Astro stopped.", C["orange"])
+                page.update()
+                return
+            if not current_stock.get("sym"):
+                set_status("Search a stock first, then start Auto Astro.", C["red"])
+                page.update()
+                return
+            try:
+                minutes = float(fld_auto_interval.value)
+                if not (0.5 <= minutes <= 1440):
+                    raise ValueError("Interval must be between 0.5 and 1440 minutes")
+            except Exception:
+                set_status("Enter a valid interval in minutes (0.5–1440), e.g. 5.", C["red"])
+                page.update()
+                return
+            stop_event = threading.Event()
+            auto_astro_state["stop_event"] = stop_event
+            auto_astro_state["running"] = True
+            btn_auto_astro.text = "⏸  STOP AUTO ASTRO"
+            btn_auto_astro.bgcolor = C["red"]
+            auto_astro_status_txt.value = f"Auto Astro: ON — recalculating every {minutes:g} min for {current_stock['sym']}"
+            set_status(f"Auto Astro started for {current_stock['sym']} — every {minutes:g} min.", C["green"])
+            threading.Thread(target=auto_astro_loop, args=(minutes * 60, stop_event, current_stock["sym"]), daemon=True).start()
+            do_oracle_astro(None)  # run once immediately too, not just after the first interval elapses
+            page.update()
+
+        def do_stop_auto_astro_silently():
+            """Called when a new stock search happens while Auto Astro is running for the old one —
+            it would be confusing to keep recalculating a stock that's no longer on screen."""
+            if auto_astro_state["running"]:
+                if auto_astro_state["stop_event"]:
+                    auto_astro_state["stop_event"].set()
+                auto_astro_state["running"] = False
+                btn_auto_astro.text = "▶  START AUTO ASTRO"
+                btn_auto_astro.bgcolor = C["green"]
+                auto_astro_status_txt.value = "Auto Astro: OFF (stopped — you searched a different stock)"
+
+        btn_auto_astro = ft.ElevatedButton("▶  START AUTO ASTRO", bgcolor=C["green"], color="#FFFFFF", height=46,
+                                            style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")),
+                                            on_click=do_toggle_auto_astro)
+
         oracle_screen = ft.Column(visible=True, controls=[
             make_header("🔮  ORACLE ANALYSIS"), ft.Divider(height=4, color=C["divider"]),
             ft.Text("Enter Stock Symbol or Name:", size=15, color=C["black_txt"], weight="bold"),
@@ -1146,6 +1210,9 @@ def main(page: ft.Page):
             ft.Container(height=10),
             ft.ElevatedButton("🪐  CALCULATE ASTRO (D1 / D9)", bgcolor=C["primary"], color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_astro),
             oracle_astro_container,
+            ft.Container(height=10),
+            ft.Text("⏱ AUTO ASTRO — recalculate on its own, repeatedly, without you tapping the button", size=12, weight="bold", color=C["black_txt"]),
+            fld_auto_interval, btn_auto_astro, auto_astro_status_txt,
             ft.Container(height=10),
             ft.ElevatedButton("🎲  RAMAL PRASHNA (Cast Now)", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_ramal),
             ramal_container

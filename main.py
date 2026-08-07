@@ -766,29 +766,41 @@ def main(page: ft.Page):
             except Exception:
                 pass  # column already exists on installs upgraded from an earlier version
             conn.execute("""CREATE TABLE IF NOT EXISTS planet_rules(
-                id            INTEGER PRIMARY KEY AUTOINCREMENT,
-                rule_type     TEXT NOT NULL,
-                planet        TEXT NOT NULL,
-                house_d1      INTEGER,
-                house_d9      INTEGER,
-                house_d1_list TEXT,
-                retro_only    INTEGER DEFAULT 0,
-                signal        TEXT NOT NULL,
-                weight        REAL DEFAULT 1.0,
-                note          TEXT)""")
+                id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+                rule_type          TEXT NOT NULL,
+                planet             TEXT NOT NULL,
+                house_d1           INTEGER,
+                house_d9           INTEGER,
+                house_d1_list      TEXT,
+                companion_planet   TEXT,
+                companion_house_d9 INTEGER,
+                retro_only         INTEGER DEFAULT 0,
+                signal             TEXT NOT NULL,
+                weight             REAL DEFAULT 1.0,
+                note               TEXT)""")
             try:
                 conn.execute("ALTER TABLE planet_rules ADD COLUMN house_d1_list TEXT")
                 conn.commit()
             except Exception:
                 pass  # column already exists on installs upgraded from an earlier version
+            try:
+                conn.execute("ALTER TABLE planet_rules ADD COLUMN companion_planet TEXT")
+                conn.execute("ALTER TABLE planet_rules ADD COLUMN companion_house_d9 INTEGER")
+                conn.commit()
+            except Exception:
+                pass  # columns already exist on installs upgraded from an earlier version
             conn.commit()
             conn.close()
         except: pass
 
-        def rule_add(rule_type, planet, house_d1, house_d9, retro_only, signal, weight, note, house_d1_list=None):
+        def rule_add(rule_type, planet, house_d1, house_d9, retro_only, signal, weight, note,
+                     house_d1_list=None, companion_planet=None, companion_house_d9=None):
             conn = sqlite3.connect(db_path)
-            conn.execute("INSERT INTO planet_rules(rule_type,planet,house_d1,house_d9,house_d1_list,retro_only,signal,weight,note) VALUES(?,?,?,?,?,?,?,?,?)",
-                         (rule_type, planet, house_d1, house_d9, house_d1_list, 1 if retro_only else 0, signal, weight, note))
+            conn.execute("""INSERT INTO planet_rules(rule_type,planet,house_d1,house_d9,house_d1_list,
+                             companion_planet,companion_house_d9,retro_only,signal,weight,note)
+                             VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
+                         (rule_type, planet, house_d1, house_d9, house_d1_list,
+                          companion_planet, companion_house_d9, 1 if retro_only else 0, signal, weight, note))
             conn.commit(); conn.close()
 
         def rule_delete(rule_id):
@@ -798,7 +810,9 @@ def main(page: ft.Page):
 
         def rule_list():
             conn = sqlite3.connect(db_path)
-            rows = conn.execute("SELECT id,rule_type,planet,house_d1,house_d9,house_d1_list,retro_only,signal,weight,note FROM planet_rules ORDER BY id").fetchall()
+            rows = conn.execute("""SELECT id,rule_type,planet,house_d1,house_d9,house_d1_list,
+                                    companion_planet,companion_house_d9,retro_only,signal,weight,note
+                                    FROM planet_rules ORDER BY id""").fetchall()
             conn.close()
             return rows
 
@@ -810,11 +824,15 @@ def main(page: ft.Page):
             """Runs all stored rules against the current chart and returns (matches, net_score, avoid_matches).
             AVOID rules are kept separate from the BUY/SELL numeric score — a single genuine
             AVOID match should be a hard caution flag, not something that can be outweighed
-            by a pile of small BUY-weighted rules elsewhere."""
+            by a pile of small BUY-weighted rules elsewhere.
+            A rule can optionally carry a Companion Condition (companion_planet + companion_house_d9):
+            when set, the rule ONLY fires if that companion planet is ALSO in that D9 house at the
+            same time — a genuine AND between two independent facts, not just two rules that could
+            each fire alone."""
             houses_d1 = {p: get_house_num(s, lagna_d1) for p, s in d1_pos.items() if p != "As"}
             houses_d9 = {p: get_house_num(s, lagna_d9) for p, s in d9_pos.items() if p != "As"}
             matches, avoid_matches, score = [], [], 0.0
-            for (rid, rtype, planet, hd1, hd9, hd1_list, retro_only, signal, weight, note) in rule_list():
+            for (rid, rtype, planet, hd1, hd9, hd1_list, comp_planet, comp_hd9, retro_only, signal, weight, note) in rule_list():
                 planets_to_check = [planet] if planet != "ANY" else list(houses_d1.keys())
                 for pl in planets_to_check:
                     if retro_only and pl not in retro_set:
@@ -841,6 +859,10 @@ def main(page: ft.Page):
                             allowed_d1_houses = set()
                         if houses_d1.get(pl) in allowed_d1_houses:
                             ok = True
+                    if ok and comp_planet and comp_hd9:
+                        # Companion Condition — must ALSO be true, or this rule doesn't fire at all
+                        if houses_d9.get(comp_planet) != comp_hd9:
+                            ok = False
                     if ok:
                         entry = (pl, rtype, signal, weight, note)
                         if signal == "AVOID":
@@ -1435,6 +1457,9 @@ def main(page: ft.Page):
         fld_rule_h1     = make_field("D1 House (1-12) OR D1 Rashi number", hint="HOUSE rules: house# counted from Lagna. RASHI rules: " + ", ".join(RASHI_NAMES[:4]) + "...")
         fld_rule_h9     = make_field("D9 House (1-12) OR D9 Rashi number", hint="Same numbering as above, applied to the D9 (Navamsha) chart")
         fld_rule_h1_list = make_field("D1 House LIST (D9_TO_D1_LIST only)", hint="Comma-separated house numbers, e.g. 4,5,10,11 — used only for the D9_TO_D1_LIST rule type")
+        fld_rule_companion_planet = ft.Dropdown(label="Companion Planet (optional AND condition)", value="",
+                                        options=[ft.dropdown.Option("")] + [ft.dropdown.Option(o) for o in PLANET_OPTS[1:]])
+        fld_rule_companion_h9 = make_field("Companion D9 House (optional)", hint="If set, this planet must ALSO be in this D9 house for the rule to fire — leave both blank if not needed")
         fld_rule_retro  = ft.Checkbox(label="Apply only when planet is Retrograde", value=False)
         fld_rule_signal = ft.Dropdown(label="Signal", value="BUY",
                                         options=[ft.dropdown.Option(o) for o in ["BUY", "SELL", "AVOID", "NEUTRAL"]])
@@ -1448,7 +1473,7 @@ def main(page: ft.Page):
             rows = rule_list()
             if not rows:
                 rules_list_col.controls.append(ft.Text("No custom rules yet. Add one above, or tap LOAD EXAMPLE RULES.", size=12, color=C["black_txt"]))
-            for (rid, rtype, planet, hd1, hd9, hd1_list, retro_only, signal, weight, note) in rows:
+            for (rid, rtype, planet, hd1, hd9, hd1_list, comp_planet, comp_hd9, retro_only, signal, weight, note) in rows:
                 sig_color = {"SELL": C["red"], "BUY": C["green"], "AVOID": "#212121"}.get(signal, C["black_txt"])
                 label1 = "D1 Rashi" if rtype == "D1_RASHI" else "D1H"
                 label2 = "D9 Rashi" if rtype == "D9_RASHI" else "D9H"
@@ -1456,6 +1481,8 @@ def main(page: ft.Page):
                     desc = f"#{rid}  [{rtype}]  {planet}  D9H:{hd9 or '-'} → D1H in [{hd1_list or '-'}]  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
                 else:
                     desc = f"#{rid}  [{rtype}]  {planet}  {label1}:{hd1 or '-'}  {label2}:{hd9 or '-'}  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
+                if comp_planet and comp_hd9:
+                    desc += f"  AND {comp_planet} in D9H:{comp_hd9}"
                 rules_list_col.controls.append(
                     ft.Row([
                         ft.Text(desc, size=12, color=sig_color, weight="bold" if signal == "AVOID" else None, expand=True),
@@ -1475,8 +1502,13 @@ def main(page: ft.Page):
                 h9 = int(fld_rule_h9.value) if fld_rule_h9.value and fld_rule_h9.value.strip() else None
                 w  = float(fld_rule_weight.value) if fld_rule_weight.value and fld_rule_weight.value.strip() else 1.0
                 h1_list_raw = (fld_rule_h1_list.value or "").strip()
+                comp_planet_raw = (fld_rule_companion_planet.value or "").strip() or None
+                comp_h9_raw = int(fld_rule_companion_h9.value) if fld_rule_companion_h9.value and fld_rule_companion_h9.value.strip() else None
                 if h1 is not None and not (1 <= h1 <= 12): raise ValueError("D1 field must be 1-12 (house# from Lagna, or 1-12=Aries..Pisces for a RASHI rule)")
                 if h9 is not None and not (1 <= h9 <= 12): raise ValueError("D9 field must be 1-12 (house# from Lagna, or 1-12=Aries..Pisces for a RASHI rule)")
+                if comp_h9_raw is not None and not (1 <= comp_h9_raw <= 12): raise ValueError("Companion D9 House must be 1-12")
+                if (comp_planet_raw and not comp_h9_raw) or (comp_h9_raw and not comp_planet_raw):
+                    raise ValueError("Companion condition needs BOTH the planet AND the D9 house filled in — or leave both blank")
                 if fld_rule_type.value == "D9_TO_D1_LIST":
                     if h9 is None: raise ValueError("D9_TO_D1_LIST needs the D9 House field filled in (the fixed D9 house)")
                     if not h1_list_raw: raise ValueError("D9_TO_D1_LIST needs the D1 House LIST field filled in, e.g. 4,5,10,11")
@@ -1485,42 +1517,45 @@ def main(page: ft.Page):
                     h1_list_raw = ",".join(str(n) for n in parsed)  # normalized
                 else:
                     h1_list_raw = None
-                rule_add(fld_rule_type.value, fld_rule_planet.value, h1, h9, fld_rule_retro.value, fld_rule_signal.value, w, fld_rule_note.value, house_d1_list=h1_list_raw)
+                rule_add(fld_rule_type.value, fld_rule_planet.value, h1, h9, fld_rule_retro.value, fld_rule_signal.value, w, fld_rule_note.value,
+                         house_d1_list=h1_list_raw, companion_planet=comp_planet_raw, companion_house_d9=comp_h9_raw)
                 set_status("Rule added.", C["green"])
-                fld_rule_h1.value = ""; fld_rule_h9.value = ""; fld_rule_h1_list.value = ""; fld_rule_note.value = ""
+                fld_rule_h1.value = ""; fld_rule_h9.value = ""; fld_rule_h1_list.value = ""
+                fld_rule_companion_planet.value = ""; fld_rule_companion_h9.value = ""; fld_rule_note.value = ""
                 refresh_rules_list()
             except Exception as ex:
                 set_status(f"Rule error: {str(ex)}", C["red"])
                 page.update()
 
         EXAMPLE_RULE_PACK = [
-            # (rule_type, planet, house_d1, house_d9, retro_only, signal, weight, note, house_d1_list)
-            ("D1_HOUSE",      "Ju", 11, None, 0, "BUY",  2.0, "Jupiter in D1 11th house from Lagna — gains/profits house", None),
-            ("D9_HOUSE",      "Ju", None, 11, 0, "BUY",  2.0, "Jupiter in D9 11th house — navamsha confirms gains", None),
-            ("D1_D9_COMPARE", "Ju", 11, 11,   0, "BUY",  3.0, "Jupiter strong in BOTH D1 & D9 11th — very strong bullish confirmation", None),
-            ("D1_D9_SAME_HOUSE", "Ju", None, None, 0, "BUY", 2.0, "Jupiter holds the SAME house number in both D1 & D9 (whatever that house is) — consistent placement, generally strengthens Jupiter's result either way", None),
-            ("D1_D9_SAME_HOUSE", "ANY", None, None, 0, "NEUTRAL", 0.5, "ANY planet with matching D1/D9 house — logged for reference, doesn't move the score by default; raise the weight/change signal once you've tested this yourself", None),
-            ("D9_TO_D1_LIST", "ANY", None, 2, 0, "AVOID", 1.0, "D9 2nd house planet whose D1 house is 1,2,3,6,7,8, or 12 — avoid buy or sell entirely", "1,2,3,6,7,8,12"),
-            ("D9_TO_D1_LIST", "ANY", None, 2, 0, "BUY",   1.5, "D9 2nd house planet whose D1 house is 4,5,10, or 11 — buy recommended", "4,5,10,11"),
-            ("VARGOTTAMA",    "Ju", None, None, 0, "BUY", 3.0, "Jupiter Vargottama (same rashi in D1 & D9) — amplified benefic strength", None),
-            ("D1_RASHI",      "Ju", 9,  None, 0, "BUY",  2.0, "Jupiter sitting in Sagittarius (its own rashi, #9) in D1 — own-sign strength, regardless of house", None),
-            ("D9_RASHI",      "Ve", 7,  None, 0, "BUY",  1.5, "Venus in Libra (#7, its own rashi) in D9 — strong Venus signification (finance/luxury) in the navamsha", None),
-            ("D1_HOUSE",      "Ve", 2,  None, 0, "BUY",  1.5, "Venus D1 2nd house — wealth/liquidity", None),
-            ("D1_HOUSE",      "Ma", 8,  None, 0, "SELL", 2.0, "Mars D1 8th house — classic sudden-crash placement", None),
-            ("D1_HOUSE",      "Ma", 8,  None, 1, "AVOID", 1.0, "Mars RETROGRADE in D1 8th — high-risk combination, sit this one out entirely", None),
-            ("D1_HOUSE",      "Sa", 6,  None, 0, "SELL", 1.5, "Saturn D1 6th house — debt/obstacle pressure", None),
-            ("D1_D9_COMPARE", "Sa", 8,  8,    1, "AVOID", 1.0, "Saturn retrograde AND afflicted in BOTH D1 & D9 8th house — strong caution, avoid new positions", None),
-            ("D9_HOUSE",      "Sa", None, 7, 0, "AVOID", 1.0, "Saturn in D9 7th house — avoid trading (buy or sell) entirely", None),
-            ("D9_HOUSE",      "Me", 3,  None, 1, "SELL", 2.0, "Mercury retrograde in D9 3rd house — trade/communication volatility", None),
-            ("D1_HOUSE",      "Ra", 11, None, 0, "BUY",  1.5, "Rahu D1 11th house — speculative sudden gains (volatile)", None),
-            ("D1_HOUSE",      "Ke", 12, None, 0, "SELL", 1.5, "Ketu D1 12th house — losses/isolation", None),
-            ("D1_HOUSE",      "Su", 10, None, 0, "BUY",  1.0, "Sun D1 10th house — leadership/PSU strength", None),
-            ("D1_HOUSE",      "Sa", 8,  None, 1, "SELL", 1.5, "Saturn retrograde D1 8th house — prolonged structural correction", None),
+            # (rule_type, planet, house_d1, house_d9, retro_only, signal, weight, note, house_d1_list, companion_planet, companion_house_d9)
+            ("D1_HOUSE",      "Ju", 11, None, 0, "BUY",  2.0, "Jupiter in D1 11th house from Lagna — gains/profits house", None, None, None),
+            ("D9_HOUSE",      "Ju", None, 11, 0, "BUY",  2.0, "Jupiter in D9 11th house — navamsha confirms gains", None, None, None),
+            ("D1_D9_COMPARE", "Ju", 11, 11,   0, "BUY",  3.0, "Jupiter strong in BOTH D1 & D9 11th — very strong bullish confirmation", None, None, None),
+            ("D1_D9_SAME_HOUSE", "Ju", None, None, 0, "BUY", 2.0, "Jupiter holds the SAME house number in both D1 & D9 (whatever that house is) — consistent placement, generally strengthens Jupiter's result either way", None, None, None),
+            ("D1_D9_SAME_HOUSE", "ANY", None, None, 0, "NEUTRAL", 0.5, "ANY planet with matching D1/D9 house — logged for reference, doesn't move the score by default; raise the weight/change signal once you've tested this yourself", None, None, None),
+            ("D9_TO_D1_LIST", "ANY", None, 2, 0, "AVOID", 1.0, "D9 2nd house planet whose D1 house is 1,2,3,6,7,8, or 12 — avoid buy or sell entirely", "1,2,3,6,7,8,12", None, None),
+            ("D9_TO_D1_LIST", "ANY", None, 2, 0, "BUY",   1.5, "D9 2nd house planet whose D1 house is 4,5,10, or 11 — buy recommended", "4,5,10,11", None, None),
+            ("D9_TO_D1_LIST", "ANY", None, 2, 0, "AVOID", 1.0, "COMPOUND: D9 2nd house planet's D1 house is in {2,3,6,7,8,12} AND Saturn is separately in D9's 7th house — both facts must hold together", "2,3,6,7,8,12", "Sa", 7),
+            ("VARGOTTAMA",    "Ju", None, None, 0, "BUY", 3.0, "Jupiter Vargottama (same rashi in D1 & D9) — amplified benefic strength", None, None, None),
+            ("D1_RASHI",      "Ju", 9,  None, 0, "BUY",  2.0, "Jupiter sitting in Sagittarius (its own rashi, #9) in D1 — own-sign strength, regardless of house", None, None, None),
+            ("D9_RASHI",      "Ve", 7,  None, 0, "BUY",  1.5, "Venus in Libra (#7, its own rashi) in D9 — strong Venus signification (finance/luxury) in the navamsha", None, None, None),
+            ("D1_HOUSE",      "Ve", 2,  None, 0, "BUY",  1.5, "Venus D1 2nd house — wealth/liquidity", None, None, None),
+            ("D1_HOUSE",      "Ma", 8,  None, 0, "SELL", 2.0, "Mars D1 8th house — classic sudden-crash placement", None, None, None),
+            ("D1_HOUSE",      "Ma", 8,  None, 1, "AVOID", 1.0, "Mars RETROGRADE in D1 8th — high-risk combination, sit this one out entirely", None, None, None),
+            ("D1_HOUSE",      "Sa", 6,  None, 0, "SELL", 1.5, "Saturn D1 6th house — debt/obstacle pressure", None, None, None),
+            ("D1_D9_COMPARE", "Sa", 8,  8,    1, "AVOID", 1.0, "Saturn retrograde AND afflicted in BOTH D1 & D9 8th house — strong caution, avoid new positions", None, None, None),
+            ("D9_HOUSE",      "Sa", None, 7, 0, "AVOID", 1.0, "Saturn in D9 7th house — avoid trading (buy or sell) entirely", None, None, None),
+            ("D9_HOUSE",      "Me", 3,  None, 1, "SELL", 2.0, "Mercury retrograde in D9 3rd house — trade/communication volatility", None, None, None),
+            ("D1_HOUSE",      "Ra", 11, None, 0, "BUY",  1.5, "Rahu D1 11th house — speculative sudden gains (volatile)", None, None, None),
+            ("D1_HOUSE",      "Ke", 12, None, 0, "SELL", 1.5, "Ketu D1 12th house — losses/isolation", None, None, None),
+            ("D1_HOUSE",      "Su", 10, None, 0, "BUY",  1.0, "Sun D1 10th house — leadership/PSU strength", None, None, None),
+            ("D1_HOUSE",      "Sa", 8,  None, 1, "SELL", 1.5, "Saturn retrograde D1 8th house — prolonged structural correction", None, None, None),
         ]
 
         def do_load_example_rules(e):
-            for (rt, pl, h1, h9, ro, sig, w, nt, h1_list) in EXAMPLE_RULE_PACK:
-                rule_add(rt, pl, h1, h9, ro, sig, w, nt, house_d1_list=h1_list)
+            for (rt, pl, h1, h9, ro, sig, w, nt, h1_list, comp_pl, comp_h9) in EXAMPLE_RULE_PACK:
+                rule_add(rt, pl, h1, h9, ro, sig, w, nt, house_d1_list=h1_list, companion_planet=comp_pl, companion_house_d9=comp_h9)
             set_status(f"Loaded {len(EXAMPLE_RULE_PACK)} example rules.", C["green"])
             refresh_rules_list()
 
@@ -1534,10 +1569,11 @@ def main(page: ft.Page):
         def do_export_rules(e):
             rows = rule_list()
             data = []
-            for (rid, rtype, planet, hd1, hd9, hd1_list, retro_only, signal, weight, note) in rows:
+            for (rid, rtype, planet, hd1, hd9, hd1_list, comp_planet, comp_hd9, retro_only, signal, weight, note) in rows:
                 data.append({
                     "rule_type": rtype, "planet": planet, "house_d1": hd1, "house_d9": hd9,
                     "house_d1_list": hd1_list,
+                    "companion_planet": comp_planet, "companion_house_d9": comp_hd9,
                     "retro_only": retro_only, "signal": signal, "weight": weight, "note": note
                 })
             export_output.value = json.dumps(data, ensure_ascii=False, indent=2)
@@ -1562,7 +1598,9 @@ def main(page: ft.Page):
                         item.get("house_d1"), item.get("house_d9"),
                         item.get("retro_only", 0), item.get("signal", "NEUTRAL"),
                         float(item.get("weight", 1.0)), item.get("note", ""),
-                        house_d1_list=item.get("house_d1_list")
+                        house_d1_list=item.get("house_d1_list"),
+                        companion_planet=item.get("companion_planet"),
+                        companion_house_d9=item.get("companion_house_d9")
                     )
                     count += 1
                 set_status(f"Imported {count} rules.", C["green"])
@@ -1674,7 +1712,13 @@ Ramal is then cross-checked against Bhoovalaya's own combined direction (Step 8)
 EXPORT / IMPORT RULES
 "📤 EXPORT RULES" turns all your saved rules into JSON text shown in a copyable box below the button — long-press the text to select it, copy, then paste it anywhere (a text file on your PC, notes app, email) to back it up or test it elsewhere. "📥 IMPORT RULES FROM JSON" does the reverse: paste JSON text (in the same format) into the box above it and tap the button to load those rules straight into this app. This uses plain copy-paste rather than a file-save dialog, since those have proven unreliable once compiled into an Android APK.
 
-Tap "📦 LOAD EXAMPLE RULES" to add a 21-rule starter pack covering the patterns above, then edit/delete individual rules to match your own approach."""
+COMPANION CONDITION — COMBINING TWO SEPARATE FACTS WITH "AND"
+Every rule type above checks ONE fact about ONE planet. Sometimes you need TWO facts to be true at the SAME time before it counts — e.g. "condition A about whichever planet is in D9's 2nd house" AND, completely separately, "Saturn specifically is in D9's 7th house." Entering these as two separate rules would fire the AVOID banner if EITHER happened alone, which is not what you want.
+The "Companion Condition" fields solve this: fill in a Companion Planet and a Companion D9 House, and the rule will ONLY fire when its normal condition is true AND that companion planet is separately sitting in that D9 house too — both must hold at once.
+Worked example: "If D9's 2nd house planet's D1 house is in {2,3,6,7,8,12} AND Saturn is in D9's 7th house -> AVOID" is built as: Rule Type=D9_TO_D1_LIST, Planet=ANY, D9 House=2, D1 House LIST=2,3,6,7,8,12, Companion Planet=Sa, Companion D9 House=7, Signal=AVOID. This is already included in the example pack below.
+Leave both Companion fields blank for an ordinary single-fact rule — this is fully optional and only needed for compound AND conditions like this one.
+
+Tap "📦 LOAD EXAMPLE RULES" to add a 22-rule starter pack covering the patterns above, then edit/delete individual rules to match your own approach."""
 
         help_screen = ft.Column(visible=False, scroll="auto", controls=[
             make_header("📖 HELP / REFERENCE GUIDE"), ft.Divider(height=4, color=C["divider"]),
@@ -1690,6 +1734,8 @@ Tap "📦 LOAD EXAMPLE RULES" to add a 21-rule starter pack covering the pattern
             fld_rule_type, fld_rule_planet,
             ft.Row([fld_rule_h1, fld_rule_h9]),
             fld_rule_h1_list,
+            ft.Text("Companion Condition (optional) — an extra planet+house that must ALSO be true (AND), for compound rules", size=11, color=C["black_txt"]),
+            ft.Row([fld_rule_companion_planet, fld_rule_companion_h9]),
             fld_rule_retro, fld_rule_signal, fld_rule_weight, fld_rule_note,
             ft.ElevatedButton("➕ ADD RULE", bgcolor=C["primary"], color="#FFFFFF", height=48, on_click=do_add_rule),
             ft.ElevatedButton("📦 LOAD EXAMPLE RULES (financial astrology starter pack)", bgcolor=C["orange"], color="#FFFFFF", height=44, on_click=do_load_example_rules),

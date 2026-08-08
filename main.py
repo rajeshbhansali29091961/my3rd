@@ -1020,8 +1020,6 @@ def main(page: ft.Page):
                 result_box.visible = True
                 oracle_astro_container.visible = False   # hide any chart from a previous search
                 ramal_container.visible = False          # hide any Ramal result from a previous search
-                if current_stock.get("sym") != sym:
-                    do_stop_auto_astro_silently()  # a genuinely new stock — don't keep auto-recalculating the old one
                 current_stock["sym"], current_stock["asum"], current_stock["ldt"] = sym, asum, ldt
             else:
                 set_status("Not found: " + q, C["red"])
@@ -1139,68 +1137,6 @@ def main(page: ft.Page):
             ramal_container.visible = True
             page.update()
 
-        # ── AUTO ASTRO — recalculate D1/D9 + custom-rule verdict every N minutes ──
-        auto_astro_state = {"running": False, "stop_event": None}
-        fld_auto_interval = make_field("Auto Astro Interval (minutes)", value="5")
-        auto_astro_status_txt = ft.Text("Auto Astro: OFF", size=12, color=C["hint_txt"])
-
-        def auto_astro_loop(interval_seconds, stop_event, sym_at_start):
-            while not stop_event.is_set():
-                if stop_event.wait(interval_seconds):
-                    break  # stop was requested during the wait — exit immediately, don't run one more cycle
-                if current_stock.get("sym") != sym_at_start:
-                    break  # the user searched a different stock — this loop's job is done, do_oracle already stopped it
-                do_oracle_astro(None)
-
-        def do_toggle_auto_astro(e):
-            if auto_astro_state["running"]:
-                if auto_astro_state["stop_event"]:
-                    auto_astro_state["stop_event"].set()
-                auto_astro_state["running"] = False
-                btn_auto_astro.text = "▶  START AUTO ASTRO"
-                btn_auto_astro.bgcolor = C["green"]
-                auto_astro_status_txt.value = "Auto Astro: OFF"
-                set_status("Auto Astro stopped.", C["orange"])
-                page.update()
-                return
-            if not current_stock.get("sym"):
-                set_status("Search a stock first, then start Auto Astro.", C["red"])
-                page.update()
-                return
-            try:
-                minutes = float(fld_auto_interval.value)
-                if not (0.5 <= minutes <= 1440):
-                    raise ValueError("Interval must be between 0.5 and 1440 minutes")
-            except Exception:
-                set_status("Enter a valid interval in minutes (0.5–1440), e.g. 5.", C["red"])
-                page.update()
-                return
-            stop_event = threading.Event()
-            auto_astro_state["stop_event"] = stop_event
-            auto_astro_state["running"] = True
-            btn_auto_astro.text = "⏸  STOP AUTO ASTRO"
-            btn_auto_astro.bgcolor = C["red"]
-            auto_astro_status_txt.value = f"Auto Astro: ON — recalculating every {minutes:g} min for {current_stock['sym']}"
-            set_status(f"Auto Astro started for {current_stock['sym']} — every {minutes:g} min.", C["green"])
-            threading.Thread(target=auto_astro_loop, args=(minutes * 60, stop_event, current_stock["sym"]), daemon=True).start()
-            do_oracle_astro(None)  # run once immediately too, not just after the first interval elapses
-            page.update()
-
-        def do_stop_auto_astro_silently():
-            """Called when a new stock search happens while Auto Astro is running for the old one —
-            it would be confusing to keep recalculating a stock that's no longer on screen."""
-            if auto_astro_state["running"]:
-                if auto_astro_state["stop_event"]:
-                    auto_astro_state["stop_event"].set()
-                auto_astro_state["running"] = False
-                btn_auto_astro.text = "▶  START AUTO ASTRO"
-                btn_auto_astro.bgcolor = C["green"]
-                auto_astro_status_txt.value = "Auto Astro: OFF (stopped — you searched a different stock)"
-
-        btn_auto_astro = ft.ElevatedButton("▶  START AUTO ASTRO", bgcolor=C["green"], color="#FFFFFF", height=46,
-                                            style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")),
-                                            on_click=do_toggle_auto_astro)
-
         oracle_screen = ft.Column(visible=True, controls=[
             make_header("🔮  ORACLE ANALYSIS"), ft.Divider(height=4, color=C["divider"]),
             ft.Text("Enter Stock Symbol or Name:", size=15, color=C["black_txt"], weight="bold"),
@@ -1210,9 +1146,6 @@ def main(page: ft.Page):
             ft.Container(height=10),
             ft.ElevatedButton("🪐  CALCULATE ASTRO (D1 / D9)", bgcolor=C["primary"], color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_astro),
             oracle_astro_container,
-            ft.Container(height=10),
-            ft.Text("⏱ AUTO ASTRO — recalculate on its own, repeatedly, without you tapping the button", size=12, weight="bold", color=C["black_txt"]),
-            fld_auto_interval, btn_auto_astro, auto_astro_status_txt,
             ft.Container(height=10),
             ft.ElevatedButton("🎲  RAMAL PRASHNA (Cast Now)", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_ramal),
             ramal_container
@@ -1229,6 +1162,101 @@ def main(page: ft.Page):
         current_list_symbols = []  # tracks symbols in current display order, for reference
         selected_letter = {"value": None}  # A-Z filter state — None means no letter filter active
         price_popup = ft.Column(spacing=6, visible=False)
+
+        # ── LIVE TIMING SIGNAL (Auto Refresh) ─────────────────────────────
+        # Your custom Rules (evaluate_rules) check the current sky right now, not any one
+        # stock's identity — so this is ONE market-timing signal shared by every stock at a
+        # given moment, not per-row. Shown here as a single blinking banner, refreshed on
+        # the interval you set, rather than duplicating an identical dot on every row.
+        stocks_auto_state = {"running": False, "stop_event": None}
+        stocks_live_signal_state = {"label": "OFF", "color": C["hint_txt"]}
+        fld_stocks_auto_interval = make_field("Auto Refresh Interval (minutes)", value="5")
+        live_signal_text = ft.Text("⏱ LIVE TIMING SIGNAL: OFF", size=14, weight="bold", color="#FFFFFF")
+        live_signal_container = ft.Container(
+            content=live_signal_text, bgcolor=C["hint_txt"], padding=12, border_radius=8, alignment=ft.alignment.center
+        )
+
+        def compute_live_timing_signal():
+            """Runs your custom Rules against the sky right now (same engine as Oracle's
+            Calculate Astro), independent of any specific stock — a general market-timing read."""
+            now = datetime.now()
+            jd = jd_ut_from_ist(now.year, now.month, now.day, now.hour, now.minute)
+            pos, ay = calc_planet_positions(jd, 19.076, 72.877)
+            d1_pos = {p: lon_to_sign_deg(l)[0] for p, l in pos.items()}
+            d9_pos = {p: d9_sign(l) for p, l in pos.items()}
+            lagna_idx, lagna_d9 = d1_pos["As"], d9_pos["As"]
+            retro_set = get_retrograde_set(jd, 19.076, 72.877)
+            matches, score, avoid_matches = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
+            if avoid_matches:
+                return "AVOID", "#212121"
+            elif score > 0:
+                return "BUY", C["green"]
+            elif score < 0:
+                return "SELL", C["red"]
+            else:
+                return "NEUTRAL", C["accent"]
+
+        def stocks_blink_loop(stop_event):
+            blink_on = True
+            while not stop_event.is_set():
+                if stop_event.wait(0.8):
+                    break
+                blink_on = not blink_on
+                label, color = stocks_live_signal_state["label"], stocks_live_signal_state["color"]
+                if blink_on:
+                    live_signal_container.bgcolor = color
+                    live_signal_text.color = "#FFFFFF"
+                else:
+                    live_signal_container.bgcolor = "#FFFFFF"
+                    live_signal_text.color = color
+                page.update()
+
+        def stocks_recalc_loop(interval_seconds, stop_event):
+            while not stop_event.is_set():
+                label, color = compute_live_timing_signal()
+                stocks_live_signal_state["label"], stocks_live_signal_state["color"] = label, color
+                live_signal_text.value = f"⏱ LIVE TIMING SIGNAL: {label}"
+                live_signal_container.bgcolor = color
+                live_signal_text.color = "#FFFFFF"
+                load_list(fld_list_search.value.strip().upper())
+                page.update()
+                if stop_event.wait(interval_seconds):
+                    break
+
+        def do_toggle_stocks_auto_refresh(e):
+            if stocks_auto_state["running"]:
+                if stocks_auto_state["stop_event"]:
+                    stocks_auto_state["stop_event"].set()
+                stocks_auto_state["running"] = False
+                btn_stocks_auto_refresh.text = "▶  START AUTO REFRESH"
+                btn_stocks_auto_refresh.bgcolor = C["green"]
+                live_signal_text.value = "⏱ LIVE TIMING SIGNAL: OFF"
+                live_signal_container.bgcolor = C["hint_txt"]
+                live_signal_text.color = "#FFFFFF"
+                set_status("Stocks Auto Refresh stopped.", C["orange"])
+                page.update()
+                return
+            try:
+                minutes = float(fld_stocks_auto_interval.value)
+                if not (0.5 <= minutes <= 1440):
+                    raise ValueError("Interval must be between 0.5 and 1440 minutes")
+            except Exception:
+                set_status("Enter a valid interval in minutes (0.5–1440), e.g. 5.", C["red"])
+                page.update()
+                return
+            stop_event = threading.Event()
+            stocks_auto_state["stop_event"] = stop_event
+            stocks_auto_state["running"] = True
+            btn_stocks_auto_refresh.text = "⏸  STOP AUTO REFRESH"
+            btn_stocks_auto_refresh.bgcolor = C["red"]
+            set_status(f"Stocks Auto Refresh started — every {minutes:g} min.", C["green"])
+            threading.Thread(target=stocks_recalc_loop, args=(minutes * 60, stop_event), daemon=True).start()
+            threading.Thread(target=stocks_blink_loop, args=(stop_event,), daemon=True).start()
+            page.update()
+
+        btn_stocks_auto_refresh = ft.ElevatedButton("▶  START AUTO REFRESH", bgcolor=C["green"], color="#FFFFFF", height=46,
+                                                      style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")),
+                                                      on_click=do_toggle_stocks_auto_refresh)
 
         def do_close_price_popup(e=None):
             price_popup.visible = False
@@ -1332,6 +1360,10 @@ def main(page: ft.Page):
             make_header("📋 STOCK LIST (NSE India)"), ft.Divider(height=4, color=C["divider"]),
             ft.ElevatedButton("⬅  BACK TO ORACLE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("oracle")),
             price_popup,
+            ft.Divider(height=4, color=C["divider"]),
+            ft.Text("⏱ LIVE TIMING SIGNAL — your custom Rules checked against the sky right now (one shared signal for all stocks, not per-row); blinks while active", size=10, color=C["hint_txt"]),
+            fld_stocks_auto_interval, btn_stocks_auto_refresh, live_signal_container,
+            ft.Divider(height=4, color=C["divider"]),
             ft.Text("🔼 UP  🔽 DOWN  ↔️ SIDE  ⚠️ MIXED — Bhoovalaya (Graha+Bandha) combined direction | Vedha = Sarvatobhadra caution flag", size=10, color=C["hint_txt"]),
             fld_list_search,
             ft.Row([

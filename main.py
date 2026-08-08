@@ -820,6 +820,36 @@ def main(page: ft.Page):
             """Convert a raw sign index (0-11) to a house number (1-12) relative to the lagna."""
             return ((int(sign_idx) - int(lagna_sign_idx)) % 12) + 1
 
+        # Classical Parashari drishti (aspect) rules: EVERY planet aspects the 7th house
+        # from its own position. Mars/Jupiter/Saturn also cast special extra aspects.
+        # Rahu/Ketu have no single agreed classical aspect scheme — by common modern
+        # convention this app treats them like Saturn (3rd/7th/10th), noted honestly here
+        # rather than presented as ancient doctrine.
+        ASPECT_EXTRA_HOUSES = {"Ma": [4, 8], "Ju": [5, 9], "Sa": [3, 10], "Ra": [3, 10], "Ke": [3, 10]}
+
+        def planet_aspect_houses(planet_key, house_pos):
+            """Houses (1-12) aspected by a planet currently sitting in house_pos."""
+            offsets = [7] + ASPECT_EXTRA_HOUSES.get(planet_key, [])
+            return {((int(house_pos) - 1 + (off - 1)) % 12) + 1 for off in offsets}
+
+        def apply_timing_flag(score, avoid_matches):
+            """Shared GOOD/BAD-timing flag shown at the very top of the Stocks/Show All
+            page — same custom-rules verdict (score + AVOID matches) that CALCULATE ASTRO
+            and the Live Timing Signal below use, so all three always agree."""
+            if avoid_matches:
+                top_timing_text.value = "🔴 BAD TIMING — AVOID TRADING TODAY  (custom AVOID rule matched)"
+                top_timing_flag_container.bgcolor = C["red"]
+            elif score > 0:
+                top_timing_text.value = f"🟢 GOOD TIMING — GO FOR TRADE  (score {score:+.1f})"
+                top_timing_flag_container.bgcolor = C["green"]
+            elif score < 0:
+                top_timing_text.value = f"🔴 BAD TIMING — AVOID TRADING  (score {score:+.1f})"
+                top_timing_flag_container.bgcolor = C["red"]
+            else:
+                top_timing_text.value = "⚪ NEUTRAL — NO STRONG SIGNAL, TRADE WITH CAUTION"
+                top_timing_flag_container.bgcolor = C["hint_txt"]
+            page.update()
+
         def evaluate_rules(d1_pos, d9_pos, lagna_d1, lagna_d9, retro_set):
             """Runs all stored rules against the current chart and returns (matches, net_score, avoid_matches).
             AVOID rules are kept separate from the BUY/SELL numeric score — a single genuine
@@ -851,6 +881,8 @@ def main(page: ft.Page):
                     elif rtype == "D1_RASHI" and d1_pos.get(pl) is not None and (d1_pos.get(pl) + 1) == hd1:
                         ok = True
                     elif rtype == "D9_RASHI" and d9_pos.get(pl) is not None and (d9_pos.get(pl) + 1) == hd9:
+                        ok = True
+                    elif rtype == "D9_HOUSE_ASPECT" and houses_d9.get(pl) is not None and hd9 in planet_aspect_houses(pl, houses_d9.get(pl)):
                         ok = True
                     elif rtype == "D9_TO_D1_LIST" and houses_d9.get(pl) == hd9 and hd1_list:
                         try:
@@ -1063,6 +1095,7 @@ def main(page: ft.Page):
 
                 # ── CUSTOM RULES: BUY/SELL/AVOID RECOMMENDATION ──────────────
                 matches, score, avoid_matches = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
+                apply_timing_flag(score, avoid_matches)  # keep the top-of-page flag in sync
                 if avoid_matches:
                     rec_text, rec_color = f"🚫 CUSTOM RULES: AVOID THIS STOCK TODAY  ({len(avoid_matches)} avoid-rule match{'es' if len(avoid_matches) != 1 else ''})", "#212121"
                 elif score > 0:
@@ -1084,12 +1117,12 @@ def main(page: ft.Page):
                     oracle_astro_container.controls.append(ft.Text(detail, size=11, color=C["black_txt"], selectable=True))
 
                 oracle_astro_container.controls.append(ft.Container(height=8))
-                oracle_astro_container.controls.append(ft.ElevatedButton("⬅  BACK TO ORACLE SEARCH", bgcolor=C["primary"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_oracle_back))
+                oracle_astro_container.controls.append(ft.ElevatedButton("⬅  CLOSE ASTRO CHART", bgcolor=C["primary"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_oracle_back))
                 oracle_astro_container.visible = True
             except Exception as aex:
                 oracle_astro_container.controls.clear()
                 oracle_astro_container.controls.append(ft.Text(f"Astro chart error: {str(aex)}", size=13, color=C["red"]))
-                oracle_astro_container.controls.append(ft.ElevatedButton("⬅  BACK TO ORACLE SEARCH", bgcolor=C["primary"], color="#FFFFFF", height=46, on_click=do_oracle_back))
+                oracle_astro_container.controls.append(ft.ElevatedButton("⬅  CLOSE ASTRO CHART", bgcolor=C["primary"], color="#FFFFFF", height=46, on_click=do_oracle_back))
                 oracle_astro_container.visible = True
             page.update()
 
@@ -1144,8 +1177,7 @@ def main(page: ft.Page):
             ft.ElevatedButton("🔍  SEARCH AND CALCULATE", bgcolor=C["green"], color="#FFFFFF", height=52, style=ft.ButtonStyle(text_style=ft.TextStyle(size=17, weight="bold")), on_click=do_oracle),
             ft.Divider(height=6, color=C["divider"]), result_box,
             ft.Container(height=10),
-            ft.ElevatedButton("🪐  CALCULATE ASTRO (D1 / D9)", bgcolor=C["primary"], color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_astro),
-            oracle_astro_container,
+            ft.Text("🪐 Auto Astro (D1/D9) has moved to the Stocks / Show All page — tap the Stocks tab below.", size=12, color=C["hint_txt"]),
             ft.Container(height=10),
             ft.ElevatedButton("🎲  RAMAL PRASHNA (Cast Now)", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_ramal),
             ramal_container
@@ -1163,6 +1195,16 @@ def main(page: ft.Page):
         selected_letter = {"value": None}  # A-Z filter state — None means no letter filter active
         price_popup = ft.Column(spacing=6, visible=False)
 
+        # ── TOP-OF-PAGE GOOD/BAD TIMING FLAG ───────────────────────────────
+        # A single green/red headline flag, always the first thing on this page — tells
+        # you at a glance whether right now is good or bad timing to trade, per your
+        # custom Rules. Kept in sync by CALCULATE ASTRO below and by Auto Refresh.
+        top_timing_text = ft.Text("⏳ TIMING: tap CALCULATE ASTRO below, or start Auto Refresh, to check now",
+                                    size=15, weight="bold", color="#FFFFFF")
+        top_timing_flag_container = ft.Container(
+            content=top_timing_text, bgcolor=C["hint_txt"], padding=14, border_radius=8, alignment=ft.alignment.center
+        )
+
         # ── LIVE TIMING SIGNAL (Auto Refresh) ─────────────────────────────
         # Your custom Rules (evaluate_rules) check the current sky right now, not any one
         # stock's identity — so this is ONE market-timing signal shared by every stock at a
@@ -1177,7 +1219,7 @@ def main(page: ft.Page):
         )
 
         def compute_live_timing_signal():
-            """Runs your custom Rules against the sky right now (same engine as Oracle's
+            """Runs your custom Rules against the sky right now (same engine as this page's
             Calculate Astro), independent of any specific stock — a general market-timing read."""
             now = datetime.now()
             jd = jd_ut_from_ist(now.year, now.month, now.day, now.hour, now.minute)
@@ -1188,13 +1230,13 @@ def main(page: ft.Page):
             retro_set = get_retrograde_set(jd, 19.076, 72.877)
             matches, score, avoid_matches = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
             if avoid_matches:
-                return "AVOID", "#212121"
+                return "AVOID", "#212121", score, avoid_matches
             elif score > 0:
-                return "BUY", C["green"]
+                return "BUY", C["green"], score, avoid_matches
             elif score < 0:
-                return "SELL", C["red"]
+                return "SELL", C["red"], score, avoid_matches
             else:
-                return "NEUTRAL", C["accent"]
+                return "NEUTRAL", C["accent"], score, avoid_matches
 
         def stocks_blink_loop(stop_event):
             blink_on = True
@@ -1213,11 +1255,12 @@ def main(page: ft.Page):
 
         def stocks_recalc_loop(interval_seconds, stop_event):
             while not stop_event.is_set():
-                label, color = compute_live_timing_signal()
+                label, color, score, avoid_matches = compute_live_timing_signal()
                 stocks_live_signal_state["label"], stocks_live_signal_state["color"] = label, color
                 live_signal_text.value = f"⏱ LIVE TIMING SIGNAL: {label}"
                 live_signal_container.bgcolor = color
                 live_signal_text.color = "#FFFFFF"
+                apply_timing_flag(score, avoid_matches)
                 load_list(fld_list_search.value.strip().upper())
                 page.update()
                 if stop_event.wait(interval_seconds):
@@ -1357,9 +1400,14 @@ def main(page: ft.Page):
             page.update()
 
         list_screen = ft.Column(visible=False, controls=[
+            top_timing_flag_container,
             make_header("📋 STOCK LIST (NSE India)"), ft.Divider(height=4, color=C["divider"]),
             ft.ElevatedButton("⬅  BACK TO ORACLE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("oracle")),
             price_popup,
+            ft.Divider(height=4, color=C["divider"]),
+            ft.Text("🪐 AUTO ASTRO (D1/D9) — calculates the current-sky Vedic chart and runs your custom Rules against it, right here.", size=11, color=C["black_txt"]),
+            ft.ElevatedButton("🪐  CALCULATE ASTRO (D1 / D9)", bgcolor=C["primary"], color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_astro),
+            oracle_astro_container,
             ft.Divider(height=4, color=C["divider"]),
             ft.Text("⏱ LIVE TIMING SIGNAL — your custom Rules checked against the sky right now (one shared signal for all stocks, not per-row); blinks while active", size=10, color=C["hint_txt"]),
             fld_stocks_auto_interval, btn_stocks_auto_refresh, live_signal_container,
@@ -1550,11 +1598,11 @@ def main(page: ft.Page):
         RASHI_NAMES = ["1=Aries", "2=Taurus", "3=Gemini", "4=Cancer", "5=Leo", "6=Virgo",
                        "7=Libra", "8=Scorpio", "9=Sagittarius", "10=Capricorn", "11=Aquarius", "12=Pisces"]
         fld_rule_type   = ft.Dropdown(label="Rule Type", value="D9_HOUSE",
-                                        options=[ft.dropdown.Option(o) for o in ["D1_HOUSE", "D9_HOUSE", "D1_D9_COMPARE", "D1_D9_SAME_HOUSE", "D9_TO_D1_LIST", "VARGOTTAMA", "D1_RASHI", "D9_RASHI"]])
+                                        options=[ft.dropdown.Option(o) for o in ["D1_HOUSE", "D9_HOUSE", "D9_HOUSE_ASPECT", "D1_D9_COMPARE", "D1_D9_SAME_HOUSE", "D9_TO_D1_LIST", "VARGOTTAMA", "D1_RASHI", "D9_RASHI"]])
         fld_rule_planet = ft.Dropdown(label="Planet", value="ANY",
                                         options=[ft.dropdown.Option(o) for o in PLANET_OPTS])
         fld_rule_h1     = make_field("D1 House (1-12) OR D1 Rashi number", hint="HOUSE rules: house# counted from Lagna. RASHI rules: " + ", ".join(RASHI_NAMES[:4]) + "...")
-        fld_rule_h9     = make_field("D9 House (1-12) OR D9 Rashi number", hint="Same numbering as above, applied to the D9 (Navamsha) chart")
+        fld_rule_h9     = make_field("D9 House (1-12) OR D9 Rashi number", hint="D9_HOUSE_ASPECT: enter the D9 house being ASPECTED (Planet field = the aspecting planet, or ANY). Other rules: same numbering as D1, applied to the D9 (Navamsha) chart")
         fld_rule_h1_list = make_field("D1 House LIST (D9_TO_D1_LIST only)", hint="Comma-separated house numbers, e.g. 4,5,10,11 — used only for the D9_TO_D1_LIST rule type")
         fld_rule_companion_planet = ft.Dropdown(label="Companion Planet (optional AND condition)", value="",
                                         options=[ft.dropdown.Option("")] + [ft.dropdown.Option(o) for o in PLANET_OPTS[1:]])
@@ -1578,12 +1626,27 @@ def main(page: ft.Page):
                 label2 = "D9 Rashi" if rtype == "D9_RASHI" else "D9H"
                 if rtype == "D9_TO_D1_LIST":
                     desc = f"#{rid}  [{rtype}]  {planet}  D9H:{hd9 or '-'} → D1H in [{hd1_list or '-'}]  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
+                elif rtype == "D9_HOUSE_ASPECT":
+                    desc = f"#{rid}  [{rtype}]  {planet} aspecting D9H:{hd9 or '-'}  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
                 else:
                     desc = f"#{rid}  [{rtype}]  {planet}  {label1}:{hd1 or '-'}  {label2}:{hd9 or '-'}  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
                 if comp_planet and comp_hd9:
                     desc += f"  AND {comp_planet} in D9H:{comp_hd9}"
+                # GO / NO-TRADE flag — green for BUY (go for trade), red for SELL/AVOID
+                # (not to trade), grey for NEUTRAL rules kept only for reference.
+                if signal == "BUY":
+                    flag_color, flag_label = C["green"], "GO"
+                elif signal in ("SELL", "AVOID"):
+                    flag_color, flag_label = C["red"], "NO-TRADE"
+                else:
+                    flag_color, flag_label = C["hint_txt"], "NEUTRAL"
+                flag_badge = ft.Container(
+                    content=ft.Text(flag_label, size=10, color="#FFFFFF", weight="bold"),
+                    bgcolor=flag_color, padding=ft.padding.symmetric(horizontal=6, vertical=3), border_radius=4
+                )
                 rules_list_col.controls.append(
                     ft.Row([
+                        flag_badge,
                         ft.Text(desc, size=12, color=sig_color, weight="bold" if signal == "AVOID" else None, expand=True),
                         ft.IconButton(icon=ft.Icons.DELETE, icon_color=C["red"], on_click=lambda e, rid=rid: do_delete_rule(rid))
                     ])
@@ -1608,6 +1671,8 @@ def main(page: ft.Page):
                 if comp_h9_raw is not None and not (1 <= comp_h9_raw <= 12): raise ValueError("Companion D9 House must be 1-12")
                 if (comp_planet_raw and not comp_h9_raw) or (comp_h9_raw and not comp_planet_raw):
                     raise ValueError("Companion condition needs BOTH the planet AND the D9 house filled in — or leave both blank")
+                if fld_rule_type.value == "D9_HOUSE_ASPECT" and h9 is None:
+                    raise ValueError("D9_HOUSE_ASPECT needs the D9 House field filled in (the house being ASPECTED)")
                 if fld_rule_type.value == "D9_TO_D1_LIST":
                     if h9 is None: raise ValueError("D9_TO_D1_LIST needs the D9 House field filled in (the fixed D9 house)")
                     if not h1_list_raw: raise ValueError("D9_TO_D1_LIST needs the D1 House LIST field filled in, e.g. 4,5,10,11")
@@ -1645,6 +1710,9 @@ def main(page: ft.Page):
             ("D1_HOUSE",      "Sa", 6,  None, 0, "SELL", 1.5, "Saturn D1 6th house — debt/obstacle pressure", None, None, None),
             ("D1_D9_COMPARE", "Sa", 8,  8,    1, "AVOID", 1.0, "Saturn retrograde AND afflicted in BOTH D1 & D9 8th house — strong caution, avoid new positions", None, None, None),
             ("D9_HOUSE",      "Sa", None, 7, 0, "AVOID", 1.0, "Saturn in D9 7th house — avoid trading (buy or sell) entirely", None, None, None),
+            ("D9_HOUSE_ASPECT", "Ju", None, 11, 0, "BUY",  2.0, "D9 11th house (gains) ASPECTED by Jupiter — benefic drishti on the gains house", None, None, None),
+            ("D9_HOUSE_ASPECT", "Sa", None, 1,  0, "AVOID", 1.0, "D9 1st house (overall chart strength) ASPECTED by Saturn — malefic drishti on the Lagna, avoid trading", None, None, None),
+            ("D9_HOUSE_ASPECT", "ANY", None, 2, 0, "NEUTRAL", 0.5, "D9 2nd house (liquid wealth) aspected by ANY planet — logged for reference only, raise weight/change signal once you've tested this yourself", None, None, None),
             ("D9_HOUSE",      "Me", 3,  None, 1, "SELL", 2.0, "Mercury retrograde in D9 3rd house — trade/communication volatility", None, None, None),
             ("D1_HOUSE",      "Ra", 11, None, 0, "BUY",  1.5, "Rahu D1 11th house — speculative sudden gains (volatile)", None, None, None),
             ("D1_HOUSE",      "Ke", 12, None, 0, "SELL", 1.5, "Ketu D1 12th house — losses/isolation", None, None, None),
@@ -1710,7 +1778,7 @@ def main(page: ft.Page):
                 page.update()
 
         HELP_TEXT = """HOW THE BUY/SELL/AVOID SIGNAL WORKS
-The banner in Oracle (under CALCULATE ASTRO) is computed by adding up every rule below that matches the current chart: +weight for BUY rules, -weight for SELL rules, 0 for NEUTRAL. AVOID rules work differently on purpose — see below. This is a reference tool based on conventional interpretations, not a validated predictive model — use it as one input, not a standalone signal.
+The banner under CALCULATE ASTRO on the Stocks / Show All page is computed by adding up every rule below that matches the current chart: +weight for BUY rules, -weight for SELL rules, 0 for NEUTRAL. AVOID rules work differently on purpose — see below. This is a reference tool based on conventional interpretations, not a validated predictive model — use it as one input, not a standalone signal.
 
 HOUSE vs RASHI — THE MOST IMPORTANT DISTINCTION TO UNDERSTAND
 These are two different things, and mixing them up is the #1 source of confusion:
@@ -1759,6 +1827,7 @@ RULE TYPES EXPLAINED
 • VARGOTTAMA — fires when D1 rashi = D9 rashi for that planet (house fields not needed) — note this is about the SIGN matching, which is a different, separate concept from D1_D9_SAME_HOUSE matching on HOUSE NUMBER (see the House vs Rashi section above)
 • D1_RASHI — fires when a planet sits in the given absolute RASHI (1=Aries...12=Pisces) in the D1 chart, regardless of which house that rashi falls in for this particular Lagna
 • D9_RASHI — same as above, but checked in the D9 (Navamsha) chart
+• D9_HOUSE_ASPECT — fires when the chosen D9 HOUSE (enter it in the D9 House field) is ASPECTED (drishti) by the chosen Planet — or by ANY planet if Planet=ANY. Classical Parashari rule: every planet aspects the 7th house from its own position; Mars also aspects the 4th/8th, Jupiter the 5th/9th, Saturn the 3rd/10th. Rahu/Ketu are treated like Saturn here (3rd/7th/10th) as a common modern convention, not classical doctrine. Example: Planet=ANY, D9 House=11, Signal=BUY → fires whenever any planet currently aspects the D9 11th (gains) house.
 
 CHART COLOR CODING (on the D1/D9 diamond charts themselves)
 • Red — normal planet, no special condition
@@ -1828,7 +1897,7 @@ Tap "📦 LOAD EXAMPLE RULES" to add a 22-rule starter pack covering the pattern
 
         rules_screen = ft.Column(visible=False, scroll="auto", controls=[
             make_header("📜 CUSTOM D1 / D9 RULES"), ft.Divider(height=4, color=C["divider"]),
-            ft.Text("Define your own planet-in-house rules. These drive the BUY/SELL recommendation shown under CALCULATE ASTRO in Oracle.", size=12, color=C["black_txt"]),
+            ft.Text("Define your own planet-in-house rules. These drive the BUY/SELL recommendation shown under CALCULATE ASTRO on the Stocks / Show All page, and the Green/Red timing flag at the top of that page.", size=12, color=C["black_txt"]),
             ft.ElevatedButton("📖 HELP / REFERENCE GUIDE", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("help")),
             fld_rule_type, fld_rule_planet,
             ft.Row([fld_rule_h1, fld_rule_h9]),
@@ -1989,6 +2058,12 @@ Tap "📦 LOAD EXAMPLE RULES" to add a 22-rule starter pack covering the pattern
         page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, rules_screen, help_screen, confirm_exit_panel, nav_row)
 
         refresh_rules_list()
+
+        try:
+            _lbl, _clr, _score, _avoid = compute_live_timing_signal()
+            apply_timing_flag(_score, _avoid)
+        except Exception:
+            pass  # ephemeris/rules not ready yet — top flag just keeps its placeholder text
 
         n = db_count()
         if n < 5: set_status("No database. Go to Database tab.", C["red"])

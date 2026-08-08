@@ -18,41 +18,41 @@ except Exception:
 import flet as ft
 import flet.canvas as cv
 
-# â”€â”€ CONSTANTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── CONSTANTS ──────────────────────────────────────────────────────────────────
 AKSHARA_VALS = {
-    'à¤…':1,'à¤†':2,'à¤‡':3,'à¤ˆ':4,'à¤‰':5,'à¤Š':6,'à¤':7,'à¤':8,'à¤“':9,'à¤”':10,
-    'à¤•':11,'à¤–':12,'à¤—':13,'à¤—':14,'à¤™':15,'à¤š':16,'à¤›':17,'à¤œ':18,'à¤':19,'à¤ž':20,
-    'à¤Ÿ':21,'à¤ ':22,'à¤¡':23,'à¤¢':24,'à¤£':25,'à¤¤':26,'à¤¥':27,'à¤¦':28,'à¤§':29,'à¤¨':30,
-    'à¤ª':31,'à¤«':32,'à¤¬':33,'à¤­':34,'à¤®':35,'à¤¯':36,'à¤°':37,'à¤²':38,'à¤µ':39,'à¤¶':40,
-    'à¤·':41,'à¤¸':42,'à¤¹':43,'à¤¿':2,'à¤¾':2,'à¥‡':7,'à¥ˆ':8,'à¥‹':9,'à¥Œ':10,'à¥':0,'à¤‚':1
+    'अ':1,'आ':2,'इ':3,'ई':4,'उ':5,'ऊ':6,'ए':7,'ऐ':8,'ओ':9,'औ':10,
+    'क':11,'ख':12,'ग':13,'ग':14,'ङ':15,'च':16,'छ':17,'ज':18,'झ':19,'ञ':20,
+    'ट':21,'ठ':22,'ड':23,'ढ':24,'ण':25,'त':26,'थ':27,'द':28,'ध':29,'न':30,
+    'प':31,'फ':32,'ब':33,'भ':34,'म':35,'य':36,'र':37,'ल':38,'व':39,'श':40,
+    'ष':41,'स':42,'ह':43,'ि':2,'ा':2,'े':7,'ै':8,'ो':9,'ौ':10,'्':0,'ं':1
 }
 SUTRA_MAP = {
-    0:"à¤…à¤¨à¤‚à¤¤(Ananta)",1:"à¤¶à¤•à¥à¤¤à¤¿(Shakti)",2:"à¤œà¥à¤žà¤¾à¤¨(Gnana)",
-    3:"à¤§à¤°à¥à¤®(Dharma)",4:"à¤µà¥ˆà¤°à¤¾à¤—à¥à¤¯(Vairagya)",5:"à¤à¤¶à¥à¤µà¤°à¥à¤¯(Aishwarya)",
-    6:"à¤¯à¤¶(Yashas)",7:"à¤¶à¥à¤°à¥€(Shree)",8:"à¤µà¥€à¤°à¥à¤¯(Veerya)"
+    0:"अनंत(Ananta)",1:"शक्ति(Shakti)",2:"ज्ञान(Gnana)",
+    3:"धर्म(Dharma)",4:"वैराग्य(Vairagya)",5:"ऐश्वर्य(Aishwarya)",
+    6:"यश(Yashas)",7:"श्री(Shree)",8:"वीर्य(Veerya)"
 }
 GRAHA = {
-    0:("à¤®à¤‚à¤—à¤² Mars","BULLISH",4,"Metals Defence Energy","1-7 Days","Strict stop-loss","Tuesday"),
-    1:("à¤¸à¥‚à¤°à¥à¤¯ Sun","BULLISH",5,"PSU Govt Energy Gold","1-4 Weeks","Enter Monday","Sunday"),
-    2:("à¤šà¤‚à¤¦à¥à¤° Moon","VOLATILE",2,"FMCG Dairy Retail","1-3 Days","Avoid overnight","Monday"),
-    3:("à¤—à¥à¤°à¥ Jupiter","STRONGLY BULLISH",5,"Banking Education","1-6 Months","Watch retrograde","Thursday"),
-    4:("à¤°à¤¾à¤¹à¥ Rahu","SPECULATIVE",3,"Tech Pharma Foreign","Caution","No leverage","Saturday"),
-    5:("à¤¬à¥à¤§ Mercury","BULLISH",4,"IT Telecom Media","1-3 Weeks","Watch retrograde","Wednesday"),
-    6:("à¤¶à¥à¤•à¥à¤° Venus","BULLISH",4,"FMCG Luxury Hotels","2-8 Weeks","Book at peaks","Friday"),
-    7:("à¤•à¥‡à¤¤à¥ Ketu","BEARISH",2,"Old Economy Exit","Avoid Entry","Reduce positions","Tuesday"),
-    8:("à¤¶à¤¨à¤¿ Saturn","SLOW BULLISH",3,"Infra Metals Coal","3-12 Months","No panic sell","Saturday"),
+    0:("मंगल Mars","BULLISH",4,"Metals Defence Energy","1-7 Days","Strict stop-loss","Tuesday"),
+    1:("सूर्य Sun","BULLISH",5,"PSU Govt Energy Gold","1-4 Weeks","Enter Monday","Sunday"),
+    2:("चंद्र Moon","VOLATILE",2,"FMCG Dairy Retail","1-3 Days","Avoid overnight","Monday"),
+    3:("गुरु Jupiter","STRONGLY BULLISH",5,"Banking Education","1-6 Months","Watch retrograde","Thursday"),
+    4:("राहु Rahu","SPECULATIVE",3,"Tech Pharma Foreign","Caution","No leverage","Saturday"),
+    5:("बुध Mercury","BULLISH",4,"IT Telecom Media","1-3 Weeks","Watch retrograde","Wednesday"),
+    6:("शुक्र Venus","BULLISH",4,"FMCG Luxury Hotels","2-8 Weeks","Book at peaks","Friday"),
+    7:("केतु Ketu","BEARISH",2,"Old Economy Exit","Avoid Entry","Reduce positions","Tuesday"),
+    8:("शनि Saturn","SLOW BULLISH",3,"Infra Metals Coal","3-12 Months","No panic sell","Saturday"),
 }
-# Six classical Bandha (traversal/lock) patterns from the Siribhoovalaya tradition â€”
+# Six classical Bandha (traversal/lock) patterns from the Siribhoovalaya tradition —
 # each is a distinct way of reading/moving through the 27x27 akshara matrix.
 # Mapped here from Navaank as a symbolic "food for thought" overlay on the market forecast.
 # 4th field = directional tendency: UP / SIDEWAYS / CONTINUATION (reinforces whatever Graha says)
 BANDHA = {
-    0:("à¤°à¤¥à¤¬à¤‚à¤§ Rathabandha", "Chariot â€” steady, linear forward motion", "Favors trend-following; hold through medium-term moves rather than chasing every tick", "UP"),
-    1:("à¤šà¤•à¥à¤°à¤¬à¤‚à¤§ Chakrabandha", "Wheel â€” cyclical, repeating loops", "Expect cyclical swings; better suited to swing-trade re-entries than a single hold", "SIDEWAYS"),
-    2:("à¤ªà¤¦à¥à¤®à¤¬à¤‚à¤§ Padmabandha", "Lotus â€” layered, unfolding petal by petal", "Gradual, layered build-up; consider accumulating in tranches rather than one lump sum", "UP"),
-    3:("à¤¹à¤‚à¤¸à¤¬à¤‚à¤§ Hamsabandha", "Swan â€” graceful glide, discernment (neera-kshira)", "Favors selective, quality-over-quantity entries; be choosy about timing", "UP"),
-    4:("à¤®à¥à¤•à¥à¤¤à¤¾à¤µà¤²à¥€ Muktavali", "Pearl-chain â€” linked, sequential continuity", "Moves may be linked to sector/peer stocks; watch correlated names before acting alone", "CONTINUATION"),
-    5:("à¤¸à¤°à¥à¤µà¤¤à¥‹à¤­à¤¦à¥à¤° Sarvatobhadra", "All-auspicious square â€” balance in every direction", "A balanced/range-bound signature; often better to wait for a clear breakout than force an entry", "SIDEWAYS"),
+    0:("रथबंध Rathabandha", "Chariot — steady, linear forward motion", "Favors trend-following; hold through medium-term moves rather than chasing every tick", "UP"),
+    1:("चक्रबंध Chakrabandha", "Wheel — cyclical, repeating loops", "Expect cyclical swings; better suited to swing-trade re-entries than a single hold", "SIDEWAYS"),
+    2:("पद्मबंध Padmabandha", "Lotus — layered, unfolding petal by petal", "Gradual, layered build-up; consider accumulating in tranches rather than one lump sum", "UP"),
+    3:("हंसबंध Hamsabandha", "Swan — graceful glide, discernment (neera-kshira)", "Favors selective, quality-over-quantity entries; be choosy about timing", "UP"),
+    4:("मुक्तावली Muktavali", "Pearl-chain — linked, sequential continuity", "Moves may be linked to sector/peer stocks; watch correlated names before acting alone", "CONTINUATION"),
+    5:("सर्वतोभद्र Sarvatobhadra", "All-auspicious square — balance in every direction", "A balanced/range-bound signature; often better to wait for a clear breakout than force an entry", "SIDEWAYS"),
 }
 
 GRAHA_DIRECTION = {
@@ -65,21 +65,21 @@ def combine_direction(graha_signal, bandha_dir):
     if bandha_dir == "CONTINUATION":
         return g_dir, "Bandha reinforces the Graha's own direction (trend continuation)"
     if g_dir == bandha_dir:
-        return g_dir, "Graha and Bandha AGREE â€” higher-confidence signal"
+        return g_dir, "Graha and Bandha AGREE — higher-confidence signal"
     if g_dir == "SIDEWAYS" or bandha_dir == "SIDEWAYS":
-        return "SIDEWAYS", "One signal points range-bound â€” lower conviction either way"
-    return "MIXED", "Graha and Bandha CONFLICT â€” contradictory signals, avoid strong conviction"
+        return "SIDEWAYS", "One signal points range-bound — lower conviction either way"
+    return "MIXED", "Graha and Bandha CONFLICT — contradictory signals, avoid strong conviction"
 
-DIR_ARROW = {"UP": "ðŸ”¼ UP", "DOWN": "ðŸ”½ DOWN", "SIDEWAYS": "â†”ï¸ SIDEWAYS", "MIXED": "âš ï¸ MIXED"}
+DIR_ARROW = {"UP": "🔼 UP", "DOWN": "🔽 DOWN", "SIDEWAYS": "↔️ SIDEWAYS", "MIXED": "⚠️ MIXED"}
 
 NAK = [
-    "à¤…à¤¶à¥à¤µà¤¿à¤¨à¥€","à¤­à¤°à¤£à¥€","à¤•à¥ƒà¤¤à¥à¤¤à¤¿à¤•à¤¾","à¤°à¥‹à¤¹à¤¿à¤£à¥€","à¤®à¥ƒà¤—à¤¶à¤¿à¤°à¤¾","à¤†à¤°à¥à¤¦à¥à¤°à¤¾",
-    "à¤ªà¥à¤¨à¤°à¥à¤µà¤¸à¥","à¤ªà¥à¤·à¥à¤¯","à¤†à¤¶à¥à¤²à¥‡à¤·à¤¾","à¤®à¤˜à¤¾","à¤ªà¥‚à¤°à¥à¤µà¤¾à¤«à¤¾à¤²à¥à¤—à¥à¤¨à¥€","à¤‰à¤¤à¥à¤¤à¤°à¤¾à¤«à¤¾à¤²à¥à¤—à¥à¤¨à¥€",
-    "à¤¹à¤¸à¥à¤¤","à¤šà¤¿à¤¤à¥à¤°à¤¾","à¤¸à¥à¤µà¤¾à¤¤à¤¿","à¤µà¤¿à¤¶à¤¾à¤–à¤¾","à¤…à¤¨à¥à¤°à¤¾à¤§à¤¾","à¤œà¥à¤¯à¥‡à¤·à¥à¤ à¤¾",
-    "à¤®à¥‚à¤²","à¤ªà¥‚à¤°à¥à¤µà¤¾à¤·à¤¾à¤¢à¤¼à¤¾","à¤‰à¤¤à¥à¤¤à¤°à¤¾à¤·à¤¾à¤¢à¤¼à¤¾","à¤¶à¥à¤°à¤µà¤£","à¤§à¤¨à¤¿à¤·à¥à¤ à¤¾","à¤¶à¤¤à¤­à¤¿à¤·à¤¾",
-    "à¤ªà¥‚à¤°à¥à¤µà¤¾à¤­à¤¾à¤¦à¥à¤°à¤ªà¤¦","à¤‰à¤¤à¥à¤¤à¤°à¤¾à¤­à¤¾à¤¦à¥à¤°à¤ªà¤¦","à¤°à¥‡à¤µà¤¤à¥€"
+    "अश्विनी","भरणी","कृत्तिका","रोहिणी","मृगशिरा","आर्द्रा",
+    "पुनर्वसु","पुष्य","आश्लेषा","मघा","पूर्वाफाल्गुनी","उत्तराफाल्गुनी",
+    "हस्त","चित्रा","स्वाति","विशाखा","अनुराधा","ज्येष्ठा",
+    "मूल","पूर्वाषाढ़ा","उत्तराषाढ़ा","श्रवण","धनिष्ठा","शतभिषा",
+    "पूर्वाभाद्रपद","उत्तराभाद्रपद","रेवती"
 ]
-# Sarvatobhadra Chakra Vedha (obstruction) pairs â€” classical Muhurta-shastra nakshatra
+# Sarvatobhadra Chakra Vedha (obstruction) pairs — classical Muhurta-shastra nakshatra
 # pairing used to flag an afflicted/inauspicious combination. Indices are 0-based to
 # match NAK above (0=Ashwini ... 26=Revati). Dhanishta (22) traditionally has no partner.
 VEDHA_PAIRS = {
@@ -88,7 +88,7 @@ VEDHA_PAIRS = {
     18:26, 26:18, 19:25, 25:19, 20:24, 24:20, 21:23, 23:21,
     22: None,
 }
-# Classical Nakshatra Lord cycle (Vimshottari Dasha order) â€” this part IS standard,
+# Classical Nakshatra Lord cycle (Vimshottari Dasha order) — this part IS standard,
 # well-documented Vedic astrology, repeating 3x across all 27 nakshatras.
 NAKSHATRA_LORD_CYCLE = ["Ke","Ve","Su","Mo","Ma","Ra","Ju","Sa","Me"]
 PLANET_ABBR_TO_GRAHA_IDX = {"Ma":0,"Su":1,"Mo":2,"Ju":3,"Ra":4,"Me":5,"Ve":6,"Ke":7,"Sa":8}
@@ -97,84 +97,84 @@ def nak_lord_abbr(nak_idx):
 def nak_lord_graha(nak_idx):
     return GRAHA[PLANET_ABBR_TO_GRAHA_IDX[nak_lord_abbr(nak_idx)]]
 CURATED = {
-    "SBIN":"à¤­à¤¾à¤°à¤¤à¥€à¤¯ à¤¸à¥à¤Ÿà¥‡à¤Ÿ à¤¬à¥ˆà¤‚à¤•","HDFCBANK":"à¤à¤šà¤¡à¥€à¤à¤«à¤¸à¥€ à¤¬à¥ˆà¤‚à¤•",
-    "ICICIBANK":"à¤†à¤ˆà¤¸à¥€à¤†à¤ˆà¤¸à¥€à¤†à¤ˆ à¤¬à¥ˆà¤‚à¤•","AXISBANK":"à¤à¤•à¥à¤¸à¤¿à¤¸ à¤¬à¥ˆà¤‚à¤•",
-    "RELIANCE":"à¤°à¤¿à¤²à¤¾à¤¯à¤‚à¤¸ à¤²à¤¿à¤®à¤¿à¤Ÿà¥‡à¤¡","TCS":"à¤Ÿà¤¾à¤Ÿà¤¾ à¤•à¤‚à¤¸à¤²à¥à¤Ÿà¥‡à¤‚à¤¸à¥€ à¤¸à¤°à¥à¤µà¤¿à¤¸à¥‡à¤œ",
-    "INFY":"à¤‡à¤¨à¥à¤«à¥‹à¤¸à¤¿à¤¸","WIPRO":"à¤µà¤¿à¤ªà¥à¤°à¥‹",
-    "NTPC":"à¤°à¤¾à¤·à¥à¤Ÿà¥à¤°à¥€à¤¯ à¤¤à¤¾à¤ª à¤µà¤¿à¤¦à¥à¤¯à¥à¤¤ à¤¨à¤¿à¤—à¤®",
-    "ONGC":"à¤¤à¥‡à¤² à¤”à¤° à¤ªà¥à¤°à¤¾à¤•à¥ƒà¤¤à¤¿à¤• à¤—à¥ˆà¤¸ à¤¨à¤¿à¤—à¤®",
-    "TATASTEEL":"à¤Ÿà¤¾à¤Ÿà¤¾ à¤¸à¥à¤Ÿà¥€à¤²","COALINDIA":"à¤•à¥‹à¤² à¤‡à¤‚à¤¡à¤¿à¤¯à¤¾",
-    "HINDUNILVR":"à¤¹à¤¿à¤‚à¤¦à¥à¤¸à¥à¤¤à¤¾à¤¨ à¤¯à¥‚à¤¨à¤¿à¤²à¥€à¤µà¤°","ITC":"à¤†à¤ˆà¤Ÿà¥€à¤¸à¥€",
-    "LT":"à¤²à¤¾à¤°à¥à¤¸à¤¨ à¤à¤‚à¤¡ à¤Ÿà¥à¤¬à¥à¤°à¥‹","MARUTI":"à¤®à¤¾à¤°à¥à¤¤à¤¿ à¤¸à¥à¤œà¥à¤•à¥€",
-    "TATAMOTORS":"à¤Ÿà¤¾à¤Ÿà¤¾ à¤®à¥‹à¤Ÿà¤°à¥à¤¸","SUNPHARMA":"à¤¸à¤¨ à¤«à¤¾à¤°à¥à¤®à¤¾à¤¸à¥à¤¯à¥à¤Ÿà¤¿à¤•à¤²",
-    "BHARTIARTL":"à¤­à¤¾à¤°à¤¤à¥€ à¤à¤¯à¤°à¤Ÿà¥‡à¤²","BAJFINANCE":"à¤¬à¤œà¤¾à¤œ à¤«à¤¾à¤‡à¤¨à¥‡à¤‚à¤¸",
-    "LICI":"à¤­à¤¾à¤°à¤¤à¥€à¤¯ à¤œà¥€à¤µà¤¨ à¤¬à¥€à¤®à¤¾ à¤¨à¤¿à¤—à¤®","IRCTC":"à¤­à¤¾à¤°à¤¤à¥€à¤¯ à¤°à¥‡à¤²à¤µà¥‡ à¤–à¤¾à¤¨à¤ªà¤¾à¤¨",
-    "HAL":"à¤¹à¤¿à¤‚à¤¦à¥à¤¸à¥à¤¤à¤¾à¤¨ à¤à¤¯à¤°à¥‹à¤¨à¥‰à¤Ÿà¤¿à¤•à¥à¤¸","ASIANPAINT":"à¤à¤¶à¤¿à¤¯à¤¨ à¤ªà¥‡à¤‚à¤Ÿà¥à¤¸",
-    "TITAN":"à¤Ÿà¤¾à¤‡à¤Ÿà¤¨ à¤•à¤‚à¤ªà¤¨à¥€","ZOMATO":"à¤œà¥‹à¤®à¥ˆà¤Ÿà¥‹",
-    "PNB":"à¤ªà¤‚à¤œà¤¾à¤¬ à¤¨à¥‡à¤¶à¤¨à¤² à¤¬à¥ˆà¤‚à¤•","BEL":"à¤­à¤¾à¤°à¤¤ à¤‡à¤²à¥‡à¤•à¥à¤Ÿà¥à¤°à¥‰à¤¨à¤¿à¤•à¥à¤¸",
-    "HCLTECH":"à¤à¤šà¤¸à¥€à¤à¤² à¤Ÿà¥‡à¤•à¥à¤¨à¥‹à¤²à¥‰à¤œà¥€à¤œ","ADANIPORTS":"à¤…à¤¦à¤¾à¤¨à¥€ à¤ªà¥‹à¤°à¥à¤Ÿà¥à¤¸",
-    "KOTAKBANK":"à¤•à¥‹à¤Ÿà¤• à¤®à¤¹à¤¿à¤‚à¤¦à¥à¤°à¤¾ à¤¬à¥ˆà¤‚à¤•","DRREDDY":"à¤¡à¥‰ à¤°à¥‡à¤¡à¥à¤¡à¥€à¤œ",
-    "CIPLA":"à¤¸à¤¿à¤ªà¥à¤²à¤¾","M&M":"à¤®à¤¹à¤¿à¤‚à¤¦à¥à¤°à¤¾ à¤à¤‚à¤¡ à¤®à¤¹à¤¿à¤‚à¤¦à¥à¤°à¤¾",
-    "ULTRACEMCO":"à¤…à¤²à¥à¤Ÿà¥à¤°à¤¾à¤Ÿà¥‡à¤• à¤¸à¥€à¤®à¥‡à¤‚à¤Ÿ","BAJAJ-AUTO":"à¤¬à¤œà¤¾à¤œ à¤‘à¤Ÿà¥‹",
-    "POWERGRID":"à¤ªà¤¾à¤µà¤° à¤—à¥à¤°à¤¿à¤¡ à¤•à¥‰à¤°à¥à¤ªà¥‹à¤°à¥‡à¤¶à¤¨","GAIL":"à¤—à¥‡à¤² à¤‡à¤‚à¤¡à¤¿à¤¯à¤¾",
-    "BPCL":"à¤­à¤¾à¤°à¤¤ à¤ªà¥‡à¤Ÿà¥à¤°à¥‹à¤²à¤¿à¤¯à¤®","IOC":"à¤‡à¤‚à¤¡à¤¿à¤¯à¤¨ à¤‘à¤¯à¤² à¤•à¥‰à¤°à¥à¤ªà¥‹à¤°à¥‡à¤¶à¤¨",
-    "BANKBARODA":"à¤¬à¥ˆà¤‚à¤• à¤‘à¤« à¤¬à¤¡à¤¼à¥Œà¤¦à¤¾","CANBK":"à¤•à¥‡à¤¨à¤°à¤¾ à¤¬à¥ˆà¤‚à¤•",
-    "UNIONBANK":"à¤¯à¥‚à¤¨à¤¿à¤¯à¤¨ à¤¬à¥ˆà¤‚à¤• à¤‘à¤« à¤‡à¤‚à¤¡à¤¿à¤¯à¤¾","YESBANK":"à¤¯à¤¸ à¤¬à¥ˆà¤‚à¤•",
-    "IDFCFIRSTB":"à¤†à¤ˆà¤¡à¥€à¤à¤«à¤¸à¥€ à¤«à¤°à¥à¤¸à¥à¤Ÿ à¤¬à¥ˆà¤‚à¤•","FEDERALBNK":"à¤«à¥‡à¤¡à¤°à¤² à¤¬à¥ˆà¤‚à¤•",
-    "SAIL":"à¤¸à¥à¤Ÿà¥€à¤² à¤…à¤¥à¥‰à¤°à¤¿à¤Ÿà¥€ à¤‘à¤« à¤‡à¤‚à¤¡à¤¿à¤¯à¤¾","NMDC":"à¤à¤¨à¤à¤®à¤¡à¥€à¤¸à¥€",
-    "HINDALCO":"à¤¹à¤¿à¤‚à¤¡à¤¾à¤²à¥à¤•à¥‹ à¤¨à¤¿à¤·à¥à¤•à¤°à¥à¤·","VEDL":"à¤µà¥‡à¤¦à¤¾à¤‚à¤¤à¤¾",
-    "TATAPOWER":"à¤Ÿà¤¾à¤Ÿà¤¾ à¤ªà¤¾à¤µà¤°","ADANIPOWER":"à¤…à¤¦à¤¾à¤¨à¥€ à¤ªà¤¾à¤µà¤°",
-    "ADANIENT":"à¤…à¤¦à¤¾à¤¨à¥€ à¤à¤‚à¤Ÿà¤°à¤ªà¥à¤°à¤¾à¤‡à¤œà¥‡à¤œ","ADANIGREEN":"à¤…à¤¦à¤¾à¤¨à¥€ à¤—à¥à¤°à¥€à¤¨é…ç½®",
-    "DLF":"à¤¡à¥€à¤à¤²à¤à¤«","GODREJPROP":"à¤—à¥‹à¤¦à¤°à¥‡à¤œ à¤ªà¥à¤°à¥‰à¤ªà¤°à¥à¤Ÿà¥€à¤œ",
-    "BRITANNIA":"à¤¬à¥à¤°à¤¿à¤Ÿà¤¾à¤¨à¤¿à¤¯à¤¾æ™¯æ°”","DABUR":"à¤¡à¤¾à¤¬à¤° à¤‡à¤‚à¤¡à¤¿à¤¯à¤¾",
-    "MARICO":"à¤®à¥‡à¤°à¤¿à¤•à¥‹","NESTLEIND":"à¤¨à¥‡à¤¸à¥à¤²à¥‡ à¤‡à¤‚à¤¡à¤¿à¤¯à¤¾",
-    "HEROMOTOCO":"à¤¹à¥€à¤°à¥‹ à¤®à¥‹à¤Ÿà¥‹à¤•à¥‰à¤°à¥à¤ª","EICHERMOT":"à¤†à¤¯à¤¶à¤° à¤®à¥‹à¤Ÿà¤°à¥à¤¸",
-    "ASHOKLEY":"à¤…à¤¶à¥‹à¤• à¤²à¥‡à¤²à¥ˆà¤‚à¤¡","TVSMOTOR":"à¤Ÿà¥€à¤µà¥€à¤à¤¸ à¤®à¥‹à¤Ÿà¤°",
-    "CONCOR":"à¤•à¤‚à¤Ÿà¥‡à¤¨à¤° à¤•à¥‰à¤°à¥à¤ªà¥‹à¤°à¥‡à¤¶à¤¨","BHEL":"à¤­à¤¾à¤°à¤¤ à¤¹à¥‡à¤µà¥€ à¤‡à¤²à¥‡à¤•à¥à¤Ÿà¥à¤°à¤¿à¤•à¤²à¥à¤¸",
-    "APOLLOHOSP":"à¤…à¤ªà¥‹à¤²à¥‹ à¤¹à¥‰à¤¸à¥à¤ªà¤¿à¤Ÿà¤²à¥à¤¸","DIVISLAB":"à¤¦à¤¿à¤µà¤¿à¤¸ à¤²à¥‡à¤¬à¥‹à¤°à¥‡à¤Ÿà¤°à¥€à¤œ",
-    "BIOCON":"à¤¬à¤¾à¤¯à¥‹à¤•à¥‰à¤¨","LUPIN":"à¤²à¥à¤¯à¥‚à¤ªà¤¿à¤¨",
-    "AUROPHARMA":"à¤‘à¤°à¥‹à¤¬à¤¿à¤‚à¤¦à¥‹ à¤«à¤¾à¤°à¥à¤®à¤¾","TORNTPHARM":"à¤Ÿà¥‹à¤°à¥‡à¤‚à¤Ÿ à¤«à¤¾à¤°à¥à¤®à¤¾",
+    "SBIN":"भारतीय स्टेट बैंक","HDFCBANK":"एचडीएफसी बैंक",
+    "ICICIBANK":"आईसीआईसीआई बैंक","AXISBANK":"एक्सिस बैंक",
+    "RELIANCE":"रिलायंस लिमिटेड","TCS":"टाटा कंसल्टेंसी सर्विसेज",
+    "INFY":"इन्फोसिस","WIPRO":"विप्रो",
+    "NTPC":"राष्ट्रीय ताप विद्युत निगम",
+    "ONGC":"तेल और प्राकृतिक गैस निगम",
+    "TATASTEEL":"टाटा स्टील","COALINDIA":"कोल इंडिया",
+    "HINDUNILVR":"हिंदुस्तान यूनिलीवर","ITC":"आईटीसी",
+    "LT":"लार्सन एंड टुब्रो","MARUTI":"मारुति सुजुकी",
+    "TATAMOTORS":"टाटा मोटर्स","SUNPHARMA":"सन फार्मास्युटिकल",
+    "BHARTIARTL":"भारती एयरटेल","BAJFINANCE":"बजाज फाइनेंस",
+    "LICI":"भारतीय जीवन बीमा निगम","IRCTC":"भारतीय रेलवे खानपान",
+    "HAL":"हिंदुस्तान एयरोनॉटिक्स","ASIANPAINT":"एशियन पेंट्स",
+    "TITAN":"टाइटन कंपनी","ZOMATO":"जोमैटो",
+    "PNB":"पंजाब नेशनल बैंक","BEL":"भारत इलेक्ट्रॉनिक्स",
+    "HCLTECH":"एचसीएल टेक्नोलॉजीज","ADANIPORTS":"अदानी पोर्ट्स",
+    "KOTAKBANK":"कोटक महिंद्रा बैंक","DRREDDY":"डॉ रेड्डीज",
+    "CIPLA":"सिप्ला","M&M":"महिंद्रा एंड महिंद्रा",
+    "ULTRACEMCO":"अल्ट्राटेक सीमेंट","BAJAJ-AUTO":"बजाज ऑटो",
+    "POWERGRID":"पावर ग्रिड कॉर्पोरेशन","GAIL":"गेल इंडिया",
+    "BPCL":"भारत पेट्रोलियम","IOC":"इंडियन ऑयल कॉर्पोरेशन",
+    "BANKBARODA":"बैंक ऑफ बड़ौदा","CANBK":"केनरा बैंक",
+    "UNIONBANK":"यूनियन बैंक ऑफ इंडिया","YESBANK":"यस बैंक",
+    "IDFCFIRSTB":"आईडीएफसी फर्स्ट बैंक","FEDERALBNK":"फेडरल बैंक",
+    "SAIL":"स्टील अथॉरिटी ऑफ इंडिया","NMDC":"एनएमडीसी",
+    "HINDALCO":"हिंडाल्को निष्कर्ष","VEDL":"वेदांता",
+    "TATAPOWER":"टाटा पावर","ADANIPOWER":"अदानी पावर",
+    "ADANIENT":"अदानी एंटरप्राइजेज","ADANIGREEN":"अदानी ग्रीन配置",
+    "DLF":"डीएलएफ","GODREJPROP":"गोदरेज प्रॉपर्टीज",
+    "BRITANNIA":"ब्रिटानिया景气","DABUR":"डाबर इंडिया",
+    "MARICO":"मेरिको","NESTLEIND":"नेस्ले इंडिया",
+    "HEROMOTOCO":"हीरो मोटोकॉर्प","EICHERMOT":"आयशर मोटर्स",
+    "ASHOKLEY":"अशोक लेलैंड","TVSMOTOR":"टीवीएस मोटर",
+    "CONCOR":"कंटेनर कॉर्पोरेशन","BHEL":"भारत हेवी इलेक्ट्रिकल्स",
+    "APOLLOHOSP":"अपोलो हॉस्पिटल्स","DIVISLAB":"दिविस लेबोरेटरीज",
+    "BIOCON":"बायोकॉन","LUPIN":"ल्यूपिन",
+    "AUROPHARMA":"ऑरोबिंदो फार्मा","TORNTPHARM":"टोरेंट फार्मा",
 }
 WD = {
-    "LIMITED":"à¤²à¤¿à¤®à¤¿à¤Ÿà¥‡à¤¡","LTD":"à¤²à¤¿à¤®à¤¿à¤Ÿà¥‡à¤¡","BANK":"à¤¬à¥ˆà¤‚à¤•",
-    "INDUSTRIES":"à¤‡à¤‚à¤¡à¤¸à¥à¤Ÿà¥à¤°à¥€à¤œ","INDUSTRY":"à¤‰à¤¦à¥à¤¯à¥‹à¤—",
-    "INDIA":"à¤‡à¤‚à¤¡à¤¿à¤¯à¤¾","INDIAN":"à¤‡à¤‚à¤¡à¤¿à¤¯à¤¨","POWER":"à¤ªà¤¾à¤µà¤°",
-    "ENERGY":"à¤à¤¨à¤°à¥à¤œà¥€","FINANCE":"à¤«à¤¾à¤‡à¤¨à¥‡à¤‚à¤¸","STEEL":"à¤¸à¥à¤Ÿà¥€à¤²",
-    "MOTORS":"à¤®à¥‹à¤Ÿà¤°à¥à¤¸","MOTOR":"à¤®à¥‹à¤Ÿà¤°",
-    "TECHNOLOGIES":"à¤Ÿà¥‡à¤•à¥à¤¨à¥‹à¤²à¥‰à¤œà¥€à¤œ","TECHNOLOGY":"à¤Ÿà¥‡à¤•à¥à¤¨à¥‹à¤²à¥‰à¤œà¥€",
-    "AND":"à¤à¤‚à¤¡","&":"à¤à¤‚à¤¡","SERVICES":"à¤¸à¤°à¥à¤µà¤¿à¤¸à¥‡à¤œ","SERVICE":"à¤¸à¤°à¥à¤µà¤¿à¤¸",
-    "PHARMA":"à¤«à¤¾à¤°à¥à¤®à¤¾","PHARMACEUTICALS":"à¤«à¤¾à¤°à¥à¤®à¤¾à¤¸à¥à¤¯à¥à¤Ÿà¤¿à¤•à¤²à¥à¤¸",
-    "CEMENT":"à¤¸à¥€à¤®à¥‡à¤‚à¤Ÿ","OIL":"à¤‘à¤¯à¤²","GAS":"à¤—à¥ˆà¤¸",
-    "TELECOM":"à¤Ÿà¥‡à¤²à¥€à¤•à¥‰à¤®","GROUP":"à¤—à¥à¤°à¥à¤ª",
-    "CHEMICALS":"à¤•à¥‡à¤®à¤¿à¤•à¤²à¥à¤¸","NATIONAL":"à¤¨à¥‡à¤¶à¤¨à¤²",
-    "CORPORATION":"à¤•à¥‰à¤°à¥à¤ªà¥‹à¤°à¥‡à¤¶à¤¨","CORP":"à¤•à¥‰à¤°à¥à¤ª",
-    "MEDIA":"MEDIA","HEALTHCARE":"à¤¹à¥‡à¤²à¥à¤¥à¤•à¥‡à¤¯à¤°",
-    "CAPITAL":"à¤•à¥ˆà¤ªà¤¿à¤Ÿà¤²","INSURANCE":"à¤‡à¤‚à¤¶à¥à¤¯à¥‹à¤°à¥‡à¤‚à¤¸",
-    "REALTY":"à¤°à¤¿à¤¯à¤²à¥à¤Ÿà¥€","PROPERTIES":"à¤ªà¥à¤°à¥‰à¤ªà¤°à¥à¤Ÿà¥€à¤œ",
-    "AUTO":"à¤‘à¤Ÿà¥‹","AUTOMOBILE":"à¤‘à¤Ÿà¥‹à¤®à¥‹à¤¬à¤¾à¤‡à¤²",
-    "ELECTRIC":"à¤‡à¤²à¥‡à¤•à¥à¤Ÿà¥à¤°à¤¿à¤•","ELECTRONICS":"à¤‡à¤²à¥‡à¤•à¥à¤Ÿà¥à¤°à¥‰à¤¨à¤¿à¤•à¥à¤¸",
-    "CONSTRUCTION":"à¤•à¤‚à¤¸à¥à¤Ÿà¥à¤°à¤•à¥à¤¶à¤¨","INFRASTRUCTURE":"à¤‡à¤¨à¥à¤«à¥à¤°à¤¾à¤¸à¥à¤Ÿà¥à¤°à¤•à¥à¤šà¤°",
-    "ENTERPRISES":"à¤à¤‚à¤Ÿà¤°à¤ªà¥à¤°à¤¾à¤‡à¤œà¥‡à¤œ","ENTERPRISE":"à¤à¤‚à¤Ÿà¤°à¤ªà¥à¤°à¤¾à¤‡à¤œ",
-    "HOLDINGS":"à¤¹à¥‹à¤²à¥à¤¡à¤¿à¤‚à¤—à¥à¤¸","INVESTMENTS":"à¤‡à¤¨à¥à¤µà¥‡à¤¸à¥à¤Ÿà¤®à¥‡à¤‚à¤Ÿà¥à¤¸",
-    "LABORATORIES":"à¤²à¥‡à¤¬à¥‹à¤°à¥‡à¤Ÿà¤°à¥€à¤œ","LABS":"à¤²à¥ˆà¤¬à¥à¤¸",
-    "HOSPITAL":"à¤¹à¥‰à¤¸à¥à¤ªà¤¿à¤Ÿà¤²","HOSPITALS":"à¤¹à¥‰à¤¸à¥à¤ªà¤¿à¤Ÿà¤²à¥à¤¸",
-    "FOODS":"à¤«à¥‚à¤¡à¥à¤¸","FOOD":"à¤«à¥‚à¤¡","BEVERAGES":"à¤¬à¥‡à¤µà¤°à¥‡à¤œà¥‡à¤œ",
-    "TEXTILE":"à¤Ÿà¥‡à¤•à¥à¤¸à¤Ÿà¤¾à¤‡à¤²","TEXTILES":"à¤Ÿà¥‡à¤•à¥à¤¸à¤Ÿà¤¾à¤‡à¤²à¥à¤¸",
-    "FERTILIZERS":"à¤«à¤°à¥à¤Ÿà¤¿à¤²à¤¾à¤‡à¤œà¤°à¥à¤¸","AGRO":"à¤à¤—à¥à¤°à¥‹",
-    "TRADING":"à¤Ÿà¥à¤°à¥‡à¤¡à¤¿à¤‚à¤—","EXPORTS":"à¤à¤•à¥à¤¸à¤ªà¥‹à¤°à¥à¤Ÿà¥à¤¸",
-    "SOLUTIONS":"à¤¸à¥‰à¤²à¥à¤¯à¥‚à¤¶à¤‚à¤¸","SYSTEMS":"à¤¸à¤¿à¤¸à¥à¤Ÿà¤®à¥à¤¸",
-    "GLOBAL":"à¤—à¥à¤²à¥‹à¤¬à¤²","INTERNATIONAL":"à¤‡à¤‚à¤Ÿà¤°à¤¨à¥‡à¤¶à¤¨à¤²",
-    "MANAGEMENT":"à¤®à¥ˆà¤¨à¥‡à¤œà¤®à¥‡à¤‚à¤Ÿ","CONSULTING":"à¤•à¤‚à¤¸ULTING",
-    "SECURITIES":"à¤¸à¤¿à¤•à¥à¤¯à¥‹à¤°à¤¿à¤Ÿà¥€à¤œ","PETROLEUM":"à¤ªà¥‡à¤Ÿà¥à¤°à¥‹à¤²à¤¿à¤¯à¤®",
-    "COMPANY":"à¤•à¤‚à¤ªà¤¨à¥€","SOLAR":"à¤¸à¥‹à¤²à¤°","RENEWABLE":"à¤°à¤¿à¤¨à¥à¤¯à¥‚à¤à¤¬à¤²",
-    "DIGITAL":"à¤¡à¤¿à¤œà¤¿à¤Ÿà¤²","NETWORK":"à¤¨à¥‡à¤Ÿà¤µà¤°à¥à¤•","NETWORKS":"à¤¨à¥‡à¤Ÿà¤µà¤°à¥à¤•à¥à¤¸",
+    "LIMITED":"लिमिटेड","LTD":"लिमिटेड","BANK":"बैंक",
+    "INDUSTRIES":"इंडस्ट्रीज","INDUSTRY":"उद्योग",
+    "INDIA":"इंडिया","INDIAN":"इंडियन","POWER":"पावर",
+    "ENERGY":"एनर्जी","FINANCE":"फाइनेंस","STEEL":"स्टील",
+    "MOTORS":"मोटर्स","MOTOR":"मोटर",
+    "TECHNOLOGIES":"टेक्नोलॉजीज","TECHNOLOGY":"टेक्नोलॉजी",
+    "AND":"एंड","&":"एंड","SERVICES":"सर्विसेज","SERVICE":"सर्विस",
+    "PHARMA":"फार्मा","PHARMACEUTICALS":"फार्मास्युटिकल्स",
+    "CEMENT":"सीमेंट","OIL":"ऑयल","GAS":"गैस",
+    "TELECOM":"टेलीकॉम","GROUP":"ग्रुप",
+    "CHEMICALS":"केमिकल्स","NATIONAL":"नेशनल",
+    "CORPORATION":"कॉर्पोरेशन","CORP":"कॉर्प",
+    "MEDIA":"MEDIA","HEALTHCARE":"हेल्थकेयर",
+    "CAPITAL":"कैपिटल","INSURANCE":"इंश्योरेंस",
+    "REALTY":"रियल्टी","PROPERTIES":"प्रॉपर्टीज",
+    "AUTO":"ऑटो","AUTOMOBILE":"ऑटोमोबाइल",
+    "ELECTRIC":"इलेक्ट्रिक","ELECTRONICS":"इलेक्ट्रॉनिक्स",
+    "CONSTRUCTION":"कंस्ट्रक्शन","INFRASTRUCTURE":"इन्फ्रास्ट्रक्चर",
+    "ENTERPRISES":"एंटरप्राइजेज","ENTERPRISE":"एंटरप्राइज",
+    "HOLDINGS":"होल्डिंग्स","INVESTMENTS":"इन्वेस्टमेंट्स",
+    "LABORATORIES":"लेबोरेटरीज","LABS":"लैब्स",
+    "HOSPITAL":"हॉस्पिटल","HOSPITALS":"हॉस्पिटल्स",
+    "FOODS":"फूड्स","FOOD":"फूड","BEVERAGES":"बेवरेजेज",
+    "TEXTILE":"टेक्सटाइल","TEXTILES":"टेक्सटाइल्स",
+    "FERTILIZERS":"फर्टिलाइजर्स","AGRO":"एग्रो",
+    "TRADING":"ट्रेडिंग","EXPORTS":"एक्सपोर्ट्स",
+    "SOLUTIONS":"सॉल्यूशंस","SYSTEMS":"सिस्टम्स",
+    "GLOBAL":"ग्लोबल","INTERNATIONAL":"इंटरनेशनल",
+    "MANAGEMENT":"मैनेजमेंट","CONSULTING":"कंसULTING",
+    "SECURITIES":"सिक्योरिटीज","PETROLEUM":"पेट्रोलियम",
+    "COMPANY":"कंपनी","SOLAR":"सोलर","RENEWABLE":"रिन्यूएबल",
+    "DIGITAL":"डिजिटल","NETWORK":"नेटवर्क","NETWORKS":"नेटवर्क्स",
 }
 PR = {
-    'A':'à¤','B':'à¤¬','C':'à¤•','D':'à¤¡','E':'à¤‡','F':'à¤«',
-    'G':'à¤—','H':'à¤¹','I':'à¤‡','J':'à¤œ','K':'à¤•','L':'à¤²',
-    'M':'à¤®','N':'à¤¨','O':'à¤“','P':'à¤ª','Q':'à¤•','R':'à¤°',
-    'S':'à¤¸','T':'à¤Ÿ','U':'à¤¯','V':'à¤µ','W':'à¤µ','X':'à¤•à¥à¤¸',
-    'Y':'à¤¯','Z':'à¤œ'
+    'A':'ए','B':'ब','C':'क','D':'ड','E':'इ','F':'फ',
+    'G':'ग','H':'ह','I':'इ','J':'ज','K':'क','L':'ल',
+    'M':'म','N':'न','O':'ओ','P':'प','Q':'क','R':'र',
+    'S':'स','T':'ट','U':'य','V':'व','W':'व','X':'क्स',
+    'Y':'य','Z':'ज'
 }
 NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
 
@@ -210,7 +210,7 @@ def fetch_nse_quote(symbol):
     }
 
 def fetch_yahoo_quote(symbol):
-    """Fallback quote source when NSE blocks the request â€” Yahoo Finance's chart
+    """Fallback quote source when NSE blocks the request — Yahoo Finance's chart
     API (the same data source the popular 'yfinance' library uses under the hood).
     No API key needed, and far more permissive than NSE for simple lookups.
     NSE-listed stocks use the '.NS' suffix on Yahoo Finance."""
@@ -253,7 +253,7 @@ def fetch_stock_quote(symbol):
         except Exception as yahoo_err:
             raise RuntimeError(f"NSE failed ({nse_err}); Yahoo Finance fallback also failed ({yahoo_err})")
 
-# â”€â”€ COLORS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── COLORS ─────────────────────────────────────────────────────────────────────
 C = {
     "bg":       "#FFFFFF",
     "primary":  "#0D47A1",
@@ -272,7 +272,7 @@ C = {
     "divider":  "#90CAF9",
 }
 
-# â”€â”€ HELPER FUNCTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── HELPER FUNCTIONS ───────────────────────────────────────────────────────────
 def parse_dt(s):
     if not s: return None
     for f in ("%d-%m-%Y","%Y-%m-%d","%d/%m/%Y","%d-%b-%Y"):
@@ -281,7 +281,7 @@ def parse_dt(s):
     return None
 
 def quick_verdict(asum, ldt_str):
-    """Lightweight one-line Bhoovalaya + Sarvatobhadra summary for stock-list rows â€”
+    """Lightweight one-line Bhoovalaya + Sarvatobhadra summary for stock-list rows —
     same Navaank/Graha/Bandha/Vedha logic as the full Oracle report, condensed."""
     ldate = parse_dt(ldt_str)
     today = datetime.now()
@@ -298,26 +298,26 @@ def quick_verdict(asum, ldt_str):
         has_vedha = (vedha_partner is not None) and (vedha_partner == birth_nak_idx)
     return combined_dir, has_vedha
 
-# â”€â”€ RAMAL PRASHNA (Arabic/Persian geomancy, cast at the moment of the question) â”€â”€
+# ── RAMAL PRASHNA (Arabic/Persian geomancy, cast at the moment of the question) ──
 # The 16 Ramal Shakals mapped to binary tuples (Top to Bottom: Agni, Vayu, Jala, Prithvi)
 # 1 = Single Dot (Odd/Fire/Air aspect), 0 = Double Dot or Line (Even/Water/Earth aspect)
 RAMAL_DICTIONARY = {
-    (1, 1, 1, 1): {"name": "Jamat (à¤œà¤®à¤¾à¤¤)", "nature": "Mitrik (Inward)", "element": "Agni", "bias": "Strong Bullish"},
-    (0, 0, 0, 0): {"name": "Tariq (à¤¤à¤¾à¤°à¥€à¤•à¤¼)", "nature": "Kharij (Outward)", "element": "Prithvi", "bias": "Bearish"},
-    (1, 0, 0, 0): {"name": "Lahan (à¤²à¤¹à¤¾à¤¨)", "nature": "Mitrik (Inward)", "element": "Jala", "bias": "Bullish"},
-    (0, 1, 1, 1): {"name": "Nafki (à¤¨à¤«à¤¼à¤•à¥€)", "nature": "Kharij (Outward)", "element": "Vayu", "bias": "Bearish"},
-    (1, 1, 0, 0): {"name": "Kajjul (à¤•à¤œà¥à¤œà¥à¤²)", "nature": "Mitrik (Inward)", "element": "Agni", "bias": "Bullish"},
-    (0, 0, 1, 1): {"name": "Uqla (à¤‰à¤•à¤¼à¤²à¤¾)", "nature": "Nishasht (Neutral)", "element": "Prithvi", "bias": "Sideways"},
-    (1, 0, 1, 0): {"name": "Nasrut-Kharij (à¤¨à¤¸à¤°à¥à¤¤ à¤–à¤¾à¤°à¤¿à¤œ)", "nature": "Kharij (Outward)", "element": "Vayu", "bias": "Bearish"},
-    (0, 1, 0, 1): {"name": "Nasrut-Dakhil (à¤¨à¤¸à¤°à¥à¤¤ à¤¦à¤¾à¤–à¤¿à¤²)", "nature": "Mitrik (Inward)", "element": "Jala", "bias": "Bullish"},
-    (1, 0, 0, 1): {"name": "Humra (à¤¹à¥à¤®à¤°à¤¾)", "nature": "Kharij (Fire)", "element": "Agni", "bias": "Volatile / Bearish"},
-    (0, 1, 1, 0): {"name": "Bayaz (à¤¬à¤¯à¤¾à¤œà¤¼)", "nature": "Mitrik (Inward)", "element": "Jala", "bias": "Bullish"},
-    (1, 1, 0, 1): {"name": "Nusra (à¤¨à¥à¤¸à¤°à¤¾)", "nature": "Mitrik (Inward)", "element": "Vayu", "bias": "Bullish"},
-    (0, 0, 1, 0): {"name": "Kosa (à¤•à¥‹à¤¸à¤¾)", "nature": "Kharij (Outward)", "element": "Prithvi", "bias": "Bearish"},
-    (1, 1, 1, 0): {"name": "Fath (à¤«à¤¥)", "nature": "Mitrik (Inward)", "element": "Agni", "bias": "Bullish"},
-    (0, 1, 0, 0): {"name": "Rahu (à¤°à¤¾à¤¹à¥)", "nature": "Kharij (Outward)", "element": "Vayu", "bias": "Bearish"},
-    (1, 0, 1, 1): {"name": "Munkis (à¤®à¥à¤‚à¤•à¤¿à¤¸)", "nature": "Kharij (Outward)", "element": "Prithvi", "bias": "Volatile / Bearish"},
-    (0, 0, 0, 1): {"name": "Ijtima (à¤‡à¤œà¤¤à¤¿à¤®à¤¾)", "nature": "Mitrik (Inward)", "element": "Jala", "bias": "Bullish"},
+    (1, 1, 1, 1): {"name": "Jamat (जमात)", "nature": "Mitrik (Inward)", "element": "Agni", "bias": "Strong Bullish"},
+    (0, 0, 0, 0): {"name": "Tariq (तारीक़)", "nature": "Kharij (Outward)", "element": "Prithvi", "bias": "Bearish"},
+    (1, 0, 0, 0): {"name": "Lahan (लहान)", "nature": "Mitrik (Inward)", "element": "Jala", "bias": "Bullish"},
+    (0, 1, 1, 1): {"name": "Nafki (नफ़की)", "nature": "Kharij (Outward)", "element": "Vayu", "bias": "Bearish"},
+    (1, 1, 0, 0): {"name": "Kajjul (कज्जुल)", "nature": "Mitrik (Inward)", "element": "Agni", "bias": "Bullish"},
+    (0, 0, 1, 1): {"name": "Uqla (उक़ला)", "nature": "Nishasht (Neutral)", "element": "Prithvi", "bias": "Sideways"},
+    (1, 0, 1, 0): {"name": "Nasrut-Kharij (नसरुत खारिज)", "nature": "Kharij (Outward)", "element": "Vayu", "bias": "Bearish"},
+    (0, 1, 0, 1): {"name": "Nasrut-Dakhil (नसरुत दाखिल)", "nature": "Mitrik (Inward)", "element": "Jala", "bias": "Bullish"},
+    (1, 0, 0, 1): {"name": "Humra (हुमरा)", "nature": "Kharij (Fire)", "element": "Agni", "bias": "Volatile / Bearish"},
+    (0, 1, 1, 0): {"name": "Bayaz (बयाज़)", "nature": "Mitrik (Inward)", "element": "Jala", "bias": "Bullish"},
+    (1, 1, 0, 1): {"name": "Nusra (नुसरा)", "nature": "Mitrik (Inward)", "element": "Vayu", "bias": "Bullish"},
+    (0, 0, 1, 0): {"name": "Kosa (कोसा)", "nature": "Kharij (Outward)", "element": "Prithvi", "bias": "Bearish"},
+    (1, 1, 1, 0): {"name": "Fath (फथ)", "nature": "Mitrik (Inward)", "element": "Agni", "bias": "Bullish"},
+    (0, 1, 0, 0): {"name": "Rahu (राहु)", "nature": "Kharij (Outward)", "element": "Vayu", "bias": "Bearish"},
+    (1, 0, 1, 1): {"name": "Munkis (मुंकिस)", "nature": "Kharij (Outward)", "element": "Prithvi", "bias": "Volatile / Bearish"},
+    (0, 0, 0, 1): {"name": "Ijtima (इजतिमा)", "nature": "Mitrik (Inward)", "element": "Jala", "bias": "Bullish"},
 }
 
 def ramal_add(fig1, fig2):
@@ -370,11 +370,11 @@ def ramal_recommendation(judge_info, final_info):
     16-house tradition. We still don't ask BUY/SELL intent, so both readings are given."""
     j_nature, f_nature = judge_info["nature"], final_info["nature"]
     if j_nature.startswith("Mitrik") and f_nature.startswith("Mitrik"):
-        return ("BUY", "ðŸŸ¢ HIGH-PROBABILITY BUY (Strong Teji Alignment) â€” both Judge and Final Outcome show inward energy accumulation. Favors BUY; avoid fresh SELL here.")
+        return ("BUY", "🟢 HIGH-PROBABILITY BUY (Strong Teji Alignment) — both Judge and Final Outcome show inward energy accumulation. Favors BUY; avoid fresh SELL here.")
     elif j_nature.startswith("Kharij"):
-        return ("SELL", "ðŸ”´ AVOID BUYING (Mandi Warning) â€” Judge shows outward energy depletion, a potential price dump or trap. Favors SELL/short over fresh BUY.")
+        return ("SELL", "🔴 AVOID BUYING (Mandi Warning) — Judge shows outward energy depletion, a potential price dump or trap. Favors SELL/short over fresh BUY.")
     else:
-        return ("NEUTRAL", "âšª NEUTRAL / WAIT FOR CONFIRMATION â€” mixed or non-agreeing Shakal signature; avoid trading without price-action support.")
+        return ("NEUTRAL", "⚪ NEUTRAL / WAIT FOR CONFIRMATION — mixed or non-agreeing Shakal signature; avoid trading without price-action support.")
 
 def get_hindi(sym, eng):
     if sym in CURATED: return CURATED[sym]
@@ -410,7 +410,7 @@ def calc(name):
     for c in name:
         w = AKSHARA_VALS.get(c, 0)
         total += w
-        if w > 0 or c == "à¥":
+        if w > 0 or c == "्":
             steps.append(c + "=" + str(w))
         elif c == " ":
             steps.append("|")
@@ -427,11 +427,11 @@ def make_report(asum, tval, ldate):
     today_nak_idx = today.timetuple().tm_yday % 27
     nak   = NAK[today_nak_idx]
     wday  = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][today.weekday()]
-    bars  = {1:"â˜…â˜†â˜†â˜†â˜†",2:"â˜…â˜…â˜†â˜†â˜†",3:"â˜…â˜…â˜…â˜†â˜†",4:"â˜…â˜…â˜…â˜…â˜†",5:"â˜…â˜…â˜…â˜…â˜…"}
+    bars  = {1:"★☆☆☆☆",2:"★★☆☆☆",3:"★★★☆☆",4:"★★★★☆",5:"★★★★★"}
     today_lord = nak_lord_graha(today_nak_idx)
     if ldate:
         tc = ((today.timetuple().tm_yday - ldate.timetuple().tm_yday) % 27) + 1
-        tn = ["à¤œà¤¨à¥à¤®","à¤¸à¤®à¥à¤ªà¤¤","à¤µà¤¿à¤ªà¤¤","à¤•à¥à¤·à¥‡à¤®","à¤ªà¥à¤°à¤¤à¥à¤¯à¤°à¤¿","à¤¸à¤¾à¤§à¤•","à¤µà¤§","à¤®à¤¿à¤¤à¥à¤°","à¤ªà¤°à¤®-à¤®à¤¿à¤¤à¥à¤°"]
+        tn = ["जन्म","सम्पत","विपत","क्षेम","प्रत्यरि","साधक","वध","मित्र","परम-मित्र"]
         tara = tn[(tc-1)%9] + (" GOOD" if tc%9 in(2,4,6,8,0) else " CAUTION")
         birth_nak_idx = ldate.timetuple().tm_yday % 27
         birth_nak = NAK[birth_nak_idx]
@@ -439,24 +439,24 @@ def make_report(asum, tval, ldate):
         vedha_partner = VEDHA_PAIRS.get(today_nak_idx)
         has_vedha = (vedha_partner is not None) and (vedha_partner == birth_nak_idx)
         if has_vedha:
-            vedha_line = "âš ï¸ VEDHA PRESENT â€” " + nak + " obstructs " + birth_nak + " â†’ avoid fresh entry today"
+            vedha_line = "⚠️ VEDHA PRESENT — " + nak + " obstructs " + birth_nak + " → avoid fresh entry today"
             vedha_sector_line = ("  Affected sectors (via lords " + today_lord[0] + " / " + birth_lord[0] + "): "
                                   + today_lord[3] + "  &  " + birth_lord[3])
         else:
-            vedha_line = "âœ… NO VEDHA â€” " + nak + " and " + birth_nak + " are clear of each other"
+            vedha_line = "✅ NO VEDHA — " + nak + " and " + birth_nak + " are clear of each other"
             vedha_sector_line = ""
     else:
         birth_nak = "N/A"
         birth_lord = None
         vedha_line = "N/A (no listing date on record)"
         vedha_sector_line = ""
-    S  = "â”€" * 30
-    S2 = "â•" * 30
+    S  = "─" * 30
+    S2 = "═" * 30
     return "\n".join([
         S2, "    BHOOVALAYA ORACLE RESULT", S2, "",
-        "STEP 1: AKSHARA WEIGHT THEORY", "  (Siribhoovalaya â€” Jain Text)",
-        "  Each Hindi sound has weight:", "  à¤…=1 à¤†=2 à¤‡=3 à¤ˆ=4 à¤‰=5 à¤Š=6",
-        "  à¤=7 à¤=8 à¤“=9 à¤•=11 à¤¬=33 à¤°=37", "  (64 Akshara Ã— weight = sum)", S,
+        "STEP 1: AKSHARA WEIGHT THEORY", "  (Siribhoovalaya — Jain Text)",
+        "  Each Hindi sound has weight:", "  अ=1 आ=2 इ=3 ई=4 उ=5 ऊ=6",
+        "  ए=7 ऐ=8 ओ=9 क=11 ब=33 र=37", "  (64 Akshara × weight = sum)", S,
         "STEP 2: NAVAANK CALCULATION", "  (Vedic Digital Root Theory)",
         "  Akshara Sum = " + str(asum), "  Digital Root (1-9) = " + str(nv),
         "  " + _navaank_steps(asum), S,
@@ -465,28 +465,28 @@ def make_report(asum, tval, ldate):
         "  Combined = " + str(asum) + " + " + str(tval) + " = " + str(total),
         "  Sutra Index = " + str(total) + " % 9 = " + str(total % 9), S,
         "STEP 4: SUTRA PRINCIPLE", "  (Bhoovalaya Cosmic Principle)", "  " + sutra, S,
-        "STEP 5: RULING GRAHA (PLANET)", "  (Vedic Financial Astrology)", "  Navaank " + str(nv) + " â†’ " + g[0], S2,
+        "STEP 5: RULING GRAHA (PLANET)", "  (Vedic Financial Astrology)", "  Navaank " + str(nv) + " → " + g[0], S2,
         "  MARKET FORECAST", S2, "  Signal   : " + g[1],
         "  Strength : " + bars.get(g[2],"") + "  " + str(g[2]) + "/5",
         "  Sectors  : " + g[3], "  Hold For : " + g[4], "  Caution  : " + g[5], "  Best Day : " + g[6], S,
         "STEP 6: VEDIC TIMING", "  (Nakshatra + Tara Bala)",
         "  Today    : " + wday + " " + today.strftime("%d-%m-%Y"),
         "  Nakshatra: " + nak, "  Tara Bala: " + tara, "  (Even Tara = GOOD entry)", S,
-        "STEP 7: BHOOVALAYA BANDHA (TRAVERSAL PATTERN)", "  (Siribhoovalaya 27Ã—27 Matrix Theory)",
-        "  Navaank " + str(nv) + " â†’ " + b[0],
+        "STEP 7: BHOOVALAYA BANDHA (TRAVERSAL PATTERN)", "  (Siribhoovalaya 27×27 Matrix Theory)",
+        "  Navaank " + str(nv) + " → " + b[0],
         "  " + b[1], "  Thought: " + b[2],
         "  Bandha Direction: " + b[3], S,
         "STEP 8: COMBINED PRICE DIRECTION (GRAHA + BANDHA)", S2,
         "  " + DIR_ARROW.get(combined_dir, combined_dir),
         "  " + combined_note,
-        "  (Graha=" + g[1] + " â†’ " + GRAHA_DIRECTION.get(g[1],"SIDEWAYS") + "  |  Bandha=" + b[3] + ")",
-        "  Symbolic guess, not a guarantee â€” verify against real price/volume action.", S,
-        "STEP 9: SARVATOBHADRA VEDHA CHECK", "  (Muhurta Shastra â€” Nakshatra Obstruction)",
+        "  (Graha=" + g[1] + " → " + GRAHA_DIRECTION.get(g[1],"SIDEWAYS") + "  |  Bandha=" + b[3] + ")",
+        "  Symbolic guess, not a guarantee — verify against real price/volume action.", S,
+        "STEP 9: SARVATOBHADRA VEDHA CHECK", "  (Muhurta Shastra — Nakshatra Obstruction)",
         "  Today's Nakshatra   : " + nak + "  (Lord: " + today_lord[0] + ")",
         "  Stock's Nakshatra   : " + birth_nak + " (from listing date)" + ("  (Lord: " + birth_lord[0] + ")" if birth_lord else ""),
         "  " + vedha_line,
     ] + ([vedha_sector_line] if vedha_sector_line else []) + [
-        "  (Nakshatra-lord/sector link is this app's own symbolic extension â€”", "   classical Muhurta texts cover timing, not stock sectors)", S2,
+        "  (Nakshatra-lord/sector link is this app's own symbolic extension —", "   classical Muhurta texts cover timing, not stock sectors)", S2,
         "  Research only. Not SEBI advice.", S2,
     ])
 
@@ -498,16 +498,16 @@ def _navaank_steps(n):
         steps.append(str(current) + "=" + "+".join(str(d) for d in digits))
         current = sum(digits)
     if steps:
-        return " â†’ ".join(steps) + " â†’ " + str(current)
+        return " → ".join(steps) + " → " + str(current)
     return str(current)
 
-# â”€â”€ VEDIC ASTROLOGY CALCULATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── VEDIC ASTROLOGY CALCULATIONS ──────────────────────────────────────────────
 SIGN_ABB  = ["Ar","Ta","Ge","Ca","Le","Vi","Li","Sc","Sg","Cp","Aq","Pi"]
-SIGN_HI   = ["à¤®à¥‡à¤·","à¤µà¥ƒà¤·","à¤®à¤¿à¤¥à¥à¤¨","à¤•à¤°à¥à¤•","à¤¸à¤¿à¤‚à¤¹","à¤•à¤¨à¥à¤¯à¤¾","à¤¤à¥à¤²à¤¾","à¤µà¥ƒà¤¶à¥à¤šà¤¿à¤•","à¤§à¤¨à¥","à¤®à¤•à¤°","à¤•à¥à¤‚à¤­","à¤®à¥€à¤¨"]
+SIGN_HI   = ["मेष","वृष","मिथुन","कर्क","सिंह","कन्या","तुला","वृश्चिक","धनु","मकर","कुंभ","मीन"]
 SIGN_FULL = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"]
 PLANET_NAMES = {
-    "As":"Lagna","Su":"Sun-à¤¸à¥‚à¤°à¥à¤¯","Mo":"Moon-à¤šà¤‚à¤¦à¥à¤°","Ma":"Mars-à¤®à¤‚à¤—à¤²","Me":"Mercury-à¤¬à¥à¤§",
-    "Ju":"Jupiter-à¤—à¥à¤°à¥","Ve":"Venus-à¤¶à¥à¤•à¥à¤°","Sa":"Saturn-à¤¶à¤¨à¤¿","Ra":"Rahu-à¤°à¤¾à¤¹à¥","Ke":"Ketu-à¤•à¥‡à¤¤à¥"
+    "As":"Lagna","Su":"Sun-सूर्य","Mo":"Moon-चंद्र","Ma":"Mars-मंगल","Me":"Mercury-बुध",
+    "Ju":"Jupiter-गुरु","Ve":"Venus-शुक्र","Sa":"Saturn-शनि","Ra":"Rahu-राहु","Ke":"Ketu-केतु"
 }
 
 def norm360(x): return x % 360
@@ -593,7 +593,7 @@ def d9_sign(lon):
     start_map = {0:0, 1:9, 2:6, 3:3, 4:0, 5:9, 6:6, 7:3, 8:0, 9:9, 10:6, 11:3}
     return (start_map[sign] + nav_num) % 12
 
-# â”€â”€ ADVANCED CANVAS ENGINE: NORTH INDIAN VEDIC CHART â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── ADVANCED CANVAS ENGINE: NORTH INDIAN VEDIC CHART ─────────────────────────────
 def _diamond_shapes(positions, lagna_sign, title, chart_size=320, y_off=0, add_fill=None, retro=None, vargottama=None):
     if add_fill is None:
         add_fill = (y_off == 0)
@@ -671,13 +671,13 @@ def _diamond_shapes(positions, lagna_sign, title, chart_size=320, y_off=0, add_f
                 is_retro = pl in retro
                 is_varg  = pl in vargottama
                 if is_retro and is_varg:
-                    label, color = pl + "(R,V)", "#6A1B9A"   # purple â€” retrograde AND vargottama
+                    label, color = pl + "(R,V)", "#6A1B9A"   # purple — retrograde AND vargottama
                 elif is_retro:
-                    label, color = pl + "(R)", "#EF6C00"     # orange â€” retrograde
+                    label, color = pl + "(R)", "#EF6C00"     # orange — retrograde
                 elif is_varg:
-                    label, color = pl + "(V)", "#00838F"     # teal â€” vargottama
+                    label, color = pl + "(V)", "#00838F"     # teal — vargottama
                 else:
-                    label, color = pl, "#D32F2F"             # red â€” normal
+                    label, color = pl, "#D32F2F"             # red — normal
                 tokens.append((label, color))
             total_w = sum(len(lbl) * 6 for lbl, _ in tokens) + max(0, len(tokens) - 1) * 4
             tx_cursor = px - total_w // 2
@@ -722,23 +722,23 @@ def build_dual_diamond_chart_with_bars(d1_pos, lagna_d1, d9_pos, lagna_d9, chart
             border_radius=6, top=top, left=0, right=0, height=bar_h - 4
         )
 
-    bar1 = _bar("ðŸ“Š  D1 â€” RASI CHART", 0)
-    bar2 = _bar("ðŸ“Š  D9 â€” NAVAMSHA CHART", y2 - bar_h)
+    bar1 = _bar("📊  D1 — RASI CHART", 0)
+    bar2 = _bar("📊  D9 — NAVAMSHA CHART", y2 - bar_h)
 
     stack = ft.Stack(controls=[canvas, bar1, bar2], width=chart_size, height=total_h)
 
     legend = ft.Row(
         controls=[
-            ft.Text("â–  Normal", size=10, color="#D32F2F", weight="bold"),
-            ft.Text("â–  (R) Retrograde", size=10, color="#EF6C00", weight="bold"),
-            ft.Text("â–  (V) Vargottama", size=10, color="#00838F", weight="bold"),
-            ft.Text("â–  (R,V) Both", size=10, color="#6A1B9A", weight="bold"),
+            ft.Text("■ Normal", size=10, color="#D32F2F", weight="bold"),
+            ft.Text("■ (R) Retrograde", size=10, color="#EF6C00", weight="bold"),
+            ft.Text("■ (V) Vargottama", size=10, color="#00838F", weight="bold"),
+            ft.Text("■ (R,V) Both", size=10, color="#6A1B9A", weight="bold"),
         ],
         alignment=ft.MainAxisAlignment.CENTER, wrap=True, spacing=12
     )
     return ft.Column(controls=[stack, ft.Container(height=6), legend], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
-# â”€â”€ MAIN APP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── MAIN APP ───────────────────────────────────────────────────────────────────
 def main(page: ft.Page):
     try:
         page.title   = "Bhoovalaya Oracle"
@@ -822,7 +822,7 @@ def main(page: ft.Page):
 
         # Classical Parashari drishti (aspect) rules: EVERY planet aspects the 7th house
         # from its own position. Mars/Jupiter/Saturn also cast special extra aspects.
-        # Rahu/Ketu have no single agreed classical aspect scheme â€” by common modern
+        # Rahu/Ketu have no single agreed classical aspect scheme — by common modern
         # convention this app treats them like Saturn (3rd/7th/10th), noted honestly here
         # rather than presented as ancient doctrine.
         ASPECT_EXTRA_HOUSES = {"Ma": [4, 8], "Ju": [5, 9], "Sa": [3, 10], "Ra": [3, 10], "Ke": [3, 10]}
@@ -834,30 +834,30 @@ def main(page: ft.Page):
 
         def apply_timing_flag(score, avoid_matches):
             """Shared GOOD/BAD-timing flag shown at the very top of the Stocks/Show All
-            page â€” same custom-rules verdict (score + AVOID matches) that CALCULATE ASTRO
+            page — same custom-rules verdict (score + AVOID matches) that CALCULATE ASTRO
             and the Live Timing Signal below use, so all three always agree."""
             if avoid_matches:
-                top_timing_text.value = "ðŸ”´ BAD TIMING â€” AVOID TRADING TODAY  (custom AVOID rule matched)"
+                top_timing_text.value = "🔴 BAD TIMING — AVOID TRADING TODAY  (custom AVOID rule matched)"
                 top_timing_flag_container.bgcolor = C["red"]
             elif score > 0:
-                top_timing_text.value = f"ðŸŸ¢ GOOD TIMING â€” GO FOR TRADE  (score {score:+.1f})"
+                top_timing_text.value = f"🟢 GOOD TIMING — GO FOR TRADE  (score {score:+.1f})"
                 top_timing_flag_container.bgcolor = C["green"]
             elif score < 0:
-                top_timing_text.value = f"ðŸ”´ BAD TIMING â€” AVOID TRADING  (score {score:+.1f})"
+                top_timing_text.value = f"🔴 BAD TIMING — AVOID TRADING  (score {score:+.1f})"
                 top_timing_flag_container.bgcolor = C["red"]
             else:
-                top_timing_text.value = "âšª NEUTRAL â€” NO STRONG SIGNAL, TRADE WITH CAUTION"
+                top_timing_text.value = "⚪ NEUTRAL — NO STRONG SIGNAL, TRADE WITH CAUTION"
                 top_timing_flag_container.bgcolor = C["hint_txt"]
             page.update()
 
         def evaluate_rules(d1_pos, d9_pos, lagna_d1, lagna_d9, retro_set):
             """Runs all stored rules against the current chart and returns (matches, net_score, avoid_matches).
-            AVOID rules are kept separate from the BUY/SELL numeric score â€” a single genuine
+            AVOID rules are kept separate from the BUY/SELL numeric score — a single genuine
             AVOID match should be a hard caution flag, not something that can be outweighed
             by a pile of small BUY-weighted rules elsewhere.
             A rule can optionally carry a Companion Condition (companion_planet + companion_house_d9):
             when set, the rule ONLY fires if that companion planet is ALSO in that D9 house at the
-            same time â€” a genuine AND between two independent facts, not just two rules that could
+            same time — a genuine AND between two independent facts, not just two rules that could
             each fire alone."""
             houses_d1 = {p: get_house_num(s, lagna_d1) for p, s in d1_pos.items() if p != "As"}
             houses_d9 = {p: get_house_num(s, lagna_d9) for p, s in d9_pos.items() if p != "As"}
@@ -892,7 +892,7 @@ def main(page: ft.Page):
                         if houses_d1.get(pl) in allowed_d1_houses:
                             ok = True
                     if ok and comp_planet and comp_hd9:
-                        # Companion Condition â€” must ALSO be true, or this rule doesn't fire at all
+                        # Companion Condition — must ALSO be true, or this rule doesn't fire at all
                         if houses_d9.get(comp_planet) != comp_hd9:
                             ok = False
                     if ok:
@@ -921,7 +921,7 @@ def main(page: ft.Page):
             try:
                 conn = sqlite3.connect(db_path)
                 if letter:
-                    # Query the database directly for this letter â€” never truncated by
+                    # Query the database directly for this letter — never truncated by
                     # the general LIMIT below, since a letter's own count is naturally small.
                     base = "SELECT symbol, eng_name, hindi_name, ldate, asum, portfolio FROM stocks WHERE symbol LIKE ?"
                     params = [letter.upper() + "%"]
@@ -1015,7 +1015,7 @@ def main(page: ft.Page):
         def make_header(title, bgcolor=None):
             return ft.Container(content=ft.Text(title, size=16, color="#FFFFFF", weight="bold"), bgcolor=bgcolor or C["primary"], padding=ft.padding.symmetric(horizontal=12, vertical=8), border_radius=6)
 
-        # â”€â”€ SCREEN 1: ORACLE SEARCH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # ── SCREEN 1: ORACLE SEARCH ───────────────────────────────────────────
         fld_oracle = make_field("NSE Stock Symbol or Name", hint="Example: RELIANCE or TCS or SBIN", value="RELIANCE")
         result_txt = ft.Text("", size=15, color=C["dark_txt"], selectable=True, font_family="monospace")
         result_box = ft.Container(content=result_txt, bgcolor=C["res_bg"], padding=14, border_radius=8, border=ft.Border(top=ft.BorderSide(2, C["primary"]), bottom=ft.BorderSide(2, C["primary"]), left=ft.BorderSide(2, C["primary"]), right=ft.BorderSide(2, C["primary"])), visible=False)
@@ -1048,7 +1048,7 @@ def main(page: ft.Page):
                 tval  = days % 730
                 rep   = make_report(asum, tval, ldate)
                 set_status("Found: " + sym, C["green"])
-                result_txt.value = f"â”" * 30 + f"\nSYMBOL  : {sym}\nCOMPANY : {eng}\nHINDI   : {hi}\nLISTED  : {ldt}\n" + f"â”" * 30 + f"\nAKSHARA SUM  = {asum}\nTEMPORAL MOD = {tval}\nCOMBINED VIB = {asum + tval}\nNAVAANK      = {(asum % 9) or 9}\n\n{rep}"
+                result_txt.value = f"━" * 30 + f"\nSYMBOL  : {sym}\nCOMPANY : {eng}\nHINDI   : {hi}\nLISTED  : {ldt}\n" + f"━" * 30 + f"\nAKSHARA SUM  = {asum}\nTEMPORAL MOD = {tval}\nCOMBINED VIB = {asum + tval}\nNAVAANK      = {(asum % 9) or 9}\n\n{rep}"
                 result_box.visible = True
                 oracle_astro_container.visible = False   # hide any chart from a previous search
                 ramal_container.visible = False          # hide any Ramal result from a previous search
@@ -1069,7 +1069,7 @@ def main(page: ft.Page):
             page.update()
 
         def do_oracle_astro(e):
-            # â”€â”€ D1 / D9 VEDIC CHART AT TIME OF THIS CALCULATION (single combined canvas) â”€â”€
+            # ── D1 / D9 VEDIC CHART AT TIME OF THIS CALCULATION (single combined canvas) ──
             try:
                 calc_time = datetime.now()
                 jd = jd_ut_from_ist(calc_time.year, calc_time.month, calc_time.day, calc_time.hour, calc_time.minute)
@@ -1084,51 +1084,51 @@ def main(page: ft.Page):
 
                 oracle_astro_container.controls.clear()
                 oracle_astro_container.controls.append(ft.Divider(height=6, color=C["divider"]))
-                oracle_astro_container.controls.append(make_header("ðŸ•‰ï¸ VEDIC KUNDALI AT TIME OF CALCULATION"))
+                oracle_astro_container.controls.append(make_header("🕉️ VEDIC KUNDALI AT TIME OF CALCULATION"))
                 oracle_astro_container.controls.append(ft.Text(
-                    "ðŸ“… " + calc_time.strftime("%d-%m-%Y %H:%M") + "   âœ¨ Ayanamsa (Lahiri): " + str(round(ay, 4)) + "Â°" +
-                    ("   âŸ² Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
-                    ("   â˜… Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else ""),
+                    "📅 " + calc_time.strftime("%d-%m-%Y %H:%M") + "   ✨ Ayanamsa (Lahiri): " + str(round(ay, 4)) + "°" +
+                    ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
+                    ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else ""),
                     size=13, color=C["primary"], weight="bold"
                 ))
                 oracle_astro_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
 
-                # â”€â”€ CUSTOM RULES: BUY/SELL/AVOID RECOMMENDATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                # ── CUSTOM RULES: BUY/SELL/AVOID RECOMMENDATION ──────────────
                 matches, score, avoid_matches = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
                 apply_timing_flag(score, avoid_matches)  # keep the top-of-page flag in sync
                 if avoid_matches:
-                    rec_text, rec_color = f"ðŸš« CUSTOM RULES: AVOID THIS STOCK TODAY  ({len(avoid_matches)} avoid-rule match{'es' if len(avoid_matches) != 1 else ''})", "#212121"
+                    rec_text, rec_color = f"🚫 CUSTOM RULES: AVOID THIS STOCK TODAY  ({len(avoid_matches)} avoid-rule match{'es' if len(avoid_matches) != 1 else ''})", "#212121"
                 elif score > 0:
-                    rec_text, rec_color = f"ðŸŸ¢ CUSTOM RULES: NET BUY  (score {score:+.1f})", C["green"]
+                    rec_text, rec_color = f"🟢 CUSTOM RULES: NET BUY  (score {score:+.1f})", C["green"]
                 elif score < 0:
-                    rec_text, rec_color = f"ðŸ”´ CUSTOM RULES: NET SELL  (score {score:+.1f})", C["red"]
+                    rec_text, rec_color = f"🔴 CUSTOM RULES: NET SELL  (score {score:+.1f})", C["red"]
                 else:
-                    rec_text, rec_color = "âšª CUSTOM RULES: NEUTRAL / no matching rules", C["black_txt"]
+                    rec_text, rec_color = "⚪ CUSTOM RULES: NEUTRAL / no matching rules", C["black_txt"]
                 oracle_astro_container.controls.append(ft.Container(height=10))
                 oracle_astro_container.controls.append(ft.Container(
                     content=ft.Text(rec_text, size=15, color="#FFFFFF", weight="bold"),
                     bgcolor=rec_color, padding=12, border_radius=8, alignment=ft.alignment.center
                 ))
                 if avoid_matches:
-                    avoid_detail = "\n".join(f"ðŸš« {pl}  [{rt}]  {nt or ''}" for pl, rt, sig, w, nt in avoid_matches)
+                    avoid_detail = "\n".join(f"🚫 {pl}  [{rt}]  {nt or ''}" for pl, rt, sig, w, nt in avoid_matches)
                     oracle_astro_container.controls.append(ft.Text(avoid_detail, size=11, color=C["red"], weight="bold", selectable=True))
                 if matches:
-                    detail = "\n".join(f"â€¢ {pl}  [{rt}]  â†’ {sig}  (w={w})  {nt or ''}" for pl, rt, sig, w, nt in matches)
+                    detail = "\n".join(f"• {pl}  [{rt}]  → {sig}  (w={w})  {nt or ''}" for pl, rt, sig, w, nt in matches)
                     oracle_astro_container.controls.append(ft.Text(detail, size=11, color=C["black_txt"], selectable=True))
 
                 oracle_astro_container.controls.append(ft.Container(height=8))
-                oracle_astro_container.controls.append(ft.ElevatedButton("â¬…  CLOSE ASTRO CHART", bgcolor=C["primary"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_oracle_back))
+                oracle_astro_container.controls.append(ft.ElevatedButton("⬅  CLOSE ASTRO CHART", bgcolor=C["primary"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_oracle_back))
                 oracle_astro_container.visible = True
             except Exception as aex:
                 oracle_astro_container.controls.clear()
                 oracle_astro_container.controls.append(ft.Text(f"Astro chart error: {str(aex)}", size=13, color=C["red"]))
-                oracle_astro_container.controls.append(ft.ElevatedButton("â¬…  CLOSE ASTRO CHART", bgcolor=C["primary"], color="#FFFFFF", height=46, on_click=do_oracle_back))
+                oracle_astro_container.controls.append(ft.ElevatedButton("⬅  CLOSE ASTRO CHART", bgcolor=C["primary"], color="#FFFFFF", height=46, on_click=do_oracle_back))
                 oracle_astro_container.visible = True
             page.update()
 
         def do_oracle_ramal(e):
-            # â”€â”€ RAMAL PRASHNA â€” cast fresh right now, for whichever stock is already
-            # loaded above. Never re-asks for the stock name or BUY/SELL intent. â”€â”€
+            # ── RAMAL PRASHNA — cast fresh right now, for whichever stock is already
+            # loaded above. Never re-asks for the stock name or BUY/SELL intent. ──
             sym = current_stock.get("sym")
             if not sym:
                 set_status("Search a stock first, then cast Ramal.", C["red"])
@@ -1142,11 +1142,11 @@ def main(page: ft.Page):
             # Cross-check against the Bhoovalaya combined direction (Step 8) for this same stock
             bhoovalaya_dir, has_vedha = quick_verdict(current_stock["asum"], current_stock["ldt"])
             if (direction == "BUY" and bhoovalaya_dir == "UP") or (direction == "SELL" and bhoovalaya_dir == "DOWN"):
-                club_note = "âœ… Ramal AGREES with Bhoovalaya's combined direction (" + bhoovalaya_dir + ") â€” higher-confidence read."
+                club_note = "✅ Ramal AGREES with Bhoovalaya's combined direction (" + bhoovalaya_dir + ") — higher-confidence read."
             elif direction == "NEUTRAL" or bhoovalaya_dir in ("SIDEWAYS", "MIXED"):
-                club_note = "â†”ï¸ One or both systems read range-bound/mixed â€” lower conviction either way."
+                club_note = "↔️ One or both systems read range-bound/mixed — lower conviction either way."
             else:
-                club_note = "âš ï¸ Ramal and Bhoovalaya DISAGREE (Ramal=" + direction + " vs Bhoovalaya=" + bhoovalaya_dir + ") â€” treat with extra caution."
+                club_note = "⚠️ Ramal and Bhoovalaya DISAGREE (Ramal=" + direction + " vs Bhoovalaya=" + bhoovalaya_dir + ") — treat with extra caution."
 
             grid_lines = "\n".join(
                 f"{cast['grid_desc'][i]:<26}: {cast['grid'][i]}" for i in range(16)
@@ -1154,8 +1154,8 @@ def main(page: ft.Page):
 
             ramal_container.controls.clear()
             ramal_container.controls.append(ft.Divider(height=6, color=C["divider"]))
-            ramal_container.controls.append(make_header("ðŸŽ² RAMAL PRASHNA â€” " + sym))
-            ramal_container.controls.append(ft.Text("ðŸ“… Cast at: " + datetime.now().strftime("%d-%m-%Y %H:%M:%S") + "  (full 16-house chart)", size=12, color=C["hint_txt"]))
+            ramal_container.controls.append(make_header("🎲 RAMAL PRASHNA — " + sym))
+            ramal_container.controls.append(ft.Text("📅 Cast at: " + datetime.now().strftime("%d-%m-%Y %H:%M:%S") + "  (full 16-house chart)", size=12, color=C["hint_txt"]))
             ramal_container.controls.append(ft.Text(grid_lines, size=10.5, color=C["black_txt"], font_family="monospace", selectable=True))
             ramal_container.controls.append(ft.Text("15th House (Judge): " + ji["name"] + "  [" + ji["nature"] + "]", size=13, weight="bold", color=C["primary"]))
             ramal_container.controls.append(ft.Text("16th House (Final Outcome): " + fi["name"] + "  [" + fi["nature"] + "]", size=13, weight="bold", color=C["primary"]))
@@ -1164,63 +1164,63 @@ def main(page: ft.Page):
                 bgcolor=ramal_color, padding=12, border_radius=8, alignment=ft.alignment.center
             ))
             ramal_container.controls.append(ft.Text(club_note, size=12, color=C["black_txt"], weight="bold"))
-            ramal_container.controls.append(ft.Text("Symbolic Prashna casting â€” a fresh cast can differ each time you tap. Not a guarantee, treat as one more input alongside the rest.", size=10, color=C["hint_txt"]))
+            ramal_container.controls.append(ft.Text("Symbolic Prashna casting — a fresh cast can differ each time you tap. Not a guarantee, treat as one more input alongside the rest.", size=10, color=C["hint_txt"]))
             ramal_container.controls.append(ft.Container(height=6))
-            ramal_container.controls.append(ft.ElevatedButton("â¬…  BACK TO ORACLE SEARCH", bgcolor=C["primary"], color="#FFFFFF", height=46, on_click=do_oracle_back))
+            ramal_container.controls.append(ft.ElevatedButton("⬅  BACK TO ORACLE SEARCH", bgcolor=C["primary"], color="#FFFFFF", height=46, on_click=do_oracle_back))
             ramal_container.visible = True
             page.update()
 
         oracle_screen = ft.Column(visible=True, controls=[
-            make_header("ðŸ”®  ORACLE ANALYSIS"), ft.Divider(height=4, color=C["divider"]),
+            make_header("🔮  ORACLE ANALYSIS"), ft.Divider(height=4, color=C["divider"]),
             ft.Text("Enter Stock Symbol or Name:", size=15, color=C["black_txt"], weight="bold"),
             fld_oracle,
-            ft.ElevatedButton("ðŸ”  SEARCH AND CALCULATE", bgcolor=C["green"], color="#FFFFFF", height=52, style=ft.ButtonStyle(text_style=ft.TextStyle(size=17, weight="bold")), on_click=do_oracle),
+            ft.ElevatedButton("🔍  SEARCH AND CALCULATE", bgcolor=C["green"], color="#FFFFFF", height=52, style=ft.ButtonStyle(text_style=ft.TextStyle(size=17, weight="bold")), on_click=do_oracle),
             ft.Divider(height=6, color=C["divider"]), result_box,
             ft.Container(height=10),
-            ft.Text("ðŸª Auto Astro (D1/D9) has moved to the Stocks / Show All page â€” tap the Stocks tab below.", size=12, color=C["hint_txt"]),
+            ft.Text("🪐 Auto Astro (D1/D9) has moved to the Stocks / Show All page — tap the Stocks tab below.", size=12, color=C["hint_txt"]),
             ft.Container(height=10),
-            ft.ElevatedButton("ðŸŽ²  RAMAL PRASHNA (Cast Now)", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_ramal),
+            ft.ElevatedButton("🎲  RAMAL PRASHNA (Cast Now)", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_ramal),
             ramal_container
         ])
 
-        # â”€â”€ SCREEN 2: STOCK LIST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # ── SCREEN 2: STOCK LIST ──────────────────────────────────────────────
         fld_list_search = make_field("Search Symbol or Company Name", hint="Leave blank to show first 100 stocks")
         list_rows = ft.Column(controls=[], spacing=2)
         list_count_txt = ft.Text("", size=14, color=C["primary"], weight="bold")
-        fld_portfolio_only = ft.Switch(label="ðŸ“Œ Show only My Portfolio (ON stocks)", value=False, active_color=C["green"])
+        fld_portfolio_only = ft.Switch(label="📌 Show only My Portfolio (ON stocks)", value=False, active_color=C["green"])
         fld_portfolio_only.on_change = lambda e: load_list(fld_list_search.value.strip().upper())
-        fld_up_only = ft.Switch(label="ðŸ”¼ Show only UP-signal stocks (regardless of Portfolio on/off)", value=False, active_color=C["green"])
+        fld_up_only = ft.Switch(label="🔼 Show only UP-signal stocks (regardless of Portfolio on/off)", value=False, active_color=C["green"])
         fld_up_only.on_change = lambda e: load_list(fld_list_search.value.strip().upper())
         current_list_symbols = []  # tracks symbols in current display order, for reference
-        selected_letter = {"value": None}  # A-Z filter state â€” None means no letter filter active
+        selected_letter = {"value": None}  # A-Z filter state — None means no letter filter active
         price_popup = ft.Column(spacing=6, visible=False)
 
-        # â”€â”€ TOP-OF-PAGE GOOD/BAD TIMING FLAG â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        # A single green/red headline flag, always the first thing on this page â€” tells
+        # ── TOP-OF-PAGE GOOD/BAD TIMING FLAG ───────────────────────────────
+        # A single green/red headline flag, always the first thing on this page — tells
         # you at a glance whether right now is good or bad timing to trade, per your
         # custom Rules. Kept in sync by CALCULATE ASTRO below and by Auto Refresh.
-        top_timing_text = ft.Text("â³ TIMING: tap CALCULATE ASTRO below, or start Auto Refresh, to check now",
+        top_timing_text = ft.Text("⏳ TIMING: tap CALCULATE ASTRO below, or start Auto Refresh, to check now",
                                     size=15, weight="bold", color="#FFFFFF")
         top_timing_flag_container = ft.Container(
             content=top_timing_text, bgcolor=C["hint_txt"], padding=14, border_radius=8, alignment=ft.alignment.center
         )
 
-        # â”€â”€ LIVE TIMING SIGNAL (Auto Refresh) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # ── LIVE TIMING SIGNAL (Auto Refresh) ─────────────────────────────
         # Your custom Rules (evaluate_rules) check the current sky right now, not any one
-        # stock's identity â€” so this is ONE market-timing signal shared by every stock at a
+        # stock's identity — so this is ONE market-timing signal shared by every stock at a
         # given moment, not per-row. Shown here as a static banner, refreshed on the
-        # interval you set (no blinking â€” a fixed-interval color swap is enough to notice a
+        # interval you set (no blinking — a fixed-interval color swap is enough to notice a
         # change, and it avoids the constant background redraw that a blinking timer causes).
         stocks_auto_state = {"running": False, "stop_event": None}
         fld_stocks_auto_interval = make_field("Auto Refresh Interval (minutes)", value="5")
-        live_signal_text = ft.Text("â± LIVE TIMING SIGNAL: OFF", size=14, weight="bold", color="#FFFFFF")
+        live_signal_text = ft.Text("⏱ LIVE TIMING SIGNAL: OFF", size=14, weight="bold", color="#FFFFFF")
         live_signal_container = ft.Container(
             content=live_signal_text, bgcolor=C["hint_txt"], padding=12, border_radius=8, alignment=ft.alignment.center
         )
 
         def compute_live_timing_signal():
             """Runs your custom Rules against the sky right now (same engine as this page's
-            Calculate Astro), independent of any specific stock â€” a general market-timing read."""
+            Calculate Astro), independent of any specific stock — a general market-timing read."""
             now = datetime.now()
             jd = jd_ut_from_ist(now.year, now.month, now.day, now.hour, now.minute)
             pos, ay = calc_planet_positions(jd, 19.076, 72.877)
@@ -1241,7 +1241,7 @@ def main(page: ft.Page):
         def stocks_recalc_loop(interval_seconds, stop_event):
             while not stop_event.is_set():
                 label, color, score, avoid_matches = compute_live_timing_signal()
-                live_signal_text.value = f"â± LIVE TIMING SIGNAL: {label}"
+                live_signal_text.value = f"⏱ LIVE TIMING SIGNAL: {label}"
                 live_signal_container.bgcolor = color
                 live_signal_text.color = "#FFFFFF"
                 apply_timing_flag(score, avoid_matches)
@@ -1255,9 +1255,9 @@ def main(page: ft.Page):
                 if stocks_auto_state["stop_event"]:
                     stocks_auto_state["stop_event"].set()
                 stocks_auto_state["running"] = False
-                btn_stocks_auto_refresh.text = "â–¶  START AUTO REFRESH"
+                btn_stocks_auto_refresh.text = "▶  START AUTO REFRESH"
                 btn_stocks_auto_refresh.bgcolor = C["green"]
-                live_signal_text.value = "â± LIVE TIMING SIGNAL: OFF"
+                live_signal_text.value = "⏱ LIVE TIMING SIGNAL: OFF"
                 live_signal_container.bgcolor = C["hint_txt"]
                 live_signal_text.color = "#FFFFFF"
                 set_status("Stocks Auto Refresh stopped.", C["orange"])
@@ -1268,19 +1268,19 @@ def main(page: ft.Page):
                 if not (0.5 <= minutes <= 1440):
                     raise ValueError("Interval must be between 0.5 and 1440 minutes")
             except Exception:
-                set_status("Enter a valid interval in minutes (0.5â€“1440), e.g. 5.", C["red"])
+                set_status("Enter a valid interval in minutes (0.5–1440), e.g. 5.", C["red"])
                 page.update()
                 return
             stop_event = threading.Event()
             stocks_auto_state["stop_event"] = stop_event
             stocks_auto_state["running"] = True
-            btn_stocks_auto_refresh.text = "â¸  STOP AUTO REFRESH"
+            btn_stocks_auto_refresh.text = "⏸  STOP AUTO REFRESH"
             btn_stocks_auto_refresh.bgcolor = C["red"]
-            set_status(f"Stocks Auto Refresh started â€” every {minutes:g} min.", C["green"])
+            set_status(f"Stocks Auto Refresh started — every {minutes:g} min.", C["green"])
             threading.Thread(target=stocks_recalc_loop, args=(minutes * 60, stop_event), daemon=True).start()
             page.update()
 
-        btn_stocks_auto_refresh = ft.ElevatedButton("â–¶  START AUTO REFRESH", bgcolor=C["green"], color="#FFFFFF", height=46,
+        btn_stocks_auto_refresh = ft.ElevatedButton("▶  START AUTO REFRESH", bgcolor=C["green"], color="#FFFFFF", height=46,
                                                       style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")),
                                                       on_click=do_toggle_stocks_auto_refresh)
 
@@ -1291,7 +1291,7 @@ def main(page: ft.Page):
         def do_fetch_price(sym):
             price_popup.controls.clear()
             price_popup.controls.append(ft.Divider(height=4, color=C["divider"]))
-            price_popup.controls.append(ft.Text(f"â³ Fetching live price for {sym} (NSE, then Yahoo Finance as fallback)...", size=13, color=C["accent"]))
+            price_popup.controls.append(ft.Text(f"⏳ Fetching live price for {sym} (NSE, then Yahoo Finance as fallback)...", size=13, color=C["accent"]))
             price_popup.visible = True
             page.scroll_to(offset=0, duration=200)
             page.update()
@@ -1310,24 +1310,24 @@ def main(page: ft.Page):
                         chg_color = C["black_txt"]
                     price_popup.controls.clear()
                     price_popup.controls.append(ft.Divider(height=4, color=C["divider"]))
-                    price_popup.controls.append(make_header("ðŸ’° " + sym + " â€” LIVE PRICE"))
+                    price_popup.controls.append(make_header("💰 " + sym + " — LIVE PRICE"))
                     price_popup.controls.append(ft.Text(
-                        f"Current Trading Price : â‚¹{lp}" + change_str,
+                        f"Current Trading Price : ₹{lp}" + change_str,
                         size=15, weight="bold", color=chg_color
                     ))
-                    price_popup.controls.append(ft.Text(f"Yesterday's Close      : â‚¹{q['prev_close']}", size=13, color=C["black_txt"]))
-                    price_popup.controls.append(ft.Text(f"52-Week High           : â‚¹{q['week_high']}", size=13, color=C["green"]))
-                    price_popup.controls.append(ft.Text(f"52-Week Low            : â‚¹{q['week_low']}", size=13, color=C["red"]))
-                    price_popup.controls.append(ft.Text(f"Source: {src}" + (" (NSE was unreachable, used fallback)" if src != "NSE India" else "") + ". Can be delayed a few minutes â€” verify on your broker's terminal before trading.", size=10, color=C["hint_txt"]))
-                    price_popup.controls.append(ft.ElevatedButton("âœ–  CLOSE", bgcolor=C["red"], color="#FFFFFF", height=40, on_click=do_close_price_popup))
+                    price_popup.controls.append(ft.Text(f"Yesterday's Close      : ₹{q['prev_close']}", size=13, color=C["black_txt"]))
+                    price_popup.controls.append(ft.Text(f"52-Week High           : ₹{q['week_high']}", size=13, color=C["green"]))
+                    price_popup.controls.append(ft.Text(f"52-Week Low            : ₹{q['week_low']}", size=13, color=C["red"]))
+                    price_popup.controls.append(ft.Text(f"Source: {src}" + (" (NSE was unreachable, used fallback)" if src != "NSE India" else "") + ". Can be delayed a few minutes — verify on your broker's terminal before trading.", size=10, color=C["hint_txt"]))
+                    price_popup.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["red"], color="#FFFFFF", height=40, on_click=do_close_price_popup))
                 except Exception as ex:
                     price_popup.controls.clear()
                     price_popup.controls.append(ft.Divider(height=4, color=C["divider"]))
                     price_popup.controls.append(ft.Text(
-                        f"âš ï¸ Could not fetch live price for {sym}.\nReason: {str(ex)}\n\nBoth NSE and the Yahoo Finance fallback were tried. Try again in a moment, or check your internet connection.",
+                        f"⚠️ Could not fetch live price for {sym}.\nReason: {str(ex)}\n\nBoth NSE and the Yahoo Finance fallback were tried. Try again in a moment, or check your internet connection.",
                         size=12, color=C["red"]
                     ))
-                    price_popup.controls.append(ft.ElevatedButton("âœ–  CLOSE", bgcolor=C["red"], color="#FFFFFF", height=40, on_click=do_close_price_popup))
+                    price_popup.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["red"], color="#FFFFFF", height=40, on_click=do_close_price_popup))
                 page.update()
 
             threading.Thread(target=worker, daemon=True).start()
@@ -1341,9 +1341,9 @@ def main(page: ft.Page):
             filter_note = " matching '" + q + "'" if q else (
                 " (Portfolio only)" if fld_portfolio_only.value else " (first 200)")
             if fld_up_only.value:
-                filter_note += " â€” UP signal only"
+                filter_note += " — UP signal only"
             if selected_letter["value"]:
-                filter_note += f" â€” starting with '{selected_letter['value']}'"
+                filter_note += f" — starting with '{selected_letter['value']}'"
             list_count_txt.value = f"Showing {len(rows)} stocks" + filter_note
             for i, r in enumerate(rows):
                 sym, eng, hi, ldt, asum, portfolio = r
@@ -1351,12 +1351,12 @@ def main(page: ft.Page):
                 bg = C["row_odd"] if i % 2 == 0 else C["row_even"]
                 combined_dir, has_vedha = quick_verdict(asum, ldt)
                 badge_color = {"UP": C["green"], "DOWN": C["red"], "SIDEWAYS": C["orange"], "MIXED": C["accent"]}.get(combined_dir, C["accent"])
-                badge_text = {"UP": "ðŸ”¼ UP", "DOWN": "ðŸ”½ DOWN", "SIDEWAYS": "â†”ï¸ SIDE", "MIXED": "âš ï¸ MIXED"}.get(combined_dir, combined_dir)
+                badge_text = {"UP": "🔼 UP", "DOWN": "🔽 DOWN", "SIDEWAYS": "↔️ SIDE", "MIXED": "⚠️ MIXED"}.get(combined_dir, combined_dir)
 
                 def make_portfolio_toggle(s):
                     def _on_change(e):
                         set_portfolio(s, e.control.value)
-                        set_status(("ðŸ“Œ Added to" if e.control.value else "Removed from") + f" portfolio: {s}", C["green"] if e.control.value else C["orange"])
+                        set_status(("📌 Added to" if e.control.value else "Removed from") + f" portfolio: {s}", C["green"] if e.control.value else C["orange"])
                         load_list(fld_list_search.value.strip().upper())  # refresh so ON stocks re-sort to the top immediately
                     return _on_change
 
@@ -1373,10 +1373,10 @@ def main(page: ft.Page):
                         ft.Text(eng, size=14, color=C["black_txt"], weight="bold"),
                         ft.Text(hi, size=15, color=C["primary"], weight="bold"),
                         ft.Row([
-                            ft.TextButton("âœï¸ Edit", style=ft.ButtonStyle(color=C["accent"]), on_click=lambda e, s=sym: load_edit(s)),
-                            ft.TextButton("ðŸ”® Analyse", style=ft.ButtonStyle(color=C["green"]), on_click=lambda e, s=sym: (setattr(fld_oracle, 'value', s), show_screen("oracle"), do_oracle(e))),
-                            ft.TextButton("ðŸŽ² Ramal", style=ft.ButtonStyle(color="#4E342E"), on_click=lambda e, s=sym: (setattr(fld_oracle, 'value', s), show_screen("oracle"), do_oracle(e), do_oracle_ramal(e))),
-                            ft.TextButton("ðŸ’° Price", style=ft.ButtonStyle(color=C["orange"]), on_click=lambda e, s=sym: do_fetch_price(s)),
+                            ft.TextButton("✏️ Edit", style=ft.ButtonStyle(color=C["accent"]), on_click=lambda e, s=sym: load_edit(s)),
+                            ft.TextButton("🔮 Analyse", style=ft.ButtonStyle(color=C["green"]), on_click=lambda e, s=sym: (setattr(fld_oracle, 'value', s), show_screen("oracle"), do_oracle(e))),
+                            ft.TextButton("🎲 Ramal", style=ft.ButtonStyle(color="#4E342E"), on_click=lambda e, s=sym: (setattr(fld_oracle, 'value', s), show_screen("oracle"), do_oracle(e), do_oracle_ramal(e))),
+                            ft.TextButton("💰 Price", style=ft.ButtonStyle(color=C["orange"]), on_click=lambda e, s=sym: do_fetch_price(s)),
                         ], wrap=True),
                     ], spacing=2), bgcolor=bg, padding=8, border_radius=6, border=ft.Border(bottom=ft.BorderSide(1, C["divider"])))
                 list_rows.controls.append(row_ctrl)
@@ -1384,30 +1384,30 @@ def main(page: ft.Page):
 
         list_screen = ft.Column(visible=False, controls=[
             top_timing_flag_container,
-            make_header("ðŸ“‹ STOCK LIST (NSE India)"), ft.Divider(height=4, color=C["divider"]),
-            ft.ElevatedButton("â¬…  BACK TO ORACLE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("oracle")),
+            make_header("📋 STOCK LIST (NSE India)"), ft.Divider(height=4, color=C["divider"]),
+            ft.ElevatedButton("⬅  BACK TO ORACLE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("oracle")),
             price_popup,
             ft.Divider(height=4, color=C["divider"]),
-            ft.Text("ðŸª AUTO ASTRO (D1/D9) â€” calculates the current-sky Vedic chart and runs your custom Rules against it, right here.", size=11, color=C["black_txt"]),
-            ft.ElevatedButton("ðŸª  CALCULATE ASTRO (D1 / D9)", bgcolor=C["primary"], color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_astro),
+            ft.Text("🪐 AUTO ASTRO (D1/D9) — calculates the current-sky Vedic chart and runs your custom Rules against it, right here.", size=11, color=C["black_txt"]),
+            ft.ElevatedButton("🪐  CALCULATE ASTRO (D1 / D9)", bgcolor=C["primary"], color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_astro),
             oracle_astro_container,
             ft.Divider(height=4, color=C["divider"]),
-            ft.Text("â± LIVE TIMING SIGNAL â€” your custom Rules checked against the sky right now (one shared signal for all stocks, not per-row); updates every refresh interval", size=10, color=C["hint_txt"]),
+            ft.Text("⏱ LIVE TIMING SIGNAL — your custom Rules checked against the sky right now (one shared signal for all stocks, not per-row); updates every refresh interval", size=10, color=C["hint_txt"]),
             fld_stocks_auto_interval, btn_stocks_auto_refresh, live_signal_container,
             ft.Divider(height=4, color=C["divider"]),
-            ft.Text("ðŸ”¼ UP  ðŸ”½ DOWN  â†”ï¸ SIDE  âš ï¸ MIXED â€” Bhoovalaya (Graha+Bandha) combined direction | Vedha = Sarvatobhadra caution flag", size=10, color=C["hint_txt"]),
+            ft.Text("🔼 UP  🔽 DOWN  ↔️ SIDE  ⚠️ MIXED — Bhoovalaya (Graha+Bandha) combined direction | Vedha = Sarvatobhadra caution flag", size=10, color=C["hint_txt"]),
             fld_list_search,
             ft.Row([
-                ft.ElevatedButton("ðŸ” Search", bgcolor=C["primary"], color="#FFFFFF", height=46, on_click=lambda e: load_list(fld_list_search.value.strip().upper())),
-                ft.ElevatedButton("ðŸ“‹ Show All", bgcolor=C["accent"], color="#FFFFFF", height=46, on_click=lambda e: load_list("")),
+                ft.ElevatedButton("🔍 Search", bgcolor=C["primary"], color="#FFFFFF", height=46, on_click=lambda e: load_list(fld_list_search.value.strip().upper())),
+                ft.ElevatedButton("📋 Show All", bgcolor=C["accent"], color="#FFFFFF", height=46, on_click=lambda e: load_list("")),
             ]),
             ft.Divider(height=4, color=C["divider"]),
-            ft.Text("ðŸ“Œ PORTFOLIO â€” every stock defaults OFF. Flip a stock's own switch to mark it ON as yours; ON stocks are saved and always listed first, above the OFF ones.", size=11, color=C["black_txt"]),
+            ft.Text("📌 PORTFOLIO — every stock defaults OFF. Flip a stock's own switch to mark it ON as yours; ON stocks are saved and always listed first, above the OFF ones.", size=11, color=C["black_txt"]),
             fld_portfolio_only, fld_up_only,
             list_count_txt, ft.Divider(height=4, color=C["divider"]), list_rows
         ])
 
-        # â”€â”€ SCREEN 3: DATA ENTRY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # ── SCREEN 3: DATA ENTRY ──────────────────────────────────────────────
         fld_sym, fld_eng, fld_hindi, fld_ldate, fld_series = make_field("Symbol *"), make_field("English Company Name *"), make_field("Hindi Name *"), make_field("Listing Date (DD-MM-YYYY)"), make_field("Series", value="EQ")
         entry_status = ft.Text("", size=15, color=C["green"], weight="bold")
         akshara_preview = ft.Container(content=ft.Text("", size=14, color=C["dark_txt"]), bgcolor=C["res_bg"], padding=10, border_radius=6, visible=False)
@@ -1419,7 +1419,7 @@ def main(page: ft.Page):
                 fld_sym.disabled = True
                 asum, bk = calc(row[2])
                 akshara_preview.content.value, akshara_preview.visible = f"Akshara Sum = {asum}\n{bk[:80]}", True
-                entry_status.value, entry_status.color = f"Loaded: {sym} â€” Edit and tap UPDATE", C["accent"]
+                entry_status.value, entry_status.color = f"Loaded: {sym} — Edit and tap UPDATE", C["accent"]
                 show_screen("entry")
 
         def do_transliterate(e):
@@ -1443,19 +1443,19 @@ def main(page: ft.Page):
             page.update()
 
         entry_screen = ft.Column(visible=False, controls=[
-            make_header("âœï¸ MANAGE STOCK ENTRY"), ft.Divider(height=4, color=C["divider"]),
-            fld_sym, fld_eng, ft.ElevatedButton("ðŸŒ AUTO TRANSLITERATE HINDI", bgcolor=C["accent"], color="#FFFFFF", on_click=do_transliterate),
-            fld_hindi, ft.ElevatedButton("ðŸ‘ï¸ PREVIEW SOUND WEIGHTS", bgcolor=C["secondary"], color="#FFFFFF", on_click=lambda e: (asum:=calc(fld_hindi.value.strip())) and setattr(akshara_preview.content,'value',f"Akshara: {asum[0]}\n{asum[1]}") or setattr(akshara_preview,'visible',True) or page.update()),
+            make_header("✏️ MANAGE STOCK ENTRY"), ft.Divider(height=4, color=C["divider"]),
+            fld_sym, fld_eng, ft.ElevatedButton("🌐 AUTO TRANSLITERATE HINDI", bgcolor=C["accent"], color="#FFFFFF", on_click=do_transliterate),
+            fld_hindi, ft.ElevatedButton("👁️ PREVIEW SOUND WEIGHTS", bgcolor=C["secondary"], color="#FFFFFF", on_click=lambda e: (asum:=calc(fld_hindi.value.strip())) and setattr(akshara_preview.content,'value',f"Akshara: {asum[0]}\n{asum[1]}") or setattr(akshara_preview,'visible',True) or page.update()),
             akshara_preview, fld_ldate, fld_series, entry_status,
             ft.Row([
-                ft.ElevatedButton("ðŸ’¾ SAVE NEW", bgcolor=C["green"], color="#FFFFFF", on_click=do_save),
-                ft.ElevatedButton("ðŸ”„ UPDATE", bgcolor=C["primary"], color="#FFFFFF", on_click=do_save),
-                ft.ElevatedButton("âŒ DELETE", bgcolor=C["red"], color="#FFFFFF", on_click=lambda e: db_delete(fld_sym.value.strip().upper()) and setattr(entry_status,'value',"Deleted!") or page.update()),
-                ft.ElevatedButton("ðŸ§¹ CLEAR", bgcolor=C["hint_txt"], color="#FFFFFF", on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_sym,'disabled',False), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), setattr(akshara_preview,'visible',False), page.update())),
+                ft.ElevatedButton("💾 SAVE NEW", bgcolor=C["green"], color="#FFFFFF", on_click=do_save),
+                ft.ElevatedButton("🔄 UPDATE", bgcolor=C["primary"], color="#FFFFFF", on_click=do_save),
+                ft.ElevatedButton("❌ DELETE", bgcolor=C["red"], color="#FFFFFF", on_click=lambda e: db_delete(fld_sym.value.strip().upper()) and setattr(entry_status,'value',"Deleted!") or page.update()),
+                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["hint_txt"], color="#FFFFFF", on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_sym,'disabled',False), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), setattr(akshara_preview,'visible',False), page.update())),
             ])
         ])
 
-        # â”€â”€ SCREEN 4: ASTRO CHART â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # ── SCREEN 4: ASTRO CHART ────────────────────────────────────────────
         fld_date = make_field("Date (DD-MM-YYYY)", value=datetime.now().strftime("%d-%m-%Y"))
         fld_time = make_field("Time (HH:MM)", value=datetime.now().strftime("%H:%M"))
         fld_lat  = make_field("Latitude (Decimal)", value="19.076")
@@ -1486,13 +1486,13 @@ def main(page: ft.Page):
                 astro_chart_container.controls.clear()
                 
                 astro_chart_container.controls.append(ft.Text(
-                    "âœ¨ SIDEREAL AYANAMSA (LAHIRI): " + str(round(ay, 4)) + "Â°" +
-                    ("   âŸ² Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
-                    ("   â˜… Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else ""),
+                    "✨ SIDEREAL AYANAMSA (LAHIRI): " + str(round(ay, 4)) + "°" +
+                    ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
+                    ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else ""),
                     size=13, color=C["primary"], weight="bold"))
                 astro_chart_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
                 astro_chart_container.controls.append(ft.Container(height=8))
-                astro_chart_container.controls.append(ft.ElevatedButton("âœ–  CLOSE CHARTS", bgcolor=C["red"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_astro_close))
+                astro_chart_container.controls.append(ft.ElevatedButton("✖  CLOSE CHARTS", bgcolor=C["red"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_astro_close))
                 
                 set_status("Charts Calculated Successfully!", C["green"])
             except Exception as ex:
@@ -1500,13 +1500,13 @@ def main(page: ft.Page):
             page.update()
 
         astro_screen = ft.Column(visible=False, controls=[
-            make_header("ðŸ•‰ï¸ VEDIC KUNDALI ENGINES"), ft.Divider(height=4, color=C["divider"]),
+            make_header("🕉️ VEDIC KUNDALI ENGINES"), ft.Divider(height=4, color=C["divider"]),
             ft.Row([fld_date, fld_time]), ft.Row([fld_lat, fld_lon]),
-            ft.ElevatedButton("ðŸ•‰ï¸ GENERATE NORTH INDIAN CHARTS", bgcolor=C["primary"], color="#FFFFFF", height=50, on_click=do_astro),
+            ft.ElevatedButton("🕉️ GENERATE NORTH INDIAN CHARTS", bgcolor=C["primary"], color="#FFFFFF", height=50, on_click=do_astro),
             ft.Divider(height=6, color=C["divider"]), astro_chart_container
         ])
 
-        # â”€â”€ SCREEN 5: DATABASE BUILD (STRICT HEADER-BASED PARSING) â”€â”€â”€â”€â”€
+        # ── SCREEN 5: DATABASE BUILD (STRICT HEADER-BASED PARSING) ─────
         def build_db_thread():
             try:
                 set_status("Downloading NSE Data...", C["accent"])
@@ -1515,7 +1515,7 @@ def main(page: ft.Page):
                 lines = res.text.splitlines()
                 reader = csv.DictReader(lines)
                 
-                # à¤•à¥‰à¤²à¤®à¥à¤¸ à¤•à¥‡ à¤¨à¤¾à¤®à¥‹à¤‚ à¤•à¥‹ à¤•à¥à¤²à¥€à¤¨ (Strip) à¤•à¤° à¤°à¤¹à¥‡ à¤¹à¥ˆà¤‚ à¤¤à¤¾à¤•à¤¿ à¤•à¥‹à¤ˆ à¤¸à¥à¤ªà¥‡à¤¸ à¤¨ à¤°à¤¹à¥‡
+                # कॉलम्स के नामों को क्लीन (Strip) कर रहे हैं ताकि कोई स्पेस न रहे
                 reader.fieldnames = [f.strip().upper() for f in reader.fieldnames] if reader.fieldnames else []
                 
                 rows = list(reader)
@@ -1535,10 +1535,10 @@ def main(page: ft.Page):
                     if series != "EQ" or not sym: 
                         continue
                     
-                    # à¤¸à¥€à¤§à¥‡ à¤•à¥‰à¤²à¤® à¤•à¥‡ à¤¨à¤¾à¤® "DATE OF LISTING" à¤¸à¥‡ à¤¤à¤¾à¤°à¥€à¤– à¤‰à¤ à¤¾à¤à¤—à¤¾
+                    # सीधे कॉलम के नाम "DATE OF LISTING" से तारीख उठाएगा
                     ldt = clean_row.get("DATE OF LISTING", "").strip()
                     
-                    # à¤¸à¥à¤°à¤•à¥à¤·à¤¾ à¤œà¤¾à¤‚à¤š: à¤…à¤—à¤° à¤¤à¤¾à¤°à¥€à¤– à¤•à¥€ à¤œà¤—à¤¹ à¤—à¤²à¤¤à¥€ à¤¸à¥‡ ISIN à¤¨à¤‚à¤¬à¤° à¤¯à¤¾ Face Value (à¤œà¥ˆà¤¸à¥‡ 10) à¤† à¤œà¤¾à¤
+                    # सुरक्षा जांच: अगर तारीख की जगह गलती से ISIN नंबर या Face Value (जैसे 10) आ जाए
                     if "INE" in ldt or len(ldt) <= 4:
                         ldt = ""
                         for val in clean_row.values():
@@ -1547,8 +1547,8 @@ def main(page: ft.Page):
                                 break
                     
                     hi = get_hindi(sym, eng)
-                    if "LIMITED" in eng.upper() and not hi.endswith("à¤²à¤¿à¤®à¤¿à¤Ÿà¥‡à¤¡"):
-                        hi = hi.replace("à¤²à¤¿à¤®à¤¿à¤Ÿà¥‡à¤¡", "").strip() + " à¤²à¤¿à¤®à¤¿à¤Ÿà¥‡à¤¡"
+                    if "LIMITED" in eng.upper() and not hi.endswith("लिमिटेड"):
+                        hi = hi.replace("लिमिटेड", "").strip() + " लिमिटेड"
                     
                     asum, bk = calc(hi)
                     conn.execute("""INSERT INTO stocks(symbol,eng_name,hindi_name,ldate,asum,breakdown,series,portfolio)
@@ -1571,12 +1571,12 @@ def main(page: ft.Page):
                 set_status(f"Build failed: {str(ex)}", C["red"])
 
         db_screen = ft.Column(visible=False, controls=[
-            make_header("âš™ï¸ DATABASE AND ENGINE SETUP"), ft.Divider(height=4, color=C["divider"]),
-            ft.ElevatedButton("âš¡ BUILD AUTOMATED DATABASE", bgcolor=C["orange"], color="#FFFFFF", height=54, on_click=lambda e: threading.Thread(target=build_db_thread, daemon=True).start()),
+            make_header("⚙️ DATABASE AND ENGINE SETUP"), ft.Divider(height=4, color=C["divider"]),
+            ft.ElevatedButton("⚡ BUILD AUTOMATED DATABASE", bgcolor=C["orange"], color="#FFFFFF", height=54, on_click=lambda e: threading.Thread(target=build_db_thread, daemon=True).start()),
             prg_bar, prg_txt
         ])
 
-        # â”€â”€ SCREEN 6: CUSTOM D1/D9 RULES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # ── SCREEN 6: CUSTOM D1/D9 RULES ────────────────────────────────────
         PLANET_OPTS = ["ANY", "Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa", "Ra", "Ke"]
         RASHI_NAMES = ["1=Aries", "2=Taurus", "3=Gemini", "4=Cancer", "5=Leo", "6=Virgo",
                        "7=Libra", "8=Scorpio", "9=Sagittarius", "10=Capricorn", "11=Aquarius", "12=Pisces"]
@@ -1586,15 +1586,15 @@ def main(page: ft.Page):
                                         options=[ft.dropdown.Option(o) for o in PLANET_OPTS])
         fld_rule_h1     = make_field("D1 House (1-12) OR D1 Rashi number", hint="HOUSE rules: house# counted from Lagna. RASHI rules: " + ", ".join(RASHI_NAMES[:4]) + "...")
         fld_rule_h9     = make_field("D9 House (1-12) OR D9 Rashi number", hint="D9_HOUSE_ASPECT: enter the D9 house being ASPECTED (Planet field = the aspecting planet, or ANY). Other rules: same numbering as D1, applied to the D9 (Navamsha) chart")
-        fld_rule_h1_list = make_field("D1 House LIST (D9_TO_D1_LIST only)", hint="Comma-separated house numbers, e.g. 4,5,10,11 â€” used only for the D9_TO_D1_LIST rule type")
+        fld_rule_h1_list = make_field("D1 House LIST (D9_TO_D1_LIST only)", hint="Comma-separated house numbers, e.g. 4,5,10,11 — used only for the D9_TO_D1_LIST rule type")
         fld_rule_companion_planet = ft.Dropdown(label="Companion Planet (optional AND condition)", value="",
                                         options=[ft.dropdown.Option("")] + [ft.dropdown.Option(o) for o in PLANET_OPTS[1:]])
-        fld_rule_companion_h9 = make_field("Companion D9 House (optional)", hint="If set, this planet must ALSO be in this D9 house for the rule to fire â€” leave both blank if not needed")
+        fld_rule_companion_h9 = make_field("Companion D9 House (optional)", hint="If set, this planet must ALSO be in this D9 house for the rule to fire — leave both blank if not needed")
         fld_rule_retro  = ft.Checkbox(label="Apply only when planet is Retrograde", value=False)
         fld_rule_signal = ft.Dropdown(label="Signal", value="BUY",
                                         options=[ft.dropdown.Option(o) for o in ["BUY", "SELL", "AVOID", "NEUTRAL"]])
         fld_rule_weight = make_field("Weight", value="1.0")
-        fld_rule_note   = make_field("Note (optional)", hint="e.g. Jupiter own house â€” strength")
+        fld_rule_note   = make_field("Note (optional)", hint="e.g. Jupiter own house — strength")
 
         rules_list_col = ft.Column(spacing=6)
 
@@ -1608,14 +1608,14 @@ def main(page: ft.Page):
                 label1 = "D1 Rashi" if rtype == "D1_RASHI" else "D1H"
                 label2 = "D9 Rashi" if rtype == "D9_RASHI" else "D9H"
                 if rtype == "D9_TO_D1_LIST":
-                    desc = f"#{rid}  [{rtype}]  {planet}  D9H:{hd9 or '-'} â†’ D1H in [{hd1_list or '-'}]  {'(Retro only)' if retro_only else ''}  â†’ {signal} (w={weight})  {note or ''}"
+                    desc = f"#{rid}  [{rtype}]  {planet}  D9H:{hd9 or '-'} → D1H in [{hd1_list or '-'}]  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
                 elif rtype == "D9_HOUSE_ASPECT":
-                    desc = f"#{rid}  [{rtype}]  {planet} aspecting D9H:{hd9 or '-'}  {'(Retro only)' if retro_only else ''}  â†’ {signal} (w={weight})  {note or ''}"
+                    desc = f"#{rid}  [{rtype}]  {planet} aspecting D9H:{hd9 or '-'}  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
                 else:
-                    desc = f"#{rid}  [{rtype}]  {planet}  {label1}:{hd1 or '-'}  {label2}:{hd9 or '-'}  {'(Retro only)' if retro_only else ''}  â†’ {signal} (w={weight})  {note or ''}"
+                    desc = f"#{rid}  [{rtype}]  {planet}  {label1}:{hd1 or '-'}  {label2}:{hd9 or '-'}  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
                 if comp_planet and comp_hd9:
                     desc += f"  AND {comp_planet} in D9H:{comp_hd9}"
-                # GO / NO-TRADE flag â€” green for BUY (go for trade), red for SELL/AVOID
+                # GO / NO-TRADE flag — green for BUY (go for trade), red for SELL/AVOID
                 # (not to trade), grey for NEUTRAL rules kept only for reference.
                 if signal == "BUY":
                     flag_color, flag_label = C["green"], "GO"
@@ -1653,7 +1653,7 @@ def main(page: ft.Page):
                 if h9 is not None and not (1 <= h9 <= 12): raise ValueError("D9 field must be 1-12 (house# from Lagna, or 1-12=Aries..Pisces for a RASHI rule)")
                 if comp_h9_raw is not None and not (1 <= comp_h9_raw <= 12): raise ValueError("Companion D9 House must be 1-12")
                 if (comp_planet_raw and not comp_h9_raw) or (comp_h9_raw and not comp_planet_raw):
-                    raise ValueError("Companion condition needs BOTH the planet AND the D9 house filled in â€” or leave both blank")
+                    raise ValueError("Companion condition needs BOTH the planet AND the D9 house filled in — or leave both blank")
                 if fld_rule_type.value == "D9_HOUSE_ASPECT" and h9 is None:
                     raise ValueError("D9_HOUSE_ASPECT needs the D9 House field filled in (the house being ASPECTED)")
                 if fld_rule_type.value == "D9_TO_D1_LIST":
@@ -1677,73 +1677,73 @@ def main(page: ft.Page):
         EXAMPLE_RULE_PACK = [
             # (rule_type, planet, house_d1, house_d9, retro_only, signal, weight, note, house_d1_list, companion_planet, companion_house_d9)
 
-            # â”€â”€ GROUP 1: Kendra/Trikona (1,4,5,7,9,10,11) benefic placements â”€â”€â”€â”€â”€â”€
-            ("D1_HOUSE",      "Ju", 11, None, 0, "BUY",  2.0, "Jupiter in D1 11th house from Lagna â€” gains/profits house", None, None, None),
-            ("D9_HOUSE",      "Ju", None, 11, 0, "BUY",  2.0, "Jupiter in D9 11th house â€” navamsha confirms gains", None, None, None),
-            ("D1_HOUSE",      "Ve", 2,  None, 0, "BUY",  1.5, "Venus D1 2nd house â€” wealth/liquidity", None, None, None),
-            ("D1_HOUSE",      "Mo", 4,  None, 0, "BUY",  1.0, "Moon D1 4th house â€” public sentiment/liquidity comfortable", None, None, None),
-            ("D1_HOUSE",      "Su", 10, None, 0, "BUY",  1.0, "Sun D1 10th house â€” leadership/PSU strength", None, None, None),
+            # ── GROUP 1: Kendra/Trikona (1,4,5,7,9,10,11) benefic placements ──────
+            ("D1_HOUSE",      "Ju", 11, None, 0, "BUY",  2.0, "Jupiter in D1 11th house from Lagna — gains/profits house", None, None, None),
+            ("D9_HOUSE",      "Ju", None, 11, 0, "BUY",  2.0, "Jupiter in D9 11th house — navamsha confirms gains", None, None, None),
+            ("D1_HOUSE",      "Ve", 2,  None, 0, "BUY",  1.5, "Venus D1 2nd house — wealth/liquidity", None, None, None),
+            ("D1_HOUSE",      "Mo", 4,  None, 0, "BUY",  1.0, "Moon D1 4th house — public sentiment/liquidity comfortable", None, None, None),
+            ("D1_HOUSE",      "Su", 10, None, 0, "BUY",  1.0, "Sun D1 10th house — leadership/PSU strength", None, None, None),
 
-            # â”€â”€ GROUP 2: Dusthana (6,8,12) malefic/caution placements â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            ("D1_HOUSE",      "Ma", 8,  None, 0, "SELL", 2.0, "Mars D1 8th house â€” classic sudden-crash placement", None, None, None),
-            ("D1_HOUSE",      "Ma", 8,  None, 1, "AVOID", 1.0, "Mars RETROGRADE in D1 8th â€” high-risk combination, sit this one out entirely", None, None, None),
-            ("D1_HOUSE",      "Sa", 6,  None, 0, "SELL", 1.5, "Saturn D1 6th house â€” debt/obstacle pressure", None, None, None),
-            ("D1_HOUSE",      "Sa", 8,  None, 1, "SELL", 1.5, "Saturn retrograde D1 8th house â€” prolonged structural correction", None, None, None),
-            ("D1_HOUSE",      "Ke", 12, None, 0, "SELL", 1.5, "Ketu D1 12th house â€” losses/isolation", None, None, None),
-            ("D9_HOUSE",      "Sa", None, 7, 0, "AVOID", 1.0, "Saturn in D9 7th house â€” avoid trading (buy or sell) entirely", None, None, None),
+            # ── GROUP 2: Dusthana (6,8,12) malefic/caution placements ──────────
+            ("D1_HOUSE",      "Ma", 8,  None, 0, "SELL", 2.0, "Mars D1 8th house — classic sudden-crash placement", None, None, None),
+            ("D1_HOUSE",      "Ma", 8,  None, 1, "AVOID", 1.0, "Mars RETROGRADE in D1 8th — high-risk combination, sit this one out entirely", None, None, None),
+            ("D1_HOUSE",      "Sa", 6,  None, 0, "SELL", 1.5, "Saturn D1 6th house — debt/obstacle pressure", None, None, None),
+            ("D1_HOUSE",      "Sa", 8,  None, 1, "SELL", 1.5, "Saturn retrograde D1 8th house — prolonged structural correction", None, None, None),
+            ("D1_HOUSE",      "Ke", 12, None, 0, "SELL", 1.5, "Ketu D1 12th house — losses/isolation", None, None, None),
+            ("D9_HOUSE",      "Sa", None, 7, 0, "AVOID", 1.0, "Saturn in D9 7th house — avoid trading (buy or sell) entirely", None, None, None),
 
-            # â”€â”€ GROUP 3: Planetary dignity â€” exaltation / debilitation / own-sign â”€â”€
+            # ── GROUP 3: Planetary dignity — exaltation / debilitation / own-sign ──
             # These are classical Vedic fundamentals (not market-specific folklore): a
             # planet in its exaltation sign gives its best results, debilitation its
             # weakest, own sign a comfortable/stable result. D1_RASHI/D9_RASHI use the
             # absolute rashi number (1=Aries...12=Pisces), independent of house/Lagna.
-            ("D1_RASHI",      "Ju", 4,  None, 0, "BUY",  2.5, "Jupiter EXALTED in Cancer (#4) in D1 â€” best possible Jupiter result", None, None, None),
-            ("D9_RASHI",      "Ju", None, 4,  0, "BUY",  2.5, "Jupiter EXALTED in Cancer (#4) in D9 â€” navamsha confirms peak strength", None, None, None),
-            ("D1_RASHI",      "Ju", 10, None, 0, "SELL", 1.5, "Jupiter DEBILITATED in Capricorn (#10) in D1 â€” weakest Jupiter result", None, None, None),
-            ("D1_RASHI",      "Ve", 12, None, 0, "BUY",  2.0, "Venus EXALTED in Pisces (#12) in D1 â€” finance/luxury sector at its best", None, None, None),
+            ("D1_RASHI",      "Ju", 4,  None, 0, "BUY",  2.5, "Jupiter EXALTED in Cancer (#4) in D1 — best possible Jupiter result", None, None, None),
+            ("D9_RASHI",      "Ju", None, 4,  0, "BUY",  2.5, "Jupiter EXALTED in Cancer (#4) in D9 — navamsha confirms peak strength", None, None, None),
+            ("D1_RASHI",      "Ju", 10, None, 0, "SELL", 1.5, "Jupiter DEBILITATED in Capricorn (#10) in D1 — weakest Jupiter result", None, None, None),
+            ("D1_RASHI",      "Ve", 12, None, 0, "BUY",  2.0, "Venus EXALTED in Pisces (#12) in D1 — finance/luxury sector at its best", None, None, None),
             ("D1_RASHI",      "Ve", 6,  None, 0, "SELL", 1.0, "Venus DEBILITATED in Virgo (#6) in D1", None, None, None),
-            ("D1_RASHI",      "Mo", 2,  None, 0, "BUY",  1.5, "Moon EXALTED in Taurus (#2) in D1 â€” strong public sentiment/liquidity", None, None, None),
-            ("D1_RASHI",      "Mo", 8,  None, 0, "SELL", 1.0, "Moon DEBILITATED in Scorpio (#8) in D1 â€” shaky sentiment", None, None, None),
-            ("D1_RASHI",      "Su", 1,  None, 0, "BUY",  1.0, "Sun EXALTED in Aries (#1) in D1 â€” leadership/PSU sector strong", None, None, None),
-            ("D1_RASHI",      "Sa", 7,  None, 0, "BUY",  1.0, "Saturn EXALTED in Libra (#7) in D1 â€” old-economy/structure sector stable", None, None, None),
+            ("D1_RASHI",      "Mo", 2,  None, 0, "BUY",  1.5, "Moon EXALTED in Taurus (#2) in D1 — strong public sentiment/liquidity", None, None, None),
+            ("D1_RASHI",      "Mo", 8,  None, 0, "SELL", 1.0, "Moon DEBILITATED in Scorpio (#8) in D1 — shaky sentiment", None, None, None),
+            ("D1_RASHI",      "Su", 1,  None, 0, "BUY",  1.0, "Sun EXALTED in Aries (#1) in D1 — leadership/PSU sector strong", None, None, None),
+            ("D1_RASHI",      "Sa", 7,  None, 0, "BUY",  1.0, "Saturn EXALTED in Libra (#7) in D1 — old-economy/structure sector stable", None, None, None),
             ("D1_RASHI",      "Sa", 1,  None, 0, "SELL", 1.5, "Saturn DEBILITATED in Aries (#1) in D1", None, None, None),
-            ("D9_RASHI",      "Ve", 7,  None, 0, "BUY",  1.5, "Venus OWN SIGN Libra (#7) in D9 â€” strong finance/luxury signification in navamsha", None, None, None),
-            ("D1_RASHI",      "Ju", 9,  None, 0, "BUY",  1.5, "Jupiter OWN SIGN Sagittarius (#9) in D1 â€” own-sign strength, regardless of house", None, None, None),
+            ("D9_RASHI",      "Ve", 7,  None, 0, "BUY",  1.5, "Venus OWN SIGN Libra (#7) in D9 — strong finance/luxury signification in navamsha", None, None, None),
+            ("D1_RASHI",      "Ju", 9,  None, 0, "BUY",  1.5, "Jupiter OWN SIGN Sagittarius (#9) in D1 — own-sign strength, regardless of house", None, None, None),
 
-            # â”€â”€ GROUP 4: Vargottama (D1 rashi = D9 rashi) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            ("VARGOTTAMA",    "Ju", None, None, 0, "BUY", 3.0, "Jupiter Vargottama (same rashi in D1 & D9) â€” amplified benefic strength", None, None, None),
-            ("VARGOTTAMA",    "Sa", None, None, 0, "SELL", 1.5, "Saturn Vargottama â€” amplified malefic pressure, whatever house it's in", None, None, None),
+            # ── GROUP 4: Vargottama (D1 rashi = D9 rashi) ───────────────────────
+            ("VARGOTTAMA",    "Ju", None, None, 0, "BUY", 3.0, "Jupiter Vargottama (same rashi in D1 & D9) — amplified benefic strength", None, None, None),
+            ("VARGOTTAMA",    "Sa", None, None, 0, "SELL", 1.5, "Saturn Vargottama — amplified malefic pressure, whatever house it's in", None, None, None),
 
-            # â”€â”€ GROUP 5: Retrograde â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            ("D9_HOUSE",      "Me", 3,  None, 1, "SELL", 2.0, "Mercury retrograde in D9 3rd house â€” trade/communication volatility", None, None, None),
+            # ── GROUP 5: Retrograde ──────────────────────────────────────────
+            ("D9_HOUSE",      "Me", 3,  None, 1, "SELL", 2.0, "Mercury retrograde in D9 3rd house — trade/communication volatility", None, None, None),
 
-            # â”€â”€ GROUP 6: House-position consistency across D1 and D9 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            ("D1_D9_COMPARE", "Ju", 11, 11,   0, "BUY",  3.0, "Jupiter strong in BOTH D1 & D9 11th â€” very strong bullish confirmation", None, None, None),
-            ("D1_D9_COMPARE", "Sa", 8,  8,    1, "AVOID", 1.0, "Saturn retrograde AND afflicted in BOTH D1 & D9 8th house â€” strong caution, avoid new positions", None, None, None),
-            ("D1_D9_SAME_HOUSE", "Ju", None, None, 0, "BUY", 2.0, "Jupiter holds the SAME house number in both D1 & D9 (whatever that house is) â€” consistent placement, generally strengthens Jupiter's result either way", None, None, None),
-            ("D1_D9_SAME_HOUSE", "ANY", None, None, 0, "NEUTRAL", 0.5, "ANY planet with matching D1/D9 house â€” logged for reference, doesn't move the score by default; raise the weight/change signal once you've tested this yourself", None, None, None),
+            # ── GROUP 6: House-position consistency across D1 and D9 ───────────
+            ("D1_D9_COMPARE", "Ju", 11, 11,   0, "BUY",  3.0, "Jupiter strong in BOTH D1 & D9 11th — very strong bullish confirmation", None, None, None),
+            ("D1_D9_COMPARE", "Sa", 8,  8,    1, "AVOID", 1.0, "Saturn retrograde AND afflicted in BOTH D1 & D9 8th house — strong caution, avoid new positions", None, None, None),
+            ("D1_D9_SAME_HOUSE", "Ju", None, None, 0, "BUY", 2.0, "Jupiter holds the SAME house number in both D1 & D9 (whatever that house is) — consistent placement, generally strengthens Jupiter's result either way", None, None, None),
+            ("D1_D9_SAME_HOUSE", "ANY", None, None, 0, "NEUTRAL", 0.5, "ANY planet with matching D1/D9 house — logged for reference, doesn't move the score by default; raise the weight/change signal once you've tested this yourself", None, None, None),
 
-            # â”€â”€ GROUP 7: D9_TO_D1_LIST â€” one planet's D9 house vs a whole SET of D1 houses â”€â”€
-            ("D9_TO_D1_LIST", "ANY", None, 2, 0, "AVOID", 1.0, "D9 2nd house planet whose D1 house is 1,2,3,6,7,8, or 12 â€” avoid buy or sell entirely", "1,2,3,6,7,8,12", None, None),
-            ("D9_TO_D1_LIST", "ANY", None, 2, 0, "BUY",   1.5, "D9 2nd house planet whose D1 house is 4,5,10, or 11 â€” buy recommended", "4,5,10,11", None, None),
+            # ── GROUP 7: D9_TO_D1_LIST — one planet's D9 house vs a whole SET of D1 houses ──
+            ("D9_TO_D1_LIST", "ANY", None, 2, 0, "AVOID", 1.0, "D9 2nd house planet whose D1 house is 1,2,3,6,7,8, or 12 — avoid buy or sell entirely", "1,2,3,6,7,8,12", None, None),
+            ("D9_TO_D1_LIST", "ANY", None, 2, 0, "BUY",   1.5, "D9 2nd house planet whose D1 house is 4,5,10, or 11 — buy recommended", "4,5,10,11", None, None),
 
-            # â”€â”€ GROUP 8: D9_HOUSE_ASPECT â€” a house being ASPECTED (drishti), not occupied â”€â”€
-            ("D9_HOUSE_ASPECT", "Ju", None, 11, 0, "BUY",  2.0, "D9 11th house (gains) ASPECTED by Jupiter â€” benefic drishti on the gains house", None, None, None),
-            ("D9_HOUSE_ASPECT", "Sa", None, 1,  0, "AVOID", 1.0, "D9 1st house (overall chart strength) ASPECTED by Saturn â€” malefic drishti on the Lagna, avoid trading", None, None, None),
-            ("D9_HOUSE_ASPECT", "Ma", None, 2,  0, "SELL", 1.5, "D9 2nd house (wealth) ASPECTED by Mars â€” aggressive/volatile drishti on the wealth house", None, None, None),
-            ("D9_HOUSE_ASPECT", "ANY", None, 2, 0, "NEUTRAL", 0.5, "D9 2nd house (liquid wealth) aspected by ANY planet â€” logged for reference only, raise weight/change signal once you've tested this yourself", None, None, None),
+            # ── GROUP 8: D9_HOUSE_ASPECT — a house being ASPECTED (drishti), not occupied ──
+            ("D9_HOUSE_ASPECT", "Ju", None, 11, 0, "BUY",  2.0, "D9 11th house (gains) ASPECTED by Jupiter — benefic drishti on the gains house", None, None, None),
+            ("D9_HOUSE_ASPECT", "Sa", None, 1,  0, "AVOID", 1.0, "D9 1st house (overall chart strength) ASPECTED by Saturn — malefic drishti on the Lagna, avoid trading", None, None, None),
+            ("D9_HOUSE_ASPECT", "Ma", None, 2,  0, "SELL", 1.5, "D9 2nd house (wealth) ASPECTED by Mars — aggressive/volatile drishti on the wealth house", None, None, None),
+            ("D9_HOUSE_ASPECT", "ANY", None, 2, 0, "NEUTRAL", 0.5, "D9 2nd house (liquid wealth) aspected by ANY planet — logged for reference only, raise weight/change signal once you've tested this yourself", None, None, None),
 
-            # â”€â”€ GROUP 9: Compound AND rules (Companion Condition) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            ("D9_TO_D1_LIST",   "ANY", None, 2, 0, "AVOID", 1.0, "COMPOUND: D9 2nd house planet's D1 house is in {2,3,6,7,8,12} AND Saturn is separately in D9's 7th house â€” both facts must hold together", "2,3,6,7,8,12", "Sa", 7),
-            ("D9_HOUSE_ASPECT", "Ju", None, 11, 0, "BUY",  2.5, "COMPOUND: D9 11th house aspected by Jupiter AND Venus is separately in D9's 2nd house â€” double benefic confirmation on gains+wealth", None, "Ve", 2),
+            # ── GROUP 9: Compound AND rules (Companion Condition) ───────────────
+            ("D9_TO_D1_LIST",   "ANY", None, 2, 0, "AVOID", 1.0, "COMPOUND: D9 2nd house planet's D1 house is in {2,3,6,7,8,12} AND Saturn is separately in D9's 7th house — both facts must hold together", "2,3,6,7,8,12", "Sa", 7),
+            ("D9_HOUSE_ASPECT", "Ju", None, 11, 0, "BUY",  2.5, "COMPOUND: D9 11th house aspected by Jupiter AND Venus is separately in D9's 2nd house — double benefic confirmation on gains+wealth", None, "Ve", 2),
 
-            # â”€â”€ GROUP 10: Rahu/Ketu â€” speculation and volatility â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            ("D1_HOUSE",      "Ra", 11, None, 0, "BUY",  1.5, "Rahu D1 11th house â€” speculative sudden gains (volatile)", None, None, None),
-            ("D1_HOUSE",      "Ra", 8,  None, 0, "AVOID", 1.0, "Rahu D1 8th house â€” speculative/sudden-event risk, sit this one out", None, None, None),
+            # ── GROUP 10: Rahu/Ketu — speculation and volatility ────────────────
+            ("D1_HOUSE",      "Ra", 11, None, 0, "BUY",  1.5, "Rahu D1 11th house — speculative sudden gains (volatile)", None, None, None),
+            ("D1_HOUSE",      "Ra", 8,  None, 0, "AVOID", 1.0, "Rahu D1 8th house — speculative/sudden-event risk, sit this one out", None, None, None),
 
-            # â”€â”€ GROUP 11: General planet-house significations (single-fact) â”€â”€â”€â”€â”€
-            ("D1_HOUSE",      "Me", 3,  None, 0, "BUY",  1.0, "Mercury D1 3rd house â€” trade/communication/IT sector active and direct", None, None, None),
-            ("D1_HOUSE",      "Ve", 11, None, 0, "BUY",  1.5, "Venus D1 11th house â€” consumer/luxury sector gains", None, None, None),
+            # ── GROUP 11: General planet-house significations (single-fact) ─────
+            ("D1_HOUSE",      "Me", 3,  None, 0, "BUY",  1.0, "Mercury D1 3rd house — trade/communication/IT sector active and direct", None, None, None),
+            ("D1_HOUSE",      "Ve", 11, None, 0, "BUY",  1.5, "Venus D1 11th house — consumer/luxury sector gains", None, None, None),
         ]
 
         def do_load_example_rules(e):
@@ -1752,7 +1752,7 @@ def main(page: ft.Page):
             set_status(f"Loaded {len(EXAMPLE_RULE_PACK)} example rules.", C["green"])
             refresh_rules_list()
 
-        # â”€â”€ EXPORT / IMPORT RULES AS JSON TEXT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # ── EXPORT / IMPORT RULES AS JSON TEXT ──────────────────────────
         # Uses plain copy/paste (selectable text + text field) instead of native
         # file dialogs, since save/open file pickers have been unreliable once
         # compiled into an Android APK elsewhere in this app.
@@ -1771,7 +1771,7 @@ def main(page: ft.Page):
                 })
             export_output.value = json.dumps(data, ensure_ascii=False, indent=2)
             export_output.visible = True
-            set_status(f"Exported {len(data)} rules below â€” long-press the text to select & copy.", C["green"])
+            set_status(f"Exported {len(data)} rules below — long-press the text to select & copy.", C["green"])
             page.update()
 
         def do_import_rules(e):
@@ -1804,175 +1804,175 @@ def main(page: ft.Page):
                 page.update()
 
         HELP_TEXT = """HOW THE BUY/SELL/AVOID SIGNAL WORKS
-The banner under CALCULATE ASTRO on the Stocks / Show All page is computed by adding up every rule below that matches the current chart: +weight for BUY rules, -weight for SELL rules, 0 for NEUTRAL. AVOID rules work differently on purpose â€” see below. This is a reference tool based on conventional interpretations, not a validated predictive model â€” use it as one input, not a standalone signal.
+The banner under CALCULATE ASTRO on the Stocks / Show All page is computed by adding up every rule below that matches the current chart: +weight for BUY rules, -weight for SELL rules, 0 for NEUTRAL. AVOID rules work differently on purpose — see below. This is a reference tool based on conventional interpretations, not a validated predictive model — use it as one input, not a standalone signal.
 
-HOUSE vs RASHI â€” THE MOST IMPORTANT DISTINCTION TO UNDERSTAND
+HOUSE vs RASHI — THE MOST IMPORTANT DISTINCTION TO UNDERSTAND
 These are two different things, and mixing them up is the #1 source of confusion:
-â€¢ HOUSE (Bhava) â€” counted starting from the Ascendant (Lagna), 1st house = wherever the Lagna itself sits, then 2nd, 3rd... 12th going around. This is RELATIVE to that specific chart's Ascendant.
-â€¢ RASHI (sign) â€” the fixed zodiac sign itself: 1=Aries, 2=Taurus, 3=Gemini, 4=Cancer, 5=Leo, 6=Virgo, 7=Libra, 8=Scorpio, 9=Sagittarius, 10=Capricorn, 11=Aquarius, 12=Pisces. This is ABSOLUTE â€” Aries is always Aries no matter what the Lagna is.
+• HOUSE (Bhava) — counted starting from the Ascendant (Lagna), 1st house = wherever the Lagna itself sits, then 2nd, 3rd... 12th going around. This is RELATIVE to that specific chart's Ascendant.
+• RASHI (sign) — the fixed zodiac sign itself: 1=Aries, 2=Taurus, 3=Gemini, 4=Cancer, 5=Leo, 6=Virgo, 7=Libra, 8=Scorpio, 9=Sagittarius, 10=Capricorn, 11=Aquarius, 12=Pisces. This is ABSOLUTE — Aries is always Aries no matter what the Lagna is.
 
 A FULLY WORKED EXAMPLE (numbers, not just theory):
 Say the Ascendant (Lagna) for this chart falls in Aries (rashi #1). Say Jupiter sits in Sagittarius (rashi #9).
-â€¢ Jupiter's HOUSE = count from Lagna's sign to Jupiter's sign, inclusive of the start: Aries(1)â†’Taurus(2)â†’...â†’Sagittarius(9) = 9 signs along = Jupiter is in the 9th HOUSE.
-â€¢ Jupiter's RASHI is simply Sagittarius (#9) â€” regardless of house, because Sagittarius is Jupiter's own sign (Jupiter "rules" Sagittarius), this is called Swakshetra (own-sign) and is considered a strong, stable placement in its own right.
-So the exact same planet position gives you TWO separate facts you can build rules from: "Jupiter in 9th house" (a D1_HOUSE rule with value 9) AND "Jupiter in Sagittarius" (a D1_RASHI rule with value 9 â€” yes, both happen to be 9 here, but that's a coincidence of this specific example; house and rashi numbers do NOT generally match for other planets or other Lagnas).
+• Jupiter's HOUSE = count from Lagna's sign to Jupiter's sign, inclusive of the start: Aries(1)→Taurus(2)→...→Sagittarius(9) = 9 signs along = Jupiter is in the 9th HOUSE.
+• Jupiter's RASHI is simply Sagittarius (#9) — regardless of house, because Sagittarius is Jupiter's own sign (Jupiter "rules" Sagittarius), this is called Swakshetra (own-sign) and is considered a strong, stable placement in its own right.
+So the exact same planet position gives you TWO separate facts you can build rules from: "Jupiter in 9th house" (a D1_HOUSE rule with value 9) AND "Jupiter in Sagittarius" (a D1_RASHI rule with value 9 — yes, both happen to be 9 here, but that's a coincidence of this specific example; house and rashi numbers do NOT generally match for other planets or other Lagnas).
 
 KEY HOUSES FOR WEALTH (D1 and D9 both)
-â€¢ 2nd â€” liquid wealth, banking, accumulated value
-â€¢ 5th â€” speculation, trading, IPOs
-â€¢ 9th â€” fortune, long-term growth
-â€¢ 11th â€” gains, profits, income (most-watched house)
-â€¢ 6th, 8th, 12th (dusthanas) â€” debt/obstacles, sudden crashes/liability, losses â€” generally bearish
+• 2nd — liquid wealth, banking, accumulated value
+• 5th — speculation, trading, IPOs
+• 9th — fortune, long-term growth
+• 11th — gains, profits, income (most-watched house)
+• 6th, 8th, 12th (dusthanas) — debt/obstacles, sudden crashes/liability, losses — generally bearish
 
-PLANET â†’ MARKET MEANING
-â€¢ Jupiter (Ju): expansion, banking, overall bullishness â†’ strong in 2nd/5th/9th/11th
-â€¢ Venus (Ve): currency, consumer/luxury, comfort â†’ strong in 2nd/11th
-â€¢ Mercury (Me): trade, IT, quick transactions â†’ watch closely if retrograde
-â€¢ Sun (Su): authority, government/PSU, energy â†’ strong in 10th/11th
-â€¢ Moon (Mo): public sentiment, FMCG/retail liquidity â†’ strong in 4th/11th
-â€¢ Mars (Ma): energy sector, aggression, sudden moves â†’ 8th is the classic sudden-crash placement
-â€¢ Saturn (Sa): structure, old-economy, discipline, delay â†’ steady in 3rd/11th, drags in 1st/6th/8th
-â€¢ Rahu (Ra): speculation, sudden gains, unconventional/tech sectors â†’ 11th = sudden windfall (volatile)
-â€¢ Ketu (Ke): sudden loss, detachment, liquidation â†’ bearish in 8th/12th
+PLANET → MARKET MEANING
+• Jupiter (Ju): expansion, banking, overall bullishness → strong in 2nd/5th/9th/11th
+• Venus (Ve): currency, consumer/luxury, comfort → strong in 2nd/11th
+• Mercury (Me): trade, IT, quick transactions → watch closely if retrograde
+• Sun (Su): authority, government/PSU, energy → strong in 10th/11th
+• Moon (Mo): public sentiment, FMCG/retail liquidity → strong in 4th/11th
+• Mars (Ma): energy sector, aggression, sudden moves → 8th is the classic sudden-crash placement
+• Saturn (Sa): structure, old-economy, discipline, delay → steady in 3rd/11th, drags in 1st/6th/8th
+• Rahu (Ra): speculation, sudden gains, unconventional/tech sectors → 11th = sudden windfall (volatile)
+• Ketu (Ke): sudden loss, detachment, liquidation → bearish in 8th/12th
 
-RETROGRADE â€” TWO SCHOOLS OF THOUGHT
-Most trading-desk convention treats Mercury retrograde as a caution period (miscommunication, contract issues, volatility) â€” often bearish for IT/trade stocks. Some traditional astrologers instead argue a retrograde planet acts stronger, not weaker. Given this genuine disagreement, treat retrograde as a volatility multiplier and let your own rule's Signal/Weight decide the direction. Note: Rahu/Ketu are always calculated as retrograde (their mean motion never goes direct), so a "retrograde only" rule on them will basically always fire.
+RETROGRADE — TWO SCHOOLS OF THOUGHT
+Most trading-desk convention treats Mercury retrograde as a caution period (miscommunication, contract issues, volatility) — often bearish for IT/trade stocks. Some traditional astrologers instead argue a retrograde planet acts stronger, not weaker. Given this genuine disagreement, treat retrograde as a volatility multiplier and let your own rule's Signal/Weight decide the direction. Note: Rahu/Ketu are always calculated as retrograde (their mean motion never goes direct), so a "retrograde only" rule on them will basically always fire.
 
 VARGOTTAMA
-When a planet sits in the SAME rashi/sign in both D1 and D9 (regardless of house number), it's considered to triple/amplify that planet's natural result â€” good or bad. Use the VARGOTTAMA rule type for this (house fields not needed).
+When a planet sits in the SAME rashi/sign in both D1 and D9 (regardless of house number), it's considered to triple/amplify that planet's natural result — good or bad. Use the VARGOTTAMA rule type for this (house fields not needed).
 
-THE "AVOID" SIGNAL â€” HOW IT'S DIFFERENT FROM SELL
-BUY and SELL both feed into one numeric tug-of-war score â€” a handful of small BUY rules can outweigh one SELL rule. AVOID is deliberately NOT part of that tally. It's meant for placements you consider serious enough that no amount of other-rule positivity should paper over them (e.g. a retrograde malefic sitting in a genuinely dangerous house). If even ONE of your AVOID rules matches, the banner switches to "ðŸš« AVOID THIS STOCK TODAY" regardless of what the BUY/SELL score says â€” you'll still see the numeric score's detail below it, but the headline is the AVOID warning. Use it sparingly, for placements you've personally found reliably bad â€” that's the whole point of letting you set your OWN experienced rules rather than a fixed formula.
+THE "AVOID" SIGNAL — HOW IT'S DIFFERENT FROM SELL
+BUY and SELL both feed into one numeric tug-of-war score — a handful of small BUY rules can outweigh one SELL rule. AVOID is deliberately NOT part of that tally. It's meant for placements you consider serious enough that no amount of other-rule positivity should paper over them (e.g. a retrograde malefic sitting in a genuinely dangerous house). If even ONE of your AVOID rules matches, the banner switches to "🚫 AVOID THIS STOCK TODAY" regardless of what the BUY/SELL score says — you'll still see the numeric score's detail below it, but the headline is the AVOID warning. Use it sparingly, for placements you've personally found reliably bad — that's the whole point of letting you set your OWN experienced rules rather than a fixed formula.
 
 RULE TYPES EXPLAINED
-â€¢ D1_HOUSE â€” fires when a planet is in the given HOUSE (counted from Lagna) in the D1 (Rasi) chart
-â€¢ D9_HOUSE â€” fires when a planet is in the given HOUSE (counted from Lagna) in the D9 (Navamsha) chart
-â€¢ D1_D9_COMPARE â€” fires only when BOTH the D1 house AND D9 house match the SPECIFIC values you enter (e.g. only 11th-and-11th) â€” the strongest, most exact confirmation
-â€¢ D1_D9_SAME_HOUSE â€” a more general version of the above: fires whenever a planet's D1 house number EQUALS its D9 house number, whatever that number happens to be (11th-11th, or 3rd-3rd, or any other matching pair) â€” no house values need to be entered for this type. Use D1_D9_COMPARE when you care about one specific house; use D1_D9_SAME_HOUSE when you just want to flag "this planet's house position is consistent across both charts," regardless of which house it is.
-â€¢ D9_TO_D1_LIST â€” for a common pattern that doesn't fit the types above: "whichever planet sits in a FIXED D9 house, check whether that same planet's D1 house is ANY of a whole SET of houses." Enter the fixed D9 house in the D9 House field, and the set of acceptable D1 houses as a comma-separated list in the "D1 House LIST" field (e.g. "4,5,10,11"). Fires if the D9 house matches AND the D1 house is anywhere in that list. Example: "D9 2nd house planet, if its D1 house is 1, 2, 3, 6, 7, 8, or 12 â†’ AVOID" becomes one single rule: D9 House=2, D1 House LIST=1,2,3,6,7,8,12, Signal=AVOID â€” instead of needing 7 separate rows.
-â€¢ VARGOTTAMA â€” fires when D1 rashi = D9 rashi for that planet (house fields not needed) â€” note this is about the SIGN matching, which is a different, separate concept from D1_D9_SAME_HOUSE matching on HOUSE NUMBER (see the House vs Rashi section above)
-â€¢ D1_RASHI â€” fires when a planet sits in the given absolute RASHI (1=Aries...12=Pisces) in the D1 chart, regardless of which house that rashi falls in for this particular Lagna
-â€¢ D9_RASHI â€” same as above, but checked in the D9 (Navamsha) chart
-â€¢ D9_HOUSE_ASPECT â€” fires when the chosen D9 HOUSE (enter it in the D9 House field) is ASPECTED (drishti) by the chosen Planet â€” or by ANY planet if Planet=ANY. Classical Parashari rule: every planet aspects the 7th house from its own position; Mars also aspects the 4th/8th, Jupiter the 5th/9th, Saturn the 3rd/10th. Rahu/Ketu are treated like Saturn here (3rd/7th/10th) as a common modern convention, not classical doctrine. Example: Planet=ANY, D9 House=11, Signal=BUY â†’ fires whenever any planet currently aspects the D9 11th (gains) house.
+• D1_HOUSE — fires when a planet is in the given HOUSE (counted from Lagna) in the D1 (Rasi) chart
+• D9_HOUSE — fires when a planet is in the given HOUSE (counted from Lagna) in the D9 (Navamsha) chart
+• D1_D9_COMPARE — fires only when BOTH the D1 house AND D9 house match the SPECIFIC values you enter (e.g. only 11th-and-11th) — the strongest, most exact confirmation
+• D1_D9_SAME_HOUSE — a more general version of the above: fires whenever a planet's D1 house number EQUALS its D9 house number, whatever that number happens to be (11th-11th, or 3rd-3rd, or any other matching pair) — no house values need to be entered for this type. Use D1_D9_COMPARE when you care about one specific house; use D1_D9_SAME_HOUSE when you just want to flag "this planet's house position is consistent across both charts," regardless of which house it is.
+• D9_TO_D1_LIST — for a common pattern that doesn't fit the types above: "whichever planet sits in a FIXED D9 house, check whether that same planet's D1 house is ANY of a whole SET of houses." Enter the fixed D9 house in the D9 House field, and the set of acceptable D1 houses as a comma-separated list in the "D1 House LIST" field (e.g. "4,5,10,11"). Fires if the D9 house matches AND the D1 house is anywhere in that list. Example: "D9 2nd house planet, if its D1 house is 1, 2, 3, 6, 7, 8, or 12 → AVOID" becomes one single rule: D9 House=2, D1 House LIST=1,2,3,6,7,8,12, Signal=AVOID — instead of needing 7 separate rows.
+• VARGOTTAMA — fires when D1 rashi = D9 rashi for that planet (house fields not needed) — note this is about the SIGN matching, which is a different, separate concept from D1_D9_SAME_HOUSE matching on HOUSE NUMBER (see the House vs Rashi section above)
+• D1_RASHI — fires when a planet sits in the given absolute RASHI (1=Aries...12=Pisces) in the D1 chart, regardless of which house that rashi falls in for this particular Lagna
+• D9_RASHI — same as above, but checked in the D9 (Navamsha) chart
+• D9_HOUSE_ASPECT — fires when the chosen D9 HOUSE (enter it in the D9 House field) is ASPECTED (drishti) by the chosen Planet — or by ANY planet if Planet=ANY. Classical Parashari rule: every planet aspects the 7th house from its own position; Mars also aspects the 4th/8th, Jupiter the 5th/9th, Saturn the 3rd/10th. Rahu/Ketu are treated like Saturn here (3rd/7th/10th) as a common modern convention, not classical doctrine. Example: Planet=ANY, D9 House=11, Signal=BUY → fires whenever any planet currently aspects the D9 11th (gains) house.
 
 CHART COLOR CODING (on the D1/D9 diamond charts themselves)
-â€¢ Red â€” normal planet, no special condition
-â€¢ Orange "(R)" â€” retrograde
-â€¢ Teal "(V)" â€” Vargottama (same rashi in D1 and D9)
-â€¢ Purple "(R,V)" â€” both retrograde and Vargottama at once
+• Red — normal planet, no special condition
+• Orange "(R)" — retrograde
+• Teal "(V)" — Vargottama (same rashi in D1 and D9)
+• Purple "(R,V)" — both retrograde and Vargottama at once
 A legend with these same colors appears just below every chart.
 
 BHOOVALAYA BANDHA (STEP 7 of the Oracle report)
-The Navaank (digital root, Step 2) also maps to one of six classical Bandha (traversal/lock) patterns from the Siribhoovalaya tradition â€” each represents a distinct way of moving through the 27Ã—27 akshara matrix. This is a symbolic overlay for your own thinking, not a standalone rule.
+The Navaank (digital root, Step 2) also maps to one of six classical Bandha (traversal/lock) patterns from the Siribhoovalaya tradition — each represents a distinct way of moving through the 27×27 akshara matrix. This is a symbolic overlay for your own thinking, not a standalone rule.
 
-â€¢ à¤°à¤¥à¤¬à¤‚à¤§ Rathabandha (Chariot) â€” steady, linear forward motion â†’ Direction: UP. Favors trend-following; hold through medium-term moves.
-â€¢ à¤šà¤•à¥à¤°à¤¬à¤‚à¤§ Chakrabandha (Wheel) â€” cyclical, repeating loops â†’ Direction: SIDEWAYS. Expect swings both ways; better for swing-trade re-entries than one hold.
-â€¢ à¤ªà¤¦à¥à¤®à¤¬à¤‚à¤§ Padmabandha (Lotus) â€” layered, unfolding petal by petal â†’ Direction: UP. Gradual build-up; consider accumulating in tranches.
-â€¢ à¤¹à¤‚à¤¸à¤¬à¤‚à¤§ Hamsabandha (Swan) â€” graceful glide, discernment â†’ Direction: UP (mild). Favors selective, quality-over-quantity entries.
-â€¢ à¤®à¥à¤•à¥à¤¤à¤¾à¤µà¤²à¥€ Muktavali (Pearl-chain) â€” linked, sequential continuity â†’ Direction: CONTINUATION (reinforces whatever the Graha already says). Moves may be linked to sector/peer stocks.
-â€¢ à¤¸à¤°à¥à¤µà¤¤à¥‹à¤­à¤¦à¥à¤° Sarvatobhadra (Balanced square) â€” balance in every direction â†’ Direction: SIDEWAYS. Range-bound; better to wait for a clear breakout.
+• रथबंध Rathabandha (Chariot) — steady, linear forward motion → Direction: UP. Favors trend-following; hold through medium-term moves.
+• चक्रबंध Chakrabandha (Wheel) — cyclical, repeating loops → Direction: SIDEWAYS. Expect swings both ways; better for swing-trade re-entries than one hold.
+• पद्मबंध Padmabandha (Lotus) — layered, unfolding petal by petal → Direction: UP. Gradual build-up; consider accumulating in tranches.
+• हंसबंध Hamsabandha (Swan) — graceful glide, discernment → Direction: UP (mild). Favors selective, quality-over-quantity entries.
+• मुक्तावली Muktavali (Pearl-chain) — linked, sequential continuity → Direction: CONTINUATION (reinforces whatever the Graha already says). Moves may be linked to sector/peer stocks.
+• सर्वतोभद्र Sarvatobhadra (Balanced square) — balance in every direction → Direction: SIDEWAYS. Range-bound; better to wait for a clear breakout.
 
-Which Bandha you get depends only on Navaank: Bandha index = (Navaank âˆ’ 1) mod 6.
+Which Bandha you get depends only on Navaank: Bandha index = (Navaank − 1) mod 6.
 
 COMBINED PRICE DIRECTION (STEP 8 of the Oracle report)
 Step 8 cross-checks the Graha's signal (Step 5: Bullish/Bearish/Volatile/Speculative) against the Bandha's directional tendency above, to give one final UP / DOWN / SIDEWAYS / MIXED call:
-â€¢ Graha and Bandha AGREE (e.g. both point UP) â†’ higher-confidence UP or DOWN call
-â€¢ Bandha is CONTINUATION â†’ simply follows whatever direction the Graha already gives
-â€¢ Either signal is SIDEWAYS â†’ tempered down to SIDEWAYS (lower conviction, range-bound read)
-â€¢ Graha and Bandha genuinely CONFLICT (one UP, one DOWN) â†’ flagged as MIXED rather than forcing a false-confident call
-This is a heuristic combination of two symbolic systems, not a backtested statistical model â€” treat it as food for thought alongside your own research and the custom Rules above, not as a standalone buy/sell trigger.
+• Graha and Bandha AGREE (e.g. both point UP) → higher-confidence UP or DOWN call
+• Bandha is CONTINUATION → simply follows whatever direction the Graha already gives
+• Either signal is SIDEWAYS → tempered down to SIDEWAYS (lower conviction, range-bound read)
+• Graha and Bandha genuinely CONFLICT (one UP, one DOWN) → flagged as MIXED rather than forcing a false-confident call
+This is a heuristic combination of two symbolic systems, not a backtested statistical model — treat it as food for thought alongside your own research and the custom Rules above, not as a standalone buy/sell trigger.
 
 SARVATOBHADRA VEDHA CHECK (STEP 9 of the Oracle report)
-Vedha means "obstruction" â€” a classical Muhurta-shastra concept where certain pairs of nakshatras are said to afflict/cancel each other's auspiciousness when they occur together. This is genuinely a timing/electional-astrology tool in the original tradition â€” classical texts do NOT link it to stock sectors or price direction; that link is this app's own extension, done honestly rather than invented as if it were textual.
+Vedha means "obstruction" — a classical Muhurta-shastra concept where certain pairs of nakshatras are said to afflict/cancel each other's auspiciousness when they occur together. This is genuinely a timing/electional-astrology tool in the original tradition — classical texts do NOT link it to stock sectors or price direction; that link is this app's own extension, done honestly rather than invented as if it were textual.
 
-Step 9 compares today's trading-day nakshatra against the stock's own "birth" nakshatra (from its listing date) using the standard Sarvatobhadra Chakra pairing table. If they form a Vedha pair, it's flagged âš ï¸ as an extra caution signal for that day; if not, it shows âœ… clear.
+Step 9 compares today's trading-day nakshatra against the stock's own "birth" nakshatra (from its listing date) using the standard Sarvatobhadra Chakra pairing table. If they form a Vedha pair, it's flagged ⚠️ as an extra caution signal for that day; if not, it shows ✅ clear.
 
-Each nakshatra also has a real, classical ruling planet (the "Nakshatra Lord", same sequence used for Vimshottari Dasha: Ketu â†’ Venus â†’ Sun â†’ Moon â†’ Mars â†’ Rahu â†’ Jupiter â†’ Saturn â†’ Mercury, repeating 3x across all 27 nakshatras). When a Vedha is present, Step 9 also shows both nakshatras' lords and pulls their associated sectors from the Graha table in Step 5 â€” so you get a concrete "which sectors does this caution flag concern" answer, built from a real classical assignment (the lordship) even though the sector-linkage itself is this app's own layer, not ancient doctrine.
+Each nakshatra also has a real, classical ruling planet (the "Nakshatra Lord", same sequence used for Vimshottari Dasha: Ketu → Venus → Sun → Moon → Mars → Rahu → Jupiter → Saturn → Mercury, repeating 3x across all 27 nakshatras). When a Vedha is present, Step 9 also shows both nakshatras' lords and pulls their associated sectors from the Graha table in Step 5 — so you get a concrete "which sectors does this caution flag concern" answer, built from a real classical assignment (the lordship) even though the sector-linkage itself is this app's own layer, not ancient doctrine.
 
-Treat this whole step as an additional caution flag to weigh alongside Graha, Bandha, and your own Rules â€” not a standalone reason to act.
+Treat this whole step as an additional caution flag to weigh alongside Graha, Bandha, and your own Rules — not a standalone reason to act.
 
 LIVE PRICE (in Stocks list, next to Ramal)
-Tap "ðŸ’° Price" on any stock row to fetch its current trading price, change vs previous close, yesterday's closing price, and 52-week high/low. It tries NSE's live quote API first; if NSE blocks the request (it does this unpredictably to automated requests), it automatically falls back to Yahoo Finance for the same stock â€” no action needed from you. The panel tells you which source actually answered. It runs in the background so the list stays responsive while fetching. If both sources fail, the panel shows the error and you can simply try again in a moment. Treat this as a quick reference, not a substitute for checking your broker's terminal before actually placing a trade.
+Tap "💰 Price" on any stock row to fetch its current trading price, change vs previous close, yesterday's closing price, and 52-week high/low. It tries NSE's live quote API first; if NSE blocks the request (it does this unpredictably to automated requests), it automatically falls back to Yahoo Finance for the same stock — no action needed from you. The panel tells you which source actually answered. It runs in the background so the list stays responsive while fetching. If both sources fail, the panel shows the error and you can simply try again in a moment. Treat this as a quick reference, not a substitute for checking your broker's terminal before actually placing a trade.
 
 RAMAL PRASHNA (in Oracle, below Calculate Astro)
-Ramal is a separate Persian/Arabic geomancy system (also used in some Indian traditions), cast fresh at the exact moment you ask the question â€” like a horary chart. Tapping "ðŸŽ² RAMAL PRASHNA" never re-asks for the stock; it uses whichever stock you already searched above.
+Ramal is a separate Persian/Arabic geomancy system (also used in some Indian traditions), cast fresh at the exact moment you ask the question — like a horary chart. Tapping "🎲 RAMAL PRASHNA" never re-asks for the stock; it uses whichever stock you already searched above.
 
-It randomly casts 4 "Mother" figures (simulating a disc-spin), derives 4 Daughters (by transposing the Mothers) and 4 Nephews, then 2 Witnesses, then the 15th house "Judge", and finally the 16th house "Final Outcome" (Mother 1 combined with the Judge) â€” the complete classical 16-house chart, with all 16 possible Shakal figures properly named (not a partial set). Since we don't ask BUY or SELL intent, the result shows both readings from the same cast.
+It randomly casts 4 "Mother" figures (simulating a disc-spin), derives 4 Daughters (by transposing the Mothers) and 4 Nephews, then 2 Witnesses, then the 15th house "Judge", and finally the 16th house "Final Outcome" (Mother 1 combined with the Judge) — the complete classical 16-house chart, with all 16 possible Shakal figures properly named (not a partial set). Since we don't ask BUY or SELL intent, the result shows both readings from the same cast.
 
-The verdict requires the Judge (15th) AND Final Outcome (16th) to agree in nature (both Mitrik/inward) for a high-confidence BUY call â€” a stricter, closer-to-tradition check than using the Judge alone. If the Judge shows Kharij (outward) energy, that's read as a caution against buying regardless of the Final Outcome. Anything else lands as neutral/wait.
+The verdict requires the Judge (15th) AND Final Outcome (16th) to agree in nature (both Mitrik/inward) for a high-confidence BUY call — a stricter, closer-to-tradition check than using the Judge alone. If the Judge shows Kharij (outward) energy, that's read as a caution against buying regardless of the Final Outcome. Anything else lands as neutral/wait.
 
-Ramal is then cross-checked against Bhoovalaya's own combined direction (Step 8) for the same stock â€” if both agree, it's flagged as higher-confidence; if they disagree, that's flagged too, rather than picking one silently. Because Ramal is randomly re-cast at the moment of asking, tapping it again later (or for the same stock on a different day) can genuinely give a different reading â€” that's expected behavior for a Prashna-style system, not a bug.
+Ramal is then cross-checked against Bhoovalaya's own combined direction (Step 8) for the same stock — if both agree, it's flagged as higher-confidence; if they disagree, that's flagged too, rather than picking one silently. Because Ramal is randomly re-cast at the moment of asking, tapping it again later (or for the same stock on a different day) can genuinely give a different reading — that's expected behavior for a Prashna-style system, not a bug.
 
 EXPORT / IMPORT RULES
-"ðŸ“¤ EXPORT RULES" turns all your saved rules into JSON text shown in a copyable box below the button â€” long-press the text to select it, copy, then paste it anywhere (a text file on your PC, notes app, email) to back it up or test it elsewhere. "ðŸ“¥ IMPORT RULES FROM JSON" does the reverse: paste JSON text (in the same format) into the box above it and tap the button to load those rules straight into this app. This uses plain copy-paste rather than a file-save dialog, since those have proven unreliable once compiled into an Android APK.
+"📤 EXPORT RULES" turns all your saved rules into JSON text shown in a copyable box below the button — long-press the text to select it, copy, then paste it anywhere (a text file on your PC, notes app, email) to back it up or test it elsewhere. "📥 IMPORT RULES FROM JSON" does the reverse: paste JSON text (in the same format) into the box above it and tap the button to load those rules straight into this app. This uses plain copy-paste rather than a file-save dialog, since those have proven unreliable once compiled into an Android APK.
 
-COMPANION CONDITION â€” COMBINING TWO SEPARATE FACTS WITH "AND"
-Every rule type above checks ONE fact about ONE planet. Sometimes you need TWO facts to be true at the SAME time before it counts â€” e.g. "condition A about whichever planet is in D9's 2nd house" AND, completely separately, "Saturn specifically is in D9's 7th house." Entering these as two separate rules would fire the AVOID banner if EITHER happened alone, which is not what you want.
-The "Companion Condition" fields solve this: fill in a Companion Planet and a Companion D9 House, and the rule will ONLY fire when its normal condition is true AND that companion planet is separately sitting in that D9 house too â€” both must hold at once.
+COMPANION CONDITION — COMBINING TWO SEPARATE FACTS WITH "AND"
+Every rule type above checks ONE fact about ONE planet. Sometimes you need TWO facts to be true at the SAME time before it counts — e.g. "condition A about whichever planet is in D9's 2nd house" AND, completely separately, "Saturn specifically is in D9's 7th house." Entering these as two separate rules would fire the AVOID banner if EITHER happened alone, which is not what you want.
+The "Companion Condition" fields solve this: fill in a Companion Planet and a Companion D9 House, and the rule will ONLY fire when its normal condition is true AND that companion planet is separately sitting in that D9 house too — both must hold at once.
 Worked example: "If D9's 2nd house planet's D1 house is in {2,3,6,7,8,12} AND Saturn is in D9's 7th house -> AVOID" is built as: Rule Type=D9_TO_D1_LIST, Planet=ANY, D9 House=2, D1 House LIST=2,3,6,7,8,12, Companion Planet=Sa, Companion D9 House=7, Signal=AVOID. This is already included in the example pack below.
-Leave both Companion fields blank for an ordinary single-fact rule â€” this is fully optional and only needed for compound AND conditions like this one.
+Leave both Companion fields blank for an ordinary single-fact rule — this is fully optional and only needed for compound AND conditions like this one.
 
-Tap "ðŸ“¦ LOAD EXAMPLE RULES" to add the full starter pack covering all the patterns above (the exact count is shown in the confirmation message after loading), then edit/delete individual rules to match your own approach.
+Tap "📦 LOAD EXAMPLE RULES" to add the full starter pack covering all the patterns above (the exact count is shown in the confirmation message after loading), then edit/delete individual rules to match your own approach.
 
 REFERENCE: PLANETARY DIGNITY TABLE (exaltation / own sign / debilitation)
-This is classical Vedic astrology, not market-specific â€” a planet gives its strongest result in its exaltation sign, a comfortable/stable result in its own sign(s), and its weakest result in its debilitation sign (always the sign directly opposite its exaltation). Build D1_RASHI or D9_RASHI rules from this table using the rashi number (1=Aries, 2=Taurus, 3=Gemini, 4=Cancer, 5=Leo, 6=Virgo, 7=Libra, 8=Scorpio, 9=Sagittarius, 10=Capricorn, 11=Aquarius, 12=Pisces):
-â€¢ Sun (Su) â€” exalted #1 Aries Â· own #5 Leo Â· debilitated #7 Libra
-â€¢ Moon (Mo) â€” exalted #2 Taurus Â· own #4 Cancer Â· debilitated #8 Scorpio
-â€¢ Mars (Ma) â€” exalted #10 Capricorn Â· own #1 Aries / #8 Scorpio Â· debilitated #4 Cancer
-â€¢ Mercury (Me) â€” exalted #6 Virgo Â· own #3 Gemini / #6 Virgo Â· debilitated #12 Pisces
-â€¢ Jupiter (Ju) â€” exalted #4 Cancer Â· own #9 Sagittarius / #12 Pisces Â· debilitated #10 Capricorn
-â€¢ Venus (Ve) â€” exalted #12 Pisces Â· own #2 Taurus / #7 Libra Â· debilitated #6 Virgo
-â€¢ Saturn (Sa) â€” exalted #7 Libra Â· own #10 Capricorn / #11 Aquarius Â· debilitated #1 Aries
-Rahu/Ketu dignity is disputed across different classical texts (Jagannatha Hora gives Rahu exalted in Gemini/Taurus depending on the source, Ketu in Sagittarius/Scorpio) â€” deliberately left out of this table rather than presenting a contested claim as settled.
+This is classical Vedic astrology, not market-specific — a planet gives its strongest result in its exaltation sign, a comfortable/stable result in its own sign(s), and its weakest result in its debilitation sign (always the sign directly opposite its exaltation). Build D1_RASHI or D9_RASHI rules from this table using the rashi number (1=Aries, 2=Taurus, 3=Gemini, 4=Cancer, 5=Leo, 6=Virgo, 7=Libra, 8=Scorpio, 9=Sagittarius, 10=Capricorn, 11=Aquarius, 12=Pisces):
+• Sun (Su) — exalted #1 Aries · own #5 Leo · debilitated #7 Libra
+• Moon (Mo) — exalted #2 Taurus · own #4 Cancer · debilitated #8 Scorpio
+• Mars (Ma) — exalted #10 Capricorn · own #1 Aries / #8 Scorpio · debilitated #4 Cancer
+• Mercury (Me) — exalted #6 Virgo · own #3 Gemini / #6 Virgo · debilitated #12 Pisces
+• Jupiter (Ju) — exalted #4 Cancer · own #9 Sagittarius / #12 Pisces · debilitated #10 Capricorn
+• Venus (Ve) — exalted #12 Pisces · own #2 Taurus / #7 Libra · debilitated #6 Virgo
+• Saturn (Sa) — exalted #7 Libra · own #10 Capricorn / #11 Aquarius · debilitated #1 Aries
+Rahu/Ketu dignity is disputed across different classical texts (Jagannatha Hora gives Rahu exalted in Gemini/Taurus depending on the source, Ketu in Sagittarius/Scorpio) — deliberately left out of this table rather than presenting a contested claim as settled.
 
 REFERENCE: FINANCIAL-ASTROLOGY TRADITIONS THIS APP DRAWS ON
-Two broad, largely separate traditions inform the planetâ†’market associations used above and in the Graha table (Oracle Step 5):
-â€¢ Western/tropical: W. D. Gann (early-to-mid 20th century US trader) pioneered linking planetary cycles, angles, and time periods to price action â€” his specific price/time-square and geometric-angle methods are NOT implemented here, only the general idea that planetary cycles can be watched. Later writers like Bill Meridian and Louise McWhirter extended this into more systematic planet-to-sector mappings.
-â€¢ Vedic/Indian: a long-running tradition (various contemporary Indian financial astrologers, building on classical Parashari and Jaimini principles) applies standard natal-chart techniques â€” house lordships, dignity, aspects, dashas â€” to market/sector timing instead of a person's life. This app's D1/D9 house-and-dignity approach sits in this camp.
-Neither tradition has peer-reviewed, statistically validated backing â€” they are heuristic, experience-based frameworks, and different practitioners within each tradition disagree with each other (see the Retrograde section above for one concrete example). Treat every planetâ†’sector association in this app, including the ones you build yourself, as a hypothesis to test against your own market experience â€” not a settled result. This app is a rule-tracking and charting tool for your own research, not financial advice, and it does not predict prices.
+Two broad, largely separate traditions inform the planet→market associations used above and in the Graha table (Oracle Step 5):
+• Western/tropical: W. D. Gann (early-to-mid 20th century US trader) pioneered linking planetary cycles, angles, and time periods to price action — his specific price/time-square and geometric-angle methods are NOT implemented here, only the general idea that planetary cycles can be watched. Later writers like Bill Meridian and Louise McWhirter extended this into more systematic planet-to-sector mappings.
+• Vedic/Indian: a long-running tradition (various contemporary Indian financial astrologers, building on classical Parashari and Jaimini principles) applies standard natal-chart techniques — house lordships, dignity, aspects, dashas — to market/sector timing instead of a person's life. This app's D1/D9 house-and-dignity approach sits in this camp.
+Neither tradition has peer-reviewed, statistically validated backing — they are heuristic, experience-based frameworks, and different practitioners within each tradition disagree with each other (see the Retrograde section above for one concrete example). Treat every planet→sector association in this app, including the ones you build yourself, as a hypothesis to test against your own market experience — not a settled result. This app is a rule-tracking and charting tool for your own research, not financial advice, and it does not predict prices.
 
 REFERENCE: WHAT THIS APP DOES NOT CALCULATE (so you don't assume a rule exists that isn't there)
-To be upfront about scope â€” none of the following are implemented, so no rule can currently be built on them:
-â€¢ Moon phase (Amavasya/Purnima) or Sun-Moon angular distance
-â€¢ Planetary combustion (a planet very close to the Sun)
-â€¢ Planetary war (two planets at the same longitude)
-â€¢ Transits measured from the Moon's position instead of the Lagna (Chandra Lagna)
-â€¢ Gann's specific price-square, time-cycle, or geometric-angle methods
-â€¢ Divisional charts other than D1 (Rasi) and D9 (Navamsha) â€” e.g. D10 (career/business) is not calculated
-â€¢ Dasha/sub-period (Vimshottari Dasha) timing, beyond the Nakshatra Lord lookup already used in Step 9
-If any of these would be useful to you, they'd need to be added as new features â€” they are not quietly happening in the background."""
+To be upfront about scope — none of the following are implemented, so no rule can currently be built on them:
+• Moon phase (Amavasya/Purnima) or Sun-Moon angular distance
+• Planetary combustion (a planet very close to the Sun)
+• Planetary war (two planets at the same longitude)
+• Transits measured from the Moon's position instead of the Lagna (Chandra Lagna)
+• Gann's specific price-square, time-cycle, or geometric-angle methods
+• Divisional charts other than D1 (Rasi) and D9 (Navamsha) — e.g. D10 (career/business) is not calculated
+• Dasha/sub-period (Vimshottari Dasha) timing, beyond the Nakshatra Lord lookup already used in Step 9
+If any of these would be useful to you, they'd need to be added as new features — they are not quietly happening in the background."""
 
         help_screen = ft.Column(visible=False, scroll="auto", controls=[
-            make_header("ðŸ“– HELP / REFERENCE GUIDE"), ft.Divider(height=4, color=C["divider"]),
+            make_header("📖 HELP / REFERENCE GUIDE"), ft.Divider(height=4, color=C["divider"]),
             ft.Text(HELP_TEXT, size=12.5, color=C["black_txt"], selectable=True),
             ft.Container(height=10),
-            ft.ElevatedButton("â¬…  BACK TO RULES", bgcolor=C["primary"], color="#FFFFFF", height=48, on_click=lambda e: show_screen("rules"))
+            ft.ElevatedButton("⬅  BACK TO RULES", bgcolor=C["primary"], color="#FFFFFF", height=48, on_click=lambda e: show_screen("rules"))
         ])
 
         rules_screen = ft.Column(visible=False, scroll="auto", controls=[
-            make_header("ðŸ“œ CUSTOM D1 / D9 RULES"), ft.Divider(height=4, color=C["divider"]),
+            make_header("📜 CUSTOM D1 / D9 RULES"), ft.Divider(height=4, color=C["divider"]),
             ft.Text("Define your own planet-in-house rules. These drive the BUY/SELL recommendation shown under CALCULATE ASTRO on the Stocks / Show All page, and the Green/Red timing flag at the top of that page.", size=12, color=C["black_txt"]),
-            ft.ElevatedButton("ðŸ“– HELP / REFERENCE GUIDE", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("help")),
+            ft.ElevatedButton("📖 HELP / REFERENCE GUIDE", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("help")),
             fld_rule_type, fld_rule_planet,
             ft.Row([fld_rule_h1, fld_rule_h9]),
             fld_rule_h1_list,
-            ft.Text("Companion Condition (optional) â€” an extra planet+house that must ALSO be true (AND), for compound rules", size=11, color=C["black_txt"]),
+            ft.Text("Companion Condition (optional) — an extra planet+house that must ALSO be true (AND), for compound rules", size=11, color=C["black_txt"]),
             ft.Row([fld_rule_companion_planet, fld_rule_companion_h9]),
             fld_rule_retro, fld_rule_signal, fld_rule_weight, fld_rule_note,
-            ft.ElevatedButton("âž• ADD RULE", bgcolor=C["primary"], color="#FFFFFF", height=48, on_click=do_add_rule),
-            ft.ElevatedButton("ðŸ“¦ LOAD EXAMPLE RULES (financial astrology starter pack)", bgcolor=C["orange"], color="#FFFFFF", height=44, on_click=do_load_example_rules),
+            ft.ElevatedButton("➕ ADD RULE", bgcolor=C["primary"], color="#FFFFFF", height=48, on_click=do_add_rule),
+            ft.ElevatedButton("📦 LOAD EXAMPLE RULES (financial astrology starter pack)", bgcolor=C["orange"], color="#FFFFFF", height=44, on_click=do_load_example_rules),
             ft.Divider(height=6, color=C["divider"]),
-            ft.Text("EXPORT / IMPORT RULES (copy-paste JSON â€” e.g. to test on desktop and bring back)", size=12, weight="bold", color=C["black_txt"]),
-            ft.ElevatedButton("ðŸ“¤ EXPORT RULES (JSON)", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=do_export_rules),
+            ft.Text("EXPORT / IMPORT RULES (copy-paste JSON — e.g. to test on desktop and bring back)", size=12, weight="bold", color=C["black_txt"]),
+            ft.ElevatedButton("📤 EXPORT RULES (JSON)", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=do_export_rules),
             export_output,
             import_input,
-            ft.ElevatedButton("ðŸ“¥ IMPORT RULES FROM JSON", bgcolor=C["green"], color="#FFFFFF", height=44, on_click=do_import_rules),
+            ft.ElevatedButton("📥 IMPORT RULES FROM JSON", bgcolor=C["green"], color="#FFFFFF", height=44, on_click=do_import_rules),
             ft.Divider(height=6, color=C["divider"]),
             ft.Text("EXISTING RULES:", size=13, weight="bold", color=C["black_txt"]),
             rules_list_col
         ])
 
-        # â”€â”€ NAVIGATION CONTROL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # ── NAVIGATION CONTROL ────────────────────────────────────────────────
         all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen, "rules": rules_screen, "help": help_screen}
 
         AZ_LETTERS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -2017,7 +2017,7 @@ If any of these would be useful to you, they'd need to be added as new features 
         )
 
         floating_back_to_oracle = ft.Container(
-            content=ft.ElevatedButton("â¬… ORACLE", bgcolor=C["primary"], color="#FFFFFF", height=38,
+            content=ft.ElevatedButton("⬅ ORACLE", bgcolor=C["primary"], color="#FFFFFF", height=38,
                                         style=ft.ButtonStyle(text_style=ft.TextStyle(size=12, weight="bold")),
                                         on_click=lambda e: show_screen("oracle")),
             top=8, right=8, visible=False
@@ -2097,11 +2097,11 @@ If any of these would be useful to you, they'd need to be added as new features 
 
         confirm_exit_panel = ft.Container(
             content=ft.Column([
-                ft.Text("âš ï¸ Exit Bhoovalaya Oracle?", size=16, weight="bold", color=C["red"]),
+                ft.Text("⚠️ Exit Bhoovalaya Oracle?", size=16, weight="bold", color=C["red"]),
                 ft.Text("Are you sure you want to close the app? Any unsaved entries will be lost.", size=13, color=C["black_txt"]),
                 ft.Row([
-                    ft.ElevatedButton("âœ”  YES, EXIT", bgcolor=C["red"], color="#FFFFFF", height=46, expand=1, on_click=do_exit_yes),
-                    ft.ElevatedButton("âœ–  NO, STAY", bgcolor=C["primary"], color="#FFFFFF", height=46, expand=1, on_click=do_exit_no),
+                    ft.ElevatedButton("✔  YES, EXIT", bgcolor=C["red"], color="#FFFFFF", height=46, expand=1, on_click=do_exit_yes),
+                    ft.ElevatedButton("✖  NO, STAY", bgcolor=C["primary"], color="#FFFFFF", height=46, expand=1, on_click=do_exit_no),
                 ], spacing=10)
             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10),
             bgcolor="#FFF3E0",
@@ -2117,11 +2117,11 @@ If any of these would be useful to you, they'd need to be added as new features 
             _lbl, _clr, _score, _avoid = compute_live_timing_signal()
             apply_timing_flag(_score, _avoid)
         except Exception:
-            pass  # ephemeris/rules not ready yet â€” top flag just keeps its placeholder text
+            pass  # ephemeris/rules not ready yet — top flag just keeps its placeholder text
 
         n = db_count()
         if n < 5: set_status("No database. Go to Database tab.", C["red"])
-        else: set_status(f"Ready â€” {n} stocks loaded.", C["green"])
+        else: set_status(f"Ready — {n} stocks loaded.", C["green"])
 
     except Exception as err:
         page.controls.clear()
@@ -2130,3 +2130,4 @@ If any of these would be useful to you, they'd need to be added as new features 
 
 if __name__ == "__main__":
     ft.app(target=main)
+

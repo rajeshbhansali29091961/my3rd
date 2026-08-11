@@ -884,9 +884,14 @@ def main(page: ft.Page):
                         ok = True
                     elif rtype == "D9_HOUSE_ASPECT" and houses_d9.get(pl) is not None and hd9 in planet_aspect_houses(pl, houses_d9.get(pl)):
                         ok = True
-                    elif rtype == "D9_RASHI_TO_D1_HOUSE" and d9_pos.get(pl) is not None and houses_d1.get(pl) is not None and (d9_pos.get(pl) + 1) == houses_d1.get(pl):
-                        ok = True
                     elif rtype == "D9_TO_D1_LIST" and houses_d9.get(pl) == hd9 and hd1_list:
+                        try:
+                            allowed_d1_houses = {int(x.strip()) for x in hd1_list.split(",") if x.strip()}
+                        except ValueError:
+                            allowed_d1_houses = set()
+                        if houses_d1.get(pl) in allowed_d1_houses:
+                            ok = True
+                    elif rtype == "D1_HOUSE_LIST" and hd1_list:
                         try:
                             allowed_d1_houses = {int(x.strip()) for x in hd1_list.split(",") if x.strip()}
                         except ValueError:
@@ -1583,12 +1588,12 @@ def main(page: ft.Page):
         RASHI_NAMES = ["1=Aries", "2=Taurus", "3=Gemini", "4=Cancer", "5=Leo", "6=Virgo",
                        "7=Libra", "8=Scorpio", "9=Sagittarius", "10=Capricorn", "11=Aquarius", "12=Pisces"]
         fld_rule_type   = ft.Dropdown(label="Rule Type", value="D9_HOUSE",
-                                        options=[ft.dropdown.Option(o) for o in ["D1_HOUSE", "D9_HOUSE", "D9_HOUSE_ASPECT", "D9_RASHI_TO_D1_HOUSE", "D1_D9_COMPARE", "D1_D9_SAME_HOUSE", "D9_TO_D1_LIST", "VARGOTTAMA", "D1_RASHI", "D9_RASHI"]])
+                                        options=[ft.dropdown.Option(o) for o in ["D1_HOUSE", "D9_HOUSE", "D9_HOUSE_ASPECT", "D1_D9_COMPARE", "D1_D9_SAME_HOUSE", "D9_TO_D1_LIST", "D1_HOUSE_LIST", "VARGOTTAMA", "D1_RASHI", "D9_RASHI"]])
         fld_rule_planet = ft.Dropdown(label="Planet", value="ANY",
                                         options=[ft.dropdown.Option(o) for o in PLANET_OPTS])
-        fld_rule_h1     = make_field("D1 House (1-12) OR D1 Rashi number", hint="HOUSE rules: house# counted from Lagna. RASHI rules: " + ", ".join(RASHI_NAMES[:4]) + "... Leave blank for VARGOTTAMA / D1_D9_SAME_HOUSE / D9_RASHI_TO_D1_HOUSE (no house fields needed)")
-        fld_rule_h9     = make_field("D9 House (1-12) OR D9 Rashi number", hint="D9_HOUSE_ASPECT: enter the D9 house being ASPECTED (Planet field = the aspecting planet, or ANY). D9_RASHI_TO_D1_HOUSE: leave blank — it's computed automatically per planet. Other rules: same numbering as D1, applied to the D9 (Navamsha) chart")
-        fld_rule_h1_list = make_field("D1 House LIST (D9_TO_D1_LIST only)", hint="Comma-separated house numbers, e.g. 4,5,10,11 — used only for the D9_TO_D1_LIST rule type")
+        fld_rule_h1     = make_field("D1 House (1-12) OR D1 Rashi number", hint="HOUSE rules: house# counted from Lagna. RASHI rules: " + ", ".join(RASHI_NAMES[:4]) + "...")
+        fld_rule_h9     = make_field("D9 House (1-12) OR D9 Rashi number", hint="D9_HOUSE_ASPECT: enter the D9 house being ASPECTED (Planet field = the aspecting planet, or ANY). Other rules: same numbering as D1, applied to the D9 (Navamsha) chart")
+        fld_rule_h1_list = make_field("D1 House LIST (D9_TO_D1_LIST or D1_HOUSE_LIST)", hint="Comma-separated house numbers, e.g. 4,5,9,10,11 — used for D9_TO_D1_LIST (needs a fixed D9 House too) and D1_HOUSE_LIST (no D9 House needed, fully general)")
         fld_rule_companion_planet = ft.Dropdown(label="Companion Planet (optional AND condition)", value="",
                                         options=[ft.dropdown.Option("")] + [ft.dropdown.Option(o) for o in PLANET_OPTS[1:]])
         fld_rule_companion_h9 = make_field("Companion D9 House (optional)", hint="If set, this planet must ALSO be in this D9 house for the rule to fire — leave both blank if not needed")
@@ -1611,6 +1616,8 @@ def main(page: ft.Page):
                 label2 = "D9 Rashi" if rtype == "D9_RASHI" else "D9H"
                 if rtype == "D9_TO_D1_LIST":
                     desc = f"#{rid}  [{rtype}]  {planet}  D9H:{hd9 or '-'} → D1H in [{hd1_list or '-'}]  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
+                elif rtype == "D1_HOUSE_LIST":
+                    desc = f"#{rid}  [{rtype}]  {planet}  D1H in [{hd1_list or '-'}]  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
                 elif rtype == "D9_HOUSE_ASPECT":
                     desc = f"#{rid}  [{rtype}]  {planet} aspecting D9H:{hd9 or '-'}  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
                 else:
@@ -1661,6 +1668,11 @@ def main(page: ft.Page):
                 if fld_rule_type.value == "D9_TO_D1_LIST":
                     if h9 is None: raise ValueError("D9_TO_D1_LIST needs the D9 House field filled in (the fixed D9 house)")
                     if not h1_list_raw: raise ValueError("D9_TO_D1_LIST needs the D1 House LIST field filled in, e.g. 4,5,10,11")
+                    parsed = [int(x.strip()) for x in h1_list_raw.split(",") if x.strip()]
+                    if not all(1 <= n <= 12 for n in parsed): raise ValueError("Every number in the D1 House LIST must be 1-12")
+                    h1_list_raw = ",".join(str(n) for n in parsed)  # normalized
+                elif fld_rule_type.value == "D1_HOUSE_LIST":
+                    if not h1_list_raw: raise ValueError("D1_HOUSE_LIST needs the D1 House LIST field filled in, e.g. 4,5,9,10,11")
                     parsed = [int(x.strip()) for x in h1_list_raw.split(",") if x.strip()]
                     if not all(1 <= n <= 12 for n in parsed): raise ValueError("Every number in the D1 House LIST must be 1-12")
                     h1_list_raw = ",".join(str(n) for n in parsed)  # normalized
@@ -1724,8 +1736,6 @@ def main(page: ft.Page):
             ("D1_D9_COMPARE", "Sa", 8,  8,    1, "AVOID", 1.0, "Saturn retrograde AND afflicted in BOTH D1 & D9 8th house — strong caution, avoid new positions", None, None, None),
             ("D1_D9_SAME_HOUSE", "Ju", None, None, 0, "BUY", 2.0, "Jupiter holds the SAME house number in both D1 & D9 (whatever that house is) — consistent placement, generally strengthens Jupiter's result either way", None, None, None),
             ("D1_D9_SAME_HOUSE", "ANY", None, None, 0, "NEUTRAL", 0.5, "ANY planet with matching D1/D9 house — logged for reference, doesn't move the score by default; raise the weight/change signal once you've tested this yourself", None, None, None),
-            ("D9_RASHI_TO_D1_HOUSE", "Ju", None, None, 0, "BUY", 2.0, "Jupiter's D9 rashi number matches Jupiter's own D1 house number — a sign/house alignment cross-check", None, None, None),
-            ("D9_RASHI_TO_D1_HOUSE", "ANY", None, None, 0, "NEUTRAL", 0.5, "ANY planet whose D9 rashi number matches its own D1 house number — logged for reference; raise weight/change signal once tested", None, None, None),
 
             # ── GROUP 7: D9_TO_D1_LIST — one planet's D9 house vs a whole SET of D1 houses ──
             ("D9_TO_D1_LIST", "ANY", None, 2, 0, "AVOID", 1.0, "D9 2nd house planet whose D1 house is 1,2,3,6,7,8, or 12 — avoid buy or sell entirely", "1,2,3,6,7,8,12", None, None),
@@ -1748,6 +1758,14 @@ def main(page: ft.Page):
             # ── GROUP 11: General planet-house significations (single-fact) ─────
             ("D1_HOUSE",      "Me", 3,  None, 0, "BUY",  1.0, "Mercury D1 3rd house — trade/communication/IT sector active and direct", None, None, None),
             ("D1_HOUSE",      "Ve", 11, None, 0, "BUY",  1.5, "Venus D1 11th house — consumer/luxury sector gains", None, None, None),
+
+            # ── GROUP 12: D1_HOUSE_LIST — one planet's D1 house checked against a SET of
+            # houses, with NO D9 house pinned at all. Fully general: any planet, any set
+            # of houses, any signal — these four rows show different combinations of all three.
+            ("D1_HOUSE_LIST", "Mo", None, None, 0, "BUY",   1.5, "Moon's D1 house is 4, 5, 9, 10, or 11 (any D9 house for Moon is fine, not fixed to one) — buy signal", "4,5,9,10,11", None, None),
+            ("D1_HOUSE_LIST", "Sa", None, None, 0, "AVOID", 1.0, "Saturn's D1 house is 6, 8, or 12 (any of the three dusthanas) — avoid trading regardless of D9", "6,8,12", None, None),
+            ("D1_HOUSE_LIST", "Ju", None, None, 0, "SELL",  1.0, "Jupiter's D1 house is 6 or 12 — even a natural benefic loses ground here", "6,12", None, None),
+            ("D1_HOUSE_LIST", "ANY", None, None, 0, "NEUTRAL", 0.5, "ANY planet whose D1 house is 1, 3, or 6 — logged for reference only; raise weight/change signal once tested", "1,3,6", None, None),
         ]
 
         def do_load_example_rules(e):
@@ -1848,6 +1866,43 @@ When a planet sits in the SAME rashi/sign in both D1 and D9 (regardless of house
 THE "AVOID" SIGNAL — HOW IT'S DIFFERENT FROM SELL
 BUY and SELL both feed into one numeric tug-of-war score — a handful of small BUY rules can outweigh one SELL rule. AVOID is deliberately NOT part of that tally. It's meant for placements you consider serious enough that no amount of other-rule positivity should paper over them (e.g. a retrograde malefic sitting in a genuinely dangerous house). If even ONE of your AVOID rules matches, the banner switches to "🚫 AVOID THIS STOCK TODAY" regardless of what the BUY/SELL score says — you'll still see the numeric score's detail below it, but the headline is the AVOID warning. Use it sparingly, for placements you've personally found reliably bad — that's the whole point of letting you set your OWN experienced rules rather than a fixed formula.
 
+QUICK REFERENCE -- EVERY RULE TYPE, ONE LINE EACH, WITH A WORKED EXAMPLE
+Field shorthand used below: Pl=Planet, D1H=D1 House, D9H=D9 House, List=D1 House LIST, Comp=Companion Planet+House, Sig=Signal.
+
+1. D1_HOUSE -- one planet, one fixed D1 house.
+   Example: Pl=Ju, D1H=11, Sig=BUY -> "Jupiter in D1 11th house -> BUY"
+
+2. D9_HOUSE -- one planet, one fixed D9 house.
+   Example: Pl=Sa, D9H=7, Sig=AVOID -> "Saturn in D9 7th house -> AVOID"
+
+3. D9_HOUSE_ASPECT -- one D9 house being ASPECTED (drishti) by a planet, not occupied by it.
+   Example: Pl=ANY, D9H=11, Sig=BUY -> "D9 11th house aspected by any planet -> BUY"
+
+4. D1_D9_COMPARE -- a planet's D1 house AND D9 house must BOTH match your exact numbers.
+   Example: Pl=Ju, D1H=11, D9H=11, Sig=BUY -> "Jupiter in D1 11th AND D9 11th together -> BUY"
+
+5. D1_D9_SAME_HOUSE -- a planet's D1 house equals its D9 house, whatever that number is (no house values entered).
+   Example: Pl=Ju, Sig=BUY -> "Jupiter's D1 and D9 house match (any house) -> BUY"
+
+6. D9_TO_D1_LIST -- one FIXED D9 house, then that planet's D1 house checked against a SET.
+   Example: Pl=ANY, D9H=2, List=1,2,3,6,7,8,12, Sig=AVOID -> "D9 2nd house planet, if its D1 house is any of these -> AVOID"
+
+7. D1_HOUSE_LIST -- NO D9 house at all -- just a planet's D1 house checked against a SET. Fully general.
+   Example: Pl=Mo, List=4,5,9,10,11, Sig=BUY -> "Moon's D1 house is any of these -> BUY"
+
+8. VARGOTTAMA -- a planet's RASHI (sign) is identical in D1 and D9 (no house/list fields needed).
+   Example: Pl=Ju, Sig=BUY -> "Jupiter Vargottama -> BUY"
+
+9. D1_RASHI -- a planet sits in a specific absolute RASHI (1=Aries...12=Pisces) in D1, regardless of house.
+   Example: Pl=Ju, D1H=9, Sig=BUY -> "Jupiter in Sagittarius (own sign) in D1 -> BUY"
+
+10. D9_RASHI -- same as above, checked in the D9 chart.
+    Example: Pl=Ve, D9H=7, Sig=BUY -> "Venus in Libra (own sign) in D9 -> BUY"
+
+COMBINING WITH RETROGRADE: tick "Apply only when Retrograde" on ANY of the 10 types above to restrict it further -- e.g. rule #2 becomes "Saturn RETROGRADE in D9 7th -> AVOID."
+
+COMBINING WITH COMPANION CONDITION: fill in Companion Planet + Companion D9 House on ANY of the 10 types to AND a second independent fact onto it -- e.g. rule #6 becomes "D9 2nd house planet's D1 house in that list, AND Saturn separately in D9's 7th -> AVOID," matching your own compound example already loaded in the starter pack.
+
 RULE TYPES EXPLAINED
 • D1_HOUSE — fires when a planet is in the given HOUSE (counted from Lagna) in the D1 (Rasi) chart
 • D9_HOUSE — fires when a planet is in the given HOUSE (counted from Lagna) in the D9 (Navamsha) chart
@@ -1857,8 +1912,8 @@ RULE TYPES EXPLAINED
 • VARGOTTAMA — fires when D1 rashi = D9 rashi for that planet (house fields not needed) — note this is about the SIGN matching, which is a different, separate concept from D1_D9_SAME_HOUSE matching on HOUSE NUMBER (see the House vs Rashi section above)
 • D1_RASHI — fires when a planet sits in the given absolute RASHI (1=Aries...12=Pisces) in the D1 chart, regardless of which house that rashi falls in for this particular Lagna
 • D9_RASHI — same as above, but checked in the D9 (Navamsha) chart
+• D1_HOUSE_LIST — the fully general cousin of D9_TO_D1_LIST, with NO D9 house pinned at all: "this planet's D1 house is ANY of a whole SET of houses," full stop. Works for any planet (or ANY), any set of D1 houses you type in, and any signal (BUY/SELL/AVOID/NEUTRAL) — nothing about this rule type is fixed. Example: "Moon's D1 house is 4, 5, 9, 10, or 11 -> BUY" becomes: Rule Type=D1_HOUSE_LIST, Planet=Mo, D1 House LIST=4,5,9,10,11, Signal=BUY. Swap the planet, the house list, or the signal freely — e.g. Planet=Sa, D1 House LIST=6,8,12, Signal=AVOID for a completely different rule using the exact same mechanism.
 • D9_HOUSE_ASPECT — fires when the chosen D9 HOUSE (enter it in the D9 House field) is ASPECTED (drishti) by the chosen Planet — or by ANY planet if Planet=ANY. Classical Parashari rule: every planet aspects the 7th house from its own position; Mars also aspects the 4th/8th, Jupiter the 5th/9th, Saturn the 3rd/10th. Rahu/Ketu are treated like Saturn here (3rd/7th/10th) as a common modern convention, not classical doctrine. Example: Planet=ANY, D9 House=11, Signal=BUY → fires whenever any planet currently aspects the D9 11th (gains) house.
-• D9_RASHI_TO_D1_HOUSE — no house fields needed (like VARGOTTAMA). For the chosen Planet (or ANY, checked one planet at a time), this takes the RASHI that planet sits in within the D9 chart and checks whether that same rashi NUMBER equals the HOUSE NUMBER that same planet occupies in the D1 chart (counted from Lagna). In other words: "this planet's D9 sign number lines up with its own D1 house position." This is a different cross-check from VARGOTTAMA (which compares D1 rashi to D9 rashi — sign vs sign) and from D1_D9_SAME_HOUSE (which compares D1 house to D9 house — house vs house); this one deliberately compares a SIGN number against a HOUSE number. Example: Planet=Ju, Signal=BUY → fires whenever Jupiter's D9 rashi number matches Jupiter's own D1 house number, whatever those numbers happen to be that day.
 
 CHART COLOR CODING (on the D1/D9 diamond charts themselves)
 • Red — normal planet, no special condition

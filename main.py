@@ -2023,7 +2023,13 @@ To be upfront about scope — none of the following are implemented, so no rule 
 • Gann's specific price-square, time-cycle, or geometric-angle methods
 • Divisional charts other than D1 (Rasi) and D9 (Navamsha) — e.g. D10 (career/business) is not calculated
 • Dasha/sub-period (Vimshottari Dasha) timing, beyond the Nakshatra Lord lookup already used in Step 9
-If any of these would be useful to you, they'd need to be added as new features — they are not quietly happening in the background."""
+If any of these would be useful to you, they'd need to be added as new features — they are not quietly happening in the background.
+
+USER Q&A — REAL WORKED EXAMPLE
+User's Question: "if d9's house no 2 has moon or any planet which i define and rashi of d9's house exist in d1's house no. 4,5,9,10,11 then how i can define it and in which rule?"
+
+Answer: Use the D9_TO_D1_LIST rule type. Set Planet = Mo (or ANY, or any specific planet of your choice), D9 House = 2, D1 House LIST = 4,5,9,10,11, and Signal = whichever you intend (BUY / SELL / AVOID / NEUTRAL). This rule type is built for exactly this shape of question — a FIXED D9 house (here, 2) combined with a SET of acceptable D1 houses (here, 4,5,9,10,11); it's item #6 in the Quick Reference table above.
+One distinction worth being clear on: D9_TO_D1_LIST pins the D9 house to one specific number, while D1_HOUSE_LIST (item #7) does not pin any D9 house at all — it only checks the D1 house. Since this question specifically named "D9's house no 2," D9_TO_D1_LIST is the correct rule type here, not D1_HOUSE_LIST."""
 
         help_screen = ft.Column(visible=False, scroll="auto", controls=[
             make_header("📖 HELP / REFERENCE GUIDE"), ft.Divider(height=4, color=C["divider"]),

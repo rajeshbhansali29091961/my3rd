@@ -1866,42 +1866,65 @@ When a planet sits in the SAME rashi/sign in both D1 and D9 (regardless of house
 THE "AVOID" SIGNAL — HOW IT'S DIFFERENT FROM SELL
 BUY and SELL both feed into one numeric tug-of-war score — a handful of small BUY rules can outweigh one SELL rule. AVOID is deliberately NOT part of that tally. It's meant for placements you consider serious enough that no amount of other-rule positivity should paper over them (e.g. a retrograde malefic sitting in a genuinely dangerous house). If even ONE of your AVOID rules matches, the banner switches to "🚫 AVOID THIS STOCK TODAY" regardless of what the BUY/SELL score says — you'll still see the numeric score's detail below it, but the headline is the AVOID warning. Use it sparingly, for placements you've personally found reliably bad — that's the whole point of letting you set your OWN experienced rules rather than a fixed formula.
 
-QUICK REFERENCE -- EVERY RULE TYPE, ONE LINE EACH, WITH A WORKED EXAMPLE
-Field shorthand used below: Pl=Planet, D1H=D1 House, D9H=D9 House, List=D1 House LIST, Comp=Companion Planet+House, Sig=Signal.
+QUICK REFERENCE -- EVERY RULE TYPE, ONE LINE EACH, WITH A WORKED EXAMPLE (ENGLISH + HINDI)
+Field shorthand: Pl=Planet, D1H=D1 House, D9H=D9 House, List=D1 House LIST, Comp=Companion Planet+House, Sig=Signal.
+Shorthand (Hindi): Pl=ग्रह, D1H=D1 भाव, D9H=D9 भाव, List=D1 भाव सूची, Comp=साथी ग्रह+भाव, Sig=संकेत।
 
 1. D1_HOUSE -- one planet, one fixed D1 house.
+   एक ग्रह, D1 में एक निश्चित भाव।
    Example: Pl=Ju, D1H=11, Sig=BUY -> "Jupiter in D1 11th house -> BUY"
+   उदाहरण: Pl=Ju, D1H=11, Sig=BUY -> "गुरु D1 के 11वें भाव में -> खरीदें (BUY)"
 
 2. D9_HOUSE -- one planet, one fixed D9 house.
+   एक ग्रह, D9 में एक निश्चित भाव।
    Example: Pl=Sa, D9H=7, Sig=AVOID -> "Saturn in D9 7th house -> AVOID"
+   उदाहरण: Pl=Sa, D9H=7, Sig=AVOID -> "शनि D9 के 7वें भाव में -> बचें (AVOID)"
 
 3. D9_HOUSE_ASPECT -- one D9 house being ASPECTED (drishti) by a planet, not occupied by it.
+   D9 का कोई भाव किसी ग्रह की दृष्टि (aspect) में हो, उस ग्रह के वहां बैठने से नहीं।
    Example: Pl=ANY, D9H=11, Sig=BUY -> "D9 11th house aspected by any planet -> BUY"
+   उदाहरण: Pl=ANY, D9H=11, Sig=BUY -> "D9 का 11वां भाव किसी भी ग्रह की दृष्टि में -> खरीदें"
 
 4. D1_D9_COMPARE -- a planet's D1 house AND D9 house must BOTH match your exact numbers.
+   एक ग्रह का D1 भाव और D9 भाव दोनों आपके बताए गए नंबर से मेल खाने चाहिए।
    Example: Pl=Ju, D1H=11, D9H=11, Sig=BUY -> "Jupiter in D1 11th AND D9 11th together -> BUY"
+   उदाहरण: Pl=Ju, D1H=11, D9H=11, Sig=BUY -> "गुरु D1 के 11वें और D9 के 11वें भाव में एक साथ -> खरीदें"
 
 5. D1_D9_SAME_HOUSE -- a planet's D1 house equals its D9 house, whatever that number is (no house values entered).
+   एक ग्रह का D1 भाव और D9 भाव बराबर हों, चाहे वह कोई भी भाव संख्या हो (भाव भरने की जरूरत नहीं)।
    Example: Pl=Ju, Sig=BUY -> "Jupiter's D1 and D9 house match (any house) -> BUY"
+   उदाहरण: Pl=Ju, Sig=BUY -> "गुरु का D1 और D9 भाव मेल खाता है (कोई भी भाव) -> खरीदें"
 
 6. D9_TO_D1_LIST -- one FIXED D9 house, then that planet's D1 house checked against a SET.
+   D9 का एक निश्चित भाव तय करें, फिर उस ग्रह के D1 भाव को भावों की एक सूची से जांचें।
    Example: Pl=ANY, D9H=2, List=1,2,3,6,7,8,12, Sig=AVOID -> "D9 2nd house planet, if its D1 house is any of these -> AVOID"
+   उदाहरण: Pl=ANY, D9H=2, List=1,2,3,6,7,8,12, Sig=AVOID -> "D9 के दूसरे भाव में जो भी ग्रह हो, अगर उसका D1 भाव इस सूची में है -> बचें"
 
 7. D1_HOUSE_LIST -- NO D9 house at all -- just a planet's D1 house checked against a SET. Fully general.
+   D9 का कोई भाव तय करने की जरूरत नहीं -- सिर्फ ग्रह के D1 भाव को सूची से जांचें। पूरी तरह लचीला।
    Example: Pl=Mo, List=4,5,9,10,11, Sig=BUY -> "Moon's D1 house is any of these -> BUY"
+   उदाहरण: Pl=Mo, List=4,5,9,10,11, Sig=BUY -> "चंद्रमा का D1 भाव इस सूची में से कोई भी हो -> खरीदें"
 
 8. VARGOTTAMA -- a planet's RASHI (sign) is identical in D1 and D9 (no house/list fields needed).
+   किसी ग्रह की राशि D1 और D9 दोनों में एक जैसी हो (भाव/सूची भरने की जरूरत नहीं)।
    Example: Pl=Ju, Sig=BUY -> "Jupiter Vargottama -> BUY"
+   उदाहरण: Pl=Ju, Sig=BUY -> "गुरु वर्गोत्तम -> खरीदें"
 
 9. D1_RASHI -- a planet sits in a specific absolute RASHI (1=Aries...12=Pisces) in D1, regardless of house.
+   कोई ग्रह D1 में एक निश्चित राशि (1=मेष...12=मीन) में बैठा हो, भाव चाहे जो भी हो।
    Example: Pl=Ju, D1H=9, Sig=BUY -> "Jupiter in Sagittarius (own sign) in D1 -> BUY"
+   उदाहरण: Pl=Ju, D1H=9, Sig=BUY -> "गुरु D1 में धनु राशि (अपनी राशि) में -> खरीदें"
 
 10. D9_RASHI -- same as above, checked in the D9 chart.
+    ऊपर जैसा ही, लेकिन D9 चार्ट में जांचा जाता है।
     Example: Pl=Ve, D9H=7, Sig=BUY -> "Venus in Libra (own sign) in D9 -> BUY"
+    उदाहरण: Pl=Ve, D9H=7, Sig=BUY -> "शुक्र D9 में तुला राशि (अपनी राशि) में -> खरीदें"
 
 COMBINING WITH RETROGRADE: tick "Apply only when Retrograde" on ANY of the 10 types above to restrict it further -- e.g. rule #2 becomes "Saturn RETROGRADE in D9 7th -> AVOID."
+रिट्रोग्रेड के साथ जोड़ना: ऊपर दिए गए किसी भी प्रकार पर "केवल वक्री होने पर लागू करें" को चुनें ताकि नियम और सीमित हो जाए -- जैसे नियम #2 बन जाता है "शनि वक्री D9 के 7वें भाव में -> बचें।"
 
 COMBINING WITH COMPANION CONDITION: fill in Companion Planet + Companion D9 House on ANY of the 10 types to AND a second independent fact onto it -- e.g. rule #6 becomes "D9 2nd house planet's D1 house in that list, AND Saturn separately in D9's 7th -> AVOID," matching your own compound example already loaded in the starter pack.
+साथी शर्त (Companion Condition) के साथ जोड़ना: किसी भी प्रकार में साथी ग्रह और साथी D9 भाव भरें ताकि एक दूसरी स्वतंत्र शर्त भी जुड़ जाए -- जैसे नियम #6 बन जाता है "D9 के दूसरे भाव के ग्रह का D1 भाव उस सूची में हो, और साथ ही शनि अलग से D9 के 7वें भाव में हो -> बचें," जो आपके अपने उदाहरण से मेल खाता है जो पहले से स्टार्टर पैक में मौजूद है।
 
 RULE TYPES EXPLAINED
 • D1_HOUSE — fires when a planet is in the given HOUSE (counted from Lagna) in the D1 (Rasi) chart

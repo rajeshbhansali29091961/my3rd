@@ -1603,6 +1603,48 @@ def main(page: ft.Page):
         fld_rule_weight = make_field("Weight", value="1.0")
         fld_rule_note   = make_field("Note (optional)", hint="e.g. Jupiter own house — strength")
 
+        # ── SIMPLE RULE WIZARD — describe D1 and D9 in plain words, and this picks
+        # the correct technical Rule Type above for you. Doesn't change the engine at
+        # all — it just fills in the same Rule Type dropdown you'd otherwise have to
+        # choose manually from 10 cryptic names.
+        D1_MODE_OPTS = [
+            "Not used", "Specific House number", "House is one of a List", "Specific Rashi (sign)",
+        ]
+        D9_MODE_OPTS = [
+            "Not used", "Specific House number", "House is one of a List", "Specific Rashi (sign)",
+            "Same House as D1 (any house)", "Same Rashi as D1 (Vargottama)", "This house is ASPECTED by the planet",
+        ]
+        fld_d1_mode = ft.Dropdown(label="What does D1 mean here?", value="Not used",
+                                   options=[ft.dropdown.Option(o) for o in D1_MODE_OPTS])
+        fld_d9_mode = ft.Dropdown(label="What does D9 mean here?", value="Specific House number",
+                                   options=[ft.dropdown.Option(o) for o in D9_MODE_OPTS])
+        wizard_status_txt = ft.Text("", size=12, color=C["black_txt"])
+
+        def do_auto_select_rule_type(e):
+            d1, d9 = fld_d1_mode.value, fld_d9_mode.value
+            mapping = {
+                ("Not used", "Specific House number"): "D9_HOUSE",
+                ("Not used", "This house is ASPECTED by the planet"): "D9_HOUSE_ASPECT",
+                ("Not used", "Same House as D1 (any house)"): "D1_D9_SAME_HOUSE",
+                ("Not used", "Same Rashi as D1 (Vargottama)"): "VARGOTTAMA",
+                ("Not used", "Specific Rashi (sign)"): "D9_RASHI",
+                ("Specific House number", "Not used"): "D1_HOUSE",
+                ("Specific Rashi (sign)", "Not used"): "D1_RASHI",
+                ("House is one of a List", "Not used"): "D1_HOUSE_LIST",
+                ("House is one of a List", "Specific House number"): "D9_TO_D1_LIST",
+                ("Specific House number", "Specific House number"): "D1_D9_COMPARE",
+            }
+            derived = mapping.get((d1, d9))
+            if derived is None:
+                wizard_status_txt.value = "⚠️ That combination isn't directly supported yet. Try: leave one side as 'Not used', or use House-List on the D1 side with a fixed D9 House."
+                wizard_status_txt.color = C["red"]
+                page.update()
+                return
+            fld_rule_type.value = derived
+            wizard_status_txt.value = f"✅ Rule Type set to: {derived} — now fill in the house/rashi/list value(s) below and tap ADD RULE."
+            wizard_status_txt.color = C["green"]
+            page.update()
+
         rules_list_col = ft.Column(spacing=6)
 
         def refresh_rules_list():
@@ -1866,6 +1908,9 @@ When a planet sits in the SAME rashi/sign in both D1 and D9 (regardless of house
 THE "AVOID" SIGNAL — HOW IT'S DIFFERENT FROM SELL
 BUY and SELL both feed into one numeric tug-of-war score — a handful of small BUY rules can outweigh one SELL rule. AVOID is deliberately NOT part of that tally. It's meant for placements you consider serious enough that no amount of other-rule positivity should paper over them (e.g. a retrograde malefic sitting in a genuinely dangerous house). If even ONE of your AVOID rules matches, the banner switches to "🚫 AVOID THIS STOCK TODAY" regardless of what the BUY/SELL score says — you'll still see the numeric score's detail below it, but the headline is the AVOID warning. Use it sparingly, for placements you've personally found reliably bad — that's the whole point of letting you set your OWN experienced rules rather than a fixed formula.
 
+SIMPLE RULE WIZARD (top of the Rules screen)
+If picking from 10 rule-type names feels like a lot, use the wizard first: answer "What does D1 mean here?" and "What does D9 mean here?" in plain words (Not used / Specific House / House is one of a List / Specific Rashi / Same as D1 / Aspected), then tap "AUTO-SELECT RULE TYPE FROM MY ANSWERS." It fills in the correct technical Rule Type below for you -- you never have to memorize which cryptic name matches which situation. It doesn't change how rules work underneath; it's just a translator sitting on top of the same 10 types explained below.
+
 QUICK REFERENCE -- EVERY RULE TYPE, ONE LINE EACH, WITH A WORKED EXAMPLE (ENGLISH + HINDI)
 Field shorthand: Pl=Planet, D1H=D1 House, D9H=D9 House, List=D1 House LIST, Comp=Companion Planet+House, Sig=Signal.
 Shorthand (Hindi): Pl=ग्रह, D1H=D1 भाव, D9H=D9 भाव, List=D1 भाव सूची, Comp=साथी ग्रह+भाव, Sig=संकेत।
@@ -2042,6 +2087,17 @@ One distinction worth being clear on: D9_TO_D1_LIST pins the D9 house to one spe
             make_header("📜 CUSTOM D1 / D9 RULES"), ft.Divider(height=4, color=C["divider"]),
             ft.Text("Define your own planet-in-house rules. These drive the BUY/SELL recommendation shown under CALCULATE ASTRO on the Stocks / Show All page, and the Green/Red timing flag at the top of that page.", size=12, color=C["black_txt"]),
             ft.ElevatedButton("📖 HELP / REFERENCE GUIDE", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("help")),
+            ft.Divider(height=6, color=C["divider"]),
+            ft.Container(
+                content=ft.Column([
+                    ft.Text("🧩 NOT SURE WHICH RULE TYPE TO PICK? Answer these two questions in plain words, then tap the button — it sets the Rule Type below for you.", size=12, weight="bold", color=C["primary"]),
+                    fld_d1_mode, fld_d9_mode,
+                    ft.ElevatedButton("🧩 AUTO-SELECT RULE TYPE FROM MY ANSWERS", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_auto_select_rule_type),
+                    wizard_status_txt,
+                ], spacing=6),
+                bgcolor="#E8EAF6", border_radius=8, padding=10
+            ),
+            ft.Divider(height=6, color=C["divider"]),
             fld_rule_type, fld_rule_planet,
             ft.Row([fld_rule_h1, fld_rule_h9]),
             fld_rule_h1_list,

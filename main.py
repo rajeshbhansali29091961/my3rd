@@ -2074,7 +2074,12 @@ USER Q&A — REAL WORKED EXAMPLE
 User's Question: "if d9's house no 2 has moon or any planet which i define and rashi of d9's house exist in d1's house no. 4,5,9,10,11 then how i can define it and in which rule?"
 
 Answer: Use the D9_TO_D1_LIST rule type. Set Planet = Mo (or ANY, or any specific planet of your choice), D9 House = 2, D1 House LIST = 4,5,9,10,11, and Signal = whichever you intend (BUY / SELL / AVOID / NEUTRAL). This rule type is built for exactly this shape of question — a FIXED D9 house (here, 2) combined with a SET of acceptable D1 houses (here, 4,5,9,10,11); it's item #6 in the Quick Reference table above.
-One distinction worth being clear on: D9_TO_D1_LIST pins the D9 house to one specific number, while D1_HOUSE_LIST (item #7) does not pin any D9 house at all — it only checks the D1 house. Since this question specifically named "D9's house no 2," D9_TO_D1_LIST is the correct rule type here, not D1_HOUSE_LIST."""
+One distinction worth being clear on: D9_TO_D1_LIST pins the D9 house to one specific number, while D1_HOUSE_LIST (item #7) does not pin any D9 house at all — it only checks the D1 house. Since this question specifically named "D9's house no 2," D9_TO_D1_LIST is the correct rule type here, not D1_HOUSE_LIST.
+
+USER Q&A #2 — SAME QUESTION, ANSWERED USING THE SIMPLE RULE WIZARD
+User's Question: "if d9 house no. 2 and its rashi exist in d1's house no. 4,5,9,10,11 how i can define in above rule?"
+
+Answer: Same underlying rule type as Q&A #1 above (D9_TO_D1_LIST) — but here's the wizard shortcut instead of picking it manually: on the Rules screen, set "What does D1 mean here?" = House is one of a List, and "What does D9 mean here?" = Specific House number, then tap AUTO-SELECT RULE TYPE FROM MY ANSWERS. It fills in D9_TO_D1_LIST for you automatically. Then fill in: Planet = ANY (or your choice), D9 House = 2, D1 House LIST = 4,5,9,10,11, Signal = your choice, and tap ADD RULE. This shows that once you can describe D1 and D9 in plain words, you don't need to remember the technical rule-type name at all — the wizard finds it for you."""
 
         help_screen = ft.Column(visible=False, scroll="auto", controls=[
             make_header("📖 HELP / REFERENCE GUIDE"), ft.Divider(height=4, color=C["divider"]),

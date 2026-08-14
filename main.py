@@ -1,4 +1,5 @@
 import os
+import re
 import sqlite3
 import threading
 import csv
@@ -816,6 +817,181 @@ def main(page: ft.Page):
             conn.close()
             return rows
 
+        # ── QUICK RULE — ONE-LINE STRING FORMAT ─────────────────────────────
+        # A single, uniform text grammar that can express EVERY one of the 10
+        # rule_type values above, so a user never has to pick a rule_type by
+        # name — they just type one line. parse_quick_rule() turns that line
+        # into the exact same fields rule_add() already takes; quick_rule_string()
+        # does the reverse, so every existing/example rule can also be shown in
+        # this shorthand (learn-by-example). Nothing about evaluate_rules() or
+        # the DB schema changes — this is purely an alternate way to fill the
+        # same fields.
+        #
+        # GRAMMAR (case-insensitive, spaces optional inside a condition):
+        #   <PLANET> <CONDITION> [RETRO] [+<PLANET>@D9H<n>] => <SIGNAL> [wt=<n>] [note="..."]
+        #
+        # PLANET     Su Mo Ma Me Ju Ve Sa Ra Ke  or  ANY
+        # CONDITION  (pick exactly one)
+        #   D1H<n>               planet's D1 house = n                   -> D1_HOUSE
+        #   D9H<n>               planet's D9 house = n                   -> D9_HOUSE
+        #   D1R<n>               planet's D1 RASHI (sign) = n            -> D1_RASHI
+        #   D9R<n>               planet's D9 RASHI (sign) = n            -> D9_RASHI
+        #   VG                   Vargottama (same rashi in D1 and D9)    -> VARGOTTAMA
+        #   D1H<n>=D9H<n2>       D1 house n AND D9 house n2, together    -> D1_D9_COMPARE
+        #   D1H=D9H              D1 house equals D9 house (any number)   -> D1_D9_SAME_HOUSE
+        #   D9H<n>~ASPECT        this D9 house is ASPECTED by the planet -> D9_HOUSE_ASPECT
+        #   D9H<n>->D1H[list]    fixed D9 house n, that planet's D1 house is in the list -> D9_TO_D1_LIST
+        #   D1H[list]            D1 house is anywhere in the list (no D9 pin) -> D1_HOUSE_LIST
+        # RETRO        optional — only fires when the planet is retrograde
+        # +<PL>@D9H<n> optional Companion Condition — <PL> must ALSO be in D9 house n
+        # SIGNAL       BUY | SELL | AVOID | NEUTRAL
+        # wt=<n>       optional weight (default 1.0)
+        # note="..."   optional note text
+        #
+        # Worked example (matches the user's own question — "D9 house 2's rashi
+        # exists in D1 house 4,5,9,10,11"):
+        #   Mo D9H2->D1H[4,5,9,10,11] => BUY
+        QUICK_RULE_HELP = (
+            'Mo D9H2->D1H[4,5,9,10,11] => BUY\n'
+            'Sa D9H7 RETRO => AVOID\n'
+            'Ju VG => BUY  wt=2 note="Jupiter vargottama"\n'
+            'ANY D9H11~ASPECT => BUY\n'
+            'Ma D1R1 => BUY   (Mars in Aries rashi, D1)\n'
+            'ANY D9H2->D1H[2,3,6,7,8,12] +Sa@D9H7 => AVOID'
+        )
+
+        def parse_quick_rule(text):
+            """Parse one QUICK RULE line into the fields rule_add() expects.
+            Raises ValueError with a plain-English message on anything it can't parse."""
+            if not text or not text.strip():
+                raise ValueError("Type a rule first, e.g.  Mo D9H2->D1H[4,5,9,10,11] => BUY")
+            raw = text.strip()
+
+            note = None
+            m = re.search(r'note\s*=\s*"([^"]*)"', raw, re.IGNORECASE)
+            if m:
+                note = m.group(1)
+                raw = raw[:m.start()] + raw[m.end():]
+
+            weight = 1.0
+            m = re.search(r'\bwt\s*=\s*([\-0-9.]+)', raw, re.IGNORECASE)
+            if m:
+                try:
+                    weight = float(m.group(1))
+                except ValueError:
+                    raise ValueError(f'wt= must be a number, got "{m.group(1)}"')
+                raw = raw[:m.start()] + raw[m.end():]
+
+            if "=>" not in raw:
+                raise ValueError('Missing "=>". Format:  <planet> <condition> => <SIGNAL>   e.g.  Mo D9H2 => BUY')
+            left, right = raw.split("=>", 1)
+            right = right.strip()
+            signal = right.split()[0].upper() if right else ""
+            if signal not in ("BUY", "SELL", "AVOID", "NEUTRAL"):
+                raise ValueError(f'Signal after "=>" must be BUY / SELL / AVOID / NEUTRAL — got "{signal or "(nothing)"}"')
+
+            left = left.strip()
+            retro = bool(re.search(r'\bRETRO\b', left, re.IGNORECASE))
+            left = re.sub(r'\bRETRO\b', '', left, flags=re.IGNORECASE)
+
+            comp_planet, comp_h9 = None, None
+            m = re.search(r'\+\s*([A-Za-z]{2})\s*@\s*D9H\s*(\d{1,2})', left, re.IGNORECASE)
+            if m:
+                comp_planet = m.group(1).capitalize()
+                comp_h9 = int(m.group(2))
+                left = left[:m.start()] + left[m.end():]
+
+            tokens = left.split()
+            if not tokens:
+                raise ValueError("Missing planet and condition before '=>'.")
+            planet = tokens[0].strip()
+            planet = "ANY" if planet.upper() == "ANY" else planet.capitalize()
+            valid_planets = {"ANY", "Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa", "Ra", "Ke"}
+            if planet not in valid_planets:
+                raise ValueError(f'Unknown planet "{tokens[0]}". Use one of: {", ".join(sorted(valid_planets))}')
+
+            cond = "".join(tokens[1:]).strip()
+            if not cond:
+                raise ValueError("Missing condition, e.g. D9H2, D1H[4,5,9], VG, D1R9, D9H11~ASPECT ...")
+
+            rule_type = None
+            h1 = h9 = None
+            h1_list = None
+
+            def _int_grp(pattern, s):
+                mm = re.fullmatch(pattern, s, re.IGNORECASE)
+                return mm
+
+            if cond.upper() == "VG":
+                rule_type = "VARGOTTAMA"
+            elif cond.upper() == "D1H=D9H":
+                rule_type = "D1_D9_SAME_HOUSE"
+            elif _int_grp(r'D9H(\d{1,2})~ASPECT', cond):
+                h9 = int(_int_grp(r'D9H(\d{1,2})~ASPECT', cond).group(1)); rule_type = "D9_HOUSE_ASPECT"
+            elif _int_grp(r'D9H(\d{1,2})->D1H\[([0-9,]+)\]', cond):
+                mm = _int_grp(r'D9H(\d{1,2})->D1H\[([0-9,]+)\]', cond)
+                h9 = int(mm.group(1)); h1_list = mm.group(2); rule_type = "D9_TO_D1_LIST"
+            elif _int_grp(r'D1H\[([0-9,]+)\]', cond):
+                h1_list = _int_grp(r'D1H\[([0-9,]+)\]', cond).group(1); rule_type = "D1_HOUSE_LIST"
+            elif _int_grp(r'D1H(\d{1,2})=D9H(\d{1,2})', cond):
+                mm = _int_grp(r'D1H(\d{1,2})=D9H(\d{1,2})', cond)
+                h1 = int(mm.group(1)); h9 = int(mm.group(2)); rule_type = "D1_D9_COMPARE"
+            elif _int_grp(r'D1H(\d{1,2})', cond):
+                h1 = int(_int_grp(r'D1H(\d{1,2})', cond).group(1)); rule_type = "D1_HOUSE"
+            elif _int_grp(r'D9H(\d{1,2})', cond):
+                h9 = int(_int_grp(r'D9H(\d{1,2})', cond).group(1)); rule_type = "D9_HOUSE"
+            elif _int_grp(r'D1R(\d{1,2})', cond):
+                h1 = int(_int_grp(r'D1R(\d{1,2})', cond).group(1)); rule_type = "D1_RASHI"
+            elif _int_grp(r'D9R(\d{1,2})', cond):
+                h9 = int(_int_grp(r'D9R(\d{1,2})', cond).group(1)); rule_type = "D9_RASHI"
+            else:
+                raise ValueError(f'Could not understand condition "{cond}". See the cheat-sheet under the Quick Rule box.')
+
+            for label, val in (("D1 house/rashi", h1), ("D9 house/rashi", h9)):
+                if val is not None and not (1 <= val <= 12):
+                    raise ValueError(f"{label} number must be 1-12, got {val}.")
+            if comp_h9 is not None and not (1 <= comp_h9 <= 12):
+                raise ValueError("Companion D9 house must be 1-12.")
+            if h1_list:
+                try:
+                    nums = [int(x.strip()) for x in h1_list.split(",") if x.strip()]
+                except ValueError:
+                    raise ValueError("House list must be comma-separated numbers, e.g. [4,5,9,10,11].")
+                if not nums or any(not (1 <= n <= 12) for n in nums):
+                    raise ValueError("Every number in the house list must be 1-12.")
+                h1_list = ",".join(str(n) for n in nums)
+
+            return {
+                "rule_type": rule_type, "planet": planet, "house_d1": h1, "house_d9": h9,
+                "house_d1_list": h1_list, "companion_planet": comp_planet, "companion_house_d9": comp_h9,
+                "retro_only": retro, "signal": signal, "weight": weight, "note": note,
+            }
+
+        def quick_rule_string(rtype, planet, hd1, hd9, hd1_list, comp_planet, comp_hd9, retro_only, signal, weight, note):
+            """Reverse of parse_quick_rule() — renders any stored rule row back into the
+            one-line shorthand, so existing/example rules double as worked examples."""
+            if rtype == "D1_HOUSE": cond = f"D1H{hd1}"
+            elif rtype == "D9_HOUSE": cond = f"D9H{hd9}"
+            elif rtype == "D1_RASHI": cond = f"D1R{hd1}"
+            elif rtype == "D9_RASHI": cond = f"D9R{hd9}"
+            elif rtype == "VARGOTTAMA": cond = "VG"
+            elif rtype == "D1_D9_COMPARE": cond = f"D1H{hd1}=D9H{hd9}"
+            elif rtype == "D1_D9_SAME_HOUSE": cond = "D1H=D9H"
+            elif rtype == "D9_HOUSE_ASPECT": cond = f"D9H{hd9}~ASPECT"
+            elif rtype == "D9_TO_D1_LIST": cond = f"D9H{hd9}->D1H[{hd1_list}]"
+            elif rtype == "D1_HOUSE_LIST": cond = f"D1H[{hd1_list}]"
+            else: cond = rtype
+            s = f"{planet} {cond}"
+            if retro_only: s += " RETRO"
+            if comp_planet and comp_hd9: s += f" +{comp_planet}@D9H{comp_hd9}"
+            s += f" => {signal}"
+            try:
+                if float(weight) != 1.0: s += f" wt={float(weight):g}"
+            except (TypeError, ValueError):
+                pass
+            if note: s += f' note="{note}"'
+            return s
+
         def get_house_num(sign_idx, lagna_sign_idx):
             """Convert a raw sign index (0-11) to a house number (1-12) relative to the lagna."""
             return ((int(sign_idx) - int(lagna_sign_idx)) % 12) + 1
@@ -1620,6 +1796,33 @@ def main(page: ft.Page):
                                    options=[ft.dropdown.Option(o) for o in D9_MODE_OPTS])
         wizard_status_txt = ft.Text("", size=12, color=C["black_txt"])
 
+        # ── QUICK RULE UI — the one-line box described above, this is the
+        # fastest path in: type the whole rule (planet + D1/D9 house-or-rashi
+        # + signal, with optional list/vargottama/aspect/retro/companion) as a
+        # single line of text and tap ADD. Uses parse_quick_rule() only — it
+        # writes to the exact same planet_rules table via rule_add().
+        fld_quick_rule = ft.TextField(
+            label="⚡ QUICK RULE — type the whole rule as ONE line",
+            hint_text="Mo D9H2->D1H[4,5,9,10,11] => BUY",
+            multiline=False
+        )
+        quick_rule_status_txt = ft.Text("", size=12, color=C["black_txt"])
+        quick_rule_cheatsheet = ft.Text(
+            "FORMAT:  <planet> <condition> => <SIGNAL>   [RETRO]  [+<planet>@D9H<n>]  [wt=<n>]  [note=\"...\"]\n"
+            "planet: Su Mo Ma Me Ju Ve Sa Ra Ke or ANY\n"
+            "D1H<n> / D9H<n> = planet's house is n (1-12, counted from Lagna)\n"
+            "D1R<n> / D9R<n> = planet's RASHI (sign) is n (1=Aries...12=Pisces)\n"
+            "VG = Vargottama (same rashi in D1 and D9)\n"
+            "D1H<n>=D9H<n2> = D1 house n AND D9 house n2 together\n"
+            "D1H=D9H = D1 house equals D9 house (any number)\n"
+            "D9H<n>~ASPECT = this D9 house is aspected by the planet\n"
+            "D9H<n>->D1H[list] = fixed D9 house n, planet's D1 house is in the list\n"
+            "D1H[list] = D1 house is anywhere in the list (no D9 house pinned)\n"
+            "SIGNAL: BUY / SELL / AVOID / NEUTRAL\n"
+            "Examples:\n" + QUICK_RULE_HELP,
+            size=10, color=C["hint_txt"]
+        )
+
         def do_auto_select_rule_type(e):
             d1, d9 = fld_d1_mode.value, fld_d9_mode.value
             mapping = {
@@ -1666,6 +1869,10 @@ def main(page: ft.Page):
                     desc = f"#{rid}  [{rtype}]  {planet}  {label1}:{hd1 or '-'}  {label2}:{hd9 or '-'}  {'(Retro only)' if retro_only else ''}  → {signal} (w={weight})  {note or ''}"
                 if comp_planet and comp_hd9:
                     desc += f"  AND {comp_planet} in D9H:{comp_hd9}"
+                try:
+                    desc += f"\n     ⚡ {quick_rule_string(rtype, planet, hd1, hd9, hd1_list, comp_planet, comp_hd9, retro_only, signal, weight, note)}"
+                except Exception:
+                    pass  # never let a display-only formatting issue block the rules list
                 # GO / NO-TRADE flag — green for BUY (go for trade), red for SELL/AVOID
                 # (not to trade), grey for NEUTRAL rules kept only for reference.
                 if signal == "BUY":
@@ -1728,6 +1935,23 @@ def main(page: ft.Page):
                 refresh_rules_list()
             except Exception as ex:
                 set_status(f"Rule error: {str(ex)}", C["red"])
+                page.update()
+
+        def do_add_quick_rule(e):
+            try:
+                parsed = parse_quick_rule(fld_quick_rule.value)
+                rule_add(parsed["rule_type"], parsed["planet"], parsed["house_d1"], parsed["house_d9"],
+                         parsed["retro_only"], parsed["signal"], parsed["weight"], parsed["note"],
+                         house_d1_list=parsed["house_d1_list"], companion_planet=parsed["companion_planet"],
+                         companion_house_d9=parsed["companion_house_d9"])
+                quick_rule_status_txt.value = f"✅ Rule added  (stored as {parsed['rule_type']})"
+                quick_rule_status_txt.color = C["green"]
+                set_status("Quick rule added.", C["green"])
+                fld_quick_rule.value = ""
+                refresh_rules_list()
+            except Exception as ex:
+                quick_rule_status_txt.value = f"⚠️ {str(ex)}"
+                quick_rule_status_txt.color = C["red"]
                 page.update()
 
         EXAMPLE_RULE_PACK = [
@@ -1907,6 +2131,13 @@ When a planet sits in the SAME rashi/sign in both D1 and D9 (regardless of house
 
 THE "AVOID" SIGNAL — HOW IT'S DIFFERENT FROM SELL
 BUY and SELL both feed into one numeric tug-of-war score — a handful of small BUY rules can outweigh one SELL rule. AVOID is deliberately NOT part of that tally. It's meant for placements you consider serious enough that no amount of other-rule positivity should paper over them (e.g. a retrograde malefic sitting in a genuinely dangerous house). If even ONE of your AVOID rules matches, the banner switches to "🚫 AVOID THIS STOCK TODAY" regardless of what the BUY/SELL score says — you'll still see the numeric score's detail below it, but the headline is the AVOID warning. Use it sparingly, for placements you've personally found reliably bad — that's the whole point of letting you set your OWN experienced rules rather than a fixed formula.
+
+QUICK RULE — ONE LINE PER RULE (top of the Rules screen, above the wizard)
+The fastest way in: type the entire rule as a single line of text and tap ADD QUICK RULE — no dropdowns, no rule-type name to remember. It understands house, rashi, house-list, vargottama, aspect, retrograde, and companion (AND) conditions, all in one uniform grammar:
+  <planet> <condition> => <SIGNAL>   [RETRO]   [+<planet>@D9H<n>]   [wt=<n>]   [note="..."]
+Condition shapes: D1H<n> / D9H<n> (house), D1R<n> / D9R<n> (rashi), VG (vargottama), D1H<n>=D9H<n2> (compare), D1H=D9H (same house), D9H<n>~ASPECT (aspect), D9H<n>->D1H[list] (fixed D9 house + D1 list), D1H[list] (plain D1 list).
+Worked example — exactly the question "if D9's house no 2 has a planet and that planet's D1 house is 4,5,9,10 or 11": Mo D9H2->D1H[4,5,9,10,11] => BUY  (use ANY instead of Mo for any planet).
+Every rule you already saved (including the example pack) is also shown in this same shorthand next to its normal description in the rules list below, so you can learn the format by reading real rules — this is purely a second way to fill the same fields; the dropdown form and the wizard still work exactly as before and write to the same table.
 
 SIMPLE RULE WIZARD (top of the Rules screen)
 If picking from 10 rule-type names feels like a lot, use the wizard first: answer "What does D1 mean here?" and "What does D9 mean here?" in plain words (Not used / Specific House / House is one of a List / Specific Rashi / Same as D1 / Aspected), then tap "AUTO-SELECT RULE TYPE FROM MY ANSWERS." It fills in the correct technical Rule Type below for you -- you never have to memorize which cryptic name matches which situation. It doesn't change how rules work underneath; it's just a translator sitting on top of the same 10 types explained below.
@@ -2093,6 +2324,18 @@ Answer: Same underlying rule type as Q&A #1 above (D9_TO_D1_LIST) — but here's
             ft.Text("Define your own planet-in-house rules. These drive the BUY/SELL recommendation shown under CALCULATE ASTRO on the Stocks / Show All page, and the Green/Red timing flag at the top of that page.", size=12, color=C["black_txt"]),
             ft.ElevatedButton("📖 HELP / REFERENCE GUIDE", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("help")),
             ft.Divider(height=6, color=C["divider"]),
+            ft.Container(
+                content=ft.Column([
+                    ft.Text("⚡ FASTEST WAY IN — type the whole rule as one line, then tap ADD. Covers house, rashi, list, vargottama, aspect, retrograde and companion conditions — everything below in one box.", size=12, weight="bold", color=C["green"]),
+                    fld_quick_rule,
+                    ft.ElevatedButton("⚡ ADD QUICK RULE", bgcolor=C["green"], color="#FFFFFF", height=44, on_click=do_add_quick_rule),
+                    quick_rule_status_txt,
+                    quick_rule_cheatsheet,
+                ], spacing=6),
+                bgcolor="#E8F5E9", border_radius=8, padding=10
+            ),
+            ft.Divider(height=6, color=C["divider"]),
+            ft.Text("Prefer dropdowns instead? Use the form below — it does exactly the same thing, field by field.", size=11, color=C["black_txt"]),
             ft.Container(
                 content=ft.Column([
                     ft.Text("🧩 NOT SURE WHICH RULE TYPE TO PICK? Answer these two questions in plain words, then tap the button — it sets the Rule Type below for you.", size=12, weight="bold", color=C["primary"]),

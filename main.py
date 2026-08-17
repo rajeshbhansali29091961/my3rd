@@ -785,9 +785,10 @@ def main(page: ft.Page):
                 struct_src_chart    TEXT,
                 struct_src_house    INTEGER,
                 struct_tgt_chart    TEXT,
-                struct_tgt_list     TEXT)""")
+                struct_tgt_list     TEXT,
+                struct_aspect       TEXT)""")
             for coldef in ("struct_src_chart TEXT", "struct_src_house INTEGER",
-                           "struct_tgt_chart TEXT", "struct_tgt_list TEXT"):
+                           "struct_tgt_chart TEXT", "struct_tgt_list TEXT", "struct_aspect TEXT"):
                 try:
                     conn.execute(f"ALTER TABLE simple_rules ADD COLUMN {coldef}")
                     conn.commit()
@@ -804,6 +805,7 @@ def main(page: ft.Page):
         PLANET_OPTIONS = ["ANY", "Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa", "Ra", "Ke"]
         PLANET_ONLY_OPTIONS = ["Any", "Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa", "Ra", "Ke"]  # for the Companion column
         YES_NO_OPTIONS = ["No", "Yes"]
+        YES_NO_ANY_OPTIONS = ["Any", "Yes", "No"]
         ACTION_OPTIONS = ["BUY", "SELL", "NEUTRAL", "WAIT"]
         CHART_OPTIONS  = ["D1", "D9"]
 
@@ -828,32 +830,32 @@ def main(page: ft.Page):
                              d9_aspect, vargottama, same_house, companion_planet,
                              companion_d9_house, retro_only, weight, action,
                              struct_src_chart=None, struct_src_house=None,
-                             struct_tgt_chart=None, struct_tgt_list=None):
+                             struct_tgt_chart=None, struct_tgt_list=None, struct_aspect=None):
             conn = sqlite3.connect(db_path)
             conn.execute("""INSERT INTO simple_rules(planet,d1_house,d1_rashi,d1_list,d9_house,d9_rashi,
                              d9_aspect,vargottama,same_house,companion_planet,companion_d9_house,
-                             retro_only,weight,action,struct_src_chart,struct_src_house,struct_tgt_chart,struct_tgt_list)
-                             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                             retro_only,weight,action,struct_src_chart,struct_src_house,struct_tgt_chart,
+                             struct_tgt_list,struct_aspect) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                          (planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                           1 if d9_aspect else 0, 1 if vargottama else 0, 1 if same_house else 0,
                           companion_planet, companion_d9_house, 1 if retro_only else 0, weight, action,
-                          struct_src_chart, struct_src_house, struct_tgt_chart, struct_tgt_list))
+                          struct_src_chart, struct_src_house, struct_tgt_chart, struct_tgt_list, struct_aspect))
             conn.commit(); conn.close()
 
         def simple_rule_update(rule_id, planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                                 d9_aspect, vargottama, same_house, companion_planet,
                                 companion_d9_house, retro_only, weight, action,
                                 struct_src_chart=None, struct_src_house=None,
-                                struct_tgt_chart=None, struct_tgt_list=None):
+                                struct_tgt_chart=None, struct_tgt_list=None, struct_aspect=None):
             conn = sqlite3.connect(db_path)
             conn.execute("""UPDATE simple_rules SET planet=?, d1_house=?, d1_rashi=?, d1_list=?, d9_house=?,
                              d9_rashi=?, d9_aspect=?, vargottama=?, same_house=?, companion_planet=?,
                              companion_d9_house=?, retro_only=?, weight=?, action=?, struct_src_chart=?,
-                             struct_src_house=?, struct_tgt_chart=?, struct_tgt_list=? WHERE id=?""",
+                             struct_src_house=?, struct_tgt_chart=?, struct_tgt_list=?, struct_aspect=? WHERE id=?""",
                          (planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                           1 if d9_aspect else 0, 1 if vargottama else 0, 1 if same_house else 0,
                           companion_planet, companion_d9_house, 1 if retro_only else 0, weight, action,
-                          struct_src_chart, struct_src_house, struct_tgt_chart, struct_tgt_list, rule_id))
+                          struct_src_chart, struct_src_house, struct_tgt_chart, struct_tgt_list, struct_aspect, rule_id))
             conn.commit(); conn.close()
 
         def simple_rule_delete(rule_id):
@@ -866,7 +868,7 @@ def main(page: ft.Page):
             rows = conn.execute("""SELECT id,planet,d1_house,d1_rashi,d1_list,d9_house,d9_rashi,
                                     d9_aspect,vargottama,same_house,companion_planet,companion_d9_house,
                                     retro_only,weight,action,struct_src_chart,struct_src_house,
-                                    struct_tgt_chart,struct_tgt_list FROM simple_rules ORDER BY id""").fetchall()
+                                    struct_tgt_chart,struct_tgt_list,struct_aspect FROM simple_rules ORDER BY id""").fetchall()
             conn.close()
             return rows
 
@@ -908,13 +910,17 @@ def main(page: ft.Page):
               Weight.
 
             Rashi-in-House Match (struct_* fields) is a DIFFERENT kind of condition:
-            it is about the CHART ITSELF, not any planet — "does the rashi sitting in
-            Source Chart's Source House also sit in one of Target Chart's Target House
-            List houses?" This depends only on the two lagna positions, never on where
-            any planet actually is. If a rule sets ONLY this (Planet left at ANY, no
+            it is about the CHART ITSELF, not any planet.
+              • struct_tgt_list: "does the rashi sitting in Source Chart's Source
+                House also sit in one of Target Chart's Target House List houses?"
+              • struct_aspect (Yes/No/Any): "is the Source Chart's Source House
+                aspected by ANY planet at all?" — computed once across every planet
+                in that chart, not tied to a particular one.
+            Both depend only on lagna positions and overall chart layout, never on
+            a single named planet. If a rule sets ONLY these (Planet left at ANY, no
             other planet-specific field set), it fires once for the whole chart. If
-            it's combined with planet-specific fields too, it acts as an extra AND
-            gate applied to every planet the rest of the row is checking.
+            combined with planet-specific fields too, they act as extra AND gates
+            applied to every planet the rest of the row is checking.
 
             WAIT rules are kept separate from the BUY/SELL numeric score — a single
             genuine WAIT match is a hard caution flag, not something a pile of small
@@ -925,21 +931,26 @@ def main(page: ft.Page):
             for (rid, planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                  d9_aspect, vargottama, same_house, comp_planet, comp_d9_house,
                  retro_only, weight, action, struct_src_chart, struct_src_house,
-                 struct_tgt_chart, struct_tgt_list) in simple_rule_list():
+                 struct_tgt_chart, struct_tgt_list, struct_aspect) in simple_rule_list():
 
-                # ── Rashi-in-House Match: a chart-level fact, computed once ──
-                struct_enabled = struct_src_house is not None and bool(struct_tgt_list)
+                # ── Rashi-in-House Match + "aspected by any planet" — chart-level facts, computed once ──
+                struct_enabled = struct_src_house is not None and (bool(struct_tgt_list) or struct_aspect in ("Yes", "No"))
                 struct_ok = True
                 if struct_enabled:
                     src_lagna = lagna_d9 if struct_src_chart == "D9" else lagna_d1
-                    tgt_lagna = lagna_d9 if struct_tgt_chart == "D9" else lagna_d1
-                    src_rashi = rashi_of_house(struct_src_house, src_lagna)
-                    try:
-                        tgt_houses = [int(x.strip()) for x in struct_tgt_list.split(",") if x.strip()]
-                    except ValueError:
-                        tgt_houses = []
-                    tgt_rashis = {rashi_of_house(h, tgt_lagna) for h in tgt_houses}
-                    struct_ok = src_rashi in tgt_rashis
+                    if struct_tgt_list:
+                        tgt_lagna = lagna_d9 if struct_tgt_chart == "D9" else lagna_d1
+                        src_rashi = rashi_of_house(struct_src_house, src_lagna)
+                        try:
+                            tgt_houses = [int(x.strip()) for x in struct_tgt_list.split(",") if x.strip()]
+                        except ValueError:
+                            tgt_houses = []
+                        tgt_rashis = {rashi_of_house(h, tgt_lagna) for h in tgt_houses}
+                        struct_ok = struct_ok and (src_rashi in tgt_rashis)
+                    if struct_aspect in ("Yes", "No"):
+                        src_houses_map = houses_d9 if struct_src_chart == "D9" else houses_d1
+                        aspected_by_any = any(struct_src_house in planet_aspect_houses(p, h) for p, h in src_houses_map.items())
+                        struct_ok = struct_ok and (aspected_by_any if struct_aspect == "Yes" else (not aspected_by_any))
 
                 no_planet_filters = (d1_house is None and d1_rashi is None and not d1_list and
                                       d9_house is None and d9_rashi is None and not vargottama and
@@ -1707,8 +1718,32 @@ def main(page: ft.Page):
         def _yn(v):
             return "Yes" if v else "No"
 
+        def _yna(v):
+            return v if v in ("Yes", "No") else "Any"
+
         def _planet_or_any_disp(v):
             return v if v else "Any"
+
+        # Bright, high-contrast field styling (bold dark text on a light-blue
+        # field, same convention as make_field() elsewhere in the app) — the
+        # bare ft.Dropdown/ft.TextField defaults render too dim to read easily.
+        def make_grid_dd(label, value, options, width):
+            return ft.Dropdown(
+                label=label, label_style=ft.TextStyle(size=11, color=C["primary"], weight="bold"),
+                value=value, options=[ft.dropdown.Option(o) for o in options], width=width, dense=True,
+                color=C["black_txt"], bgcolor=C["inp_bg"],
+                border_color=C["primary"], focused_border_color=C["accent"], border_width=2
+            )
+
+        def make_grid_tf(label, value, hint, width):
+            return ft.TextField(
+                label=label, label_style=ft.TextStyle(size=11, color=C["primary"], weight="bold"),
+                hint_text=hint, hint_style=ft.TextStyle(size=11, color=C["hint_txt"]),
+                value=value, width=width, dense=True,
+                text_style=ft.TextStyle(size=14, color=C["black_txt"], weight="bold"),
+                border_color=C["primary"], focused_border_color=C["accent"], border_width=2,
+                bgcolor=C["inp_bg"], cursor_color=C["primary"]
+            )
 
         def refresh_rules_grid():
             rules_grid_col.controls.clear()
@@ -1720,33 +1755,35 @@ def main(page: ft.Page):
             for (rid, planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                  d9_aspect, vargottama, same_house, comp_planet, comp_d9_house,
                  retro_only, weight, action, struct_src_chart, struct_src_house,
-                 struct_tgt_chart, struct_tgt_list) in rows:
+                 struct_tgt_chart, struct_tgt_list, struct_aspect) in rows:
 
-                dd_planet  = ft.Dropdown(label="Planet", value=planet, options=[ft.dropdown.Option(o) for o in PLANET_OPTIONS], width=90, dense=True)
-                dd_d1h     = ft.Dropdown(label="D1 House", value=_house_disp(d1_house), options=[ft.dropdown.Option(o) for o in HOUSE_OPTIONS], width=95, dense=True)
-                dd_d1r     = ft.Dropdown(label="D1 Rashi", value=_rashi_disp(d1_rashi), options=[ft.dropdown.Option(o) for o in RASHI_OPTIONS], width=130, dense=True)
-                fld_d1l    = ft.TextField(label="D1 House List", value=(d1_list or ""), hint_text="e.g. 4,5,9,10,11", width=150, dense=True)
-                dd_d9h     = ft.Dropdown(label="D9 House", value=_house_disp(d9_house), options=[ft.dropdown.Option(o) for o in HOUSE_OPTIONS], width=95, dense=True)
-                dd_d9r     = ft.Dropdown(label="D9 Rashi", value=_rashi_disp(d9_rashi), options=[ft.dropdown.Option(o) for o in RASHI_OPTIONS], width=130, dense=True)
-                dd_aspect  = ft.Dropdown(label="D9 House = Aspected?", value=_yn(d9_aspect), options=[ft.dropdown.Option(o) for o in YES_NO_OPTIONS], width=150, dense=True)
-                dd_varg    = ft.Dropdown(label="Vargottama?", value=_yn(vargottama), options=[ft.dropdown.Option(o) for o in YES_NO_OPTIONS], width=110, dense=True)
-                dd_same    = ft.Dropdown(label="D1=D9 House?", value=_yn(same_house), options=[ft.dropdown.Option(o) for o in YES_NO_OPTIONS], width=120, dense=True)
-                dd_comp_pl = ft.Dropdown(label="Companion Planet", value=_planet_or_any_disp(comp_planet), options=[ft.dropdown.Option(o) for o in PLANET_ONLY_OPTIONS], width=140, dense=True)
-                dd_comp_h  = ft.Dropdown(label="Companion D9 House", value=_house_disp(comp_d9_house), options=[ft.dropdown.Option(o) for o in HOUSE_OPTIONS], width=150, dense=True)
-                dd_retro   = ft.Dropdown(label="Retro Only?", value=_yn(retro_only), options=[ft.dropdown.Option(o) for o in YES_NO_OPTIONS], width=110, dense=True)
-                fld_wt     = ft.TextField(label="Weight", value=(f"{weight:g}" if weight is not None else "1"), width=80, dense=True)
-                dd_action  = ft.Dropdown(label="Action", value=action, options=[ft.dropdown.Option(o) for o in ACTION_OPTIONS], width=110, dense=True)
-                dd_ssc     = ft.Dropdown(label="Src Chart", value=(struct_src_chart or "D9"), options=[ft.dropdown.Option(o) for o in CHART_OPTIONS], width=90, dense=True)
-                dd_ssh     = ft.Dropdown(label="Src House", value=_house_disp(struct_src_house), options=[ft.dropdown.Option(o) for o in HOUSE_OPTIONS], width=95, dense=True)
-                dd_stc     = ft.Dropdown(label="Target Chart", value=(struct_tgt_chart or "D1"), options=[ft.dropdown.Option(o) for o in CHART_OPTIONS], width=110, dense=True)
-                fld_stl    = ft.TextField(label="Target House List", value=(struct_tgt_list or ""), hint_text="e.g. 4,5,9,10,11", width=170, dense=True)
-                row_status = ft.Text("", size=10, color=C["red"])
+                dd_planet  = make_grid_dd("Planet", planet, PLANET_OPTIONS, 90)
+                dd_d1h     = make_grid_dd("D1 House", _house_disp(d1_house), HOUSE_OPTIONS, 95)
+                dd_d1r     = make_grid_dd("D1 Rashi", _rashi_disp(d1_rashi), RASHI_OPTIONS, 130)
+                fld_d1l    = make_grid_tf("D1 House List", (d1_list or ""), "e.g. 4,5,9,10,11", 150)
+                dd_d9h     = make_grid_dd("D9 House", _house_disp(d9_house), HOUSE_OPTIONS, 95)
+                dd_d9r     = make_grid_dd("D9 Rashi", _rashi_disp(d9_rashi), RASHI_OPTIONS, 130)
+                dd_aspect  = make_grid_dd("D9 House=Aspected?", _yn(d9_aspect), YES_NO_OPTIONS, 150)
+                dd_varg    = make_grid_dd("Vargottama?", _yn(vargottama), YES_NO_OPTIONS, 110)
+                dd_same    = make_grid_dd("D1=D9 House?", _yn(same_house), YES_NO_OPTIONS, 120)
+                dd_comp_pl = make_grid_dd("Companion Planet", _planet_or_any_disp(comp_planet), PLANET_ONLY_OPTIONS, 140)
+                dd_comp_h  = make_grid_dd("Companion D9 House", _house_disp(comp_d9_house), HOUSE_OPTIONS, 150)
+                dd_retro   = make_grid_dd("Retro Only?", _yn(retro_only), YES_NO_OPTIONS, 110)
+                fld_wt     = make_grid_tf("Weight", (f"{weight:g}" if weight is not None else "1"), "", 80)
+                dd_action  = make_grid_dd("Action", action, ACTION_OPTIONS, 110)
+                dd_ssc     = make_grid_dd("Src Chart", (struct_src_chart or "D9"), CHART_OPTIONS, 90)
+                dd_ssh     = make_grid_dd("Src House", _house_disp(struct_src_house), HOUSE_OPTIONS, 95)
+                dd_stc     = make_grid_dd("Target Chart", (struct_tgt_chart or "D1"), CHART_OPTIONS, 110)
+                fld_stl    = make_grid_tf("Target House List", (struct_tgt_list or ""), "e.g. 4,5,9,10,11", 170)
+                dd_sasp    = make_grid_dd("Aspected by Any Planet?", _yna(struct_aspect), YES_NO_ANY_OPTIONS, 170)
+                row_status = ft.Text("", size=10, color=C["red"], weight="bold")
 
                 def make_row_saver(rid=rid, dd_planet=dd_planet, dd_d1h=dd_d1h, dd_d1r=dd_d1r, fld_d1l=fld_d1l,
                                     dd_d9h=dd_d9h, dd_d9r=dd_d9r, dd_aspect=dd_aspect, dd_varg=dd_varg,
                                     dd_same=dd_same, dd_comp_pl=dd_comp_pl, dd_comp_h=dd_comp_h,
                                     dd_retro=dd_retro, fld_wt=fld_wt, dd_action=dd_action,
-                                    dd_ssc=dd_ssc, dd_ssh=dd_ssh, dd_stc=dd_stc, fld_stl=fld_stl, row_status=row_status):
+                                    dd_ssc=dd_ssc, dd_ssh=dd_ssh, dd_stc=dd_stc, fld_stl=fld_stl,
+                                    dd_sasp=dd_sasp, row_status=row_status):
                     def _save(e):
                         try:
                             d1h = None if dd_d1h.value == "Any" else int(dd_d1h.value)
@@ -1763,10 +1800,11 @@ def main(page: ft.Page):
                             stl = (fld_stl.value or "").strip() or None
                             if stl:
                                 [int(x.strip()) for x in stl.split(",") if x.strip()]  # validate
+                            sasp = None if dd_sasp.value == "Any" else dd_sasp.value
                             simple_rule_update(rid, dd_planet.value, d1h, d1r, d1l, d9h, d9r,
                                                 dd_aspect.value == "Yes", dd_varg.value == "Yes", dd_same.value == "Yes",
                                                 comp_pl, comp_h, dd_retro.value == "Yes", wt, dd_action.value,
-                                                dd_ssc.value, ssh, dd_stc.value, stl)
+                                                dd_ssc.value, ssh, dd_stc.value, stl, sasp)
                             row_status.value = "✅ saved"
                             row_status.color = C["green"]
                             set_status("Rule updated.", C["green"])
@@ -1779,7 +1817,7 @@ def main(page: ft.Page):
                 saver = make_row_saver()
                 for ctrl in (dd_planet, dd_d1h, dd_d1r, fld_d1l, dd_d9h, dd_d9r, dd_aspect, dd_varg,
                              dd_same, dd_comp_pl, dd_comp_h, dd_retro, fld_wt, dd_action,
-                             dd_ssc, dd_ssh, dd_stc, fld_stl):
+                             dd_ssc, dd_ssh, dd_stc, fld_stl, dd_sasp):
                     if hasattr(ctrl, "on_change"):
                         ctrl.on_change = saver
                     if isinstance(ctrl, ft.TextField):
@@ -1793,42 +1831,44 @@ def main(page: ft.Page):
                         refresh_rules_grid()
                     return _del
 
+                # ── Displayed as ONE single scrollable row per rule (spreadsheet-style) ──
                 rules_grid_col.controls.append(ft.Container(
                     content=ft.Column([
-                        ft.Row([ft.Text(f"Rule #{rid}", size=11, weight="bold", color=C["primary"]),
-                                ft.IconButton(icon=ft.Icons.DELETE, icon_color=C["red"], on_click=make_row_deleter())],
-                               alignment="spaceBetween"),
-                        ft.Row([dd_planet, dd_d1h, dd_d1r, fld_d1l], wrap=True, spacing=6),
-                        ft.Row([dd_d9h, dd_d9r, dd_aspect, dd_varg, dd_same], wrap=True, spacing=6),
-                        ft.Row([dd_comp_pl, dd_comp_h, dd_retro, fld_wt, dd_action], wrap=True, spacing=6),
-                        ft.Text("Rashi-in-House Match (chart structure — ignores Planet if nothing else above is set)", size=10, color=C["hint_txt"]),
-                        ft.Row([dd_ssc, dd_ssh, dd_stc, fld_stl], wrap=True, spacing=6),
+                        ft.Row([
+                            ft.Text(f"#{rid}", size=12, weight="bold", color="#FFFFFF"),
+                            dd_planet, dd_d1h, dd_d1r, fld_d1l, dd_d9h, dd_d9r, dd_aspect, dd_varg, dd_same,
+                            dd_comp_pl, dd_comp_h, dd_retro, fld_wt, dd_action,
+                            ft.VerticalDivider(width=8, color="#FFFFFF"),
+                            dd_ssc, dd_ssh, dd_stc, fld_stl, dd_sasp,
+                            ft.IconButton(icon=ft.Icons.DELETE, icon_color="#FFFFFF", on_click=make_row_deleter())
+                        ], spacing=6, scroll="auto", vertical_alignment="center"),
                         row_status,
-                    ], spacing=6),
-                    bgcolor=C["res_bg"], border_radius=8, padding=10
+                    ], spacing=4),
+                    bgcolor=C["primary"], border_radius=8, padding=10
                 ))
             page.update()
 
-        # ── ADD NEW RULE CARD ───────────────────────────────────────────────
-        fld_new_planet  = ft.Dropdown(label="Planet", value="ANY", options=[ft.dropdown.Option(o) for o in PLANET_OPTIONS], width=90)
-        fld_new_d1h     = ft.Dropdown(label="D1 House", value="Any", options=[ft.dropdown.Option(o) for o in HOUSE_OPTIONS], width=95)
-        fld_new_d1r     = ft.Dropdown(label="D1 Rashi", value="Any", options=[ft.dropdown.Option(o) for o in RASHI_OPTIONS], width=130)
-        fld_new_d1l     = ft.TextField(label="D1 House List", hint_text="e.g. 4,5,9,10,11", width=150)
-        fld_new_d9h     = ft.Dropdown(label="D9 House", value="Any", options=[ft.dropdown.Option(o) for o in HOUSE_OPTIONS], width=95)
-        fld_new_d9r     = ft.Dropdown(label="D9 Rashi", value="Any", options=[ft.dropdown.Option(o) for o in RASHI_OPTIONS], width=130)
-        fld_new_aspect  = ft.Dropdown(label="D9 House = Aspected?", value="No", options=[ft.dropdown.Option(o) for o in YES_NO_OPTIONS], width=150)
-        fld_new_varg    = ft.Dropdown(label="Vargottama?", value="No", options=[ft.dropdown.Option(o) for o in YES_NO_OPTIONS], width=110)
-        fld_new_same    = ft.Dropdown(label="D1=D9 House?", value="No", options=[ft.dropdown.Option(o) for o in YES_NO_OPTIONS], width=120)
-        fld_new_comp_pl = ft.Dropdown(label="Companion Planet", value="Any", options=[ft.dropdown.Option(o) for o in PLANET_ONLY_OPTIONS], width=140)
-        fld_new_comp_h  = ft.Dropdown(label="Companion D9 House", value="Any", options=[ft.dropdown.Option(o) for o in HOUSE_OPTIONS], width=150)
-        fld_new_retro   = ft.Dropdown(label="Retro Only?", value="No", options=[ft.dropdown.Option(o) for o in YES_NO_OPTIONS], width=110)
-        fld_new_wt      = ft.TextField(label="Weight", value="1.0", width=80)
-        fld_new_action  = ft.Dropdown(label="Action", value="BUY", options=[ft.dropdown.Option(o) for o in ACTION_OPTIONS], width=110)
-        fld_new_ssc     = ft.Dropdown(label="Src Chart", value="D9", options=[ft.dropdown.Option(o) for o in CHART_OPTIONS], width=90)
-        fld_new_ssh     = ft.Dropdown(label="Src House", value="Any", options=[ft.dropdown.Option(o) for o in HOUSE_OPTIONS], width=95)
-        fld_new_stc     = ft.Dropdown(label="Target Chart", value="D1", options=[ft.dropdown.Option(o) for o in CHART_OPTIONS], width=110)
-        fld_new_stl     = ft.TextField(label="Target House List", hint_text="e.g. 4,5,9,10,11", width=170)
-        new_rule_status = ft.Text("", size=11, color=C["red"])
+        # ── ADD NEW RULE ROW ────────────────────────────────────────────────
+        fld_new_planet  = make_grid_dd("Planet", "ANY", PLANET_OPTIONS, 90)
+        fld_new_d1h     = make_grid_dd("D1 House", "Any", HOUSE_OPTIONS, 95)
+        fld_new_d1r     = make_grid_dd("D1 Rashi", "Any", RASHI_OPTIONS, 130)
+        fld_new_d1l     = make_grid_tf("D1 House List", "", "e.g. 4,5,9,10,11", 150)
+        fld_new_d9h     = make_grid_dd("D9 House", "Any", HOUSE_OPTIONS, 95)
+        fld_new_d9r     = make_grid_dd("D9 Rashi", "Any", RASHI_OPTIONS, 130)
+        fld_new_aspect  = make_grid_dd("D9 House=Aspected?", "No", YES_NO_OPTIONS, 150)
+        fld_new_varg    = make_grid_dd("Vargottama?", "No", YES_NO_OPTIONS, 110)
+        fld_new_same    = make_grid_dd("D1=D9 House?", "No", YES_NO_OPTIONS, 120)
+        fld_new_comp_pl = make_grid_dd("Companion Planet", "Any", PLANET_ONLY_OPTIONS, 140)
+        fld_new_comp_h  = make_grid_dd("Companion D9 House", "Any", HOUSE_OPTIONS, 150)
+        fld_new_retro   = make_grid_dd("Retro Only?", "No", YES_NO_OPTIONS, 110)
+        fld_new_wt      = make_grid_tf("Weight", "1.0", "", 80)
+        fld_new_action  = make_grid_dd("Action", "BUY", ACTION_OPTIONS, 110)
+        fld_new_ssc     = make_grid_dd("Src Chart", "D9", CHART_OPTIONS, 90)
+        fld_new_ssh     = make_grid_dd("Src House", "Any", HOUSE_OPTIONS, 95)
+        fld_new_stc     = make_grid_dd("Target Chart", "D1", CHART_OPTIONS, 110)
+        fld_new_stl     = make_grid_tf("Target House List", "", "e.g. 4,5,9,10,11", 170)
+        fld_new_sasp    = make_grid_dd("Aspected by Any Planet?", "Any", YES_NO_ANY_OPTIONS, 170)
+        new_rule_status = ft.Text("", size=11, color=C["red"], weight="bold")
 
         def do_add_grid_rule(e):
             try:
@@ -1846,10 +1886,11 @@ def main(page: ft.Page):
                 stl = (fld_new_stl.value or "").strip() or None
                 if stl:
                     [int(x.strip()) for x in stl.split(",") if x.strip()]  # validate
+                sasp = None if fld_new_sasp.value == "Any" else fld_new_sasp.value
                 simple_rule_add(fld_new_planet.value, d1h, d1r, d1l, d9h, d9r,
                                  fld_new_aspect.value == "Yes", fld_new_varg.value == "Yes", fld_new_same.value == "Yes",
                                  comp_pl, comp_h, fld_new_retro.value == "Yes", wt, fld_new_action.value,
-                                 fld_new_ssc.value, ssh, fld_new_stc.value, stl)
+                                 fld_new_ssc.value, ssh, fld_new_stc.value, stl, sasp)
                 new_rule_status.value = ""
                 set_status("Rule added.", C["green"])
                 fld_new_d1h.value = "Any"; fld_new_d1r.value = "Any"; fld_new_d1l.value = ""
@@ -1858,6 +1899,7 @@ def main(page: ft.Page):
                 fld_new_comp_pl.value = "Any"; fld_new_comp_h.value = "Any"; fld_new_retro.value = "No"
                 fld_new_wt.value = "1.0"; fld_new_action.value = "BUY"
                 fld_new_ssc.value = "D9"; fld_new_ssh.value = "Any"; fld_new_stc.value = "D1"; fld_new_stl.value = ""
+                fld_new_sasp.value = "Any"
                 refresh_rules_grid()
             except Exception as ex:
                 new_rule_status.value = f"⚠️ {str(ex)}"
@@ -1871,14 +1913,14 @@ def main(page: ft.Page):
             rows = simple_rule_list()
             data = []
             for (rid, planet, d1h, d1r, d1l, d9h, d9r, asp, varg, same, comp_pl, comp_h, retro, wt, act,
-                 ssc, ssh, stc, stl) in rows:
+                 ssc, ssh, stc, stl, sasp) in rows:
                 data.append({
                     "planet": planet, "d1_house": d1h, "d1_rashi": d1r, "d1_list": d1l,
                     "d9_house": d9h, "d9_rashi": d9r, "d9_aspect": asp, "vargottama": varg,
                     "same_house": same, "companion_planet": comp_pl, "companion_d9_house": comp_h,
                     "retro_only": retro, "weight": wt, "action": act,
                     "struct_src_chart": ssc, "struct_src_house": ssh,
-                    "struct_tgt_chart": stc, "struct_tgt_list": stl
+                    "struct_tgt_chart": stc, "struct_tgt_list": stl, "struct_aspect": sasp
                 })
             export_output.value = json.dumps(data, ensure_ascii=False, indent=2)
             export_output.visible = True
@@ -1904,7 +1946,7 @@ def main(page: ft.Page):
                         item.get("companion_planet"), item.get("companion_d9_house"),
                         item.get("retro_only", 0), float(item.get("weight", 1.0)), item.get("action", "BUY"),
                         item.get("struct_src_chart"), item.get("struct_src_house"),
-                        item.get("struct_tgt_chart"), item.get("struct_tgt_list")
+                        item.get("struct_tgt_chart"), item.get("struct_tgt_list"), item.get("struct_aspect")
                     )
                     count += 1
                 set_status(f"Imported {count} rules.", C["green"])
@@ -1913,6 +1955,7 @@ def main(page: ft.Page):
             except Exception as ex:
                 set_status(f"Import error: {str(ex)}", C["red"])
                 page.update()
+
 
         HELP_TEXT = """HOW THE BUY/SELL/NEUTRAL/WAIT SIGNAL WORKS
 
@@ -1933,8 +1976,10 @@ FIELD-BY-FIELD MEANING
 • Weight — how strongly a BUY/SELL match counts toward the score (default 1).
 • Action — BUY (+weight to score), SELL (-weight to score), NEUTRAL (logged only), or WAIT (a hard caution flag — see below).
 
-RASHI-IN-HOUSE MATCH — A DIFFERENT KIND OF FIELD (Src Chart / Src House / Target Chart / Target House List)
-This section is NOT about any planet — it's a fact about the chart itself: "does the rashi sitting in Source Chart's Source House ALSO sit in one of Target Chart's Target House List houses?" It depends only on the Lagna of each chart, never on where any planet is.
+RASHI-IN-HOUSE MATCH — A DIFFERENT KIND OF FIELD (Src Chart / Src House / Target Chart / Target House List / Aspected by Any Planet?)
+This section is NOT about any planet — it's a fact about the chart itself.
+• Target House List: "does the rashi sitting in Source Chart's Source House ALSO sit in one of Target Chart's Target House List houses?" Depends only on the Lagna of each chart.
+• Aspected by Any Planet?: "is the Source Chart's Source House aspected by AT LEAST ONE planet, whichever it is?" — checked once across every planet in that chart, not tied to a specific one. Leave at Any to skip this check.
 • If you set ONLY this section (Planet left at ANY, nothing else above set) — the rule fires once for the whole chart, not once per planet.
 • If you combine it WITH planet fields above (e.g. Planet=Ju + D1 House=9) — it becomes an extra AND requirement on top of the planet condition.
 Example — "D9's house 11 rashi exists in D1's houses 4, 5, 9, 10, or 11": Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,9,10,11.
@@ -1954,8 +1999,11 @@ WORKED EXAMPLES (what to set, leaving everything else at its default)
 • Same idea, but only when a second planet is also confirming it: add Companion Planet + Companion D9 House.
 • Mercury in D1 house 3, only while retrograde → caution: Planet=Me, D1 House=3, Retro Only?=Yes, Action=WAIT
 • D9's house 11 rashi carries into D1's kendra/trikona houses, no planet involved → BUY: Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,9,10,11, Action=BUY
+• D9 house 11's rashi in D1's houses 4,5,10,11 → SELL: Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,10,11, Action=SELL
+• D9 house 2's rashi in D1's houses 4,5,10,11 → BUY: Src Chart=D9, Src House=2, Target Chart=D1, Target House List=4,5,10,11, Action=BUY
+• Same two rules, but ALSO require that D9 house 11 (or D9 house 2) is aspected by some planet: add Aspected by Any Planet?=Yes to that rule.
 
-Tap any field on an existing rule card to change it — it saves as soon as you leave the field. Tap the trash icon to delete a card."""
+Tap any field on an existing rule row to change it — it saves as soon as you leave the field. Tap the trash icon to delete a row."""
 
         help_screen = ft.Column(visible=False, scroll="auto", controls=[
             make_header("📖 HELP / REFERENCE GUIDE"), ft.Divider(height=4, color=C["divider"]),
@@ -1966,10 +2014,10 @@ Tap any field on an existing rule card to change it — it saves as soon as you 
 
         rules_screen = ft.Column(visible=False, scroll="auto", controls=[
             make_header("📜 CUSTOM D1 / D9 RULES"), ft.Divider(height=4, color=C["divider"]),
-            ft.Text("Every rule is a card of fields — set only what you need, leave the rest at Any/No. This grid covers every situation the old named rule types did (house, rashi, house-list, vargottama, aspect, same-house, retrograde, companion AND-condition, and rashi-in-house chart-structure matches) plus new combinations. See HELP for the full field guide and worked examples.", size=12, color=C["black_txt"]),
+            ft.Text("Every rule is ONE ROW — scroll it sideways to see every field. Set only what you need, leave the rest at Any/No. This grid covers house, rashi, house-list, vargottama, aspect, same-house, retrograde, companion AND-condition, and rashi-in-house chart-structure matches (including 'aspected by any planet'). See HELP for the full field guide and worked examples.", size=12, color=C["black_txt"]),
             ft.ElevatedButton("📖 HELP / REFERENCE GUIDE", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("help")),
             ft.Divider(height=6, color=C["divider"]),
-            ft.Text("EXISTING RULES", size=13, weight="bold", color=C["black_txt"]),
+            ft.Text("EXISTING RULES (swipe a row sideways to see all its fields)", size=13, weight="bold", color=C["black_txt"]),
             rules_grid_col,
             ft.Divider(height=6, color=C["divider"]),
             ft.Text("➕ ADD NEW RULE", size=13, weight="bold", color=C["primary"]),
@@ -1977,7 +2025,7 @@ Tap any field on an existing rule card to change it — it saves as soon as you 
             ft.Row([fld_new_d9h, fld_new_d9r, fld_new_aspect, fld_new_varg, fld_new_same], wrap=True, spacing=6),
             ft.Row([fld_new_comp_pl, fld_new_comp_h, fld_new_retro, fld_new_wt, fld_new_action], wrap=True, spacing=6),
             ft.Text("Rashi-in-House Match (chart structure — ignores Planet if nothing else above is set)", size=10, color=C["hint_txt"]),
-            ft.Row([fld_new_ssc, fld_new_ssh, fld_new_stc, fld_new_stl], wrap=True, spacing=6),
+            ft.Row([fld_new_ssc, fld_new_ssh, fld_new_stc, fld_new_stl, fld_new_sasp], wrap=True, spacing=6),
             new_rule_status,
             ft.ElevatedButton("➕ ADD RULE", bgcolor=C["primary"], color="#FFFFFF", height=48, on_click=do_add_grid_rule),
             ft.Divider(height=6, color=C["divider"]),

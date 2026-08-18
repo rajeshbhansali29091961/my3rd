@@ -1726,11 +1726,16 @@ def main(page: ft.Page):
 
         # Maximum-contrast field styling: pure white field, pure black bold text,
         # white border — a crisp "cutout" against the dark blue row/section
-        # background, so nothing reads as dim or washed out.
+        # background. The options list also gets its own explicit black/bold
+        # Text content — the popup list items otherwise fall back to Flet's
+        # default dim/gray menu-item styling regardless of the field's own colors.
+        def make_grid_opt(o):
+            return ft.dropdown.Option(key=o, content=ft.Text(o, color="#000000", weight="bold", size=13))
+
         def make_grid_dd(label, value, options, width):
             return ft.Dropdown(
                 label=label, label_style=ft.TextStyle(size=11, color="#000000", weight="bold"),
-                value=value, options=[ft.dropdown.Option(o) for o in options], width=width, dense=True,
+                value=value, options=[make_grid_opt(o) for o in options], width=width, dense=True,
                 color="#000000", bgcolor="#FFFFFF",
                 border_color="#FFFFFF", focused_border_color=C["orange"], border_width=2
             )

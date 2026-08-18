@@ -2009,6 +2009,15 @@ WORKED EXAMPLES (what to set, leaving everything else at its default)
 • Same two rules, but ALSO require that D9 house 11 (or D9 house 2) is aspected by some planet: add Aspected by Any Planet?=Yes to that rule.
 • Saturn in D9 house 7 → avoid trading: Planet=Sa, D9 House=7, Action=WAIT. WAIT is this app's "avoid trading" flag — a single match overrides the BUY/SELL score and shows "WAIT ON THIS STOCK TODAY" regardless of anything else.
 
+USER Q&A
+Q: If D9's house no 7 has Saturn we should avoid trade. Can I set this rule in rule list — if yes then say 'yes', else set such rule provision setting in rule.
+A: Yes.
+Set it exactly like this in the "Add New Rule" form:
+• Section 1 (Planet): Sa
+• Section 3 (D9 Chart Condition): D9 House = 7
+• Everything else left at Any/No
+• Section 7 (Result): Action = WAIT
+
 Tap any field on an existing rule row to change it — it saves as soon as you leave the field. Tap the trash icon to delete a row."""
 
         help_screen = ft.Column(visible=False, scroll="auto", controls=[

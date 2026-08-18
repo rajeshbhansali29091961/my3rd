@@ -2012,22 +2012,43 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
             ft.ElevatedButton("⬅  BACK TO RULES", bgcolor=C["primary"], color="#FFFFFF", height=48, on_click=lambda e: show_screen("rules"))
         ])
 
+        def make_form_section(title, hint, fields):
+            """One labeled, boxed group of fields for the Add New Rule form —
+            stacked vertically so nothing is off-screen, instead of one long row."""
+            content = [ft.Text(title, size=13, weight="bold", color="#FFFFFF")]
+            if hint:
+                content.append(ft.Text(hint, size=10, color="#E3F2FD"))
+            content.append(ft.Row(fields, wrap=True, spacing=8, run_spacing=8))
+            return ft.Container(
+                content=ft.Column(content, spacing=6),
+                bgcolor=C["primary"], border_radius=8, padding=12
+            )
+
         rules_screen = ft.Column(visible=False, scroll="auto", controls=[
             make_header("📜 CUSTOM D1 / D9 RULES"), ft.Divider(height=4, color=C["divider"]),
-            ft.Text("Every rule is ONE ROW — scroll it sideways to see every field. Set only what you need, leave the rest at Any/No. This grid covers house, rashi, house-list, vargottama, aspect, same-house, retrograde, companion AND-condition, and rashi-in-house chart-structure matches (including 'aspected by any planet'). See HELP for the full field guide and worked examples.", size=12, color=C["black_txt"]),
+            ft.Text("Every SAVED rule shows as ONE ROW below — scroll it sideways to see every field. Adding a NEW rule uses the step-by-step form further down instead, grouped by what each group of fields means. Leave any field at Any/No to skip that check. See HELP for the full field guide and worked examples.", size=12, color=C["black_txt"]),
             ft.ElevatedButton("📖 HELP / REFERENCE GUIDE", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("help")),
             ft.Divider(height=6, color=C["divider"]),
             ft.Text("EXISTING RULES (swipe a row sideways to see all its fields)", size=13, weight="bold", color=C["black_txt"]),
             rules_grid_col,
             ft.Divider(height=6, color=C["divider"]),
-            ft.Text("➕ ADD NEW RULE", size=13, weight="bold", color=C["primary"]),
-            ft.Row([fld_new_planet, fld_new_d1h, fld_new_d1r, fld_new_d1l], wrap=True, spacing=6),
-            ft.Row([fld_new_d9h, fld_new_d9r, fld_new_aspect, fld_new_varg, fld_new_same], wrap=True, spacing=6),
-            ft.Row([fld_new_comp_pl, fld_new_comp_h, fld_new_retro, fld_new_wt, fld_new_action], wrap=True, spacing=6),
-            ft.Text("Rashi-in-House Match (chart structure — ignores Planet if nothing else above is set)", size=10, color=C["hint_txt"]),
-            ft.Row([fld_new_ssc, fld_new_ssh, fld_new_stc, fld_new_stl, fld_new_sasp], wrap=True, spacing=6),
+            ft.Text("➕ ADD NEW RULE", size=15, weight="bold", color=C["primary"]),
+            make_form_section("1. PLANET", "Which planet this rule applies to, or ANY for every planet.",
+                               [fld_new_planet]),
+            make_form_section("2. D1 CHART CONDITION", "The planet's house/rashi in the D1 (Rashi) chart.",
+                               [fld_new_d1h, fld_new_d1r, fld_new_d1l]),
+            make_form_section("3. D9 CHART CONDITION", "The planet's house/rashi in the D9 (Navamsha) chart. 'Aspected?' = Yes means the D9 House above is the house being ASPECTED, not occupied.",
+                               [fld_new_d9h, fld_new_d9r, fld_new_aspect]),
+            make_form_section("4. SPECIAL CONDITIONS", "Extra planet-level facts you can require.",
+                               [fld_new_varg, fld_new_same, fld_new_retro]),
+            make_form_section("5. COMPANION (SECOND PLANET)", "Only fires if this second planet is ALSO in this D9 house at the same time.",
+                               [fld_new_comp_pl, fld_new_comp_h]),
+            make_form_section("6. RASHI-IN-HOUSE CHART MATCH", "A fact about the CHART, not any planet — leave Planet at ANY above to use this on its own. Src House's rashi checked against Target House List; 'Aspected by Any Planet?' checks the Src House itself.",
+                               [fld_new_ssc, fld_new_ssh, fld_new_stc, fld_new_stl, fld_new_sasp]),
+            make_form_section("7. RESULT", "How much a BUY/SELL match counts, and what action this rule signals.",
+                               [fld_new_wt, fld_new_action]),
             new_rule_status,
-            ft.ElevatedButton("➕ ADD RULE", bgcolor=C["primary"], color="#FFFFFF", height=48, on_click=do_add_grid_rule),
+            ft.ElevatedButton("➕ ADD RULE", bgcolor=C["green"], color="#FFFFFF", height=52, on_click=do_add_grid_rule),
             ft.Divider(height=6, color=C["divider"]),
             ft.Text("EXPORT / IMPORT RULES (copy-paste JSON — e.g. to test on desktop and bring back)", size=12, weight="bold", color=C["black_txt"]),
             ft.ElevatedButton("📤 EXPORT RULES (JSON)", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=do_export_rules),

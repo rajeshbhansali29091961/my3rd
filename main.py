@@ -1724,25 +1724,25 @@ def main(page: ft.Page):
         def _planet_or_any_disp(v):
             return v if v else "Any"
 
-        # Bright, high-contrast field styling (bold dark text on a light-blue
-        # field, same convention as make_field() elsewhere in the app) — the
-        # bare ft.Dropdown/ft.TextField defaults render too dim to read easily.
+        # Maximum-contrast field styling: pure white field, pure black bold text,
+        # white border — a crisp "cutout" against the dark blue row/section
+        # background, so nothing reads as dim or washed out.
         def make_grid_dd(label, value, options, width):
             return ft.Dropdown(
-                label=label, label_style=ft.TextStyle(size=11, color=C["primary"], weight="bold"),
+                label=label, label_style=ft.TextStyle(size=11, color="#000000", weight="bold"),
                 value=value, options=[ft.dropdown.Option(o) for o in options], width=width, dense=True,
-                color=C["black_txt"], bgcolor=C["inp_bg"],
-                border_color=C["primary"], focused_border_color=C["accent"], border_width=2
+                color="#000000", bgcolor="#FFFFFF",
+                border_color="#FFFFFF", focused_border_color=C["orange"], border_width=2
             )
 
         def make_grid_tf(label, value, hint, width):
             return ft.TextField(
-                label=label, label_style=ft.TextStyle(size=11, color=C["primary"], weight="bold"),
-                hint_text=hint, hint_style=ft.TextStyle(size=11, color=C["hint_txt"]),
+                label=label, label_style=ft.TextStyle(size=11, color="#000000", weight="bold"),
+                hint_text=hint, hint_style=ft.TextStyle(size=11, color="#616161"),
                 value=value, width=width, dense=True,
-                text_style=ft.TextStyle(size=14, color=C["black_txt"], weight="bold"),
-                border_color=C["primary"], focused_border_color=C["accent"], border_width=2,
-                bgcolor=C["inp_bg"], cursor_color=C["primary"]
+                text_style=ft.TextStyle(size=14, color="#000000", weight="bold"),
+                border_color="#FFFFFF", focused_border_color=C["orange"], border_width=2,
+                bgcolor="#FFFFFF", cursor_color="#000000"
             )
 
         def refresh_rules_grid():
@@ -1776,7 +1776,7 @@ def main(page: ft.Page):
                 dd_stc     = make_grid_dd("Target Chart", (struct_tgt_chart or "D1"), CHART_OPTIONS, 110)
                 fld_stl    = make_grid_tf("Target House List", (struct_tgt_list or ""), "e.g. 4,5,9,10,11", 170)
                 dd_sasp    = make_grid_dd("Aspected by Any Planet?", _yna(struct_aspect), YES_NO_ANY_OPTIONS, 170)
-                row_status = ft.Text("", size=10, color=C["red"], weight="bold")
+                row_status = ft.Text("", size=11, color="#FFEB3B", weight="bold")  # bright on dark-blue row bg
 
                 def make_row_saver(rid=rid, dd_planet=dd_planet, dd_d1h=dd_d1h, dd_d1r=dd_d1r, fld_d1l=fld_d1l,
                                     dd_d9h=dd_d9h, dd_d9r=dd_d9r, dd_aspect=dd_aspect, dd_varg=dd_varg,
@@ -1806,11 +1806,11 @@ def main(page: ft.Page):
                                                 comp_pl, comp_h, dd_retro.value == "Yes", wt, dd_action.value,
                                                 dd_ssc.value, ssh, dd_stc.value, stl, sasp)
                             row_status.value = "✅ saved"
-                            row_status.color = C["green"]
+                            row_status.color = "#69F0AE"  # bright mint, visible on dark-blue row bg
                             set_status("Rule updated.", C["green"])
                         except Exception as ex:
                             row_status.value = f"⚠️ {str(ex)}"
-                            row_status.color = C["red"]
+                            row_status.color = "#FFEB3B"  # bright yellow, visible on dark-blue row bg
                         page.update()
                     return _save
 
@@ -1868,7 +1868,7 @@ def main(page: ft.Page):
         fld_new_stc     = make_grid_dd("Target Chart", "D1", CHART_OPTIONS, 110)
         fld_new_stl     = make_grid_tf("Target House List", "", "e.g. 4,5,9,10,11", 170)
         fld_new_sasp    = make_grid_dd("Aspected by Any Planet?", "Any", YES_NO_ANY_OPTIONS, 170)
-        new_rule_status = ft.Text("", size=11, color=C["red"], weight="bold")
+        new_rule_status = ft.Text("", size=12, color="#FFEB3B", weight="bold")  # bright on dark-blue section bg
 
         def do_add_grid_rule(e):
             try:

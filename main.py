@@ -97,70 +97,6 @@ def nak_lord_abbr(nak_idx):
     return NAKSHATRA_LORD_CYCLE[nak_idx % 9]
 def nak_lord_graha(nak_idx):
     return GRAHA[PLANET_ABBR_TO_GRAHA_IDX[nak_lord_abbr(nak_idx)]]
-
-# ── PANCHANGA (Tithi / Yoga / Karana) ─────────────────────────────────────────
-# Standard Vedic Panchanga limbs 3-5 (Vara=weekday and Nakshatra are already handled
-# elsewhere in this file). All three below depend only on the Sun-Moon angular
-# relationship, so sidereal vs tropical longitude doesn't matter as long as both
-# Sun and Moon longitudes come from the SAME system (ayanamsa cancels out in the
-# difference/sum) — we feed it the sidereal values already computed elsewhere.
-TITHI_NAMES_SHUKLA = [
-    "प्रतिपदा Pratipada","द्वितीया Dwitiya","तृतीया Tritiya","चतुर्थी Chaturthi","पंचमी Panchami",
-    "षष्ठी Shashthi","सप्तमी Saptami","अष्टमी Ashtami","नवमी Navami","दशमी Dashami",
-    "एकादशी Ekadashi","द्वादशी Dwadashi","त्रयोदशी Trayodashi","चतुर्दशी Chaturdashi","पूर्णिमा Purnima"
-]
-TITHI_NAMES_KRISHNA = TITHI_NAMES_SHUKLA[:14] + ["अमावस्या Amavasya"]
-# Tithis conventionally treated as inauspicious/caution for new undertakings (Rikta
-# tithis 4,9,14 in both Pakshas) — used only as a soft caution note here, nothing more.
-RIKTA_TITHI_NUMS = {4, 9, 14}
-
-YOGA_NAMES = [
-    "विष्कुम्भ Vishkambha","प्रीति Priti","आयुष्मान Ayushman","सौभाग्य Saubhagya","शोभन Shobhana",
-    "अतिगण्ड Atiganda","सुकर्मा Sukarma","धृति Dhriti","शूल Shoola","गण्ड Ganda",
-    "वृद्धि Vriddhi","ध्रुव Dhruva","व्याघात Vyaghata","हर्षण Harshana","वज्र Vajra",
-    "सिद्धि Siddhi","व्यतीपात Vyatipata","वरीयान Variyana","परिघ Parigha","शिव Shiva",
-    "सिद्ध Siddha","साध्य Sadhya","शुभ Shubha","शुक्ल Shukla","ब्रह्म Brahma",
-    "इन्द्र Indra","वैधृति Vaidhriti"
-]
-# Yogas classically flagged as inauspicious/obstructive (soft caution only)
-INAUSPICIOUS_YOGAS = {"व्यतीपात Vyatipata", "वैधृति Vaidhriti", "शूल Shoola", "व्याघात Vyaghata", "गण्ड Ganda"}
-
-KARANA_MOVABLE = ["बव Bava","बालव Balava","कौलव Kaulava","तैतिल Taitila","गरज Garija","वणिज Vanija","विष्टि Vishti (Bhadra)"]
-KARANA_FIXED_END = ["शकुनि Shakuni","चतुष्पद Chatushpada","नाग Naga"]
-KARANA_FIXED_START = "किंस्तुघ्न Kimstughna"
-
-def compute_panchanga(sun_lon, moon_lon):
-    """Returns (tithi_name, tithi_num, paksha, yoga_name, karana_name, caution_notes[])."""
-    diff = (moon_lon - sun_lon) % 360
-    tithi_num = int(diff / 12) + 1  # 1..30
-    if tithi_num <= 15:
-        paksha, t_in_paksha = "Shukla (Waxing)", tithi_num
-        tithi_name = TITHI_NAMES_SHUKLA[t_in_paksha - 1]
-    else:
-        paksha, t_in_paksha = "Krishna (Waning)", tithi_num - 15
-        tithi_name = TITHI_NAMES_KRISHNA[t_in_paksha - 1]
-
-    yoga_val = (sun_lon + moon_lon) % 360
-    yoga_num = int(yoga_val / (360.0 / 27.0)) % 27
-    yoga_name = YOGA_NAMES[yoga_num]
-
-    karana_num = int(diff / 6) + 1  # 1..60
-    if karana_num == 1:
-        karana_name = KARANA_FIXED_START
-    elif karana_num >= 58:
-        karana_name = KARANA_FIXED_END[min(karana_num - 58, 2)]
-    else:
-        karana_name = KARANA_MOVABLE[(karana_num - 2) % 7]
-
-    notes = []
-    if t_in_paksha in RIKTA_TITHI_NUMS:
-        notes.append("⚠️ Rikta Tithi (4th/9th/14th) — classically avoided for fresh starts")
-    if yoga_name in INAUSPICIOUS_YOGAS:
-        notes.append("⚠️ Inauspicious Yoga (" + yoga_name + ") — extra caution advised")
-    if "Vishti" in karana_name:
-        notes.append("⚠️ Vishti/Bhadra Karana — traditionally avoided for new undertakings")
-    return tithi_name, tithi_num, paksha, yoga_name, karana_name, notes
-
 CURATED = {
     "SBIN":"भारतीय स्टेट बैंक","HDFCBANK":"एचडीएफसी बैंक",
     "ICICIBANK":"आईसीआईसीआई बैंक","AXISBANK":"एक्सिस बैंक",
@@ -585,15 +521,13 @@ def jd_from_dt(year, month, day, hour=12, minute=0):
     B = 2 - A + int(A / 4)
     return (int(365.25 * (year + 4716)) + int(30.6001 * (month + 1)) + day + hour/24.0 + minute/1440.0 + B - 1524.5)
 
-IST_OFFSET_HOURS = 5.5  # India Standard Time = UTC + 5:30 — DEFAULT fallback only; the app's
-                          # actual working offset now comes from the user's saved Place setting.
+IST_OFFSET_HOURS = 5.5  # India Standard Time = UTC + 5:30
 
-def jd_ut_from_ist(year, month, day, hour, minute, gmt_offset_hours=IST_OFFSET_HOURS):
+def jd_ut_from_ist(year, month, day, hour, minute):
     """Julian Day formulas (and GMST/Ascendant) require UT. Our date/time fields and
-    datetime.now() are assumed to be in the local clock time of gmt_offset_hours (IST/UTC+5:30
-    by default, but configurable via Place Settings), so subtract the offset to get true UT."""
+    datetime.now() are IST (UTC+5:30), so subtract the offset to get true UT before use."""
     jd_local = jd_from_dt(year, month, day, hour, minute)
-    return jd_local - (gmt_offset_hours / 24.0)
+    return jd_local - (IST_OFFSET_HOURS / 24.0)
 
 def lahiri_ayanamsa(jd):
     T = (jd - 2451545.0) / 36525.0
@@ -852,55 +786,17 @@ def main(page: ft.Page):
                 struct_src_house    INTEGER,
                 struct_tgt_chart    TEXT,
                 struct_tgt_list     TEXT,
-                struct_aspect       TEXT,
-                struct_aspect_planets TEXT,
-                struct_aspect_mode  TEXT)""")
+                struct_aspect       TEXT)""")
             for coldef in ("struct_src_chart TEXT", "struct_src_house INTEGER",
-                           "struct_tgt_chart TEXT", "struct_tgt_list TEXT", "struct_aspect TEXT",
-                           "struct_aspect_planets TEXT", "struct_aspect_mode TEXT"):
+                           "struct_tgt_chart TEXT", "struct_tgt_list TEXT", "struct_aspect TEXT"):
                 try:
                     conn.execute(f"ALTER TABLE simple_rules ADD COLUMN {coldef}")
                     conn.commit()
                 except Exception:
                     pass  # column already exists on installs upgraded from an earlier version
-            # Place Settings — user-configurable reference location + GMT offset used by every
-            # "automatic" astro calculation in the app (Oracle's CALCULATE ASTRO, the Stocks tab's
-            # Live Timing Signal, and as the default prefill on the Kundali Engines page). Stored as
-            # simple key-value pairs so new settings can be added later without another migration.
-            conn.execute("""CREATE TABLE IF NOT EXISTS app_settings(
-                key   TEXT PRIMARY KEY,
-                value TEXT)""")
             conn.commit()
             conn.close()
         except: pass
-
-        PLACE_DEFAULTS = {"place_name": "Mumbai", "latitude": "19.076", "longitude": "72.877", "gmt_offset": "5.5"}
-
-        def get_place_settings():
-            """Reads the saved Place Settings, falling back to the Mumbai/IST defaults
-            (the same values this app always used) for any key not yet saved."""
-            result = dict(PLACE_DEFAULTS)
-            try:
-                conn = sqlite3.connect(db_path)
-                rows = conn.execute("SELECT key, value FROM app_settings").fetchall()
-                conn.close()
-                for k, v in rows:
-                    if k in result and v not in (None, ""):
-                        result[k] = v
-            except Exception:
-                pass
-            return result
-
-        def save_place_settings(place_name, latitude, longitude, gmt_offset):
-            conn = sqlite3.connect(db_path)
-            for k, v in (("place_name", place_name), ("latitude", str(latitude)),
-                         ("longitude", str(longitude)), ("gmt_offset", str(gmt_offset))):
-                conn.execute("""INSERT INTO app_settings(key, value) VALUES(?, ?)
-                                 ON CONFLICT(key) DO UPDATE SET value=excluded.value""", (k, v))
-            conn.commit()
-            conn.close()
-
-        current_place = get_place_settings()  # loaded once at startup; refreshed in-memory on Save
 
         RASHI_LIST = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo",
                       "Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"]
@@ -912,7 +808,6 @@ def main(page: ft.Page):
         YES_NO_ANY_OPTIONS = ["Any", "Yes", "No"]
         ACTION_OPTIONS = ["BUY", "SELL", "NEUTRAL", "WAIT"]
         CHART_OPTIONS  = ["D1", "D9"]
-        ASPECT_MODE_OPTIONS = ["Any", "None Aspect", "At Least One", "All Aspect"]
 
         # Classical Parashari drishti (aspect) rules, used only when a row's "Aspect"
         # column is set to Yes: EVERY planet aspects the 7th house from its own D9
@@ -935,38 +830,32 @@ def main(page: ft.Page):
                              d9_aspect, vargottama, same_house, companion_planet,
                              companion_d9_house, retro_only, weight, action,
                              struct_src_chart=None, struct_src_house=None,
-                             struct_tgt_chart=None, struct_tgt_list=None, struct_aspect=None,
-                             struct_aspect_planets=None, struct_aspect_mode=None):
+                             struct_tgt_chart=None, struct_tgt_list=None, struct_aspect=None):
             conn = sqlite3.connect(db_path)
             conn.execute("""INSERT INTO simple_rules(planet,d1_house,d1_rashi,d1_list,d9_house,d9_rashi,
                              d9_aspect,vargottama,same_house,companion_planet,companion_d9_house,
                              retro_only,weight,action,struct_src_chart,struct_src_house,struct_tgt_chart,
-                             struct_tgt_list,struct_aspect,struct_aspect_planets,struct_aspect_mode)
-                             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                             struct_tgt_list,struct_aspect) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                          (planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                           1 if d9_aspect else 0, 1 if vargottama else 0, 1 if same_house else 0,
                           companion_planet, companion_d9_house, 1 if retro_only else 0, weight, action,
-                          struct_src_chart, struct_src_house, struct_tgt_chart, struct_tgt_list, struct_aspect,
-                          struct_aspect_planets, struct_aspect_mode))
+                          struct_src_chart, struct_src_house, struct_tgt_chart, struct_tgt_list, struct_aspect))
             conn.commit(); conn.close()
 
         def simple_rule_update(rule_id, planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                                 d9_aspect, vargottama, same_house, companion_planet,
                                 companion_d9_house, retro_only, weight, action,
                                 struct_src_chart=None, struct_src_house=None,
-                                struct_tgt_chart=None, struct_tgt_list=None, struct_aspect=None,
-                                struct_aspect_planets=None, struct_aspect_mode=None):
+                                struct_tgt_chart=None, struct_tgt_list=None, struct_aspect=None):
             conn = sqlite3.connect(db_path)
             conn.execute("""UPDATE simple_rules SET planet=?, d1_house=?, d1_rashi=?, d1_list=?, d9_house=?,
                              d9_rashi=?, d9_aspect=?, vargottama=?, same_house=?, companion_planet=?,
                              companion_d9_house=?, retro_only=?, weight=?, action=?, struct_src_chart=?,
-                             struct_src_house=?, struct_tgt_chart=?, struct_tgt_list=?, struct_aspect=?,
-                             struct_aspect_planets=?, struct_aspect_mode=? WHERE id=?""",
+                             struct_src_house=?, struct_tgt_chart=?, struct_tgt_list=?, struct_aspect=? WHERE id=?""",
                          (planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                           1 if d9_aspect else 0, 1 if vargottama else 0, 1 if same_house else 0,
                           companion_planet, companion_d9_house, 1 if retro_only else 0, weight, action,
-                          struct_src_chart, struct_src_house, struct_tgt_chart, struct_tgt_list, struct_aspect,
-                          struct_aspect_planets, struct_aspect_mode, rule_id))
+                          struct_src_chart, struct_src_house, struct_tgt_chart, struct_tgt_list, struct_aspect, rule_id))
             conn.commit(); conn.close()
 
         def simple_rule_delete(rule_id):
@@ -979,8 +868,7 @@ def main(page: ft.Page):
             rows = conn.execute("""SELECT id,planet,d1_house,d1_rashi,d1_list,d9_house,d9_rashi,
                                     d9_aspect,vargottama,same_house,companion_planet,companion_d9_house,
                                     retro_only,weight,action,struct_src_chart,struct_src_house,
-                                    struct_tgt_chart,struct_tgt_list,struct_aspect,
-                                    struct_aspect_planets,struct_aspect_mode FROM simple_rules ORDER BY id""").fetchall()
+                                    struct_tgt_chart,struct_tgt_list,struct_aspect FROM simple_rules ORDER BY id""").fetchall()
             conn.close()
             return rows
 
@@ -1028,15 +916,11 @@ def main(page: ft.Page):
               • struct_aspect (Yes/No/Any): "is the Source Chart's Source House
                 aspected by ANY planet at all?" — computed once across every planet
                 in that chart, not tied to a particular one.
-              • struct_aspect_planets + struct_aspect_mode: a NAMED-planet version
-                of the same idea — e.g. "is the Source House aspected by Mars OR
-                Saturn specifically" (mode=At Least One), "by BOTH Mars AND Saturn"
-                (mode=All Aspect), or "by NEITHER Mars NOR Saturn" (mode=None Aspect).
-            All depend only on lagna positions and overall chart layout, never on
-            a single named planet from the Planet field above. If a rule sets ONLY
-            these (Planet left at ANY, no other planet-specific field set), it fires
-            once for the whole chart. If combined with planet fields too, they act
-            as extra AND gates applied to every planet the rest of the row is checking.
+            Both depend only on lagna positions and overall chart layout, never on
+            a single named planet. If a rule sets ONLY these (Planet left at ANY, no
+            other planet-specific field set), it fires once for the whole chart. If
+            combined with planet-specific fields too, they act as extra AND gates
+            applied to every planet the rest of the row is checking.
 
             WAIT rules are kept separate from the BUY/SELL numeric score — a single
             genuine WAIT match is a hard caution flag, not something a pile of small
@@ -1047,12 +931,10 @@ def main(page: ft.Page):
             for (rid, planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                  d9_aspect, vargottama, same_house, comp_planet, comp_d9_house,
                  retro_only, weight, action, struct_src_chart, struct_src_house,
-                 struct_tgt_chart, struct_tgt_list, struct_aspect,
-                 struct_aspect_planets, struct_aspect_mode) in simple_rule_list():
+                 struct_tgt_chart, struct_tgt_list, struct_aspect) in simple_rule_list():
 
-                # ── Rashi-in-House Match + "aspected by any/named planet" — chart-level facts, computed once ──
-                has_named_aspect_check = bool(struct_aspect_planets) and struct_aspect_mode in ("None Aspect", "At Least One", "All Aspect")
-                struct_enabled = struct_src_house is not None and (bool(struct_tgt_list) or struct_aspect in ("Yes", "No") or has_named_aspect_check)
+                # ── Rashi-in-House Match + "aspected by any planet" — chart-level facts, computed once ──
+                struct_enabled = struct_src_house is not None and (bool(struct_tgt_list) or struct_aspect in ("Yes", "No"))
                 struct_ok = True
                 if struct_enabled:
                     src_lagna = lagna_d9 if struct_src_chart == "D9" else lagna_d1
@@ -1069,20 +951,6 @@ def main(page: ft.Page):
                         src_houses_map = houses_d9 if struct_src_chart == "D9" else houses_d1
                         aspected_by_any = any(struct_src_house in planet_aspect_houses(p, h) for p, h in src_houses_map.items())
                         struct_ok = struct_ok and (aspected_by_any if struct_aspect == "Yes" else (not aspected_by_any))
-                    if has_named_aspect_check:
-                        # Named-planet aspect check: e.g. "not aspected by Mars AND Saturn"
-                        # (mode=None Aspect), "aspected by at least one of Mars/Saturn"
-                        # (At Least One), or "aspected by both Mars AND Saturn" (All Aspect).
-                        src_houses_map = houses_d9 if struct_src_chart == "D9" else houses_d1
-                        named_planets = [x.strip() for x in struct_aspect_planets.split(",") if x.strip()]
-                        aspecting_named = [p for p in named_planets
-                                            if p in src_houses_map and struct_src_house in planet_aspect_houses(p, src_houses_map[p])]
-                        if struct_aspect_mode == "None Aspect":
-                            struct_ok = struct_ok and (len(aspecting_named) == 0)
-                        elif struct_aspect_mode == "At Least One":
-                            struct_ok = struct_ok and (len(aspecting_named) >= 1)
-                        elif struct_aspect_mode == "All Aspect":
-                            struct_ok = struct_ok and (set(aspecting_named) == set(named_planets) and len(named_planets) > 0)
 
                 no_planet_filters = (d1_house is None and d1_rashi is None and not d1_list and
                                       d9_house is None and d9_rashi is None and not vargottama and
@@ -1313,45 +1181,26 @@ def main(page: ft.Page):
             # ── D1 / D9 VEDIC CHART AT TIME OF THIS CALCULATION (single combined canvas) ──
             try:
                 calc_time = datetime.now()
-                place_lat = float(current_place["latitude"])
-                place_lon = float(current_place["longitude"])
-                place_gmt = float(current_place["gmt_offset"])
-                jd = jd_ut_from_ist(calc_time.year, calc_time.month, calc_time.day, calc_time.hour, calc_time.minute, place_gmt)
-                pos, ay = calc_planet_positions(jd, place_lat, place_lon)  # user's saved Place Settings (default: Mumbai)
+                jd = jd_ut_from_ist(calc_time.year, calc_time.month, calc_time.day, calc_time.hour, calc_time.minute)
+                pos, ay = calc_planet_positions(jd, 19.076, 72.877)  # NSE Mumbai reference coords
 
                 d1_pos = {p: lon_to_sign_deg(l)[0] for p, l in pos.items()}
                 d9_pos = {p: d9_sign(l) for p, l in pos.items()}
                 lagna_idx = d1_pos["As"]
                 lagna_d9  = d9_pos["As"]
-                retro_set = get_retrograde_set(jd, place_lat, place_lon)
+                retro_set = get_retrograde_set(jd, 19.076, 72.877)
                 vargottama_set = {p for p in d1_pos if p != "As" and d1_pos.get(p) == d9_pos.get(p)}
 
                 oracle_astro_container.controls.clear()
                 oracle_astro_container.controls.append(ft.Divider(height=6, color=C["divider"]))
                 oracle_astro_container.controls.append(make_header("🕉️ VEDIC KUNDALI AT TIME OF CALCULATION"))
                 oracle_astro_container.controls.append(ft.Text(
-                    "📍 " + current_place["place_name"] + f" ({place_lat:g}, {place_lon:g}, GMT+{place_gmt:g})   " +
                     "📅 " + calc_time.strftime("%d-%m-%Y %H:%M") + "   ✨ Ayanamsa (Lahiri): " + str(round(ay, 4)) + "°" +
                     ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
                     ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else ""),
                     size=13, color=C["primary"], weight="bold"
                 ))
                 oracle_astro_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
-
-                # ── PANCHANGA (Tithi / Yoga / Karana) AT TIME OF CALCULATION ──
-                tithi_name, tithi_num, paksha, yoga_name, karana_name, panch_notes = compute_panchanga(pos["Su"], pos["Mo"])
-                oracle_astro_container.controls.append(ft.Container(height=6))
-                oracle_astro_container.controls.append(make_header("🗓️ PANCHANGA (Tithi · Yoga · Karana)", bgcolor="#4E342E"))
-                oracle_astro_container.controls.append(ft.Text(
-                    f"Tithi  : {tithi_name}  ({paksha}, #{tithi_num})\n"
-                    f"Yoga   : {yoga_name}\n"
-                    f"Karana : {karana_name}",
-                    size=13, color=C["black_txt"], weight="bold", selectable=True
-                ))
-                if panch_notes:
-                    oracle_astro_container.controls.append(ft.Text("\n".join(panch_notes), size=11, color=C["orange"], weight="bold"))
-                else:
-                    oracle_astro_container.controls.append(ft.Text("✅ No classical Panchanga caution flags for this moment.", size=11, color=C["green"], weight="bold"))
 
                 # ── CUSTOM RULES: BUY/SELL/WAIT RECOMMENDATION ──────────────
                 matches, score, wait_matches = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
@@ -1448,7 +1297,7 @@ def main(page: ft.Page):
             ft.ElevatedButton("🔍  SEARCH AND CALCULATE", bgcolor=C["green"], color="#FFFFFF", height=52, style=ft.ButtonStyle(text_style=ft.TextStyle(size=17, weight="bold")), on_click=do_oracle),
             ft.Divider(height=6, color=C["divider"]), result_box,
             ft.Container(height=10),
-            ft.Text("🪐 Auto Astro (D1/D9) + Panchanga has moved to the Stocks / Show All page — tap the Stocks tab below.", size=12, color=C["hint_txt"]),
+            ft.Text("🪐 Auto Astro (D1/D9) has moved to the Stocks / Show All page — tap the Stocks tab below.", size=12, color=C["hint_txt"]),
             ft.Container(height=10),
             ft.ElevatedButton("🎲  RAMAL PRASHNA (Cast Now)", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_ramal),
             ramal_container
@@ -1493,15 +1342,12 @@ def main(page: ft.Page):
             """Runs your custom Rules against the sky right now (same engine as this page's
             Calculate Astro), independent of any specific stock — a general market-timing read."""
             now = datetime.now()
-            place_lat = float(current_place["latitude"])
-            place_lon = float(current_place["longitude"])
-            place_gmt = float(current_place["gmt_offset"])
-            jd = jd_ut_from_ist(now.year, now.month, now.day, now.hour, now.minute, place_gmt)
-            pos, ay = calc_planet_positions(jd, place_lat, place_lon)
+            jd = jd_ut_from_ist(now.year, now.month, now.day, now.hour, now.minute)
+            pos, ay = calc_planet_positions(jd, 19.076, 72.877)
             d1_pos = {p: lon_to_sign_deg(l)[0] for p, l in pos.items()}
             d9_pos = {p: d9_sign(l) for p, l in pos.items()}
             lagna_idx, lagna_d9 = d1_pos["As"], d9_pos["As"]
-            retro_set = get_retrograde_set(jd, place_lat, place_lon)
+            retro_set = get_retrograde_set(jd, 19.076, 72.877)
             matches, score, wait_matches = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
             if wait_matches:
                 return "WAIT", C["orange"], score, wait_matches
@@ -1662,7 +1508,7 @@ def main(page: ft.Page):
             ft.ElevatedButton("⬅  BACK TO ORACLE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("oracle")),
             price_popup,
             ft.Divider(height=4, color=C["divider"]),
-            ft.Text("🪐 AUTO ASTRO (D1/D9) — calculates the current-sky Vedic chart + Panchanga and runs your custom Rules against it, right here.", size=11, color=C["black_txt"]),
+            ft.Text("🪐 AUTO ASTRO (D1/D9) — calculates the current-sky Vedic chart and runs your custom Rules against it, right here.", size=11, color=C["black_txt"]),
             ft.ElevatedButton("🪐  CALCULATE ASTRO (D1 / D9)", bgcolor=C["primary"], color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_astro),
             oracle_astro_container,
             ft.Divider(height=4, color=C["divider"]),
@@ -1683,7 +1529,6 @@ def main(page: ft.Page):
 
         # ── SCREEN 3: DATA ENTRY ──────────────────────────────────────────────
         fld_sym, fld_eng, fld_hindi, fld_ldate, fld_series = make_field("Symbol *"), make_field("English Company Name *"), make_field("Hindi Name *"), make_field("Listing Date (DD-MM-YYYY)"), make_field("Series", value="EQ")
-        fld_portfolio_entry = ft.Switch(label="📌 Mark as My Portfolio (ON)", value=False, active_color=C["green"])
         entry_status = ft.Text("", size=15, color=C["green"], weight="bold")
         akshara_preview = ft.Container(content=ft.Text("", size=14, color=C["dark_txt"]), bgcolor=C["res_bg"], padding=10, border_radius=6, visible=False)
 
@@ -1691,7 +1536,6 @@ def main(page: ft.Page):
             row = db_get(sym)
             if row:
                 fld_sym.value, fld_eng.value, fld_hindi.value, fld_ldate.value, fld_series.value = row[0], row[1], row[2], row[3], row[6] if len(row)>6 else "EQ"
-                fld_portfolio_entry.value = bool(row[7]) if len(row) > 7 else False
                 fld_sym.disabled = True
                 asum, bk = calc(row[2])
                 akshara_preview.content.value, akshara_preview.visible = f"Akshara Sum = {asum}\n{bk[:80]}", True
@@ -1714,8 +1558,6 @@ def main(page: ft.Page):
             sym, eng, hindi, ldate, series = fld_sym.value.strip().upper(), fld_eng.value.strip(), fld_hindi.value.strip(), fld_ldate.value.strip(), fld_series.value.strip() or "EQ"
             if not sym or not eng or not hindi: return
             ok, val = db_save(sym, eng, hindi, ldate, series)
-            if ok:
-                set_portfolio(sym, fld_portfolio_entry.value)  # keep the Entry form's Portfolio switch in sync with the same DB the Stocks list uses
             entry_status.value, entry_status.color = (f"Saved! {sym} Akshara={val}", C["green"]) if ok else (f"Failed: {val}", C["red"])
             if ok: fld_sym.disabled = False
             page.update()
@@ -1724,25 +1566,20 @@ def main(page: ft.Page):
             make_header("✏️ MANAGE STOCK ENTRY"), ft.Divider(height=4, color=C["divider"]),
             fld_sym, fld_eng, ft.ElevatedButton("🌐 AUTO TRANSLITERATE HINDI", bgcolor=C["accent"], color="#FFFFFF", on_click=do_transliterate),
             fld_hindi, ft.ElevatedButton("👁️ PREVIEW SOUND WEIGHTS", bgcolor=C["secondary"], color="#FFFFFF", on_click=lambda e: (asum:=calc(fld_hindi.value.strip())) and setattr(akshara_preview.content,'value',f"Akshara: {asum[0]}\n{asum[1]}") or setattr(akshara_preview,'visible',True) or page.update()),
-            akshara_preview, fld_ldate, fld_series,
-            ft.Container(height=4),
-            fld_portfolio_entry,
-            ft.Text("This is the SAME Portfolio flag shown as a switch next to each stock on the Stocks tab — setting it here keeps both in sync.", size=10, color=C["hint_txt"]),
-            entry_status,
+            akshara_preview, fld_ldate, fld_series, entry_status,
             ft.Row([
                 ft.ElevatedButton("💾 SAVE NEW", bgcolor=C["green"], color="#FFFFFF", on_click=do_save),
                 ft.ElevatedButton("🔄 UPDATE", bgcolor=C["primary"], color="#FFFFFF", on_click=do_save),
                 ft.ElevatedButton("❌ DELETE", bgcolor=C["red"], color="#FFFFFF", on_click=lambda e: db_delete(fld_sym.value.strip().upper()) and setattr(entry_status,'value',"Deleted!") or page.update()),
-                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["hint_txt"], color="#FFFFFF", on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_sym,'disabled',False), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), setattr(fld_portfolio_entry,'value',False), setattr(akshara_preview,'visible',False), page.update())),
+                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["hint_txt"], color="#FFFFFF", on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_sym,'disabled',False), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), setattr(akshara_preview,'visible',False), page.update())),
             ])
         ])
 
         # ── SCREEN 4: ASTRO CHART ────────────────────────────────────────────
         fld_date = make_field("Date (DD-MM-YYYY)", value=datetime.now().strftime("%d-%m-%Y"))
         fld_time = make_field("Time (HH:MM)", value=datetime.now().strftime("%H:%M"))
-        fld_lat  = make_field("Latitude (Decimal)", value=current_place["latitude"])
-        fld_lon  = make_field("Longitude (Decimal)", value=current_place["longitude"])
-        fld_gmt  = make_field("GMT Offset (hours)", hint="e.g. 5.5 for IST", value=current_place["gmt_offset"])
+        fld_lat  = make_field("Latitude (Decimal)", value="19.076")
+        fld_lon  = make_field("Longitude (Decimal)", value="72.877")
         astro_chart_container = ft.Column(spacing=15, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
         def do_astro_close(e):
@@ -1755,8 +1592,7 @@ def main(page: ft.Page):
                 tm = fld_time.value.strip().split(":")
                 hh, mm = int(tm[0]), int(tm[1])
                 lat, lon = float(fld_lat.value), float(fld_lon.value)
-                gmt_offset = float(fld_gmt.value) if (fld_gmt.value or "").strip() else 5.5
-                jd = jd_ut_from_ist(dt.year, dt.month, dt.day, hh, mm, gmt_offset)
+                jd = jd_ut_from_ist(dt.year, dt.month, dt.day, hh, mm)
                 pos, ay = calc_planet_positions(jd, lat, lon)
                 
                 d1_pos = {p: lon_to_sign_deg(l)[0] for p, l in pos.items()}
@@ -1770,28 +1606,11 @@ def main(page: ft.Page):
                 astro_chart_container.controls.clear()
                 
                 astro_chart_container.controls.append(ft.Text(
-                    f"📍 Lat {lat:g}, Lon {lon:g}, GMT+{gmt_offset:g}   " +
                     "✨ SIDEREAL AYANAMSA (LAHIRI): " + str(round(ay, 4)) + "°" +
                     ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
                     ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else ""),
                     size=13, color=C["primary"], weight="bold"))
                 astro_chart_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
-
-                # ── PANCHANGA FOR THIS DATE/TIME ──
-                tithi_name, tithi_num, paksha, yoga_name, karana_name, panch_notes = compute_panchanga(pos["Su"], pos["Mo"])
-                astro_chart_container.controls.append(ft.Container(height=6))
-                astro_chart_container.controls.append(make_header("🗓️ PANCHANGA (Tithi · Yoga · Karana)", bgcolor="#4E342E"))
-                astro_chart_container.controls.append(ft.Text(
-                    f"Tithi  : {tithi_name}  ({paksha}, #{tithi_num})\n"
-                    f"Yoga   : {yoga_name}\n"
-                    f"Karana : {karana_name}",
-                    size=13, color=C["black_txt"], weight="bold", selectable=True
-                ))
-                if panch_notes:
-                    astro_chart_container.controls.append(ft.Text("\n".join(panch_notes), size=11, color=C["orange"], weight="bold"))
-                else:
-                    astro_chart_container.controls.append(ft.Text("✅ No classical Panchanga caution flags for this moment.", size=11, color=C["green"], weight="bold"))
-
                 astro_chart_container.controls.append(ft.Container(height=8))
                 astro_chart_container.controls.append(ft.ElevatedButton("✖  CLOSE CHARTS", bgcolor=C["red"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_astro_close))
                 
@@ -1800,16 +1619,9 @@ def main(page: ft.Page):
                 set_status(f"Error: {str(ex)}", C["red"])
             page.update()
 
-        def do_use_saved_place(e):
-            fld_lat.value = current_place["latitude"]
-            fld_lon.value = current_place["longitude"]
-            fld_gmt.value = current_place["gmt_offset"]
-            page.update()
-
         astro_screen = ft.Column(visible=False, controls=[
             make_header("🕉️ VEDIC KUNDALI ENGINES"), ft.Divider(height=4, color=C["divider"]),
-            ft.Row([fld_date, fld_time]), ft.Row([fld_lat, fld_lon, fld_gmt]),
-            ft.TextButton("📍 Use My Saved Place Settings", style=ft.ButtonStyle(color=C["accent"]), on_click=do_use_saved_place),
+            ft.Row([fld_date, fld_time]), ft.Row([fld_lat, fld_lon]),
             ft.ElevatedButton("🕉️ GENERATE NORTH INDIAN CHARTS", bgcolor=C["primary"], color="#FFFFFF", height=50, on_click=do_astro),
             ft.Divider(height=6, color=C["divider"]), astro_chart_container
         ])
@@ -1878,74 +1690,10 @@ def main(page: ft.Page):
                 hide_prg()
                 set_status(f"Build failed: {str(ex)}", C["red"])
 
-        db_place_summary_text = ft.Text(f"📍 Current astro Place: {current_place['place_name']} ({current_place['latitude']}, {current_place['longitude']}, GMT+{current_place['gmt_offset']})", size=12, color=C["black_txt"])
         db_screen = ft.Column(visible=False, controls=[
             make_header("⚙️ DATABASE AND ENGINE SETUP"), ft.Divider(height=4, color=C["divider"]),
             ft.ElevatedButton("⚡ BUILD AUTOMATED DATABASE", bgcolor=C["orange"], color="#FFFFFF", height=54, on_click=lambda e: threading.Thread(target=build_db_thread, daemon=True).start()),
-            prg_bar, prg_txt,
-            ft.Divider(height=10, color=C["divider"]),
-            db_place_summary_text,
-            ft.ElevatedButton("📍 PLACE SETTINGS (City / Lat / Lon / GMT)", bgcolor="#455A64", color="#FFFFFF", height=48, on_click=lambda e: show_screen("place")),
-        ])
-
-        # ── SCREEN: PLACE SETTINGS ────────────────────────────────────────────
-        # The reference location + GMT offset used by every automatic astro
-        # calculation in the app (Oracle's CALCULATE ASTRO, the Stocks tab's Live
-        # Timing Signal, and as the default prefill on the Kundali Engines page).
-        # Was previously hardcoded to Mumbai (19.076, 72.877) / IST (GMT+5.5) —
-        # now saved to the same SQLite database as everything else, so it persists
-        # across app restarts and can be changed to any city.
-        fld_place_name = make_field("City / Place Name", value=current_place["place_name"])
-        fld_place_lat  = make_field("Latitude (Decimal)", hint="e.g. 19.076 for Mumbai", value=current_place["latitude"])
-        fld_place_lon  = make_field("Longitude (Decimal)", hint="e.g. 72.877 for Mumbai", value=current_place["longitude"])
-        fld_place_gmt  = make_field("GMT Offset (hours)", hint="e.g. 5.5 for India (IST)", value=current_place["gmt_offset"])
-        place_status = ft.Text("", size=14, color=C["green"], weight="bold")
-
-        def do_save_place(e):
-            try:
-                name = fld_place_name.value.strip() or "Custom Location"
-                lat  = float(fld_place_lat.value)
-                lon  = float(fld_place_lon.value)
-                gmt  = float(fld_place_gmt.value)
-                if not (-90 <= lat <= 90):
-                    raise ValueError("Latitude must be between -90 and 90")
-                if not (-180 <= lon <= 180):
-                    raise ValueError("Longitude must be between -180 and 180")
-                if not (-12 <= gmt <= 14):
-                    raise ValueError("GMT offset must be between -12 and +14")
-                save_place_settings(name, lat, lon, gmt)
-                current_place.update({"place_name": name, "latitude": str(lat), "longitude": str(lon), "gmt_offset": str(gmt)})
-                # Keep the Kundali Engines page's fields and the Data-tab summary in sync with the new saved default
-                fld_lat.value, fld_lon.value, fld_gmt.value = str(lat), str(lon), str(gmt)
-                db_place_summary_text.value = f"📍 Current astro Place: {name} ({lat:g}, {lon:g}, GMT+{gmt:g})"
-                place_status.value = f"✅ Saved! {name} ({lat:g}, {lon:g}, GMT+{gmt:g}) is now used for all astro calculations."
-                place_status.color = C["green"]
-                set_status(f"Place Settings saved: {name}", C["green"])
-            except Exception as ex:
-                place_status.value = f"⚠️ {str(ex)}"
-                place_status.color = C["red"]
-            page.update()
-
-        def do_reset_place(e):
-            fld_place_name.value = PLACE_DEFAULTS["place_name"]
-            fld_place_lat.value  = PLACE_DEFAULTS["latitude"]
-            fld_place_lon.value  = PLACE_DEFAULTS["longitude"]
-            fld_place_gmt.value  = PLACE_DEFAULTS["gmt_offset"]
-            place_status.value = "Reset to default (Mumbai / IST) — tap SAVE to apply."
-            place_status.color = C["accent"]
-            page.update()
-
-        place_screen = ft.Column(visible=False, controls=[
-            make_header("📍 PLACE SETTINGS"), ft.Divider(height=4, color=C["divider"]),
-            ft.Text("This location and GMT offset is used for every automatic astro calculation — Oracle's CALCULATE ASTRO, the Stocks tab's Live Timing Signal, and as the starting default on the Kundali Engines page (which you can still override per-calculation there).", size=12, color=C["black_txt"]),
-            ft.Container(height=6),
-            fld_place_name, fld_place_lat, fld_place_lon, fld_place_gmt,
-            ft.Text("Default when never changed: Mumbai — Latitude 19.076, Longitude 72.877, GMT+5.5 (IST).", size=11, color=C["hint_txt"]),
-            place_status,
-            ft.Row([
-                ft.ElevatedButton("💾 SAVE PLACE", bgcolor=C["green"], color="#FFFFFF", height=48, on_click=do_save_place),
-                ft.ElevatedButton("↺ RESET TO MUMBAI", bgcolor=C["hint_txt"], color="#FFFFFF", height=48, on_click=do_reset_place),
-            ], spacing=10),
+            prg_bar, prg_txt
         ])
 
         # ── SCREEN 6: CUSTOM D1/D9 RULES — FULL-POWER GRID ──────────────────
@@ -2012,8 +1760,7 @@ def main(page: ft.Page):
             for (rid, planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                  d9_aspect, vargottama, same_house, comp_planet, comp_d9_house,
                  retro_only, weight, action, struct_src_chart, struct_src_house,
-                 struct_tgt_chart, struct_tgt_list, struct_aspect,
-                 struct_aspect_planets, struct_aspect_mode) in rows:
+                 struct_tgt_chart, struct_tgt_list, struct_aspect) in rows:
 
                 dd_planet  = make_grid_dd("Planet", planet, PLANET_OPTIONS, 90)
                 dd_d1h     = make_grid_dd("D1 House", _house_disp(d1_house), HOUSE_OPTIONS, 95)
@@ -2034,8 +1781,6 @@ def main(page: ft.Page):
                 dd_stc     = make_grid_dd("Target Chart", (struct_tgt_chart or "D1"), CHART_OPTIONS, 110)
                 fld_stl    = make_grid_tf("Target House List", (struct_tgt_list or ""), "e.g. 4,5,9,10,11", 170)
                 dd_sasp    = make_grid_dd("Aspected by Any Planet?", _yna(struct_aspect), YES_NO_ANY_OPTIONS, 170)
-                fld_saspp  = make_grid_tf("Aspect Planets", (struct_aspect_planets or ""), "e.g. Ma,Sa", 130)
-                dd_saspm   = make_grid_dd("Aspect Mode", (struct_aspect_mode or "Any"), ASPECT_MODE_OPTIONS, 150)
                 row_status = ft.Text("", size=11, color="#FFEB3B", weight="bold")  # bright on dark-blue row bg
 
                 def make_row_saver(rid=rid, dd_planet=dd_planet, dd_d1h=dd_d1h, dd_d1r=dd_d1r, fld_d1l=fld_d1l,
@@ -2043,7 +1788,7 @@ def main(page: ft.Page):
                                     dd_same=dd_same, dd_comp_pl=dd_comp_pl, dd_comp_h=dd_comp_h,
                                     dd_retro=dd_retro, fld_wt=fld_wt, dd_action=dd_action,
                                     dd_ssc=dd_ssc, dd_ssh=dd_ssh, dd_stc=dd_stc, fld_stl=fld_stl,
-                                    dd_sasp=dd_sasp, fld_saspp=fld_saspp, dd_saspm=dd_saspm, row_status=row_status):
+                                    dd_sasp=dd_sasp, row_status=row_status):
                     def _save(e):
                         try:
                             d1h = None if dd_d1h.value == "Any" else int(dd_d1h.value)
@@ -2061,12 +1806,10 @@ def main(page: ft.Page):
                             if stl:
                                 [int(x.strip()) for x in stl.split(",") if x.strip()]  # validate
                             sasp = None if dd_sasp.value == "Any" else dd_sasp.value
-                            saspp = (fld_saspp.value or "").strip().upper().replace(" ", "") or None
-                            saspm = None if dd_saspm.value == "Any" else dd_saspm.value
                             simple_rule_update(rid, dd_planet.value, d1h, d1r, d1l, d9h, d9r,
                                                 dd_aspect.value == "Yes", dd_varg.value == "Yes", dd_same.value == "Yes",
                                                 comp_pl, comp_h, dd_retro.value == "Yes", wt, dd_action.value,
-                                                dd_ssc.value, ssh, dd_stc.value, stl, sasp, saspp, saspm)
+                                                dd_ssc.value, ssh, dd_stc.value, stl, sasp)
                             row_status.value = "✅ saved"
                             row_status.color = "#69F0AE"  # bright mint, visible on dark-blue row bg
                             set_status("Rule updated.", C["green"])
@@ -2079,7 +1822,7 @@ def main(page: ft.Page):
                 saver = make_row_saver()
                 for ctrl in (dd_planet, dd_d1h, dd_d1r, fld_d1l, dd_d9h, dd_d9r, dd_aspect, dd_varg,
                              dd_same, dd_comp_pl, dd_comp_h, dd_retro, fld_wt, dd_action,
-                             dd_ssc, dd_ssh, dd_stc, fld_stl, dd_sasp, fld_saspp, dd_saspm):
+                             dd_ssc, dd_ssh, dd_stc, fld_stl, dd_sasp):
                     if hasattr(ctrl, "on_change"):
                         ctrl.on_change = saver
                     if isinstance(ctrl, ft.TextField):
@@ -2101,7 +1844,7 @@ def main(page: ft.Page):
                             dd_planet, dd_d1h, dd_d1r, fld_d1l, dd_d9h, dd_d9r, dd_aspect, dd_varg, dd_same,
                             dd_comp_pl, dd_comp_h, dd_retro, fld_wt, dd_action,
                             ft.VerticalDivider(width=8, color="#FFFFFF"),
-                            dd_ssc, dd_ssh, dd_stc, fld_stl, dd_sasp, fld_saspp, dd_saspm,
+                            dd_ssc, dd_ssh, dd_stc, fld_stl, dd_sasp,
                             ft.IconButton(icon=ft.Icons.DELETE, icon_color="#FFFFFF", on_click=make_row_deleter())
                         ], spacing=6, scroll="auto", vertical_alignment="center"),
                         row_status,
@@ -2130,8 +1873,6 @@ def main(page: ft.Page):
         fld_new_stc     = make_grid_dd("Target Chart", "D1", CHART_OPTIONS, 110)
         fld_new_stl     = make_grid_tf("Target House List", "", "e.g. 4,5,9,10,11", 170)
         fld_new_sasp    = make_grid_dd("Aspected by Any Planet?", "Any", YES_NO_ANY_OPTIONS, 170)
-        fld_new_saspp   = make_grid_tf("Aspect Planets", "", "e.g. Ma,Sa", 130)
-        fld_new_saspm   = make_grid_dd("Aspect Mode", "Any", ASPECT_MODE_OPTIONS, 150)
         new_rule_status = ft.Text("", size=12, color="#FFEB3B", weight="bold")  # bright on dark-blue section bg
 
         def do_add_grid_rule(e):
@@ -2151,12 +1892,10 @@ def main(page: ft.Page):
                 if stl:
                     [int(x.strip()) for x in stl.split(",") if x.strip()]  # validate
                 sasp = None if fld_new_sasp.value == "Any" else fld_new_sasp.value
-                saspp = (fld_new_saspp.value or "").strip().upper().replace(" ", "") or None
-                saspm = None if fld_new_saspm.value == "Any" else fld_new_saspm.value
                 simple_rule_add(fld_new_planet.value, d1h, d1r, d1l, d9h, d9r,
                                  fld_new_aspect.value == "Yes", fld_new_varg.value == "Yes", fld_new_same.value == "Yes",
                                  comp_pl, comp_h, fld_new_retro.value == "Yes", wt, fld_new_action.value,
-                                 fld_new_ssc.value, ssh, fld_new_stc.value, stl, sasp, saspp, saspm)
+                                 fld_new_ssc.value, ssh, fld_new_stc.value, stl, sasp)
                 new_rule_status.value = ""
                 set_status("Rule added.", C["green"])
                 fld_new_d1h.value = "Any"; fld_new_d1r.value = "Any"; fld_new_d1l.value = ""
@@ -2165,7 +1904,7 @@ def main(page: ft.Page):
                 fld_new_comp_pl.value = "Any"; fld_new_comp_h.value = "Any"; fld_new_retro.value = "No"
                 fld_new_wt.value = "1.0"; fld_new_action.value = "BUY"
                 fld_new_ssc.value = "D9"; fld_new_ssh.value = "Any"; fld_new_stc.value = "D1"; fld_new_stl.value = ""
-                fld_new_sasp.value = "Any"; fld_new_saspp.value = ""; fld_new_saspm.value = "Any"
+                fld_new_sasp.value = "Any"
                 refresh_rules_grid()
             except Exception as ex:
                 new_rule_status.value = f"⚠️ {str(ex)}"
@@ -2179,15 +1918,14 @@ def main(page: ft.Page):
             rows = simple_rule_list()
             data = []
             for (rid, planet, d1h, d1r, d1l, d9h, d9r, asp, varg, same, comp_pl, comp_h, retro, wt, act,
-                 ssc, ssh, stc, stl, sasp, saspp, saspm) in rows:
+                 ssc, ssh, stc, stl, sasp) in rows:
                 data.append({
                     "planet": planet, "d1_house": d1h, "d1_rashi": d1r, "d1_list": d1l,
                     "d9_house": d9h, "d9_rashi": d9r, "d9_aspect": asp, "vargottama": varg,
                     "same_house": same, "companion_planet": comp_pl, "companion_d9_house": comp_h,
                     "retro_only": retro, "weight": wt, "action": act,
                     "struct_src_chart": ssc, "struct_src_house": ssh,
-                    "struct_tgt_chart": stc, "struct_tgt_list": stl, "struct_aspect": sasp,
-                    "struct_aspect_planets": saspp, "struct_aspect_mode": saspm
+                    "struct_tgt_chart": stc, "struct_tgt_list": stl, "struct_aspect": sasp
                 })
             export_output.value = json.dumps(data, ensure_ascii=False, indent=2)
             export_output.visible = True
@@ -2213,8 +1951,7 @@ def main(page: ft.Page):
                         item.get("companion_planet"), item.get("companion_d9_house"),
                         item.get("retro_only", 0), float(item.get("weight", 1.0)), item.get("action", "BUY"),
                         item.get("struct_src_chart"), item.get("struct_src_house"),
-                        item.get("struct_tgt_chart"), item.get("struct_tgt_list"), item.get("struct_aspect"),
-                        item.get("struct_aspect_planets"), item.get("struct_aspect_mode")
+                        item.get("struct_tgt_chart"), item.get("struct_tgt_list"), item.get("struct_aspect")
                     )
                     count += 1
                 set_status(f"Imported {count} rules.", C["green"])
@@ -2244,26 +1981,18 @@ FIELD-BY-FIELD MEANING
 • Weight — how strongly a BUY/SELL match counts toward the score (default 1).
 • Action — BUY (+weight to score), SELL (-weight to score), NEUTRAL (logged only), or WAIT (a hard caution flag — see below).
 
-RASHI-IN-HOUSE MATCH — A DIFFERENT KIND OF FIELD (Src Chart / Src House / Target Chart / Target House List / Aspected by Any Planet? / Aspect Planets / Aspect Mode)
+RASHI-IN-HOUSE MATCH — A DIFFERENT KIND OF FIELD (Src Chart / Src House / Target Chart / Target House List / Aspected by Any Planet?)
 This section is NOT about any planet — it's a fact about the chart itself.
 • Target House List: "does the rashi sitting in Source Chart's Source House ALSO sit in one of Target Chart's Target House List houses?" Depends only on the Lagna of each chart.
 • Aspected by Any Planet?: "is the Source Chart's Source House aspected by AT LEAST ONE planet, whichever it is?" — checked once across every planet in that chart, not tied to a specific one. Leave at Any to skip this check.
-• Aspect Planets + Aspect Mode: the NAMED-planet version — put comma-separated planet codes in Aspect Planets (e.g. Ma,Sa for Mars and Saturn) and pick a mode:
-   - None Aspect  = the Source House must NOT be aspected by any of the listed planets (none of them may aspect it)
-   - At Least One = at least one of the listed planets aspects the Source House
-   - All Aspect   = every listed planet aspects the Source House
-  Leave Aspect Mode at Any to skip this named-planet check entirely (use plain "Aspected by Any Planet?" instead, or neither).
 • If you set ONLY this section (Planet left at ANY, nothing else above set) — the rule fires once for the whole chart, not once per planet.
 • If you combine it WITH planet fields above (e.g. Planet=Ju + D1 House=9) — it becomes an extra AND requirement on top of the planet condition.
 Example — "D9's house 11 rashi exists in D1's houses 4, 5, 9, 10, or 11": Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,9,10,11.
-Example — "D9's house 11 should NOT be aspected by Mars and Saturn": Src Chart=D9, Src House=11, Aspect Planets=Ma,Sa, Aspect Mode=None Aspect.
 
 HOW THE SCORE WORKS
 The banner under CALCULATE ASTRO adds up every matching rule: +weight for BUY, -weight for SELL, 0 for NEUTRAL. WAIT is deliberately NOT part of that tally — it's a hard caution flag. If even ONE WAIT rule matches, the banner switches to "WAIT ON THIS STOCK TODAY" regardless of what the BUY/SELL score says.
 
 This is a reference tool based on conventional interpretations, not a validated predictive model — use it as one input, not a standalone signal.
-
-PANCHANGA (Tithi / Yoga / Karana) — shown alongside the D1/D9 chart on both the Stocks page's CALCULATE ASTRO and the Kundali Engines page. This is informational only right now — it is NOT wired into the BUY/SELL/WAIT rule engine, so it never changes the score. Caution notes (Rikta Tithi, inauspicious Yoga, Vishti/Bhadra Karana) are shown as soft flags for your own judgement.
 
 WORKED EXAMPLES (what to set, leaving everything else at its default)
 • Jupiter in D1 house 9 → BUY: Planet=Ju, D1 House=9, Action=BUY
@@ -2279,7 +2008,6 @@ WORKED EXAMPLES (what to set, leaving everything else at its default)
 • D9 house 2's rashi in D1's houses 4,5,10,11 → BUY: Src Chart=D9, Src House=2, Target Chart=D1, Target House List=4,5,10,11, Action=BUY
 • Same two rules, but ALSO require that D9 house 11 (or D9 house 2) is aspected by some planet: add Aspected by Any Planet?=Yes to that rule.
 • Saturn in D9 house 7 → avoid trading: Planet=Sa, D9 House=7, Action=WAIT. WAIT is this app's "avoid trading" flag — a single match overrides the BUY/SELL score and shows "WAIT ON THIS STOCK TODAY" regardless of anything else.
-• D9's house 11 rashi exists in D1's 4,5,10,11th houses AND D9's house 11 is NOT aspected by Mars or Saturn → BUY: Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,10,11, Aspect Planets=Ma,Sa, Aspect Mode=None Aspect, Action=BUY. (Everything else — Planet, D1/D9 house/rashi fields, Vargottama, etc. — left at Any/No, since this is a pure chart-structure rule, not tied to one named planet.)
 
 USER Q&A
 Q: If D9's house no 7 has Saturn we should avoid trade. Can I set this rule in rule list — if yes then say 'yes', else set such rule provision setting in rule.
@@ -2289,12 +2017,6 @@ Set it exactly like this in the "Add New Rule" form:
 • Section 3 (D9 Chart Condition): D9 House = 7
 • Everything else left at Any/No
 • Section 7 (Result): Action = WAIT
-
-Q: If D9's 11th house rashi exists in D1's 4,5,10,11th house rashi, AND D9's 11th house should NOT be aspected by Mars and Saturn — can I set this rule? If yes, say 'yes', else make a provision for it.
-A: Not originally possible — the old "Aspected by Any Planet?" field only checked ANY planet, not named ones. A provision was added: Section 6 now has two extra fields, "Aspect Planets" (comma list, e.g. Ma,Sa) and "Aspect Mode" (None Aspect / At Least One / All Aspect). Set it exactly like this:
-• Section 1 (Planet): ANY (leave as-is — this is a chart-structure rule, not tied to one planet)
-• Section 6 (Rashi-in-House Chart Match): Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,10,11, Aspect Planets=Ma,Sa, Aspect Mode=None Aspect
-• Section 7 (Result): Action = BUY (or SELL/WAIT, whichever you intend)
 
 Tap any field on an existing rule row to change it — it saves as soon as you leave the field. Tap the trash icon to delete a row."""
 
@@ -2336,8 +2058,8 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
                                [fld_new_varg, fld_new_same, fld_new_retro]),
             make_form_section("5. COMPANION (SECOND PLANET)", "Only fires if this second planet is ALSO in this D9 house at the same time.",
                                [fld_new_comp_pl, fld_new_comp_h]),
-            make_form_section("6. RASHI-IN-HOUSE CHART MATCH", "A fact about the CHART, not any planet — leave Planet at ANY above to use this on its own. Src House's rashi checked against Target House List; 'Aspected by Any Planet?' checks the Src House itself. 'Aspect Planets' + 'Aspect Mode' let you name specific planets (e.g. Ma,Sa) instead of any planet — None Aspect / At Least One / All Aspect.",
-                               [fld_new_ssc, fld_new_ssh, fld_new_stc, fld_new_stl, fld_new_sasp, fld_new_saspp, fld_new_saspm]),
+            make_form_section("6. RASHI-IN-HOUSE CHART MATCH", "A fact about the CHART, not any planet — leave Planet at ANY above to use this on its own. Src House's rashi checked against Target House List; 'Aspected by Any Planet?' checks the Src House itself.",
+                               [fld_new_ssc, fld_new_ssh, fld_new_stc, fld_new_stl, fld_new_sasp]),
             make_form_section("7. RESULT", "How much a BUY/SELL match counts, and what action this rule signals.",
                                [fld_new_wt, fld_new_action]),
             new_rule_status,
@@ -2352,7 +2074,7 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
 
 
         # ── NAVIGATION CONTROL ────────────────────────────────────────────────
-        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen, "place": place_screen, "rules": rules_screen, "help": help_screen}
+        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen, "rules": rules_screen, "help": help_screen}
 
         AZ_LETTERS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
         az_letter_containers = {}  # letter -> its Container, so we can restyle the selected one

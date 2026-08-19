@@ -97,6 +97,70 @@ def nak_lord_abbr(nak_idx):
     return NAKSHATRA_LORD_CYCLE[nak_idx % 9]
 def nak_lord_graha(nak_idx):
     return GRAHA[PLANET_ABBR_TO_GRAHA_IDX[nak_lord_abbr(nak_idx)]]
+
+# ── PANCHANGA (Tithi / Yoga / Karana) ─────────────────────────────────────────
+# Standard Vedic Panchanga limbs 3-5 (Vara=weekday and Nakshatra are already handled
+# elsewhere in this file). All three below depend only on the Sun-Moon angular
+# relationship, so sidereal vs tropical longitude doesn't matter as long as both
+# Sun and Moon longitudes come from the SAME system (ayanamsa cancels out in the
+# difference/sum) — we feed it the sidereal values already computed elsewhere.
+TITHI_NAMES_SHUKLA = [
+    "प्रतिपदा Pratipada","द्वितीया Dwitiya","तृतीया Tritiya","चतुर्थी Chaturthi","पंचमी Panchami",
+    "षष्ठी Shashthi","सप्तमी Saptami","अष्टमी Ashtami","नवमी Navami","दशमी Dashami",
+    "एकादशी Ekadashi","द्वादशी Dwadashi","त्रयोदशी Trayodashi","चतुर्दशी Chaturdashi","पूर्णिमा Purnima"
+]
+TITHI_NAMES_KRISHNA = TITHI_NAMES_SHUKLA[:14] + ["अमावस्या Amavasya"]
+# Tithis conventionally treated as inauspicious/caution for new undertakings (Rikta
+# tithis 4,9,14 in both Pakshas) — used only as a soft caution note here, nothing more.
+RIKTA_TITHI_NUMS = {4, 9, 14}
+
+YOGA_NAMES = [
+    "विष्कुम्भ Vishkambha","प्रीति Priti","आयुष्मान Ayushman","सौभाग्य Saubhagya","शोभन Shobhana",
+    "अतिगण्ड Atiganda","सुकर्मा Sukarma","धृति Dhriti","शूल Shoola","गण्ड Ganda",
+    "वृद्धि Vriddhi","ध्रुव Dhruva","व्याघात Vyaghata","हर्षण Harshana","वज्र Vajra",
+    "सिद्धि Siddhi","व्यतीपात Vyatipata","वरीयान Variyana","परिघ Parigha","शिव Shiva",
+    "सिद्ध Siddha","साध्य Sadhya","शुभ Shubha","शुक्ल Shukla","ब्रह्म Brahma",
+    "इन्द्र Indra","वैधृति Vaidhriti"
+]
+# Yogas classically flagged as inauspicious/obstructive (soft caution only)
+INAUSPICIOUS_YOGAS = {"व्यतीपात Vyatipata", "वैधृति Vaidhriti", "शूल Shoola", "व्याघात Vyaghata", "गण्ड Ganda"}
+
+KARANA_MOVABLE = ["बव Bava","बालव Balava","कौलव Kaulava","तैतिल Taitila","गरज Garija","वणिज Vanija","विष्टि Vishti (Bhadra)"]
+KARANA_FIXED_END = ["शकुनि Shakuni","चतुष्पद Chatushpada","नाग Naga"]
+KARANA_FIXED_START = "किंस्तुघ्न Kimstughna"
+
+def compute_panchanga(sun_lon, moon_lon):
+    """Returns (tithi_name, tithi_num, paksha, yoga_name, karana_name, caution_notes[])."""
+    diff = (moon_lon - sun_lon) % 360
+    tithi_num = int(diff / 12) + 1  # 1..30
+    if tithi_num <= 15:
+        paksha, t_in_paksha = "Shukla (Waxing)", tithi_num
+        tithi_name = TITHI_NAMES_SHUKLA[t_in_paksha - 1]
+    else:
+        paksha, t_in_paksha = "Krishna (Waning)", tithi_num - 15
+        tithi_name = TITHI_NAMES_KRISHNA[t_in_paksha - 1]
+
+    yoga_val = (sun_lon + moon_lon) % 360
+    yoga_num = int(yoga_val / (360.0 / 27.0)) % 27
+    yoga_name = YOGA_NAMES[yoga_num]
+
+    karana_num = int(diff / 6) + 1  # 1..60
+    if karana_num == 1:
+        karana_name = KARANA_FIXED_START
+    elif karana_num >= 58:
+        karana_name = KARANA_FIXED_END[min(karana_num - 58, 2)]
+    else:
+        karana_name = KARANA_MOVABLE[(karana_num - 2) % 7]
+
+    notes = []
+    if t_in_paksha in RIKTA_TITHI_NUMS:
+        notes.append("⚠️ Rikta Tithi (4th/9th/14th) — classically avoided for fresh starts")
+    if yoga_name in INAUSPICIOUS_YOGAS:
+        notes.append("⚠️ Inauspicious Yoga (" + yoga_name + ") — extra caution advised")
+    if "Vishti" in karana_name:
+        notes.append("⚠️ Vishti/Bhadra Karana — traditionally avoided for new undertakings")
+    return tithi_name, tithi_num, paksha, yoga_name, karana_name, notes
+
 CURATED = {
     "SBIN":"भारतीय स्टेट बैंक","HDFCBANK":"एचडीएफसी बैंक",
     "ICICIBANK":"आईसीआईसीआई बैंक","AXISBANK":"एक्सिस बैंक",
@@ -919,7 +983,7 @@ def main(page: ft.Page):
             Both depend only on lagna positions and overall chart layout, never on
             a single named planet. If a rule sets ONLY these (Planet left at ANY, no
             other planet-specific field set), it fires once for the whole chart. If
-            combined with planet-specific fields too, they act as extra AND gates
+            combined with planet fields too, they act as extra AND gates
             applied to every planet the rest of the row is checking.
 
             WAIT rules are kept separate from the BUY/SELL numeric score — a single
@@ -1202,6 +1266,21 @@ def main(page: ft.Page):
                 ))
                 oracle_astro_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
 
+                # ── PANCHANGA (Tithi / Yoga / Karana) AT TIME OF CALCULATION ──
+                tithi_name, tithi_num, paksha, yoga_name, karana_name, panch_notes = compute_panchanga(pos["Su"], pos["Mo"])
+                oracle_astro_container.controls.append(ft.Container(height=6))
+                oracle_astro_container.controls.append(make_header("🗓️ PANCHANGA (Tithi · Yoga · Karana)", bgcolor="#4E342E"))
+                oracle_astro_container.controls.append(ft.Text(
+                    f"Tithi  : {tithi_name}  ({paksha}, #{tithi_num})\n"
+                    f"Yoga   : {yoga_name}\n"
+                    f"Karana : {karana_name}",
+                    size=13, color=C["black_txt"], weight="bold", selectable=True
+                ))
+                if panch_notes:
+                    oracle_astro_container.controls.append(ft.Text("\n".join(panch_notes), size=11, color=C["orange"], weight="bold"))
+                else:
+                    oracle_astro_container.controls.append(ft.Text("✅ No classical Panchanga caution flags for this moment.", size=11, color=C["green"], weight="bold"))
+
                 # ── CUSTOM RULES: BUY/SELL/WAIT RECOMMENDATION ──────────────
                 matches, score, wait_matches = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
                 apply_timing_flag(score, wait_matches)  # keep the top-of-page flag in sync
@@ -1297,7 +1376,7 @@ def main(page: ft.Page):
             ft.ElevatedButton("🔍  SEARCH AND CALCULATE", bgcolor=C["green"], color="#FFFFFF", height=52, style=ft.ButtonStyle(text_style=ft.TextStyle(size=17, weight="bold")), on_click=do_oracle),
             ft.Divider(height=6, color=C["divider"]), result_box,
             ft.Container(height=10),
-            ft.Text("🪐 Auto Astro (D1/D9) has moved to the Stocks / Show All page — tap the Stocks tab below.", size=12, color=C["hint_txt"]),
+            ft.Text("🪐 Auto Astro (D1/D9) + Panchanga has moved to the Stocks / Show All page — tap the Stocks tab below.", size=12, color=C["hint_txt"]),
             ft.Container(height=10),
             ft.ElevatedButton("🎲  RAMAL PRASHNA (Cast Now)", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_ramal),
             ramal_container
@@ -1508,7 +1587,7 @@ def main(page: ft.Page):
             ft.ElevatedButton("⬅  BACK TO ORACLE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("oracle")),
             price_popup,
             ft.Divider(height=4, color=C["divider"]),
-            ft.Text("🪐 AUTO ASTRO (D1/D9) — calculates the current-sky Vedic chart and runs your custom Rules against it, right here.", size=11, color=C["black_txt"]),
+            ft.Text("🪐 AUTO ASTRO (D1/D9) — calculates the current-sky Vedic chart + Panchanga and runs your custom Rules against it, right here.", size=11, color=C["black_txt"]),
             ft.ElevatedButton("🪐  CALCULATE ASTRO (D1 / D9)", bgcolor=C["primary"], color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_astro),
             oracle_astro_container,
             ft.Divider(height=4, color=C["divider"]),
@@ -1529,6 +1608,7 @@ def main(page: ft.Page):
 
         # ── SCREEN 3: DATA ENTRY ──────────────────────────────────────────────
         fld_sym, fld_eng, fld_hindi, fld_ldate, fld_series = make_field("Symbol *"), make_field("English Company Name *"), make_field("Hindi Name *"), make_field("Listing Date (DD-MM-YYYY)"), make_field("Series", value="EQ")
+        fld_portfolio_entry = ft.Switch(label="📌 Mark as My Portfolio (ON)", value=False, active_color=C["green"])
         entry_status = ft.Text("", size=15, color=C["green"], weight="bold")
         akshara_preview = ft.Container(content=ft.Text("", size=14, color=C["dark_txt"]), bgcolor=C["res_bg"], padding=10, border_radius=6, visible=False)
 
@@ -1536,6 +1616,7 @@ def main(page: ft.Page):
             row = db_get(sym)
             if row:
                 fld_sym.value, fld_eng.value, fld_hindi.value, fld_ldate.value, fld_series.value = row[0], row[1], row[2], row[3], row[6] if len(row)>6 else "EQ"
+                fld_portfolio_entry.value = bool(row[7]) if len(row) > 7 else False
                 fld_sym.disabled = True
                 asum, bk = calc(row[2])
                 akshara_preview.content.value, akshara_preview.visible = f"Akshara Sum = {asum}\n{bk[:80]}", True
@@ -1558,6 +1639,8 @@ def main(page: ft.Page):
             sym, eng, hindi, ldate, series = fld_sym.value.strip().upper(), fld_eng.value.strip(), fld_hindi.value.strip(), fld_ldate.value.strip(), fld_series.value.strip() or "EQ"
             if not sym or not eng or not hindi: return
             ok, val = db_save(sym, eng, hindi, ldate, series)
+            if ok:
+                set_portfolio(sym, fld_portfolio_entry.value)  # keep the Entry form's Portfolio switch in sync with the same DB the Stocks list uses
             entry_status.value, entry_status.color = (f"Saved! {sym} Akshara={val}", C["green"]) if ok else (f"Failed: {val}", C["red"])
             if ok: fld_sym.disabled = False
             page.update()
@@ -1566,12 +1649,16 @@ def main(page: ft.Page):
             make_header("✏️ MANAGE STOCK ENTRY"), ft.Divider(height=4, color=C["divider"]),
             fld_sym, fld_eng, ft.ElevatedButton("🌐 AUTO TRANSLITERATE HINDI", bgcolor=C["accent"], color="#FFFFFF", on_click=do_transliterate),
             fld_hindi, ft.ElevatedButton("👁️ PREVIEW SOUND WEIGHTS", bgcolor=C["secondary"], color="#FFFFFF", on_click=lambda e: (asum:=calc(fld_hindi.value.strip())) and setattr(akshara_preview.content,'value',f"Akshara: {asum[0]}\n{asum[1]}") or setattr(akshara_preview,'visible',True) or page.update()),
-            akshara_preview, fld_ldate, fld_series, entry_status,
+            akshara_preview, fld_ldate, fld_series,
+            ft.Container(height=4),
+            fld_portfolio_entry,
+            ft.Text("This is the SAME Portfolio flag shown as a switch next to each stock on the Stocks tab — setting it here keeps both in sync.", size=10, color=C["hint_txt"]),
+            entry_status,
             ft.Row([
                 ft.ElevatedButton("💾 SAVE NEW", bgcolor=C["green"], color="#FFFFFF", on_click=do_save),
                 ft.ElevatedButton("🔄 UPDATE", bgcolor=C["primary"], color="#FFFFFF", on_click=do_save),
                 ft.ElevatedButton("❌ DELETE", bgcolor=C["red"], color="#FFFFFF", on_click=lambda e: db_delete(fld_sym.value.strip().upper()) and setattr(entry_status,'value',"Deleted!") or page.update()),
-                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["hint_txt"], color="#FFFFFF", on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_sym,'disabled',False), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), setattr(akshara_preview,'visible',False), page.update())),
+                ft.ElevatedButton("🧹 CLEAR", bgcolor=C["hint_txt"], color="#FFFFFF", on_click=lambda e: (setattr(fld_sym,'value',""), setattr(fld_sym,'disabled',False), setattr(fld_eng,'value',""), setattr(fld_hindi,'value',""), setattr(fld_ldate,'value',""), setattr(fld_portfolio_entry,'value',False), setattr(akshara_preview,'visible',False), page.update())),
             ])
         ])
 
@@ -1611,6 +1698,22 @@ def main(page: ft.Page):
                     ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else ""),
                     size=13, color=C["primary"], weight="bold"))
                 astro_chart_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
+
+                # ── PANCHANGA FOR THIS DATE/TIME ──
+                tithi_name, tithi_num, paksha, yoga_name, karana_name, panch_notes = compute_panchanga(pos["Su"], pos["Mo"])
+                astro_chart_container.controls.append(ft.Container(height=6))
+                astro_chart_container.controls.append(make_header("🗓️ PANCHANGA (Tithi · Yoga · Karana)", bgcolor="#4E342E"))
+                astro_chart_container.controls.append(ft.Text(
+                    f"Tithi  : {tithi_name}  ({paksha}, #{tithi_num})\n"
+                    f"Yoga   : {yoga_name}\n"
+                    f"Karana : {karana_name}",
+                    size=13, color=C["black_txt"], weight="bold", selectable=True
+                ))
+                if panch_notes:
+                    astro_chart_container.controls.append(ft.Text("\n".join(panch_notes), size=11, color=C["orange"], weight="bold"))
+                else:
+                    astro_chart_container.controls.append(ft.Text("✅ No classical Panchanga caution flags for this moment.", size=11, color=C["green"], weight="bold"))
+
                 astro_chart_container.controls.append(ft.Container(height=8))
                 astro_chart_container.controls.append(ft.ElevatedButton("✖  CLOSE CHARTS", bgcolor=C["red"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_astro_close))
                 
@@ -1993,6 +2096,8 @@ HOW THE SCORE WORKS
 The banner under CALCULATE ASTRO adds up every matching rule: +weight for BUY, -weight for SELL, 0 for NEUTRAL. WAIT is deliberately NOT part of that tally — it's a hard caution flag. If even ONE WAIT rule matches, the banner switches to "WAIT ON THIS STOCK TODAY" regardless of what the BUY/SELL score says.
 
 This is a reference tool based on conventional interpretations, not a validated predictive model — use it as one input, not a standalone signal.
+
+PANCHANGA (Tithi / Yoga / Karana) — shown alongside the D1/D9 chart on both the Stocks page's CALCULATE ASTRO and the Kundali Engines page. This is informational only right now — it is NOT wired into the BUY/SELL/WAIT rule engine, so it never changes the score. Caution notes (Rikta Tithi, inauspicious Yoga, Vishti/Bhadra Karana) are shown as soft flags for your own judgement.
 
 WORKED EXAMPLES (what to set, leaving everything else at its default)
 • Jupiter in D1 house 9 → BUY: Planet=Ju, D1 House=9, Action=BUY

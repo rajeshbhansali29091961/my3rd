@@ -850,9 +850,12 @@ def main(page: ft.Page):
                 struct_src_house    INTEGER,
                 struct_tgt_chart    TEXT,
                 struct_tgt_list     TEXT,
-                struct_aspect       TEXT)""")
+                struct_aspect       TEXT,
+                struct_aspect_planets TEXT,
+                struct_aspect_mode  TEXT)""")
             for coldef in ("struct_src_chart TEXT", "struct_src_house INTEGER",
-                           "struct_tgt_chart TEXT", "struct_tgt_list TEXT", "struct_aspect TEXT"):
+                           "struct_tgt_chart TEXT", "struct_tgt_list TEXT", "struct_aspect TEXT",
+                           "struct_aspect_planets TEXT", "struct_aspect_mode TEXT"):
                 try:
                     conn.execute(f"ALTER TABLE simple_rules ADD COLUMN {coldef}")
                     conn.commit()
@@ -872,6 +875,7 @@ def main(page: ft.Page):
         YES_NO_ANY_OPTIONS = ["Any", "Yes", "No"]
         ACTION_OPTIONS = ["BUY", "SELL", "NEUTRAL", "WAIT"]
         CHART_OPTIONS  = ["D1", "D9"]
+        ASPECT_MODE_OPTIONS = ["Any", "None Aspect", "At Least One", "All Aspect"]
 
         # Classical Parashari drishti (aspect) rules, used only when a row's "Aspect"
         # column is set to Yes: EVERY planet aspects the 7th house from its own D9
@@ -894,32 +898,38 @@ def main(page: ft.Page):
                              d9_aspect, vargottama, same_house, companion_planet,
                              companion_d9_house, retro_only, weight, action,
                              struct_src_chart=None, struct_src_house=None,
-                             struct_tgt_chart=None, struct_tgt_list=None, struct_aspect=None):
+                             struct_tgt_chart=None, struct_tgt_list=None, struct_aspect=None,
+                             struct_aspect_planets=None, struct_aspect_mode=None):
             conn = sqlite3.connect(db_path)
             conn.execute("""INSERT INTO simple_rules(planet,d1_house,d1_rashi,d1_list,d9_house,d9_rashi,
                              d9_aspect,vargottama,same_house,companion_planet,companion_d9_house,
                              retro_only,weight,action,struct_src_chart,struct_src_house,struct_tgt_chart,
-                             struct_tgt_list,struct_aspect) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                             struct_tgt_list,struct_aspect,struct_aspect_planets,struct_aspect_mode)
+                             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                          (planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                           1 if d9_aspect else 0, 1 if vargottama else 0, 1 if same_house else 0,
                           companion_planet, companion_d9_house, 1 if retro_only else 0, weight, action,
-                          struct_src_chart, struct_src_house, struct_tgt_chart, struct_tgt_list, struct_aspect))
+                          struct_src_chart, struct_src_house, struct_tgt_chart, struct_tgt_list, struct_aspect,
+                          struct_aspect_planets, struct_aspect_mode))
             conn.commit(); conn.close()
 
         def simple_rule_update(rule_id, planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                                 d9_aspect, vargottama, same_house, companion_planet,
                                 companion_d9_house, retro_only, weight, action,
                                 struct_src_chart=None, struct_src_house=None,
-                                struct_tgt_chart=None, struct_tgt_list=None, struct_aspect=None):
+                                struct_tgt_chart=None, struct_tgt_list=None, struct_aspect=None,
+                                struct_aspect_planets=None, struct_aspect_mode=None):
             conn = sqlite3.connect(db_path)
             conn.execute("""UPDATE simple_rules SET planet=?, d1_house=?, d1_rashi=?, d1_list=?, d9_house=?,
                              d9_rashi=?, d9_aspect=?, vargottama=?, same_house=?, companion_planet=?,
                              companion_d9_house=?, retro_only=?, weight=?, action=?, struct_src_chart=?,
-                             struct_src_house=?, struct_tgt_chart=?, struct_tgt_list=?, struct_aspect=? WHERE id=?""",
+                             struct_src_house=?, struct_tgt_chart=?, struct_tgt_list=?, struct_aspect=?,
+                             struct_aspect_planets=?, struct_aspect_mode=? WHERE id=?""",
                          (planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                           1 if d9_aspect else 0, 1 if vargottama else 0, 1 if same_house else 0,
                           companion_planet, companion_d9_house, 1 if retro_only else 0, weight, action,
-                          struct_src_chart, struct_src_house, struct_tgt_chart, struct_tgt_list, struct_aspect, rule_id))
+                          struct_src_chart, struct_src_house, struct_tgt_chart, struct_tgt_list, struct_aspect,
+                          struct_aspect_planets, struct_aspect_mode, rule_id))
             conn.commit(); conn.close()
 
         def simple_rule_delete(rule_id):
@@ -932,7 +942,8 @@ def main(page: ft.Page):
             rows = conn.execute("""SELECT id,planet,d1_house,d1_rashi,d1_list,d9_house,d9_rashi,
                                     d9_aspect,vargottama,same_house,companion_planet,companion_d9_house,
                                     retro_only,weight,action,struct_src_chart,struct_src_house,
-                                    struct_tgt_chart,struct_tgt_list,struct_aspect FROM simple_rules ORDER BY id""").fetchall()
+                                    struct_tgt_chart,struct_tgt_list,struct_aspect,
+                                    struct_aspect_planets,struct_aspect_mode FROM simple_rules ORDER BY id""").fetchall()
             conn.close()
             return rows
 
@@ -980,11 +991,15 @@ def main(page: ft.Page):
               • struct_aspect (Yes/No/Any): "is the Source Chart's Source House
                 aspected by ANY planet at all?" — computed once across every planet
                 in that chart, not tied to a particular one.
-            Both depend only on lagna positions and overall chart layout, never on
-            a single named planet. If a rule sets ONLY these (Planet left at ANY, no
-            other planet-specific field set), it fires once for the whole chart. If
-            combined with planet fields too, they act as extra AND gates
-            applied to every planet the rest of the row is checking.
+              • struct_aspect_planets + struct_aspect_mode: a NAMED-planet version
+                of the same idea — e.g. "is the Source House aspected by Mars OR
+                Saturn specifically" (mode=At Least One), "by BOTH Mars AND Saturn"
+                (mode=All Aspect), or "by NEITHER Mars NOR Saturn" (mode=None Aspect).
+            All depend only on lagna positions and overall chart layout, never on
+            a single named planet from the Planet field above. If a rule sets ONLY
+            these (Planet left at ANY, no other planet-specific field set), it fires
+            once for the whole chart. If combined with planet fields too, they act
+            as extra AND gates applied to every planet the rest of the row is checking.
 
             WAIT rules are kept separate from the BUY/SELL numeric score — a single
             genuine WAIT match is a hard caution flag, not something a pile of small
@@ -995,10 +1010,12 @@ def main(page: ft.Page):
             for (rid, planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                  d9_aspect, vargottama, same_house, comp_planet, comp_d9_house,
                  retro_only, weight, action, struct_src_chart, struct_src_house,
-                 struct_tgt_chart, struct_tgt_list, struct_aspect) in simple_rule_list():
+                 struct_tgt_chart, struct_tgt_list, struct_aspect,
+                 struct_aspect_planets, struct_aspect_mode) in simple_rule_list():
 
-                # ── Rashi-in-House Match + "aspected by any planet" — chart-level facts, computed once ──
-                struct_enabled = struct_src_house is not None and (bool(struct_tgt_list) or struct_aspect in ("Yes", "No"))
+                # ── Rashi-in-House Match + "aspected by any/named planet" — chart-level facts, computed once ──
+                has_named_aspect_check = bool(struct_aspect_planets) and struct_aspect_mode in ("None Aspect", "At Least One", "All Aspect")
+                struct_enabled = struct_src_house is not None and (bool(struct_tgt_list) or struct_aspect in ("Yes", "No") or has_named_aspect_check)
                 struct_ok = True
                 if struct_enabled:
                     src_lagna = lagna_d9 if struct_src_chart == "D9" else lagna_d1
@@ -1015,6 +1032,20 @@ def main(page: ft.Page):
                         src_houses_map = houses_d9 if struct_src_chart == "D9" else houses_d1
                         aspected_by_any = any(struct_src_house in planet_aspect_houses(p, h) for p, h in src_houses_map.items())
                         struct_ok = struct_ok and (aspected_by_any if struct_aspect == "Yes" else (not aspected_by_any))
+                    if has_named_aspect_check:
+                        # Named-planet aspect check: e.g. "not aspected by Mars AND Saturn"
+                        # (mode=None Aspect), "aspected by at least one of Mars/Saturn"
+                        # (At Least One), or "aspected by both Mars AND Saturn" (All Aspect).
+                        src_houses_map = houses_d9 if struct_src_chart == "D9" else houses_d1
+                        named_planets = [x.strip() for x in struct_aspect_planets.split(",") if x.strip()]
+                        aspecting_named = [p for p in named_planets
+                                            if p in src_houses_map and struct_src_house in planet_aspect_houses(p, src_houses_map[p])]
+                        if struct_aspect_mode == "None Aspect":
+                            struct_ok = struct_ok and (len(aspecting_named) == 0)
+                        elif struct_aspect_mode == "At Least One":
+                            struct_ok = struct_ok and (len(aspecting_named) >= 1)
+                        elif struct_aspect_mode == "All Aspect":
+                            struct_ok = struct_ok and (set(aspecting_named) == set(named_planets) and len(named_planets) > 0)
 
                 no_planet_filters = (d1_house is None and d1_rashi is None and not d1_list and
                                       d9_house is None and d9_rashi is None and not vargottama and
@@ -1863,7 +1894,8 @@ def main(page: ft.Page):
             for (rid, planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
                  d9_aspect, vargottama, same_house, comp_planet, comp_d9_house,
                  retro_only, weight, action, struct_src_chart, struct_src_house,
-                 struct_tgt_chart, struct_tgt_list, struct_aspect) in rows:
+                 struct_tgt_chart, struct_tgt_list, struct_aspect,
+                 struct_aspect_planets, struct_aspect_mode) in rows:
 
                 dd_planet  = make_grid_dd("Planet", planet, PLANET_OPTIONS, 90)
                 dd_d1h     = make_grid_dd("D1 House", _house_disp(d1_house), HOUSE_OPTIONS, 95)
@@ -1884,6 +1916,8 @@ def main(page: ft.Page):
                 dd_stc     = make_grid_dd("Target Chart", (struct_tgt_chart or "D1"), CHART_OPTIONS, 110)
                 fld_stl    = make_grid_tf("Target House List", (struct_tgt_list or ""), "e.g. 4,5,9,10,11", 170)
                 dd_sasp    = make_grid_dd("Aspected by Any Planet?", _yna(struct_aspect), YES_NO_ANY_OPTIONS, 170)
+                fld_saspp  = make_grid_tf("Aspect Planets", (struct_aspect_planets or ""), "e.g. Ma,Sa", 130)
+                dd_saspm   = make_grid_dd("Aspect Mode", (struct_aspect_mode or "Any"), ASPECT_MODE_OPTIONS, 150)
                 row_status = ft.Text("", size=11, color="#FFEB3B", weight="bold")  # bright on dark-blue row bg
 
                 def make_row_saver(rid=rid, dd_planet=dd_planet, dd_d1h=dd_d1h, dd_d1r=dd_d1r, fld_d1l=fld_d1l,
@@ -1891,7 +1925,7 @@ def main(page: ft.Page):
                                     dd_same=dd_same, dd_comp_pl=dd_comp_pl, dd_comp_h=dd_comp_h,
                                     dd_retro=dd_retro, fld_wt=fld_wt, dd_action=dd_action,
                                     dd_ssc=dd_ssc, dd_ssh=dd_ssh, dd_stc=dd_stc, fld_stl=fld_stl,
-                                    dd_sasp=dd_sasp, row_status=row_status):
+                                    dd_sasp=dd_sasp, fld_saspp=fld_saspp, dd_saspm=dd_saspm, row_status=row_status):
                     def _save(e):
                         try:
                             d1h = None if dd_d1h.value == "Any" else int(dd_d1h.value)
@@ -1909,10 +1943,12 @@ def main(page: ft.Page):
                             if stl:
                                 [int(x.strip()) for x in stl.split(",") if x.strip()]  # validate
                             sasp = None if dd_sasp.value == "Any" else dd_sasp.value
+                            saspp = (fld_saspp.value or "").strip().upper().replace(" ", "") or None
+                            saspm = None if dd_saspm.value == "Any" else dd_saspm.value
                             simple_rule_update(rid, dd_planet.value, d1h, d1r, d1l, d9h, d9r,
                                                 dd_aspect.value == "Yes", dd_varg.value == "Yes", dd_same.value == "Yes",
                                                 comp_pl, comp_h, dd_retro.value == "Yes", wt, dd_action.value,
-                                                dd_ssc.value, ssh, dd_stc.value, stl, sasp)
+                                                dd_ssc.value, ssh, dd_stc.value, stl, sasp, saspp, saspm)
                             row_status.value = "✅ saved"
                             row_status.color = "#69F0AE"  # bright mint, visible on dark-blue row bg
                             set_status("Rule updated.", C["green"])
@@ -1925,7 +1961,7 @@ def main(page: ft.Page):
                 saver = make_row_saver()
                 for ctrl in (dd_planet, dd_d1h, dd_d1r, fld_d1l, dd_d9h, dd_d9r, dd_aspect, dd_varg,
                              dd_same, dd_comp_pl, dd_comp_h, dd_retro, fld_wt, dd_action,
-                             dd_ssc, dd_ssh, dd_stc, fld_stl, dd_sasp):
+                             dd_ssc, dd_ssh, dd_stc, fld_stl, dd_sasp, fld_saspp, dd_saspm):
                     if hasattr(ctrl, "on_change"):
                         ctrl.on_change = saver
                     if isinstance(ctrl, ft.TextField):
@@ -1947,7 +1983,7 @@ def main(page: ft.Page):
                             dd_planet, dd_d1h, dd_d1r, fld_d1l, dd_d9h, dd_d9r, dd_aspect, dd_varg, dd_same,
                             dd_comp_pl, dd_comp_h, dd_retro, fld_wt, dd_action,
                             ft.VerticalDivider(width=8, color="#FFFFFF"),
-                            dd_ssc, dd_ssh, dd_stc, fld_stl, dd_sasp,
+                            dd_ssc, dd_ssh, dd_stc, fld_stl, dd_sasp, fld_saspp, dd_saspm,
                             ft.IconButton(icon=ft.Icons.DELETE, icon_color="#FFFFFF", on_click=make_row_deleter())
                         ], spacing=6, scroll="auto", vertical_alignment="center"),
                         row_status,
@@ -1976,6 +2012,8 @@ def main(page: ft.Page):
         fld_new_stc     = make_grid_dd("Target Chart", "D1", CHART_OPTIONS, 110)
         fld_new_stl     = make_grid_tf("Target House List", "", "e.g. 4,5,9,10,11", 170)
         fld_new_sasp    = make_grid_dd("Aspected by Any Planet?", "Any", YES_NO_ANY_OPTIONS, 170)
+        fld_new_saspp   = make_grid_tf("Aspect Planets", "", "e.g. Ma,Sa", 130)
+        fld_new_saspm   = make_grid_dd("Aspect Mode", "Any", ASPECT_MODE_OPTIONS, 150)
         new_rule_status = ft.Text("", size=12, color="#FFEB3B", weight="bold")  # bright on dark-blue section bg
 
         def do_add_grid_rule(e):
@@ -1995,10 +2033,12 @@ def main(page: ft.Page):
                 if stl:
                     [int(x.strip()) for x in stl.split(",") if x.strip()]  # validate
                 sasp = None if fld_new_sasp.value == "Any" else fld_new_sasp.value
+                saspp = (fld_new_saspp.value or "").strip().upper().replace(" ", "") or None
+                saspm = None if fld_new_saspm.value == "Any" else fld_new_saspm.value
                 simple_rule_add(fld_new_planet.value, d1h, d1r, d1l, d9h, d9r,
                                  fld_new_aspect.value == "Yes", fld_new_varg.value == "Yes", fld_new_same.value == "Yes",
                                  comp_pl, comp_h, fld_new_retro.value == "Yes", wt, fld_new_action.value,
-                                 fld_new_ssc.value, ssh, fld_new_stc.value, stl, sasp)
+                                 fld_new_ssc.value, ssh, fld_new_stc.value, stl, sasp, saspp, saspm)
                 new_rule_status.value = ""
                 set_status("Rule added.", C["green"])
                 fld_new_d1h.value = "Any"; fld_new_d1r.value = "Any"; fld_new_d1l.value = ""
@@ -2007,7 +2047,7 @@ def main(page: ft.Page):
                 fld_new_comp_pl.value = "Any"; fld_new_comp_h.value = "Any"; fld_new_retro.value = "No"
                 fld_new_wt.value = "1.0"; fld_new_action.value = "BUY"
                 fld_new_ssc.value = "D9"; fld_new_ssh.value = "Any"; fld_new_stc.value = "D1"; fld_new_stl.value = ""
-                fld_new_sasp.value = "Any"
+                fld_new_sasp.value = "Any"; fld_new_saspp.value = ""; fld_new_saspm.value = "Any"
                 refresh_rules_grid()
             except Exception as ex:
                 new_rule_status.value = f"⚠️ {str(ex)}"
@@ -2021,14 +2061,15 @@ def main(page: ft.Page):
             rows = simple_rule_list()
             data = []
             for (rid, planet, d1h, d1r, d1l, d9h, d9r, asp, varg, same, comp_pl, comp_h, retro, wt, act,
-                 ssc, ssh, stc, stl, sasp) in rows:
+                 ssc, ssh, stc, stl, sasp, saspp, saspm) in rows:
                 data.append({
                     "planet": planet, "d1_house": d1h, "d1_rashi": d1r, "d1_list": d1l,
                     "d9_house": d9h, "d9_rashi": d9r, "d9_aspect": asp, "vargottama": varg,
                     "same_house": same, "companion_planet": comp_pl, "companion_d9_house": comp_h,
                     "retro_only": retro, "weight": wt, "action": act,
                     "struct_src_chart": ssc, "struct_src_house": ssh,
-                    "struct_tgt_chart": stc, "struct_tgt_list": stl, "struct_aspect": sasp
+                    "struct_tgt_chart": stc, "struct_tgt_list": stl, "struct_aspect": sasp,
+                    "struct_aspect_planets": saspp, "struct_aspect_mode": saspm
                 })
             export_output.value = json.dumps(data, ensure_ascii=False, indent=2)
             export_output.visible = True
@@ -2054,7 +2095,8 @@ def main(page: ft.Page):
                         item.get("companion_planet"), item.get("companion_d9_house"),
                         item.get("retro_only", 0), float(item.get("weight", 1.0)), item.get("action", "BUY"),
                         item.get("struct_src_chart"), item.get("struct_src_house"),
-                        item.get("struct_tgt_chart"), item.get("struct_tgt_list"), item.get("struct_aspect")
+                        item.get("struct_tgt_chart"), item.get("struct_tgt_list"), item.get("struct_aspect"),
+                        item.get("struct_aspect_planets"), item.get("struct_aspect_mode")
                     )
                     count += 1
                 set_status(f"Imported {count} rules.", C["green"])
@@ -2084,13 +2126,19 @@ FIELD-BY-FIELD MEANING
 • Weight — how strongly a BUY/SELL match counts toward the score (default 1).
 • Action — BUY (+weight to score), SELL (-weight to score), NEUTRAL (logged only), or WAIT (a hard caution flag — see below).
 
-RASHI-IN-HOUSE MATCH — A DIFFERENT KIND OF FIELD (Src Chart / Src House / Target Chart / Target House List / Aspected by Any Planet?)
+RASHI-IN-HOUSE MATCH — A DIFFERENT KIND OF FIELD (Src Chart / Src House / Target Chart / Target House List / Aspected by Any Planet? / Aspect Planets / Aspect Mode)
 This section is NOT about any planet — it's a fact about the chart itself.
 • Target House List: "does the rashi sitting in Source Chart's Source House ALSO sit in one of Target Chart's Target House List houses?" Depends only on the Lagna of each chart.
 • Aspected by Any Planet?: "is the Source Chart's Source House aspected by AT LEAST ONE planet, whichever it is?" — checked once across every planet in that chart, not tied to a specific one. Leave at Any to skip this check.
+• Aspect Planets + Aspect Mode: the NAMED-planet version — put comma-separated planet codes in Aspect Planets (e.g. Ma,Sa for Mars and Saturn) and pick a mode:
+   - None Aspect  = the Source House must NOT be aspected by any of the listed planets (none of them may aspect it)
+   - At Least One = at least one of the listed planets aspects the Source House
+   - All Aspect   = every listed planet aspects the Source House
+  Leave Aspect Mode at Any to skip this named-planet check entirely (use plain "Aspected by Any Planet?" instead, or neither).
 • If you set ONLY this section (Planet left at ANY, nothing else above set) — the rule fires once for the whole chart, not once per planet.
 • If you combine it WITH planet fields above (e.g. Planet=Ju + D1 House=9) — it becomes an extra AND requirement on top of the planet condition.
 Example — "D9's house 11 rashi exists in D1's houses 4, 5, 9, 10, or 11": Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,9,10,11.
+Example — "D9's house 11 should NOT be aspected by Mars and Saturn": Src Chart=D9, Src House=11, Aspect Planets=Ma,Sa, Aspect Mode=None Aspect.
 
 HOW THE SCORE WORKS
 The banner under CALCULATE ASTRO adds up every matching rule: +weight for BUY, -weight for SELL, 0 for NEUTRAL. WAIT is deliberately NOT part of that tally — it's a hard caution flag. If even ONE WAIT rule matches, the banner switches to "WAIT ON THIS STOCK TODAY" regardless of what the BUY/SELL score says.
@@ -2113,6 +2161,7 @@ WORKED EXAMPLES (what to set, leaving everything else at its default)
 • D9 house 2's rashi in D1's houses 4,5,10,11 → BUY: Src Chart=D9, Src House=2, Target Chart=D1, Target House List=4,5,10,11, Action=BUY
 • Same two rules, but ALSO require that D9 house 11 (or D9 house 2) is aspected by some planet: add Aspected by Any Planet?=Yes to that rule.
 • Saturn in D9 house 7 → avoid trading: Planet=Sa, D9 House=7, Action=WAIT. WAIT is this app's "avoid trading" flag — a single match overrides the BUY/SELL score and shows "WAIT ON THIS STOCK TODAY" regardless of anything else.
+• D9's house 11 rashi exists in D1's 4,5,10,11th houses AND D9's house 11 is NOT aspected by Mars or Saturn → BUY: Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,10,11, Aspect Planets=Ma,Sa, Aspect Mode=None Aspect, Action=BUY. (Everything else — Planet, D1/D9 house/rashi fields, Vargottama, etc. — left at Any/No, since this is a pure chart-structure rule, not tied to one named planet.)
 
 USER Q&A
 Q: If D9's house no 7 has Saturn we should avoid trade. Can I set this rule in rule list — if yes then say 'yes', else set such rule provision setting in rule.
@@ -2122,6 +2171,12 @@ Set it exactly like this in the "Add New Rule" form:
 • Section 3 (D9 Chart Condition): D9 House = 7
 • Everything else left at Any/No
 • Section 7 (Result): Action = WAIT
+
+Q: If D9's 11th house rashi exists in D1's 4,5,10,11th house rashi, AND D9's 11th house should NOT be aspected by Mars and Saturn — can I set this rule? If yes, say 'yes', else make a provision for it.
+A: Not originally possible — the old "Aspected by Any Planet?" field only checked ANY planet, not named ones. A provision was added: Section 6 now has two extra fields, "Aspect Planets" (comma list, e.g. Ma,Sa) and "Aspect Mode" (None Aspect / At Least One / All Aspect). Set it exactly like this:
+• Section 1 (Planet): ANY (leave as-is — this is a chart-structure rule, not tied to one planet)
+• Section 6 (Rashi-in-House Chart Match): Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,10,11, Aspect Planets=Ma,Sa, Aspect Mode=None Aspect
+• Section 7 (Result): Action = BUY (or SELL/WAIT, whichever you intend)
 
 Tap any field on an existing rule row to change it — it saves as soon as you leave the field. Tap the trash icon to delete a row."""
 
@@ -2163,8 +2218,8 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
                                [fld_new_varg, fld_new_same, fld_new_retro]),
             make_form_section("5. COMPANION (SECOND PLANET)", "Only fires if this second planet is ALSO in this D9 house at the same time.",
                                [fld_new_comp_pl, fld_new_comp_h]),
-            make_form_section("6. RASHI-IN-HOUSE CHART MATCH", "A fact about the CHART, not any planet — leave Planet at ANY above to use this on its own. Src House's rashi checked against Target House List; 'Aspected by Any Planet?' checks the Src House itself.",
-                               [fld_new_ssc, fld_new_ssh, fld_new_stc, fld_new_stl, fld_new_sasp]),
+            make_form_section("6. RASHI-IN-HOUSE CHART MATCH", "A fact about the CHART, not any planet — leave Planet at ANY above to use this on its own. Src House's rashi checked against Target House List; 'Aspected by Any Planet?' checks the Src House itself. 'Aspect Planets' + 'Aspect Mode' let you name specific planets (e.g. Ma,Sa) instead of any planet — None Aspect / At Least One / All Aspect.",
+                               [fld_new_ssc, fld_new_ssh, fld_new_stc, fld_new_stl, fld_new_sasp, fld_new_saspp, fld_new_saspm]),
             make_form_section("7. RESULT", "How much a BUY/SELL match counts, and what action this rule signals.",
                                [fld_new_wt, fld_new_action]),
             new_rule_status,

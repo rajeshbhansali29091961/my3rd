@@ -585,13 +585,15 @@ def jd_from_dt(year, month, day, hour=12, minute=0):
     B = 2 - A + int(A / 4)
     return (int(365.25 * (year + 4716)) + int(30.6001 * (month + 1)) + day + hour/24.0 + minute/1440.0 + B - 1524.5)
 
-IST_OFFSET_HOURS = 5.5  # India Standard Time = UTC + 5:30
+IST_OFFSET_HOURS = 5.5  # India Standard Time = UTC + 5:30 — DEFAULT fallback only; the app's
+                          # actual working offset now comes from the user's saved Place setting.
 
-def jd_ut_from_ist(year, month, day, hour, minute):
+def jd_ut_from_ist(year, month, day, hour, minute, gmt_offset_hours=IST_OFFSET_HOURS):
     """Julian Day formulas (and GMST/Ascendant) require UT. Our date/time fields and
-    datetime.now() are IST (UTC+5:30), so subtract the offset to get true UT before use."""
+    datetime.now() are assumed to be in the local clock time of gmt_offset_hours (IST/UTC+5:30
+    by default, but configurable via Place Settings), so subtract the offset to get true UT."""
     jd_local = jd_from_dt(year, month, day, hour, minute)
-    return jd_local - (IST_OFFSET_HOURS / 24.0)
+    return jd_local - (gmt_offset_hours / 24.0)
 
 def lahiri_ayanamsa(jd):
     T = (jd - 2451545.0) / 36525.0
@@ -861,9 +863,44 @@ def main(page: ft.Page):
                     conn.commit()
                 except Exception:
                     pass  # column already exists on installs upgraded from an earlier version
+            # Place Settings — user-configurable reference location + GMT offset used by every
+            # "automatic" astro calculation in the app (Oracle's CALCULATE ASTRO, the Stocks tab's
+            # Live Timing Signal, and as the default prefill on the Kundali Engines page). Stored as
+            # simple key-value pairs so new settings can be added later without another migration.
+            conn.execute("""CREATE TABLE IF NOT EXISTS app_settings(
+                key   TEXT PRIMARY KEY,
+                value TEXT)""")
             conn.commit()
             conn.close()
         except: pass
+
+        PLACE_DEFAULTS = {"place_name": "Mumbai", "latitude": "19.076", "longitude": "72.877", "gmt_offset": "5.5"}
+
+        def get_place_settings():
+            """Reads the saved Place Settings, falling back to the Mumbai/IST defaults
+            (the same values this app always used) for any key not yet saved."""
+            result = dict(PLACE_DEFAULTS)
+            try:
+                conn = sqlite3.connect(db_path)
+                rows = conn.execute("SELECT key, value FROM app_settings").fetchall()
+                conn.close()
+                for k, v in rows:
+                    if k in result and v not in (None, ""):
+                        result[k] = v
+            except Exception:
+                pass
+            return result
+
+        def save_place_settings(place_name, latitude, longitude, gmt_offset):
+            conn = sqlite3.connect(db_path)
+            for k, v in (("place_name", place_name), ("latitude", str(latitude)),
+                         ("longitude", str(longitude)), ("gmt_offset", str(gmt_offset))):
+                conn.execute("""INSERT INTO app_settings(key, value) VALUES(?, ?)
+                                 ON CONFLICT(key) DO UPDATE SET value=excluded.value""", (k, v))
+            conn.commit()
+            conn.close()
+
+        current_place = get_place_settings()  # loaded once at startup; refreshed in-memory on Save
 
         RASHI_LIST = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo",
                       "Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"]
@@ -1276,20 +1313,24 @@ def main(page: ft.Page):
             # ── D1 / D9 VEDIC CHART AT TIME OF THIS CALCULATION (single combined canvas) ──
             try:
                 calc_time = datetime.now()
-                jd = jd_ut_from_ist(calc_time.year, calc_time.month, calc_time.day, calc_time.hour, calc_time.minute)
-                pos, ay = calc_planet_positions(jd, 19.076, 72.877)  # NSE Mumbai reference coords
+                place_lat = float(current_place["latitude"])
+                place_lon = float(current_place["longitude"])
+                place_gmt = float(current_place["gmt_offset"])
+                jd = jd_ut_from_ist(calc_time.year, calc_time.month, calc_time.day, calc_time.hour, calc_time.minute, place_gmt)
+                pos, ay = calc_planet_positions(jd, place_lat, place_lon)  # user's saved Place Settings (default: Mumbai)
 
                 d1_pos = {p: lon_to_sign_deg(l)[0] for p, l in pos.items()}
                 d9_pos = {p: d9_sign(l) for p, l in pos.items()}
                 lagna_idx = d1_pos["As"]
                 lagna_d9  = d9_pos["As"]
-                retro_set = get_retrograde_set(jd, 19.076, 72.877)
+                retro_set = get_retrograde_set(jd, place_lat, place_lon)
                 vargottama_set = {p for p in d1_pos if p != "As" and d1_pos.get(p) == d9_pos.get(p)}
 
                 oracle_astro_container.controls.clear()
                 oracle_astro_container.controls.append(ft.Divider(height=6, color=C["divider"]))
                 oracle_astro_container.controls.append(make_header("🕉️ VEDIC KUNDALI AT TIME OF CALCULATION"))
                 oracle_astro_container.controls.append(ft.Text(
+                    "📍 " + current_place["place_name"] + f" ({place_lat:g}, {place_lon:g}, GMT+{place_gmt:g})   " +
                     "📅 " + calc_time.strftime("%d-%m-%Y %H:%M") + "   ✨ Ayanamsa (Lahiri): " + str(round(ay, 4)) + "°" +
                     ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
                     ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else ""),
@@ -1452,12 +1493,15 @@ def main(page: ft.Page):
             """Runs your custom Rules against the sky right now (same engine as this page's
             Calculate Astro), independent of any specific stock — a general market-timing read."""
             now = datetime.now()
-            jd = jd_ut_from_ist(now.year, now.month, now.day, now.hour, now.minute)
-            pos, ay = calc_planet_positions(jd, 19.076, 72.877)
+            place_lat = float(current_place["latitude"])
+            place_lon = float(current_place["longitude"])
+            place_gmt = float(current_place["gmt_offset"])
+            jd = jd_ut_from_ist(now.year, now.month, now.day, now.hour, now.minute, place_gmt)
+            pos, ay = calc_planet_positions(jd, place_lat, place_lon)
             d1_pos = {p: lon_to_sign_deg(l)[0] for p, l in pos.items()}
             d9_pos = {p: d9_sign(l) for p, l in pos.items()}
             lagna_idx, lagna_d9 = d1_pos["As"], d9_pos["As"]
-            retro_set = get_retrograde_set(jd, 19.076, 72.877)
+            retro_set = get_retrograde_set(jd, place_lat, place_lon)
             matches, score, wait_matches = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
             if wait_matches:
                 return "WAIT", C["orange"], score, wait_matches
@@ -1696,8 +1740,9 @@ def main(page: ft.Page):
         # ── SCREEN 4: ASTRO CHART ────────────────────────────────────────────
         fld_date = make_field("Date (DD-MM-YYYY)", value=datetime.now().strftime("%d-%m-%Y"))
         fld_time = make_field("Time (HH:MM)", value=datetime.now().strftime("%H:%M"))
-        fld_lat  = make_field("Latitude (Decimal)", value="19.076")
-        fld_lon  = make_field("Longitude (Decimal)", value="72.877")
+        fld_lat  = make_field("Latitude (Decimal)", value=current_place["latitude"])
+        fld_lon  = make_field("Longitude (Decimal)", value=current_place["longitude"])
+        fld_gmt  = make_field("GMT Offset (hours)", hint="e.g. 5.5 for IST", value=current_place["gmt_offset"])
         astro_chart_container = ft.Column(spacing=15, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
         def do_astro_close(e):
@@ -1710,7 +1755,8 @@ def main(page: ft.Page):
                 tm = fld_time.value.strip().split(":")
                 hh, mm = int(tm[0]), int(tm[1])
                 lat, lon = float(fld_lat.value), float(fld_lon.value)
-                jd = jd_ut_from_ist(dt.year, dt.month, dt.day, hh, mm)
+                gmt_offset = float(fld_gmt.value) if (fld_gmt.value or "").strip() else 5.5
+                jd = jd_ut_from_ist(dt.year, dt.month, dt.day, hh, mm, gmt_offset)
                 pos, ay = calc_planet_positions(jd, lat, lon)
                 
                 d1_pos = {p: lon_to_sign_deg(l)[0] for p, l in pos.items()}
@@ -1724,6 +1770,7 @@ def main(page: ft.Page):
                 astro_chart_container.controls.clear()
                 
                 astro_chart_container.controls.append(ft.Text(
+                    f"📍 Lat {lat:g}, Lon {lon:g}, GMT+{gmt_offset:g}   " +
                     "✨ SIDEREAL AYANAMSA (LAHIRI): " + str(round(ay, 4)) + "°" +
                     ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
                     ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else ""),
@@ -1753,9 +1800,16 @@ def main(page: ft.Page):
                 set_status(f"Error: {str(ex)}", C["red"])
             page.update()
 
+        def do_use_saved_place(e):
+            fld_lat.value = current_place["latitude"]
+            fld_lon.value = current_place["longitude"]
+            fld_gmt.value = current_place["gmt_offset"]
+            page.update()
+
         astro_screen = ft.Column(visible=False, controls=[
             make_header("🕉️ VEDIC KUNDALI ENGINES"), ft.Divider(height=4, color=C["divider"]),
-            ft.Row([fld_date, fld_time]), ft.Row([fld_lat, fld_lon]),
+            ft.Row([fld_date, fld_time]), ft.Row([fld_lat, fld_lon, fld_gmt]),
+            ft.TextButton("📍 Use My Saved Place Settings", style=ft.ButtonStyle(color=C["accent"]), on_click=do_use_saved_place),
             ft.ElevatedButton("🕉️ GENERATE NORTH INDIAN CHARTS", bgcolor=C["primary"], color="#FFFFFF", height=50, on_click=do_astro),
             ft.Divider(height=6, color=C["divider"]), astro_chart_container
         ])
@@ -1824,10 +1878,74 @@ def main(page: ft.Page):
                 hide_prg()
                 set_status(f"Build failed: {str(ex)}", C["red"])
 
+        db_place_summary_text = ft.Text(f"📍 Current astro Place: {current_place['place_name']} ({current_place['latitude']}, {current_place['longitude']}, GMT+{current_place['gmt_offset']})", size=12, color=C["black_txt"])
         db_screen = ft.Column(visible=False, controls=[
             make_header("⚙️ DATABASE AND ENGINE SETUP"), ft.Divider(height=4, color=C["divider"]),
             ft.ElevatedButton("⚡ BUILD AUTOMATED DATABASE", bgcolor=C["orange"], color="#FFFFFF", height=54, on_click=lambda e: threading.Thread(target=build_db_thread, daemon=True).start()),
-            prg_bar, prg_txt
+            prg_bar, prg_txt,
+            ft.Divider(height=10, color=C["divider"]),
+            db_place_summary_text,
+            ft.ElevatedButton("📍 PLACE SETTINGS (City / Lat / Lon / GMT)", bgcolor="#455A64", color="#FFFFFF", height=48, on_click=lambda e: show_screen("place")),
+        ])
+
+        # ── SCREEN: PLACE SETTINGS ────────────────────────────────────────────
+        # The reference location + GMT offset used by every automatic astro
+        # calculation in the app (Oracle's CALCULATE ASTRO, the Stocks tab's Live
+        # Timing Signal, and as the default prefill on the Kundali Engines page).
+        # Was previously hardcoded to Mumbai (19.076, 72.877) / IST (GMT+5.5) —
+        # now saved to the same SQLite database as everything else, so it persists
+        # across app restarts and can be changed to any city.
+        fld_place_name = make_field("City / Place Name", value=current_place["place_name"])
+        fld_place_lat  = make_field("Latitude (Decimal)", hint="e.g. 19.076 for Mumbai", value=current_place["latitude"])
+        fld_place_lon  = make_field("Longitude (Decimal)", hint="e.g. 72.877 for Mumbai", value=current_place["longitude"])
+        fld_place_gmt  = make_field("GMT Offset (hours)", hint="e.g. 5.5 for India (IST)", value=current_place["gmt_offset"])
+        place_status = ft.Text("", size=14, color=C["green"], weight="bold")
+
+        def do_save_place(e):
+            try:
+                name = fld_place_name.value.strip() or "Custom Location"
+                lat  = float(fld_place_lat.value)
+                lon  = float(fld_place_lon.value)
+                gmt  = float(fld_place_gmt.value)
+                if not (-90 <= lat <= 90):
+                    raise ValueError("Latitude must be between -90 and 90")
+                if not (-180 <= lon <= 180):
+                    raise ValueError("Longitude must be between -180 and 180")
+                if not (-12 <= gmt <= 14):
+                    raise ValueError("GMT offset must be between -12 and +14")
+                save_place_settings(name, lat, lon, gmt)
+                current_place.update({"place_name": name, "latitude": str(lat), "longitude": str(lon), "gmt_offset": str(gmt)})
+                # Keep the Kundali Engines page's fields and the Data-tab summary in sync with the new saved default
+                fld_lat.value, fld_lon.value, fld_gmt.value = str(lat), str(lon), str(gmt)
+                db_place_summary_text.value = f"📍 Current astro Place: {name} ({lat:g}, {lon:g}, GMT+{gmt:g})"
+                place_status.value = f"✅ Saved! {name} ({lat:g}, {lon:g}, GMT+{gmt:g}) is now used for all astro calculations."
+                place_status.color = C["green"]
+                set_status(f"Place Settings saved: {name}", C["green"])
+            except Exception as ex:
+                place_status.value = f"⚠️ {str(ex)}"
+                place_status.color = C["red"]
+            page.update()
+
+        def do_reset_place(e):
+            fld_place_name.value = PLACE_DEFAULTS["place_name"]
+            fld_place_lat.value  = PLACE_DEFAULTS["latitude"]
+            fld_place_lon.value  = PLACE_DEFAULTS["longitude"]
+            fld_place_gmt.value  = PLACE_DEFAULTS["gmt_offset"]
+            place_status.value = "Reset to default (Mumbai / IST) — tap SAVE to apply."
+            place_status.color = C["accent"]
+            page.update()
+
+        place_screen = ft.Column(visible=False, controls=[
+            make_header("📍 PLACE SETTINGS"), ft.Divider(height=4, color=C["divider"]),
+            ft.Text("This location and GMT offset is used for every automatic astro calculation — Oracle's CALCULATE ASTRO, the Stocks tab's Live Timing Signal, and as the starting default on the Kundali Engines page (which you can still override per-calculation there).", size=12, color=C["black_txt"]),
+            ft.Container(height=6),
+            fld_place_name, fld_place_lat, fld_place_lon, fld_place_gmt,
+            ft.Text("Default when never changed: Mumbai — Latitude 19.076, Longitude 72.877, GMT+5.5 (IST).", size=11, color=C["hint_txt"]),
+            place_status,
+            ft.Row([
+                ft.ElevatedButton("💾 SAVE PLACE", bgcolor=C["green"], color="#FFFFFF", height=48, on_click=do_save_place),
+                ft.ElevatedButton("↺ RESET TO MUMBAI", bgcolor=C["hint_txt"], color="#FFFFFF", height=48, on_click=do_reset_place),
+            ], spacing=10),
         ])
 
         # ── SCREEN 6: CUSTOM D1/D9 RULES — FULL-POWER GRID ──────────────────
@@ -2234,7 +2352,7 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
 
 
         # ── NAVIGATION CONTROL ────────────────────────────────────────────────
-        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen, "rules": rules_screen, "help": help_screen}
+        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen, "place": place_screen, "rules": rules_screen, "help": help_screen}
 
         AZ_LETTERS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
         az_letter_containers = {}  # letter -> its Container, so we can restyle the selected one

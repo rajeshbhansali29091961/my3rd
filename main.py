@@ -2296,6 +2296,20 @@ A: Not originally possible — the old "Aspected by Any Planet?" field only chec
 • Section 6 (Rashi-in-House Chart Match): Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,10,11, Aspect Planets=Ma,Sa, Aspect Mode=None Aspect
 • Section 7 (Result): Action = BUY (or SELL/WAIT, whichever you intend)
 
+Q: (1) If D9's 2nd house rashi exists in D1's house 4, 5, 10, or 11, AND D9's 2nd house is NOT aspected by Sun, Mars, Saturn → BUY signal. (2) If D9's 11th house rashi exists in D1's house 4, 5, 10, or 11, AND D9's 11th house is NOT aspected by Mars and Saturn → SELL signal. Can these be set in the rule list? If yes, say 'yes', else make a provision.
+
+A: Yes — the Aspect Planets field takes ANY comma-separated list of planet codes (not just two), so a 3-planet check like Su,Ma,Sa works exactly the same way as a 2-planet check like Ma,Sa. No new provision was needed; this is the same "Rashi-in-House Match" section used above, just with different Src House / Target House List / Aspect Planets / Action values. Add TWO separate rule rows:
+
+Rule (1) — D9 house 2 → D1 kendra/trikona, unaspected by Sun/Mars/Saturn → BUY:
+• Section 1 (Planet): ANY (leave as-is — pure chart-structure rule)
+• Section 6 (Rashi-in-House Chart Match): Src Chart=D9, Src House=2, Target Chart=D1, Target House List=4,5,10,11, Aspect Planets=Su,Ma,Sa, Aspect Mode=None Aspect
+• Section 7 (Result): Action = BUY
+
+Rule (2) — D9 house 11 → D1 kendra/trikona, unaspected by Mars/Saturn → SELL:
+• Section 1 (Planet): ANY (leave as-is — pure chart-structure rule)
+• Section 6 (Rashi-in-House Chart Match): Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,10,11, Aspect Planets=Ma,Sa, Aspect Mode=None Aspect
+• Section 7 (Result): Action = SELL
+
 Tap any field on an existing rule row to change it — it saves as soon as you leave the field. Tap the trash icon to delete a row."""
 
         help_screen = ft.Column(visible=False, scroll="auto", controls=[

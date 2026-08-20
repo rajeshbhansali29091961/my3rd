@@ -2279,7 +2279,6 @@ WORKED EXAMPLES (what to set, leaving everything else at its default)
 • D9 house 2's rashi in D1's houses 4,5,10,11 → BUY: Src Chart=D9, Src House=2, Target Chart=D1, Target House List=4,5,10,11, Action=BUY
 • Same two rules, but ALSO require that D9 house 11 (or D9 house 2) is aspected by some planet: add Aspected by Any Planet?=Yes to that rule.
 • Saturn in D9 house 7 → avoid trading: Planet=Sa, D9 House=7, Action=WAIT. WAIT is this app's "avoid trading" flag — a single match overrides the BUY/SELL score and shows "WAIT ON THIS STOCK TODAY" regardless of anything else.
-• D9's house 11 rashi exists in D1's 4,5,10,11th houses AND D9's house 11 is NOT aspected by Mars or Saturn → BUY: Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,10,11, Aspect Planets=Ma,Sa, Aspect Mode=None Aspect, Action=BUY. (Everything else — Planet, D1/D9 house/rashi fields, Vargottama, etc. — left at Any/No, since this is a pure chart-structure rule, not tied to one named planet.)
 
 USER Q&A
 Q: If D9's house no 7 has Saturn we should avoid trade. Can I set this rule in rule list — if yes then say 'yes', else set such rule provision setting in rule.

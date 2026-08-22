@@ -596,42 +596,134 @@ def jd_ut_from_ist(year, month, day, hour, minute, gmt_offset_hours=IST_OFFSET_H
     return jd_local - (gmt_offset_hours / 24.0)
 
 def lahiri_ayanamsa(jd):
+    """Lahiri (Chitrapaksha) ayanamsa, degrees, T = Julian centuries from J2000.
+    NOTE: the previous version of this formula used a linear rate of only
+    0.013611 deg/century -- about 100x too small (true general precession is
+    ~50.29"/yr = ~1.397 deg/century). That bug made the ayanamsa barely move
+    across decades, silently drifting the whole D1/D9 chart by ~15-20 arcmin
+    for present-day dates. Fixed to the correct precession rate below."""
     T = (jd - 2451545.0) / 36525.0
-    return 23.85 + 0.013611 * T + 0.000092 * T * T
+    return 23.85 + 1.396971 * T + 0.000308 * T * T
+
+# ── Approximate Keplerian orbital elements (JPL/Standish, valid ~1800-2050) ──
+# (a AU, a-rate/century, e, e-rate/century, i deg, i-rate/century,
+#  L deg, L-rate/century, long.peri deg, peri-rate/century, long.node deg, node-rate/century)
+_KEPLER_ELEMENTS = {
+    "Me": (0.38709927,  0.00000037, 0.20563593,  0.00001906,  7.00497902, -0.00594749,
+           252.25032350, 149472.67411175,  77.45779628,  0.16047689,  48.33076593, -0.12534081),
+    "Ve": (0.72333566,  0.00000390, 0.00677672, -0.00004107,  3.39467605, -0.00078890,
+           181.97909950,  58517.81538729, 131.60246718,  0.00268329,  76.67984255, -0.27769418),
+    "Ea": (1.00000261,  0.00000562, 0.01671123, -0.00004392, -0.00001531, -0.01294668,
+           100.46457166,  35999.37244981, 102.93768193,  0.32327364,   0.0,          0.0),
+    "Ma": (1.52371034,  0.00001847, 0.09339410,  0.00007882,  1.84969142, -0.00813131,
+            -4.55343205, 19140.30268499, -23.94362959,  0.44441088,  49.55953891, -0.29257343),
+    "Ju": (5.20288700, -0.00011607, 0.04838624, -0.00013253,  1.30439695, -0.00183714,
+            34.39644051,  3034.74612775,  14.72847983,  0.21252668, 100.47390909,  0.20469106),
+    "Sa": (9.53667594, -0.00125060, 0.05386179, -0.00050991,  2.48599187,  0.00193609,
+            49.95424423,  1222.49362201,  92.59887831, -0.41897216, 113.66242448, -0.28867794),
+}
+
+def _kepler_solve(M_rad, e):
+    """Solve Kepler's equation E - e*sin(E) = M for eccentric anomaly E (Newton-Raphson)."""
+    E = M_rad
+    for _ in range(10):
+        dE = (E - e * math.sin(E) - M_rad) / (1 - e * math.cos(E))
+        E -= dE
+        if abs(dE) < 1e-9:
+            break
+    return E
+
+def _helio_ecliptic_xyz(elems, T):
+    """Heliocentric ecliptic (J2000 frame) rectangular coordinates, AU, for a body's
+    mean Keplerian elements at Julian century T."""
+    a0, adot, e0, edot, i0, idot, L0, Ldot, peri0, peridot, node0, nodedot = elems
+    a    = a0 + adot * T
+    e    = e0 + edot * T
+    i    = math.radians(i0 + idot * T)
+    L    = norm360(L0 + Ldot * T)
+    peri = norm360(peri0 + peridot * T)          # long. of perihelion (varpi)
+    node = norm360(node0 + nodedot * T)          # long. of ascending node
+    w    = math.radians(norm360(peri - node))    # argument of perihelion
+    M    = norm360(L - peri)
+    if M > 180:
+        M -= 360
+    E = _kepler_solve(math.radians(M), e)
+    xp = a * (math.cos(E) - e)
+    yp = a * math.sqrt(1 - e * e) * math.sin(E)
+    node_r = math.radians(node)
+    cosO, sinO = math.cos(node_r), math.sin(node_r)
+    cosw, sinw = math.cos(w), math.sin(w)
+    cosi, sini = math.cos(i), math.sin(i)
+    x = (cosO*cosw - sinO*sinw*cosi) * xp + (-cosO*sinw - sinO*cosw*cosi) * yp
+    y = (sinO*cosw + cosO*sinw*cosi) * xp + (-sinO*sinw + cosO*cosw*cosi) * yp
+    z = (sinw*sini) * xp + (cosw*sini) * yp
+    return x, y, z
+
+def _geocentric_ecliptic_longitude(planet_key, T, earth_xyz):
+    """Geocentric ecliptic longitude (deg, J2000 mean-equinox/tropical frame) of a planet,
+    with one light-time iteration for better accuracy."""
+    xe, ye, ze = earth_xyz
+    xp, yp, zp = _helio_ecliptic_xyz(_KEPLER_ELEMENTS[planet_key], T)
+    xg, yg, zg = xp - xe, yp - ye, zp - ze
+    r = math.sqrt(xg*xg + yg*yg + zg*zg)
+    lt_days = 0.0057755183 * r  # light-time, AU -> days
+    T2 = T - lt_days / 36525.0
+    xp, yp, zp = _helio_ecliptic_xyz(_KEPLER_ELEMENTS[planet_key], T2)
+    xg, yg, zg = xp - xe, yp - ye, zp - ze
+    return norm360(math.degrees(math.atan2(yg, xg)))
 
 def calc_planet_positions(jd, lat=19.076, lon=72.877):
     T = (jd - 2451545.0) / 36525.0
-    # Sun
+    # Sun (Meeus low-precision geometric position + aberration/nutation apparent-longitude correction)
     L0   = norm360(280.46646 + 36000.76983 * T)
     M_su = math.radians(norm360(357.52911 + 35999.05029 * T))
     C_su = ((1.914602 - 0.004817*T - 0.000014*T*T) * math.sin(M_su) + (0.019993 - 0.000101*T) * math.sin(2*M_su) + 0.000289 * math.sin(3*M_su))
-    sun_t = norm360(L0 + C_su)
-    # Moon
-    L_mo  = norm360(218.3164477 + 481267.88123421 * T)
+    omega_moon_node = norm360(125.04 - 1934.136 * T)
+    sun_apparent_corr = -0.00569 - 0.00478 * math.sin(math.radians(omega_moon_node))
+    sun_t = norm360(L0 + C_su + sun_apparent_corr)
+    # Moon (extended ~25-term abbreviated ELP2000/Brown series -- ~arcminute-level, vs. the
+    # previous 5-term version which could be off by several arcminutes)
+    L_prime = norm360(218.3164477 + 481267.88123421 * T)
     D_mo  = math.radians(norm360(297.8501921 + 445267.1114034 * T))
     M_mo  = math.radians(norm360(134.9633964 + 477198.8675055 * T))
     M_su2 = math.radians(norm360(357.5291092 + 35999.0502909 * T))
-    moon_t = norm360(L_mo + 6.289 * math.sin(M_mo) - 1.274 * math.sin(2*D_mo - M_mo) + 0.658 * math.sin(2*D_mo) - 0.214 * math.sin(M_mo) - 0.186 * math.sin(M_su2))
-    # Mercury
-    L_me  = norm360(252.2509 + 149474.0722 * T)
-    M_me  = math.radians(norm360(168.6562 + 149472.5153 * T))
-    merc_t = norm360(L_me + 23.440*math.sin(M_me) + 2.912*math.sin(2*M_me) + 0.513*math.sin(3*M_me))
-    # Venus
-    L_ve  = norm360(181.9798 + 58517.8160 * T)
-    M_ve  = math.radians(norm360(212.9346 + 58517.8039 * T))
-    ven_t  = norm360(L_ve + 47.682*math.sin(M_ve) + 1.319*math.sin(2*M_ve))
-    # Mars
-    L_ma  = norm360(355.433 + 19140.2993 * T)
-    M_ma  = math.radians(norm360(19.373 + 19140.2973 * T))
-    mars_t = norm360(L_ma + 10.691*math.sin(M_ma) + 0.623*math.sin(2*M_ma) + 0.050*math.sin(3*M_ma))
-    # Jupiter
-    L_ju  = norm360(34.3515 + 3034.9057 * T)
-    M_ju  = math.radians(norm360(20.9961 + 3034.9056 * T))
-    jup_t  = norm360(L_ju + 5.555*math.sin(M_ju) + 0.168*math.sin(2*M_ju))
-    # Saturn
-    L_sa  = norm360(50.0774 + 1222.1138 * T)
-    M_sa  = math.radians(norm360(317.0207 + 1221.5515 * T))
-    sat_t  = norm360(L_sa + 6.393*math.sin(M_sa) + 0.170*math.sin(2*M_sa))
+    F_mo  = math.radians(norm360(93.2720950 + 483202.0175233 * T))
+    dl = (6.288774*math.sin(M_mo)
+          - 1.274027*math.sin(2*D_mo - M_mo)
+          + 0.658314*math.sin(2*D_mo)
+          + 0.213618*math.sin(2*M_mo)
+          - 0.185116*math.sin(M_su2)
+          - 0.114332*math.sin(2*F_mo)
+          + 0.058793*math.sin(2*D_mo - 2*M_mo)
+          + 0.057066*math.sin(2*D_mo - M_su2 - M_mo)
+          + 0.053322*math.sin(2*D_mo + M_mo)
+          + 0.045758*math.sin(2*D_mo - M_su2)
+          - 0.040923*math.sin(M_su2 - M_mo)
+          - 0.034720*math.sin(D_mo)
+          - 0.030383*math.sin(M_su2 + M_mo)
+          + 0.015327*math.sin(2*D_mo - 2*F_mo)
+          - 0.012528*math.sin(M_mo + 2*F_mo)
+          + 0.010980*math.sin(M_mo - 2*F_mo)
+          + 0.010675*math.sin(4*D_mo - M_mo)
+          + 0.010034*math.sin(3*M_mo)
+          + 0.008548*math.sin(4*D_mo - 2*M_mo)
+          - 0.007888*math.sin(2*D_mo + M_su2 - M_mo)
+          - 0.006766*math.sin(2*D_mo + M_su2)
+          - 0.005163*math.sin(D_mo - M_mo)
+          + 0.004987*math.sin(D_mo + M_su2)
+          + 0.003994*math.sin(2*D_mo + 2*M_mo)
+          + 0.003861*math.sin(4*D_mo))
+    moon_t = norm360(L_prime + dl)
+    # Mercury/Venus/Mars/Jupiter/Saturn: proper 2-body Keplerian-elements method (Standish
+    # approximate elements + Kepler's equation + one light-time iteration) instead of the
+    # previous 2-3 term sine approximations, which could be off by several arcminutes to
+    # around a degree for the outer planets.
+    earth_xyz = _helio_ecliptic_xyz(_KEPLER_ELEMENTS["Ea"], T)
+    merc_t = _geocentric_ecliptic_longitude("Me", T, earth_xyz)
+    ven_t  = _geocentric_ecliptic_longitude("Ve", T, earth_xyz)
+    mars_t = _geocentric_ecliptic_longitude("Ma", T, earth_xyz)
+    jup_t  = _geocentric_ecliptic_longitude("Ju", T, earth_xyz)
+    sat_t  = _geocentric_ecliptic_longitude("Sa", T, earth_xyz)
     # Nodes
     rahu_t = norm360(125.0445 - 1934.1362*T + 0.0020708*T*T)
     ketu_t = norm360(rahu_t + 180)
@@ -2035,8 +2127,8 @@ def main(page: ft.Page):
 
         ASPECT_PLANET_CHOICES = PLANET_OPTIONS[1:]     # Su,Mo,Ma,Me,Ju,Ve,Sa,Ra,Ke (skip ANY)
         RULE_HOUSE_CHOICES = list(range(1, 13))
-        ACTION_RADIO_CHOICES = [("BUY", "\U0001F7E2 BUY"), ("SELL", "\U0001F534 SELL"),
-                                 ("NEUTRAL", "\u26AA Alert Only"), ("WAIT", "\U0001F7E1 WAIT (avoid trading)")]
+        ACTION_RADIO_CHOICES = [("BUY", "🟢 BUY"), ("SELL", "🔴 SELL"),
+                                 ("NEUTRAL", "⚪ Alert Only"), ("WAIT", "🟡 WAIT (avoid trading)")]
 
         def describe_rule_english(planet, d1h, d1r, d1l, d9h, d9r, d9_aspect, varg, same, comp_pl, comp_h,
                                    retro, wt, action, ssc, ssh, s_empty, stc, stl, sasp, saspp, saspm):
@@ -2070,8 +2162,8 @@ def main(page: ft.Page):
             if pl_bits:
                 parts.append(" ".join(pl_bits))
             if not parts:
-                return "No conditions set yet \u2014 this rule won't do anything until you set at least one field below."
-            return "IF " + "  AND  ".join(parts) + f"  \u2192  {dict(ACTION_RADIO_CHOICES).get(action, action)}  (weight {wt:g})"
+                return "No conditions set yet — this rule won't do anything until you set at least one field below."
+            return "IF " + "  AND  ".join(parts) + f"  →  {dict(ACTION_RADIO_CHOICES).get(action, action)}  (weight {wt:g})"
 
         def build_rule_card(row):
             is_new = row is None
@@ -2148,13 +2240,13 @@ def main(page: ft.Page):
                                 spacing=6, wrap=True),
                 bgcolor="#FFFFFF", border_radius=6, padding=8, visible=False
             )
-            advanced_toggle_btn = ft.TextButton("\U0001F527 ADVANCED: Planet-Specific Conditions (optional) \u25BC", style=ft.ButtonStyle(color="#FFEB3B"))
+            advanced_toggle_btn = ft.TextButton("🔧 ADVANCED: Planet-Specific Conditions (optional) ▼", style=ft.ButtonStyle(color="#FFEB3B"))
 
             def do_toggle_advanced(e):
                 advanced_visible["open"] = not advanced_visible["open"]
                 advanced_body.visible = advanced_visible["open"]
-                advanced_toggle_btn.text = ("\U0001F527 ADVANCED: Planet-Specific Conditions (optional) " +
-                                             ("\u25B2" if advanced_visible["open"] else "\u25BC"))
+                advanced_toggle_btn.text = ("🔧 ADVANCED: Planet-Specific Conditions (optional) " +
+                                             ("▲" if advanced_visible["open"] else "▼"))
                 page.update()
             advanced_toggle_btn.on_click = do_toggle_advanced
 
@@ -2190,7 +2282,7 @@ def main(page: ft.Page):
 
             def update_preview(e=None):
                 v = gather_values()
-                preview_text.value = "\U0001F4DD " + describe_rule_english(
+                preview_text.value = "📝 " + describe_rule_english(
                     v["planet"], v["d1h"], v["d1r"], v["d1l"], v["d9h"], v["d9r"], v["d9_aspect"],
                     v["varg"], v["same"], v["comp_pl"], v["comp_h"], v["retro"], v["wt"], v["action"],
                     v["ssc"], v["ssh"], v["s_empty"], v["stc"], v["stl"], v["sasp"], v["saspp"], v["saspm"])
@@ -2213,7 +2305,7 @@ def main(page: ft.Page):
                         set_status("Rule updated.", C["green"])
                     refresh_rules_grid()
                 except Exception as ex:
-                    status_text.value = f"\u26A0\uFE0F {str(ex)}"
+                    status_text.value = f"⚠️ {str(ex)}"
                     status_text.color = "#FFEB3B"
                     page.update()
 
@@ -2224,7 +2316,7 @@ def main(page: ft.Page):
 
             def do_test(e):
                 if last_chart_state["d1_pos"] is None:
-                    test_result_text.value = "\u26A0\uFE0F No chart calculated yet \u2014 run CALCULATE ASTRO (Oracle page) or open Stocks first, then come back and tap TEST again."
+                    test_result_text.value = "⚠️ No chart calculated yet — run CALCULATE ASTRO (Oracle page) or open Stocks first, then come back and tap TEST again."
                     test_result_text.color = "#FFEB3B"
                     page.update()
                     return
@@ -2242,14 +2334,14 @@ def main(page: ft.Page):
                         tgt_rashis = {rashi_of_house(h, tgt_lagna) for h in tgt_houses}
                         passed = src_rashi in tgt_rashis
                         ok = ok and passed
-                        reasons.append(f"{'\u2705' if passed else '\u274C'} Rashi-in-house: {v['ssc']} house {v['ssh']} rashi {'is' if passed else 'is NOT'} in {v['stc']} house(s) {v['stl']}")
+                        reasons.append(f"{'✅' if passed else '❌'} Rashi-in-house: {v['ssc']} house {v['ssh']} rashi {'is' if passed else 'is NOT'} in {v['stc']} house(s) {v['stl']}")
                     if v["s_empty"]:
                         src_houses_map = houses_d9 if v["ssc"] == "D9" else houses_d1
                         occupied = any(h == v["ssh"] for h in src_houses_map.values())
                         want_occupied = (v["s_empty"] == "Occupied")
                         passed = (occupied == want_occupied)
                         ok = ok and passed
-                        reasons.append(f"{'\u2705' if passed else '\u274C'} Occupancy: {v['ssc']} house {v['ssh']} is {'occupied' if occupied else 'empty'} right now (rule wants {v['s_empty']})")
+                        reasons.append(f"{'✅' if passed else '❌'} Occupancy: {v['ssc']} house {v['ssh']} is {'occupied' if occupied else 'empty'} right now (rule wants {v['s_empty']})")
                     if v["saspp"] and v["saspm"]:
                         src_houses_map = houses_d9 if v["ssc"] == "D9" else houses_d1
                         named = [x.strip() for x in v["saspp"].split(",") if x.strip()]
@@ -2263,11 +2355,11 @@ def main(page: ft.Page):
                         else:
                             passed = True
                         ok = ok and passed
-                        reasons.append(f"{'\u2705' if passed else '\u274C'} Aspect check ({v['saspm']} of {v['saspp']}): aspecting right now = {', '.join(aspecting) or 'none'}")
+                        reasons.append(f"{'✅' if passed else '❌'} Aspect check ({v['saspm']} of {v['saspp']}): aspecting right now = {', '.join(aspecting) or 'none'}")
                 if not reasons:
-                    reasons.append("No Chart & House / Rashi Location / Aspect condition is set to test \u2014 TEST currently only checks those sections, not the Advanced planet-specific fields.")
+                    reasons.append("No Chart & House / Rashi Location / Aspect condition is set to test — TEST currently only checks those sections, not the Advanced planet-specific fields.")
                 test_result_text.value = (f"TEST vs {last_chart_state['label']}:\n" + "\n".join(reasons) +
-                                           f"\n\nOVERALL: {'\u2705 PASSES right now' if ok else '\u274C DOES NOT PASS right now'}")
+                                           f"\n\nOVERALL: {'✅ PASSES right now' if ok else '❌ DOES NOT PASS right now'}")
                 test_result_text.color = "#69F0AE" if ok else "#FFEB3B"
                 page.update()
 
@@ -2296,7 +2388,7 @@ def main(page: ft.Page):
             action_box = ft.Container(content=rg_action, bgcolor="#FFFFFF", border_radius=6, padding=8)
             empty_box  = ft.Container(content=rg_empty, bgcolor="#FFFFFF", border_radius=6, padding=8)
 
-            header_row_ctrls = [ft.Text((f"Rule #{rid}" if not is_new else "\u2795 NEW RULE"), size=14, weight="bold", color="#FFFFFF")]
+            header_row_ctrls = [ft.Text((f"Rule #{rid}" if not is_new else "➕ NEW RULE"), size=14, weight="bold", color="#FFFFFF")]
             if not is_new:
                 header_row_ctrls.append(ft.IconButton(icon=ft.Icons.DELETE, icon_color="#FFFFFF", on_click=do_delete))
 
@@ -2311,14 +2403,14 @@ def main(page: ft.Page):
                     ft.Divider(height=6, color="#FFFFFF"),
                     ft.Text("PRIMARY CHART & HOUSE", size=11, color="#FFEB3B", weight="bold"),
                     ft.Row([dd_ssc, dd_ssh], spacing=8, wrap=True),
-                    ft.Text("Occupancy \u2014 does this house have a planet sitting in it?", size=11, color="#FFFFFF"),
+                    ft.Text("Occupancy — does this house have a planet sitting in it?", size=11, color="#FFFFFF"),
                     empty_box,
                     ft.Divider(height=6, color="#FFFFFF"),
-                    ft.Text("RASHI LOCATION CHECK \u2014 does this house's sign also sit in one of these Target Chart houses?", size=11, color="#FFEB3B", weight="bold"),
+                    ft.Text("RASHI LOCATION CHECK — does this house's sign also sit in one of these Target Chart houses?", size=11, color="#FFEB3B", weight="bold"),
                     ft.Row([dd_stc, dd_sasp], spacing=8, wrap=True),
                     house_grid,
                     ft.Divider(height=6, color="#FFFFFF"),
-                    ft.Text("ASPECT RESTRICTION \u2014 is this house aspected by these named planets?", size=11, color="#FFEB3B", weight="bold"),
+                    ft.Text("ASPECT RESTRICTION — is this house aspected by these named planets?", size=11, color="#FFEB3B", weight="bold"),
                     planet_grid,
                     dd_saspm,
                     ft.Divider(height=6, color="#FFFFFF"),
@@ -2327,8 +2419,8 @@ def main(page: ft.Page):
                     ft.Divider(height=6, color="#FFFFFF"),
                     preview_text,
                     ft.Row([
-                        ft.ElevatedButton(("\U0001F4BE SAVE RULE" if is_new else "\U0001F4BE UPDATE"), bgcolor=C["green"], color="#FFFFFF", on_click=do_save),
-                        ft.ElevatedButton("\U0001F9EA TEST vs Last Chart", bgcolor=C["accent"], color="#FFFFFF", on_click=do_test),
+                        ft.ElevatedButton(("💾 SAVE RULE" if is_new else "💾 UPDATE"), bgcolor=C["green"], color="#FFFFFF", on_click=do_save),
+                        ft.ElevatedButton("🧪 TEST vs Last Chart", bgcolor=C["accent"], color="#FFFFFF", on_click=do_test),
                     ], spacing=8, wrap=True),
                     status_text,
                     test_result_text,
@@ -2661,7 +2753,7 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
             border_radius=10, padding=16, visible=False
         )
 
-        page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, rules_screen, help_screen, confirm_exit_panel, nav_row)
+        page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, place_screen, rules_screen, help_screen, confirm_exit_panel, nav_row)
 
         refresh_rules_grid()
 

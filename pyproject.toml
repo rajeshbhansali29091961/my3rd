@@ -1,14 +1,13 @@
+
 [project]
 name = "bhoovalaya"
 version = "1.0.0"
 requires-python = ">=3.10"
-[project]
-name = "bhoovalaya-oracle"
-version = "0.1.0"
 dependencies = [
     "flet",
     "swisseph-ffi",
 ]
+
 [tool.flet]
 org = "com.flet"
 product = "my3rd"
@@ -16,3 +15,4 @@ company = "my3rd"
 
 [tool.flet.android]
 permissions = ["android.permission.INTERNET"]
+

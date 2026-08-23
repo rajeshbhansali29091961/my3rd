@@ -2,11 +2,13 @@
 name = "bhoovalaya"
 version = "1.0.0"
 requires-python = ">=3.10"
+[project]
+name = "bhoovalaya-oracle"
+version = "0.1.0"
 dependencies = [
-    "flet==0.28.3",
-    "requests==2.32.3",
+    "flet",
+    "swisseph-ffi",
 ]
-
 [tool.flet]
 org = "com.flet"
 product = "my3rd"

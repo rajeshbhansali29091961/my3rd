@@ -595,151 +595,99 @@ def jd_ut_from_ist(year, month, day, hour, minute, gmt_offset_hours=IST_OFFSET_H
     jd_local = jd_from_dt(year, month, day, hour, minute)
     return jd_local - (gmt_offset_hours / 24.0)
 
-def lahiri_ayanamsa(jd):
-    """Lahiri (Chitrapaksha) ayanamsa, degrees, T = Julian centuries from J2000.
-    NOTE: the previous version of this formula used a linear rate of only
-    0.013611 deg/century -- about 100x too small (true general precession is
-    ~50.29"/yr = ~1.397 deg/century). That bug made the ayanamsa barely move
-    across decades, silently drifting the whole D1/D9 chart by ~15-20 arcmin
-    for present-day dates. Fixed to the correct precession rate below."""
-    T = (jd - 2451545.0) / 36525.0
-    return 23.85 + 1.396971 * T + 0.000308 * T * T
+SWISSEPH_HOUSE_SYSTEM = 'W'  # 'W' = Whole Sign (Vedic default). Change to 'P' for
+                             # Placidus etc. if this app's existing chart rendering
+                             # assumes a different house system than Whole Sign.
 
-# ── Approximate Keplerian orbital elements (JPL/Standish, valid ~1800-2050) ──
-# (a AU, a-rate/century, e, e-rate/century, i deg, i-rate/century,
-#  L deg, L-rate/century, long.peri deg, peri-rate/century, long.node deg, node-rate/century)
-_KEPLER_ELEMENTS = {
-    "Me": (0.38709927,  0.00000037, 0.20563593,  0.00001906,  7.00497902, -0.00594749,
-           252.25032350, 149472.67411175,  77.45779628,  0.16047689,  48.33076593, -0.12534081),
-    "Ve": (0.72333566,  0.00000390, 0.00677672, -0.00004107,  3.39467605, -0.00078890,
-           181.97909950,  58517.81538729, 131.60246718,  0.00268329,  76.67984255, -0.27769418),
-    "Ea": (1.00000261,  0.00000562, 0.01671123, -0.00004392, -0.00001531, -0.01294668,
-           100.46457166,  35999.37244981, 102.93768193,  0.32327364,   0.0,          0.0),
-    "Ma": (1.52371034,  0.00001847, 0.09339410,  0.00007882,  1.84969142, -0.00813131,
-            -4.55343205, 19140.30268499, -23.94362959,  0.44441088,  49.55953891, -0.29257343),
-    "Ju": (5.20288700, -0.00011607, 0.04838624, -0.00013253,  1.30439695, -0.00183714,
-            34.39644051,  3034.74612775,  14.72847983,  0.21252668, 100.47390909,  0.20469106),
-    "Sa": (9.53667594, -0.00125060, 0.05386179, -0.00050991,  2.48599187,  0.00193609,
-            49.95424423,  1222.49362201,  92.59887831, -0.41897216, 113.66242448, -0.28867794),
-}
+_SWE_INSTANCE = None
 
-def _kepler_solve(M_rad, e):
-    """Solve Kepler's equation E - e*sin(E) = M for eccentric anomaly E (Newton-Raphson)."""
-    E = M_rad
-    for _ in range(10):
-        dE = (E - e * math.sin(E) - M_rad) / (1 - e * math.cos(E))
-        E -= dE
-        if abs(dE) < 1e-9:
-            break
-    return E
+def _resolve_native_dir():
+    here = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(here, "native"),
+        os.path.join(here, "..", "native"),
+        os.path.join(os.getcwd(), "native"),
+    ]
+    for c in candidates:
+        if os.path.isdir(c):
+            return os.path.abspath(c)
+    raise RuntimeError(f"native/ folder (libswe.so + ephe/) not found. Checked: {candidates}")
 
-def _helio_ecliptic_xyz(elems, T):
-    """Heliocentric ecliptic (J2000 frame) rectangular coordinates, AU, for a body's
-    mean Keplerian elements at Julian century T."""
-    a0, adot, e0, edot, i0, idot, L0, Ldot, peri0, peridot, node0, nodedot = elems
-    a    = a0 + adot * T
-    e    = e0 + edot * T
-    i    = math.radians(i0 + idot * T)
-    L    = norm360(L0 + Ldot * T)
-    peri = norm360(peri0 + peridot * T)          # long. of perihelion (varpi)
-    node = norm360(node0 + nodedot * T)          # long. of ascending node
-    w    = math.radians(norm360(peri - node))    # argument of perihelion
-    M    = norm360(L - peri)
-    if M > 180:
-        M -= 360
-    E = _kepler_solve(math.radians(M), e)
-    xp = a * (math.cos(E) - e)
-    yp = a * math.sqrt(1 - e * e) * math.sin(E)
-    node_r = math.radians(node)
-    cosO, sinO = math.cos(node_r), math.sin(node_r)
-    cosw, sinw = math.cos(w), math.sin(w)
-    cosi, sini = math.cos(i), math.sin(i)
-    x = (cosO*cosw - sinO*sinw*cosi) * xp + (-cosO*sinw - sinO*cosw*cosi) * yp
-    y = (sinO*cosw + cosO*sinw*cosi) * xp + (-sinO*sinw + cosO*cosw*cosi) * yp
-    z = (sinw*sini) * xp + (cosw*sini) * yp
-    return x, y, z
+def _get_swisseph():
+    """Lazily load libswe.so once and cache the SwissEph wrapper instance so the
+    native library is loaded a single time no matter how many times the rule
+    engine / backtester call calc_planet_positions()."""
+    global _SWE_INSTANCE
+    if _SWE_INSTANCE is not None:
+        return _SWE_INSTANCE
 
-def _geocentric_ecliptic_longitude(planet_key, T, earth_xyz):
-    """Geocentric ecliptic longitude (deg, J2000 mean-equinox/tropical frame) of a planet,
-    with one light-time iteration for better accuracy."""
-    xe, ye, ze = earth_xyz
-    xp, yp, zp = _helio_ecliptic_xyz(_KEPLER_ELEMENTS[planet_key], T)
-    xg, yg, zg = xp - xe, yp - ye, zp - ze
-    r = math.sqrt(xg*xg + yg*yg + zg*zg)
-    lt_days = 0.0057755183 * r  # light-time, AU -> days
-    T2 = T - lt_days / 36525.0
-    xp, yp, zp = _helio_ecliptic_xyz(_KEPLER_ELEMENTS[planet_key], T2)
-    xg, yg, zg = xp - xe, yp - ye, zp - ze
-    return norm360(math.degrees(math.atan2(yg, xg)))
+    native_dir = _resolve_native_dir()
+    so_path = os.path.join(native_dir, "arm64-v8a", "libswe.so")
+    ephe_path = os.path.join(native_dir, "ephe")
+
+    if not os.path.exists(so_path):
+        raise RuntimeError(f"libswe.so not found at {so_path}")
+
+    os.environ["SWISSEPH_LIBRARY_PATH"] = so_path
+
+    from swisseph_ffi import SwissEph
+    swe = SwissEph()
+    swe.swe_set_ephe_path(ephe_path.encode("utf-8"))
+    _SWE_INSTANCE = swe
+    return swe
 
 def calc_planet_positions(jd, lat=19.076, lon=72.877):
-    T = (jd - 2451545.0) / 36525.0
-    # Sun (Meeus low-precision geometric position + aberration/nutation apparent-longitude correction)
-    L0   = norm360(280.46646 + 36000.76983 * T)
-    M_su = math.radians(norm360(357.52911 + 35999.05029 * T))
-    C_su = ((1.914602 - 0.004817*T - 0.000014*T*T) * math.sin(M_su) + (0.019993 - 0.000101*T) * math.sin(2*M_su) + 0.000289 * math.sin(3*M_su))
-    omega_moon_node = norm360(125.04 - 1934.136 * T)
-    sun_apparent_corr = -0.00569 - 0.00478 * math.sin(math.radians(omega_moon_node))
-    sun_t = norm360(L0 + C_su + sun_apparent_corr)
-    # Moon (extended ~25-term abbreviated ELP2000/Brown series -- ~arcminute-level, vs. the
-    # previous 5-term version which could be off by several arcminutes)
-    L_prime = norm360(218.3164477 + 481267.88123421 * T)
-    D_mo  = math.radians(norm360(297.8501921 + 445267.1114034 * T))
-    M_mo  = math.radians(norm360(134.9633964 + 477198.8675055 * T))
-    M_su2 = math.radians(norm360(357.5291092 + 35999.0502909 * T))
-    F_mo  = math.radians(norm360(93.2720950 + 483202.0175233 * T))
-    dl = (6.288774*math.sin(M_mo)
-          - 1.274027*math.sin(2*D_mo - M_mo)
-          + 0.658314*math.sin(2*D_mo)
-          + 0.213618*math.sin(2*M_mo)
-          - 0.185116*math.sin(M_su2)
-          - 0.114332*math.sin(2*F_mo)
-          + 0.058793*math.sin(2*D_mo - 2*M_mo)
-          + 0.057066*math.sin(2*D_mo - M_su2 - M_mo)
-          + 0.053322*math.sin(2*D_mo + M_mo)
-          + 0.045758*math.sin(2*D_mo - M_su2)
-          - 0.040923*math.sin(M_su2 - M_mo)
-          - 0.034720*math.sin(D_mo)
-          - 0.030383*math.sin(M_su2 + M_mo)
-          + 0.015327*math.sin(2*D_mo - 2*F_mo)
-          - 0.012528*math.sin(M_mo + 2*F_mo)
-          + 0.010980*math.sin(M_mo - 2*F_mo)
-          + 0.010675*math.sin(4*D_mo - M_mo)
-          + 0.010034*math.sin(3*M_mo)
-          + 0.008548*math.sin(4*D_mo - 2*M_mo)
-          - 0.007888*math.sin(2*D_mo + M_su2 - M_mo)
-          - 0.006766*math.sin(2*D_mo + M_su2)
-          - 0.005163*math.sin(D_mo - M_mo)
-          + 0.004987*math.sin(D_mo + M_su2)
-          + 0.003994*math.sin(2*D_mo + 2*M_mo)
-          + 0.003861*math.sin(4*D_mo))
-    moon_t = norm360(L_prime + dl)
-    # Mercury/Venus/Mars/Jupiter/Saturn: proper 2-body Keplerian-elements method (Standish
-    # approximate elements + Kepler's equation + one light-time iteration) instead of the
-    # previous 2-3 term sine approximations, which could be off by several arcminutes to
-    # around a degree for the outer planets.
-    earth_xyz = _helio_ecliptic_xyz(_KEPLER_ELEMENTS["Ea"], T)
-    merc_t = _geocentric_ecliptic_longitude("Me", T, earth_xyz)
-    ven_t  = _geocentric_ecliptic_longitude("Ve", T, earth_xyz)
-    mars_t = _geocentric_ecliptic_longitude("Ma", T, earth_xyz)
-    jup_t  = _geocentric_ecliptic_longitude("Ju", T, earth_xyz)
-    sat_t  = _geocentric_ecliptic_longitude("Sa", T, earth_xyz)
-    # Nodes
-    rahu_t = norm360(125.0445 - 1934.1362*T + 0.0020708*T*T)
-    ketu_t = norm360(rahu_t + 180)
-    # Lagna
-    eps     = math.radians(23.439291111 - 0.013004167*T)
-    GMST    = norm360(280.46061837 + 360.98564736629*(jd - 2451545.0) + 0.000387933*T*T)
-    LST     = math.radians(norm360(GMST + lon))
-    lat_r   = math.radians(lat)
-    asc_t   = math.degrees(math.atan2(math.cos(LST), -math.sin(LST)*math.cos(eps) - math.tan(lat_r)*math.sin(eps))) % 360
+    """
+    DROP-IN REPLACEMENT for the previous approximate Keplerian-elements engine.
+    Same signature, same return shape: (sid, ay) — sid is a dict of sidereal
+    (Lahiri) longitudes in degrees for keys As, Su, Mo, Me, Ve, Ma, Ju, Sa, Ra, Ke,
+    and ay is the ayanamsa value (degrees) used for this jd. `jd` is the same UT
+    Julian Day already produced by jd_ut_from_ist()/jd_from_dt() elsewhere in this
+    file, so no other caller needs to change. Now backed by the real Swiss
+    Ephemeris (libswe.so) instead of an approximate formula.
+    """
+    swe = _get_swisseph()
 
-    ay = lahiri_ayanamsa(jd)
-    sid = {
-        "As": (asc_t - ay) % 360, "Su": (sun_t  - ay) % 360, "Mo": (moon_t - ay) % 360,
-        "Me": (merc_t - ay) % 360, "Ve": (ven_t  - ay) % 360, "Ma": (mars_t - ay) % 360,
-        "Ju": (jup_t  - ay) % 360, "Sa": (sat_t  - ay) % 360, "Ra": (rahu_t - ay) % 360, "Ke": (ketu_t - ay) % 360,
+    from swisseph_ffi import (
+        c_double, create_string_buffer,
+        SEFLG_SWIEPH, SEFLG_SPEED, SEFLG_SIDEREAL,
+        SE_SUN, SE_MOON, SE_MERCURY, SE_VENUS, SE_MARS,
+        SE_JUPITER, SE_SATURN, SE_MEAN_NODE,
+    )
+    try:
+        from swisseph_ffi import SE_SIDM_LAHIRI
+        sidm_lahiri = SE_SIDM_LAHIRI
+    except ImportError:
+        sidm_lahiri = 1  # SE_SIDM_LAHIRI = 1 in swephexp.h, used as fallback
+
+    swe.swe_set_sid_mode(sidm_lahiri, 0, 0)
+
+    flags = SEFLG_SWIEPH | SEFLG_SPEED | SEFLG_SIDEREAL
+    planet_ids = {
+        "Su": SE_SUN, "Mo": SE_MOON, "Me": SE_MERCURY, "Ve": SE_VENUS,
+        "Ma": SE_MARS, "Ju": SE_JUPITER, "Sa": SE_SATURN, "Ra": SE_MEAN_NODE,
     }
+
+    sid = {}
+    for key, pid in planet_ids.items():
+        xx = (c_double * 6)()
+        serr = create_string_buffer(256)
+        ret = swe.swe_calc_ut(jd, pid, flags, xx, serr)
+        if ret < 0:
+            raise RuntimeError(f"swe_calc_ut failed for {key}: {serr.value.decode(errors='ignore')}")
+        sid[key] = xx[0] % 360.0
+
+    # Ketu = Rahu + 180 (same convention as before)
+    sid["Ke"] = (sid["Ra"] + 180.0) % 360.0
+
+    # Ascendant (Lagna) via swe_houses_ex - see SWISSEPH_HOUSE_SYSTEM above.
+    cusps = (c_double * 13)()
+    ascmc = (c_double * 10)()
+    swe.swe_houses_ex(jd, SEFLG_SIDEREAL, lat, lon, ord(SWISSEPH_HOUSE_SYSTEM), cusps, ascmc)
+    sid["As"] = ascmc[0] % 360.0
+
+    ay = swe.swe_get_ayanamsa_ut(jd)
+
     return sid, ay
 
 def lon_to_sign_deg(lon):

@@ -76,7 +76,12 @@ jobs:
       - name: Configure Gradle memory
         run: |
           mkdir -p $HOME/.gradle
-          echo "org.gradle.jvmargs=-Xmx4608m -XX:MaxMetaspaceSize=1g" >> $HOME/.gradle/gradle.properties
+          cat >> $HOME/.gradle/gradle.properties << 'EOF'
+          org.gradle.jvmargs=-Xmx6144m -XX:MaxMetaspaceSize=1g
+          org.gradle.parallel=false
+          org.gradle.workers.max=1
+          org.gradle.daemon=false
+          EOF
 
       - name: Build APK
         run: |

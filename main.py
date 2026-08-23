@@ -8,6 +8,7 @@ import time
 import math
 import json
 import random
+import platform
 from datetime import datetime
 
 try:
@@ -622,7 +623,14 @@ def _get_swisseph():
         return _SWE_INSTANCE
 
     native_dir = _resolve_native_dir()
-    so_path = os.path.join(native_dir, "arm64-v8a", "libswe.so")
+
+    # Pick the right compiled .so depending on where this is actually running:
+    # Android device (arm64 embedded Python) -> arm64-v8a build;
+    # Codespace/browser preview (x86_64 Linux) -> linux-x64 build.
+    machine = platform.machine().lower()
+    subdir = "arm64-v8a" if ("aarch64" in machine or "arm64" in machine) else "linux-x64"
+
+    so_path = os.path.join(native_dir, subdir, "libswe.so")
     ephe_path = os.path.join(native_dir, "ephe")
 
     if not os.path.exists(so_path):

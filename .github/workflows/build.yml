@@ -72,6 +72,12 @@ jobs:
 
       - name: Install Flet
         run: pip install flet==0.28.3
+
+      - name: Configure Gradle memory
+        run: |
+          mkdir -p $HOME/.gradle
+          echo "org.gradle.jvmargs=-Xmx4608m -XX:MaxMetaspaceSize=1g" >> $HOME/.gradle/gradle.properties
+
       - name: Build APK
         run: |
           export ANDROID_HOME=$HOME/android

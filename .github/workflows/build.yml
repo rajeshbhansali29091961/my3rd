@@ -36,6 +36,40 @@ jobs:
         run: |
           yes | sdkmanager --licenses || true
           sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.1.8937393"
+
+      - name: Clone Swiss Ephemeris C source
+        run: |
+          git clone https://github.com/aloistr/swisseph.git sweph-src
+          echo "Repo contents:"
+          ls -la sweph-src
+
+      - name: Cross-compile libswe.so for arm64-v8a (Android)
+        run: |
+          NDK_DIR="$HOME/android/ndk/25.1.8937393"
+          TOOLCHAIN="$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64"
+          CC="$TOOLCHAIN/bin/aarch64-linux-android24-clang"
+
+          mkdir -p native/arm64-v8a
+          cd sweph-src
+
+          $CC -shared -fPIC -O2 -o ../native/arm64-v8a/libswe.so \
+            swedate.c swehouse.c swejpl.c swemmoon.c swemplan.c \
+            sweph.c swephlib.c swecl.c swehel.c \
+            -lm
+
+          echo "Built libswe.so:"
+          ls -la ../native/arm64-v8a/
+
+      - name: Copy ephemeris data files
+        run: |
+          mkdir -p native/ephe
+          echo "Contents of sweph-src/ephe:"
+          ls sweph-src/ephe | head -30
+          cp sweph-src/ephe/sepl_18.se1 native/ephe/ 2>/dev/null || echo "sepl_18.se1 not found, check listing above"
+          cp sweph-src/ephe/semo_18.se1 native/ephe/ 2>/dev/null || echo "semo_18.se1 not found, check listing above"
+          echo "Ephemeris files copied:"
+          ls -la native/ephe/
+
       - name: Install Flet
         run: pip install flet==0.28.3
       - name: Build APK

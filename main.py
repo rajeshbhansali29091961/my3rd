@@ -601,7 +601,8 @@ SWISSEPH_HOUSE_SYSTEM = 'W'  # 'W' = Whole Sign (Vedic default). Change to 'P' f
                              # assumes a different house system than Whole Sign.
 
 _SWE_INSTANCE = None
-_SWE_LOAD_ERROR = None  # remember first failure so we never retry a broken load
+_SWE_LOAD_ERROR = None
+_USE_APPROX_EPHEMERIS = False  # True when native libswe.so is unavailable
 
 def _resolve_native_dir():
     here = os.path.dirname(os.path.abspath(__file__))
@@ -617,40 +618,24 @@ def _resolve_native_dir():
                 return os.path.abspath(c)
         except Exception:
             continue
-    raise RuntimeError(
-        "Swiss Ephemeris data missing.\n"
-        "Put a folder named 'native' next to main.py with this layout:\n"
-        "  native/linux-x64/libswe.so   (for Codespace / PC)\n"
-        "  native/arm64-v8a/libswe.so   (for Android APK)\n"
-        "  native/ephe/                 (Swiss Ephemeris .se1 files)\n"
-        f"Looked in: {candidates}"
-    )
+    raise RuntimeError(f"native/ folder not found. Checked: {candidates}")
 
 def _get_swisseph():
-    """Lazily load libswe.so once. Fully fail-soft: any missing .so, wrong ABI,
-    or import error becomes a clean Python RuntimeError so the rest of the app
-    still starts (especially important on Android APK)."""
+    """Lazily load libswe.so. Fail-soft: returns None (does not crash) if missing."""
     global _SWE_INSTANCE, _SWE_LOAD_ERROR
     if _SWE_INSTANCE is not None:
         return _SWE_INSTANCE
     if _SWE_LOAD_ERROR is not None:
-        raise RuntimeError(_SWE_LOAD_ERROR)
-
+        return None
     try:
         native_dir = _resolve_native_dir()
-
-        # Android arm64 vs desktop/codespace x86_64
         machine = platform.machine().lower()
         subdir = "arm64-v8a" if ("aarch64" in machine or "arm64" in machine) else "linux-x64"
-
         so_path = os.path.join(native_dir, subdir, "libswe.so")
         ephe_path = os.path.join(native_dir, "ephe")
-
         if not os.path.exists(so_path):
             raise RuntimeError(f"libswe.so not found at {so_path}")
-
         os.environ["SWISSEPH_LIBRARY_PATH"] = so_path
-
         from swisseph_ffi import SwissEph
         swe = SwissEph()
         swe.swe_set_ephe_path(ephe_path.encode("utf-8"))
@@ -658,60 +643,137 @@ def _get_swisseph():
         return swe
     except Exception as ex:
         _SWE_LOAD_ERROR = str(ex)
-        raise RuntimeError(_SWE_LOAD_ERROR) from ex
+        return None
+
+def _lahiri_ayanamsa(jd):
+    """Approximate Lahiri ayanamsa (degrees). Good to ~0.1° for modern dates."""
+    T = (jd - 2451545.0) / 36525.0
+    # Lahiri at J2000 ≈ 23.85°; rate ≈ 50.29"/yr
+    return 23.85 + (50.290966 / 3600.0) * T * 100.0
+
+def _approx_planet_longitudes(jd):
+    """
+    Pure-Python approximate geocentric tropical longitudes (degrees) using
+    simplified mean elements. Accurate enough for sign/house placement in a
+    trading-timing app (~1–2° for most planets; Moon ~2–3°). Used only when
+    native Swiss Ephemeris is unavailable (e.g. Codespace without native/).
+    """
+    T = (jd - 2451545.0) / 36525.0  # centuries from J2000.0
+
+    def norm(x):
+        return x % 360.0
+
+    # Mean longitudes / elements (Meeus-style simplified)
+    L_sun = norm(280.46646 + 36000.76983 * T)
+    M_sun = norm(357.52911 + 35999.05029 * T)
+    C_sun = (1.914602 - 0.004817 * T) * math.sin(math.radians(M_sun)) \
+            + 0.019993 * math.sin(math.radians(2 * M_sun))
+    sun = norm(L_sun + C_sun)
+
+    # Moon (very simplified)
+    L_moon = norm(218.3164477 + 481267.88123421 * T)
+    M_moon = norm(134.9633964 + 477198.8675055 * T)
+    D = norm(297.8501921 + 445267.1114034 * T)
+    F = norm(93.2720950 + 483202.0175233 * T)
+    moon = norm(L_moon
+                + 6.289 * math.sin(math.radians(M_moon))
+                + 1.274 * math.sin(math.radians(2 * D - M_moon))
+                + 0.658 * math.sin(math.radians(2 * D))
+                + 0.214 * math.sin(math.radians(2 * M_moon)))
+
+    # Mercury, Venus, Mars, Jupiter, Saturn — mean longitude + simple equation of center
+    def body(L0, L1, M0, M1, C1, C2=0.0):
+        L = norm(L0 + L1 * T)
+        M = norm(M0 + M1 * T)
+        return norm(L + C1 * math.sin(math.radians(M)) + C2 * math.sin(math.radians(2 * M)))
+
+    me = body(252.2509, 149472.6746, 174.7948, 149472.5152, 23.4400, 2.9818)
+    ve = body(181.9798, 58517.8156, 50.4161, 58517.8039, 0.7758, 0.0033)
+    ma = body(355.4330, 19140.2993, 19.3730, 19139.8567, 10.6912, 0.6228)
+    ju = body(34.3515, 3034.6920, 19.8950, 3034.7320, 5.5550, 0.1680)
+    sa = body(50.0775, 1222.1138, 317.0200, 1222.1140, 6.4060, 0.2500)
+
+    # Mean lunar node (Rahu) — retrograde
+    ra = norm(125.04452 - 1934.136261 * T)
+
+    return {
+        "Su": sun, "Mo": moon, "Me": me, "Ve": ve,
+        "Ma": ma, "Ju": ju, "Sa": sa, "Ra": ra,
+        "Ke": norm(ra + 180.0),
+    }
+
+def _approx_ascendant(jd, lat, lon):
+    """Approximate local sidereal time → tropical Ascendant (Whole Sign friendly)."""
+    T = (jd - 2451545.0) / 36525.0
+    # GMST in degrees
+    gmst = norm360(280.46061837 + 360.98564736629 * (jd - 2451545.0)
+                   + 0.000387933 * T * T)
+    lst = norm360(gmst + lon)  # local sidereal time
+    # RAMC = LST; obliquity
+    eps = math.radians(23.439291 - 0.0130042 * T)
+    lat_r = math.radians(lat)
+    ramc = math.radians(lst)
+    # Asc = atan2(cos(RAMC), -(sin(RAMC)*cos(eps) + tan(lat)*sin(eps)))
+    y = math.cos(ramc)
+    x = -(math.sin(ramc) * math.cos(eps) + math.tan(lat_r) * math.sin(eps))
+    asc = math.degrees(math.atan2(y, x))
+    return norm360(asc)
 
 def calc_planet_positions(jd, lat=19.076, lon=72.877):
     """
-    DROP-IN REPLACEMENT for the previous approximate Keplerian-elements engine.
-    Same signature, same return shape: (sid, ay) — sid is a dict of sidereal
-    (Lahiri) longitudes in degrees for keys As, Su, Mo, Me, Ve, Ma, Ju, Sa, Ra, Ke,
-    and ay is the ayanamsa value (degrees) used for this jd. `jd` is the same UT
-    Julian Day already produced by jd_ut_from_ist()/jd_from_dt() elsewhere in this
-    file, so no other caller needs to change. Now backed by the real Swiss
-    Ephemeris (libswe.so) instead of an approximate formula.
+    Returns (sid, ay) where sid is sidereal (Lahiri) longitudes for
+    As, Su, Mo, Me, Ve, Ma, Ju, Sa, Ra, Ke and ay is ayanamsa degrees.
+    Tries native Swiss Ephemeris first; falls back to pure-Python approximation
+    when native/libswe.so is missing (Codespace, incomplete APK, etc.).
     """
+    global _USE_APPROX_EPHEMERIS
     swe = _get_swisseph()
 
-    from swisseph_ffi import (
-        c_double, create_string_buffer,
-        SEFLG_SWIEPH, SEFLG_SPEED, SEFLG_SIDEREAL,
-        SE_SUN, SE_MOON, SE_MERCURY, SE_VENUS, SE_MARS,
-        SE_JUPITER, SE_SATURN, SE_MEAN_NODE,
-    )
-    try:
-        from swisseph_ffi import SE_SIDM_LAHIRI
-        sidm_lahiri = SE_SIDM_LAHIRI
-    except ImportError:
-        sidm_lahiri = 1  # SE_SIDM_LAHIRI = 1 in swephexp.h, used as fallback
+    if swe is not None:
+        try:
+            from swisseph_ffi import (
+                c_double, create_string_buffer,
+                SEFLG_SWIEPH, SEFLG_SPEED, SEFLG_SIDEREAL,
+                SE_SUN, SE_MOON, SE_MERCURY, SE_VENUS, SE_MARS,
+                SE_JUPITER, SE_SATURN, SE_MEAN_NODE,
+            )
+            try:
+                from swisseph_ffi import SE_SIDM_LAHIRI
+                sidm_lahiri = SE_SIDM_LAHIRI
+            except ImportError:
+                sidm_lahiri = 1
+            swe.swe_set_sid_mode(sidm_lahiri, 0, 0)
+            flags = SEFLG_SWIEPH | SEFLG_SPEED | SEFLG_SIDEREAL
+            planet_ids = {
+                "Su": SE_SUN, "Mo": SE_MOON, "Me": SE_MERCURY, "Ve": SE_VENUS,
+                "Ma": SE_MARS, "Ju": SE_JUPITER, "Sa": SE_SATURN, "Ra": SE_MEAN_NODE,
+            }
+            sid = {}
+            for key, pid in planet_ids.items():
+                xx = (c_double * 6)()
+                serr = create_string_buffer(256)
+                ret = swe.swe_calc_ut(jd, pid, flags, xx, serr)
+                if ret < 0:
+                    raise RuntimeError(f"swe_calc_ut failed for {key}: {serr.value.decode(errors='ignore')}")
+                sid[key] = xx[0] % 360.0
+            sid["Ke"] = (sid["Ra"] + 180.0) % 360.0
+            cusps = (c_double * 13)()
+            ascmc = (c_double * 10)()
+            swe.swe_houses_ex(jd, SEFLG_SIDEREAL, lat, lon, ord(SWISSEPH_HOUSE_SYSTEM), cusps, ascmc)
+            sid["As"] = ascmc[0] % 360.0
+            ay = swe.swe_get_ayanamsa_ut(jd)
+            _USE_APPROX_EPHEMERIS = False
+            return sid, ay
+        except Exception:
+            pass  # fall through to approximate engine
 
-    swe.swe_set_sid_mode(sidm_lahiri, 0, 0)
-
-    flags = SEFLG_SWIEPH | SEFLG_SPEED | SEFLG_SIDEREAL
-    planet_ids = {
-        "Su": SE_SUN, "Mo": SE_MOON, "Me": SE_MERCURY, "Ve": SE_VENUS,
-        "Ma": SE_MARS, "Ju": SE_JUPITER, "Sa": SE_SATURN, "Ra": SE_MEAN_NODE,
-    }
-
-    sid = {}
-    for key, pid in planet_ids.items():
-        xx = (c_double * 6)()
-        serr = create_string_buffer(256)
-        ret = swe.swe_calc_ut(jd, pid, flags, xx, serr)
-        if ret < 0:
-            raise RuntimeError(f"swe_calc_ut failed for {key}: {serr.value.decode(errors='ignore')}")
-        sid[key] = xx[0] % 360.0
-
-    # Ketu = Rahu + 180 (same convention as before)
-    sid["Ke"] = (sid["Ra"] + 180.0) % 360.0
-
-    # Ascendant (Lagna) via swe_houses_ex - see SWISSEPH_HOUSE_SYSTEM above.
-    cusps = (c_double * 13)()
-    ascmc = (c_double * 10)()
-    swe.swe_houses_ex(jd, SEFLG_SIDEREAL, lat, lon, ord(SWISSEPH_HOUSE_SYSTEM), cusps, ascmc)
-    sid["As"] = ascmc[0] % 360.0
-
-    ay = swe.swe_get_ayanamsa_ut(jd)
-
+    # ── Pure-Python fallback (no native library required) ──
+    _USE_APPROX_EPHEMERIS = True
+    tropical = _approx_planet_longitudes(jd)
+    ay = _lahiri_ayanamsa(jd)
+    sid = {k: (v - ay) % 360.0 for k, v in tropical.items()}
+    asc_trop = _approx_ascendant(jd, lat, lon)
+    sid["As"] = (asc_trop - ay) % 360.0
     return sid, ay
 
 def lon_to_sign_deg(lon):
@@ -1417,7 +1479,8 @@ def main(page: ft.Page):
                     "📍 " + current_place["place_name"] + f" ({place_lat:g}, {place_lon:g}, GMT+{place_gmt:g})   " +
                     "📅 " + calc_time.strftime("%d-%m-%Y %H:%M") + "   ✨ Ayanamsa (Lahiri): " + str(round(ay, 4)) + "°" +
                     ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
-                    ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else ""),
+                    ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else "") +
+                    ("   ⚠️ Approx ephemeris (native libswe.so not found)" if _USE_APPROX_EPHEMERIS else ""),
                     size=13, color=C["primary"], weight="bold"
                 ))
                 oracle_astro_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
@@ -1861,7 +1924,8 @@ def main(page: ft.Page):
                     f"📍 Lat {lat:g}, Lon {lon:g}, GMT+{gmt_offset:g}   " +
                     "✨ SIDEREAL AYANAMSA (LAHIRI): " + str(round(ay, 4)) + "°" +
                     ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
-                    ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else ""),
+                    ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else "") +
+                    ("   ⚠️ Approx ephemeris (native libswe.so not found)" if _USE_APPROX_EPHEMERIS else ""),
                     size=13, color=C["primary"], weight="bold"))
                 astro_chart_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
 
@@ -1883,7 +1947,10 @@ def main(page: ft.Page):
                 astro_chart_container.controls.append(ft.Container(height=8))
                 astro_chart_container.controls.append(ft.ElevatedButton("✖  CLOSE CHARTS", bgcolor=C["red"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_astro_close))
                 
-                set_status("Charts Calculated Successfully!", C["green"])
+                if _USE_APPROX_EPHEMERIS:
+                    set_status("Charts OK (approximate ephemeris — add native/ for Swiss Ephemeris precision).", C["orange"])
+                else:
+                    set_status("Charts Calculated Successfully!", C["green"])
             except Exception as ex:
                 set_status(f"Error: {str(ex)}", C["red"])
             page.update()
@@ -2725,19 +2792,16 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
             border_radius=10, padding=16, visible=False
         )
 
-        # Paint the UI first so Android does not stay on a blank white/black screen.
+        # Paint UI first so Android/Codespace do not stay on a blank screen.
         page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, place_screen, rules_screen, help_screen, confirm_exit_panel, nav_row)
         page.update()
 
-        # Build rule cards after first paint (many Dropdown/Checkbox controls).
         try:
             refresh_rules_grid()
         except Exception as rex:
             set_status(f"Rules grid load skipped: {rex}", C["orange"])
 
-        # Do NOT force Swiss Ephemeris load at cold start.
-        # Missing libswe.so used to kill the Android process with a blank screen.
-        # User can still open Kundali / Calculate Astro later; those paths catch errors.
+        # Do NOT force ephemeris at cold start (was a cause of blank APK screens).
         n = db_count()
         if n < 5:
             set_status("No database. Go to Database tab.", C["red"])

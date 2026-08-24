@@ -1,4 +1,3 @@
-
 name: Build Android APK
 
 on:
@@ -85,28 +84,26 @@ jobs:
             "ndk;25.1.8937393"
 
       # ---------------------------------------------------------
-      # 7. Download Swiss Ephemeris
+      # 7. Download Swiss Ephemeris source
       # ---------------------------------------------------------
       - name: Get Swiss Ephemeris source
         run: |
+          set -eux
           git clone --depth 1 \
             https://github.com/aloistr/swisseph.git \
             sweph-src
-
           echo "Swiss Ephemeris source:"
           ls -la sweph-src
 
       # ---------------------------------------------------------
-      # 8. Compile Swiss Ephemeris C library
+      # 8. Compile Swiss Ephemeris C library (ARM64 for Android)
       # ---------------------------------------------------------
       - name: Build libswe.so ARM64
         run: |
           set -eux
 
           NDK="$HOME/android/ndk/25.1.8937393"
-
           TOOLCHAIN="$NDK/toolchains/llvm/prebuilt/linux-x86_64"
-
           CC="$TOOLCHAIN/bin/aarch64-linux-android24-clang"
 
           mkdir -p native/arm64-v8a
@@ -133,88 +130,100 @@ jobs:
 
           echo "Checking libswe.so:"
           file native/arm64-v8a/libswe.so
-
-          readelf -h native/arm64-v8a/libswe.so | grep -E \
-            "Class|Machine"
+          readelf -h native/arm64-v8a/libswe.so | grep -E "Class|Machine"
+          test -s native/arm64-v8a/libswe.so
 
       # ---------------------------------------------------------
-      # 9. Verify the library
+      # 9. Ephemeris data files (must exist or build fails)
       # ---------------------------------------------------------
-      - name: Verify ARM64 library
+      # The upstream repo sometimes ships .se1 under ephe/; if not present,
+      # place copies in your repo under ephe-cache/ so CI always has them.
+      - name: Prepare ephemeris data
         run: |
           set -eux
-
-          test -f native/arm64-v8a/libswe.so
-
-          file native/arm64-v8a/libswe.so
-
-          ls -lh native/arm64-v8a/libswe.so
-
-      # ---------------------------------------------------------
-      # 10. Ephemeris files
-      # ---------------------------------------------------------
-      - name: Prepare ephemeris
-        run: |
-          set -eux
-
           mkdir -p native/ephe
 
-          echo "Available ephemeris files:"
-          find sweph-src/ephe -maxdepth 1 -type f | sort | head -50
+          # 1) From Swiss Ephemeris clone
+          for f in sepl_18.se1 semo_18.se1 seas_18.se1; do
+            if [ -f "sweph-src/ephe/$f" ]; then
+              cp "sweph-src/ephe/$f" "native/ephe/$f"
+              echo "Copied from clone: $f"
+            fi
+          done
 
-          # Planetary ephemeris
-          if [ -f sweph-src/ephe/sepl_18.se1 ]; then
-            cp sweph-src/ephe/sepl_18.se1 native/ephe/
-          fi
+          # 2) Fallback: files you commit in the repo (recommended)
+          for f in sepl_18.se1 semo_18.se1 seas_18.se1; do
+            if [ ! -f "native/ephe/$f" ] && [ -f "ephe-cache/$f" ]; then
+              cp "ephe-cache/$f" "native/ephe/$f"
+              echo "Copied from ephe-cache: $f"
+            fi
+          done
 
-          # Moon ephemeris
-          if [ -f sweph-src/ephe/semo_18.se1 ]; then
-            cp sweph-src/ephe/semo_18.se1 native/ephe/
-          fi
-
-          # Asteroid ephemeris if available
-          if [ -f sweph-src/ephe/seas_18.se1 ]; then
-            cp sweph-src/ephe/seas_18.se1 native/ephe/
+          # 3) Hard requirement for exact (JHora-like) calculations
+          if [ ! -s native/ephe/sepl_18.se1 ] || [ ! -s native/ephe/semo_18.se1 ]; then
+            echo "ERROR: sepl_18.se1 and/or semo_18.se1 missing."
+            echo "Add them under ephe-cache/ in the repo, or ensure sweph-src/ephe/ has them."
+            echo "Download from: https://github.com/aloistr/swisseph/tree/master/ephe"
+            ls -la sweph-src/ephe 2>/dev/null || true
+            ls -la ephe-cache 2>/dev/null || true
+            exit 1
           fi
 
           echo "Final ephemeris:"
           ls -lh native/ephe/
 
       # ---------------------------------------------------------
-      # 11. Install Flet
+      # 10. Stage native/ next to app source so Flet packages it
       # ---------------------------------------------------------
-      - name: Install Flet
+      - name: Stage native for Flet packaging
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install flet==0.28.3
+          set -eux
+          # Repo root is the Flet app root (main.py here).
+          # Ensure native/ sits beside main.py so it is part of the app payload.
+          test -f main.py || test -f src/main.py
+
+          if [ -f src/main.py ] && [ ! -f main.py ]; then
+            mkdir -p src/native/arm64-v8a src/native/ephe
+            cp -a native/arm64-v8a/libswe.so src/native/arm64-v8a/
+            cp -a native/ephe/. src/native/ephe/
+            echo "Staged under src/native/"
+            find src/native -type f
+          else
+            echo "Staged under ./native/ (repo root)"
+            find native -type f
+          fi
 
       # ---------------------------------------------------------
-      # 12. Show Flet information
+      # 11. Install Python deps (match pyproject)
       # ---------------------------------------------------------
-      - name: Flet information
+      - name: Install Flet and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Pin same major stack you test with; adjust if you upgrade
+          python -m pip install "flet==0.28.3" "swisseph-ffi"
+          # If you use requirements.txt:
+          # python -m pip install -r requirements.txt
+
+      # ---------------------------------------------------------
+      # 12. Show environment / project
+      # ---------------------------------------------------------
+      - name: Show project layout
         run: |
           flet --version
           python --version
-          flutter --version
+          echo "=== Project (depth 3) ==="
+          find . -maxdepth 3 -type f \
+            ! -path './.git/*' ! -path './sweph-src/*' | sort
+          echo "=== Native files ==="
+          find native src/native -type f 2>/dev/null | sort || true
+          find native src/native -type f -exec file {} \; 2>/dev/null || true
 
       # ---------------------------------------------------------
-      # 13. Show project
-      # ---------------------------------------------------------
-      - name: Show project files
-        run: |
-          echo "Project:"
-          find . -maxdepth 2 -type f | sort
-
-          echo "Native libraries:"
-          find native -type f -exec file {} \;
-
-      # ---------------------------------------------------------
-      # 14. Gradle memory
+      # 13. Gradle memory
       # ---------------------------------------------------------
       - name: Configure Gradle
         run: |
           mkdir -p "$HOME/.gradle"
-
           cat > "$HOME/.gradle/gradle.properties" << 'EOF'
           org.gradle.jvmargs=-Xmx5120m -XX:MaxMetaspaceSize=1g
           org.gradle.parallel=false
@@ -223,40 +232,58 @@ jobs:
           EOF
 
       # ---------------------------------------------------------
-      # 15. Build ARM64 APK
+      # 14. Build ARM64 APK
       # ---------------------------------------------------------
       - name: Build APK
         run: |
           set -eux
-
           export ANDROID_HOME="$HOME/android"
           export ANDROID_SDK_ROOT="$HOME/android"
 
+          # legacy packaging helps some apps load custom .so from disk
           flet build apk \
             --arch arm64-v8a \
+            --android-legacy-packaging \
             --verbose \
             --no-rich-output
 
       # ---------------------------------------------------------
-      # 16. Inspect APK
+      # 15. Inspect APK (must show libswe + ephe)
       # ---------------------------------------------------------
       - name: Inspect APK
         run: |
           set -eux
-
           find build -type f -name "*.apk" -print
+
+          FOUND_SO=0
+          FOUND_EPHE=0
 
           for apk in $(find build -type f -name "*.apk"); do
             echo "======================================"
             echo "APK: $apk"
             echo "======================================"
+            unzip -l "$apk" | tee /tmp/apk-list.txt
 
-            unzip -l "$apk" | grep -E \
-              "lib/arm64-v8a|libswe|swisseph" || true
+            if grep -E "libswe\.so|native/arm64" /tmp/apk-list.txt; then
+              FOUND_SO=1
+            fi
+            if grep -E "sepl_18\.se1|semo_18\.se1|native/ephe" /tmp/apk-list.txt; then
+              FOUND_EPHE=1
+            fi
           done
 
+          echo "FOUND_SO=$FOUND_SO FOUND_EPHE=$FOUND_EPHE"
+          if [ "$FOUND_SO" != "1" ]; then
+            echo "WARNING: libswe.so not obvious in APK listing."
+            echo "It may still be inside a nested zip/asset — test on device."
+          fi
+          if [ "$FOUND_EPHE" != "1" ]; then
+            echo "WARNING: ephe .se1 files not obvious in APK listing."
+            echo "Confirm native/ephe is packaged with the Python app payload."
+          fi
+
       # ---------------------------------------------------------
-      # 17. Upload APK
+      # 16. Upload APK
       # ---------------------------------------------------------
       - name: Upload APK
         uses: actions/upload-artifact@v4

@@ -240,10 +240,10 @@ jobs:
           export ANDROID_HOME="$HOME/android"
           export ANDROID_SDK_ROOT="$HOME/android"
 
-          # legacy packaging helps some apps load custom .so from disk
+          # --android-legacy-packaging is only on newer Flet (0.86+).
+          # With flet==0.28.3 use a plain build:
           flet build apk \
             --arch arm64-v8a \
-            --android-legacy-packaging \
             --verbose \
             --no-rich-output
 

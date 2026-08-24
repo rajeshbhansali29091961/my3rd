@@ -22,9 +22,8 @@ permissions = [
 ]
 # Target modern 64-bit phones only (matches build.yml --arch arm64-v8a)
 target_arch = ["arm64-v8a"]
-# Extract native libs to disk at install time (helps loading custom libswe.so)
-# Equivalent CLI: flet build apk --android-legacy-packaging
-# legacy_packaging = true
+# legacy_packaging / --android-legacy-packaging only exist on Flet 0.86+.
+# With flet==0.28.3 leave this unset (not supported).
 
 # Optional: explicit features if you need them later
 # [tool.flet.android.feature]

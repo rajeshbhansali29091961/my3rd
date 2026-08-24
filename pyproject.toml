@@ -1,18 +1,31 @@
-
 [project]
 name = "bhoovalaya"
 version = "1.0.0"
+description = "Bhoovalaya Oracle — Vedic / Bhoovalaya stock timing app"
 requires-python = ">=3.10"
 dependencies = [
-    "flet",
+    "flet==0.28.3",
     "swisseph-ffi",
+    "requests",
 ]
 
 [tool.flet]
-org = "com.flet"
-product = "my3rd"
-company = "my3rd"
+org = "com.bhoovalaya"
+product = "BhoovalayaOracle"
+company = "Bhoovalaya"
+# App entry (repo root). Change to "src" if main.py lives under src/
+# path = "."
 
 [tool.flet.android]
-permissions = ["android.permission.INTERNET"]
+permissions = [
+    "android.permission.INTERNET",
+]
+# Target modern 64-bit phones only (matches build.yml --arch arm64-v8a)
+target_arch = ["arm64-v8a"]
+# Extract native libs to disk at install time (helps loading custom libswe.so)
+# Equivalent CLI: flet build apk --android-legacy-packaging
+# legacy_packaging = true
 
+# Optional: explicit features if you need them later
+# [tool.flet.android.feature]
+# "android.hardware.touchscreen" = false

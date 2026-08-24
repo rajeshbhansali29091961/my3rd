@@ -601,6 +601,7 @@ SWISSEPH_HOUSE_SYSTEM = 'W'  # 'W' = Whole Sign (Vedic default). Change to 'P' f
                              # assumes a different house system than Whole Sign.
 
 _SWE_INSTANCE = None
+_SWE_LOAD_ERROR = None  # remember first failure so we never retry a broken load
 
 def _resolve_native_dir():
     here = os.path.dirname(os.path.abspath(__file__))
@@ -608,41 +609,56 @@ def _resolve_native_dir():
         os.path.join(here, "native"),
         os.path.join(here, "..", "native"),
         os.path.join(os.getcwd(), "native"),
+        os.path.join(os.getenv("FLET_APP_STORAGE_DATA", ".") or ".", "native"),
     ]
     for c in candidates:
-        if os.path.isdir(c):
-            return os.path.abspath(c)
-    raise RuntimeError(f"native/ folder (libswe.so + ephe/) not found. Checked: {candidates}")
+        try:
+            if c and os.path.isdir(c):
+                return os.path.abspath(c)
+        except Exception:
+            continue
+    raise RuntimeError(
+        "Swiss Ephemeris data missing.\n"
+        "Put a folder named 'native' next to main.py with this layout:\n"
+        "  native/linux-x64/libswe.so   (for Codespace / PC)\n"
+        "  native/arm64-v8a/libswe.so   (for Android APK)\n"
+        "  native/ephe/                 (Swiss Ephemeris .se1 files)\n"
+        f"Looked in: {candidates}"
+    )
 
 def _get_swisseph():
-    """Lazily load libswe.so once and cache the SwissEph wrapper instance so the
-    native library is loaded a single time no matter how many times the rule
-    engine / backtester call calc_planet_positions()."""
-    global _SWE_INSTANCE
+    """Lazily load libswe.so once. Fully fail-soft: any missing .so, wrong ABI,
+    or import error becomes a clean Python RuntimeError so the rest of the app
+    still starts (especially important on Android APK)."""
+    global _SWE_INSTANCE, _SWE_LOAD_ERROR
     if _SWE_INSTANCE is not None:
         return _SWE_INSTANCE
+    if _SWE_LOAD_ERROR is not None:
+        raise RuntimeError(_SWE_LOAD_ERROR)
 
-    native_dir = _resolve_native_dir()
+    try:
+        native_dir = _resolve_native_dir()
 
-    # Pick the right compiled .so depending on where this is actually running:
-    # Android device (arm64 embedded Python) -> arm64-v8a build;
-    # Codespace/browser preview (x86_64 Linux) -> linux-x64 build.
-    machine = platform.machine().lower()
-    subdir = "arm64-v8a" if ("aarch64" in machine or "arm64" in machine) else "linux-x64"
+        # Android arm64 vs desktop/codespace x86_64
+        machine = platform.machine().lower()
+        subdir = "arm64-v8a" if ("aarch64" in machine or "arm64" in machine) else "linux-x64"
 
-    so_path = os.path.join(native_dir, subdir, "libswe.so")
-    ephe_path = os.path.join(native_dir, "ephe")
+        so_path = os.path.join(native_dir, subdir, "libswe.so")
+        ephe_path = os.path.join(native_dir, "ephe")
 
-    if not os.path.exists(so_path):
-        raise RuntimeError(f"libswe.so not found at {so_path}")
+        if not os.path.exists(so_path):
+            raise RuntimeError(f"libswe.so not found at {so_path}")
 
-    os.environ["SWISSEPH_LIBRARY_PATH"] = so_path
+        os.environ["SWISSEPH_LIBRARY_PATH"] = so_path
 
-    from swisseph_ffi import SwissEph
-    swe = SwissEph()
-    swe.swe_set_ephe_path(ephe_path.encode("utf-8"))
-    _SWE_INSTANCE = swe
-    return swe
+        from swisseph_ffi import SwissEph
+        swe = SwissEph()
+        swe.swe_set_ephe_path(ephe_path.encode("utf-8"))
+        _SWE_INSTANCE = swe
+        return swe
+    except Exception as ex:
+        _SWE_LOAD_ERROR = str(ex)
+        raise RuntimeError(_SWE_LOAD_ERROR) from ex
 
 def calc_planet_positions(jd, lat=19.076, lon=72.877):
     """
@@ -2709,24 +2725,32 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
             border_radius=10, padding=16, visible=False
         )
 
+        # Paint the UI first so Android does not stay on a blank white/black screen.
         page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, place_screen, rules_screen, help_screen, confirm_exit_panel, nav_row)
+        page.update()
 
-        refresh_rules_grid()
-
+        # Build rule cards after first paint (many Dropdown/Checkbox controls).
         try:
-            _lbl, _clr, _score, _avoid = compute_live_timing_signal()
-            apply_timing_flag(_score, _avoid)
-        except Exception:
-            pass  # ephemeris/rules not ready yet — top flag just keeps its placeholder text
+            refresh_rules_grid()
+        except Exception as rex:
+            set_status(f"Rules grid load skipped: {rex}", C["orange"])
 
+        # Do NOT force Swiss Ephemeris load at cold start.
+        # Missing libswe.so used to kill the Android process with a blank screen.
+        # User can still open Kundali / Calculate Astro later; those paths catch errors.
         n = db_count()
-        if n < 5: set_status("No database. Go to Database tab.", C["red"])
-        else: set_status(f"Ready — {n} stocks loaded.", C["green"])
+        if n < 5:
+            set_status("No database. Go to Database tab.", C["red"])
+        else:
+            set_status(f"Ready — {n} stocks loaded.", C["green"])
 
     except Exception as err:
-        page.controls.clear()
-        page.add(ft.Container(content=ft.Text(f"STARTUP ERROR:\n{str(err)}", size=15, color="#FFFFFF"), bgcolor=C["red"], padding=20))
-        page.update()
+        try:
+            page.controls.clear()
+            page.add(ft.Container(content=ft.Text(f"STARTUP ERROR:\n{str(err)}", size=15, color="#FFFFFF"), bgcolor="#B71C1C", padding=20))
+            page.update()
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     ft.app(target=main)

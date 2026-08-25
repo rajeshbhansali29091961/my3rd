@@ -23,7 +23,7 @@ import flet.canvas as cv
 # ── CONSTANTS ──────────────────────────────────────────────────────────────────
 AKSHARA_VALS = {
     'अ':1,'आ':2,'इ':3,'ई':4,'उ':5,'ऊ':6,'ए':7,'ऐ':8,'ओ':9,'औ':10,
-    'क':11,'ख':12,'ग':13,'ग':14,'ङ':15,'च':16,'छ':17,'ज':18,'झ':19,'ञ':20,
+    'क':11,'ख':12,'ग':13,'घ':14,'ङ':15,'च':16,'छ':17,'ज':18,'झ':19,'ञ':20,
     'ट':21,'ठ':22,'ड':23,'ढ':24,'ण':25,'त':26,'थ':27,'द':28,'ध':29,'न':30,
     'प':31,'फ':32,'ब':33,'भ':34,'म':35,'य':36,'र':37,'ल':38,'व':39,'श':40,
     'ष':41,'स':42,'ह':43,'ि':2,'ा':2,'े':7,'ै':8,'ो':9,'ौ':10,'्':0,'ं':1
@@ -188,11 +188,11 @@ CURATED = {
     "UNIONBANK":"यूनियन बैंक ऑफ इंडिया","YESBANK":"यस बैंक",
     "IDFCFIRSTB":"आईडीएफसी फर्स्ट बैंक","FEDERALBNK":"फेडरल बैंक",
     "SAIL":"स्टील अथॉरिटी ऑफ इंडिया","NMDC":"एनएमडीसी",
-    "HINDALCO":"हिंडाल्को निष्कर्ष","VEDL":"वेदांता",
+    "HINDALCO":"हिंडाल्को","VEDL":"वेदांता",
     "TATAPOWER":"टाटा पावर","ADANIPOWER":"अदानी पावर",
-    "ADANIENT":"अदानी एंटरप्राइजेज","ADANIGREEN":"अदानी ग्रीन配置",
+    "ADANIENT":"अदानी एंटरप्राइजेज","ADANIGREEN":"अदानी ग्रीन",
     "DLF":"डीएलएफ","GODREJPROP":"गोदरेज प्रॉपर्टीज",
-    "BRITANNIA":"ब्रिटानिया景气","DABUR":"डाबर इंडिया",
+    "BRITANNIA":"ब्रिटानिया","DABUR":"डाबर इंडिया",
     "MARICO":"मेरिको","NESTLEIND":"नेस्ले इंडिया",
     "HEROMOTOCO":"हीरो मोटोकॉर्प","EICHERMOT":"आयशर मोटर्स",
     "ASHOKLEY":"अशोक लेलैंड","TVSMOTOR":"टीवीएस मोटर",
@@ -214,7 +214,7 @@ WD = {
     "TELECOM":"टेलीकॉम","GROUP":"ग्रुप",
     "CHEMICALS":"केमिकल्स","NATIONAL":"नेशनल",
     "CORPORATION":"कॉर्पोरेशन","CORP":"कॉर्प",
-    "MEDIA":"MEDIA","HEALTHCARE":"हेल्थकेयर",
+    "MEDIA":"मीडिया","HEALTHCARE":"हेल्थकेयर",
     "CAPITAL":"कैपिटल","INSURANCE":"इंश्योरेंस",
     "REALTY":"रियल्टी","PROPERTIES":"प्रॉपर्टीज",
     "AUTO":"ऑटो","AUTOMOBILE":"ऑटोमोबाइल",
@@ -230,7 +230,7 @@ WD = {
     "TRADING":"ट्रेडिंग","EXPORTS":"एक्सपोर्ट्स",
     "SOLUTIONS":"सॉल्यूशंस","SYSTEMS":"सिस्टम्स",
     "GLOBAL":"ग्लोबल","INTERNATIONAL":"इंटरनेशनल",
-    "MANAGEMENT":"मैनेजमेंट","CONSULTING":"कंसULTING",
+    "MANAGEMENT":"मैनेजमेंट","CONSULTING":"कंसल्टिंग",
     "SECURITIES":"सिक्योरिटीज","PETROLEUM":"पेट्रोलियम",
     "COMPANY":"कंपनी","SOLAR":"सोलर","RENEWABLE":"रिन्यूएबल",
     "DIGITAL":"डिजिटल","NETWORK":"नेटवर्क","NETWORKS":"नेटवर्क्स",
@@ -242,6 +242,68 @@ PR = {
     'S':'स','T':'ट','U':'य','V':'व','W':'व','X':'क्स',
     'Y':'य','Z':'ज'
 }
+
+# ── Offline syllable-aware transliterator ───────────────────────────────────
+# Used only when network transliteration (Google Input Tools) is unavailable
+# or fails. Unlike PR above (one Devanagari letter per English letter, which
+# produces unreadable letter-salad like "RAJESH" -> "रएजइसह"), this groups
+# consonant+vowel into proper syllables with matras, e.g. "RAJESH" -> "रजेश".
+# It's still a heuristic (English spelling doesn't mark long/short vowels
+# reliably, so results won't always match the "textbook" spelling) but it
+# stays readable Hindi instead of garbled akshara.
+_TL_THREE_C = {'KSH':'क्ष','GYA':'ज्ञ','CHH':'छ'}
+_TL_TWO_C   = {'SH':'श','CH':'च','TH':'थ','PH':'फ','KH':'ख','GH':'घ','JH':'झ','NG':'ङ'}
+_TL_TWO_V   = {'AA':'आ','EE':'ई','II':'ई','OO':'ऊ','UU':'ऊ'}
+_TL_ONE_C   = {
+    'B':'ब','C':'क','D':'ड','F':'फ','G':'ग','H':'ह','J':'ज','K':'क','L':'ल',
+    'M':'म','N':'न','P':'प','Q':'क','R':'र','S':'स','T':'ट','V':'व','W':'व',
+    'X':'क्स','Y':'य','Z':'ज़',
+}
+_TL_ONE_V   = {'A':'अ','E':'ए','I':'इ','O':'ओ','U':'उ'}
+_TL_MATRA_SHORT = {'अ':'','इ':'ि','उ':'ु','ए':'े','ओ':'ो'}
+_TL_MATRA_LONG  = {'आ':'ा','ई':'ी','ऊ':'ू'}
+
+def _tl_tokenize(cw):
+    """Split an uppercase English word into (kind, base_devanagari, is_long) tokens."""
+    toks, i, n = [], 0, len(cw)
+    while i < n:
+        c3, c2, c1 = cw[i:i+3], cw[i:i+2], cw[i:i+1]
+        if c3 in _TL_THREE_C:
+            toks.append(('C', _TL_THREE_C[c3], False)); i += 3
+        elif c2 in _TL_TWO_C:
+            toks.append(('C', _TL_TWO_C[c2], False)); i += 2
+        elif c2 in _TL_TWO_V:
+            toks.append(('V', _TL_TWO_V[c2], True)); i += 2
+        elif c1 in _TL_ONE_C:
+            toks.append(('C', _TL_ONE_C[c1], False)); i += 1
+        elif c1 in _TL_ONE_V:
+            toks.append(('V', _TL_ONE_V[c1], False)); i += 1
+        else:
+            i += 1  # skip digits/punctuation the maps don't cover
+    return toks
+
+def offline_translit(cw):
+    """Heuristic offline fallback: consonant clusters take a following vowel as
+    a matra; a vowel with no preceding consonant (start of word, or after
+    another vowel) is written as an independent vowel letter."""
+    toks = _tl_tokenize(cw)
+    out, i, n = [], 0, len(toks)
+    while i < n:
+        kind, base, is_long = toks[i]
+        if kind == 'C':
+            nxt = toks[i + 1] if i + 1 < n else None
+            if nxt and nxt[0] == 'V':
+                vbase, vlong = nxt[1], nxt[2]
+                matra = (_TL_MATRA_LONG.get(vbase) if vlong else _TL_MATRA_SHORT.get(vbase))
+                out.append(base + (matra if matra is not None else ''))
+                i += 2
+            else:
+                out.append(base)
+                i += 1
+        else:
+            out.append(base)
+            i += 1
+    return "".join(out) or "".join(PR.get(c, "") for c in cw)
 NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
 
 def fetch_nse_quote(symbol):
@@ -443,32 +505,30 @@ def ramal_recommendation(judge_info, final_info):
         return ("NEUTRAL", "⚪ NEUTRAL / WAIT FOR CONFIRMATION — mixed or non-agreeing Shakal signature; avoid trading without price-action support.")
 
 def get_hindi(sym, eng):
+    """Phonetic transliteration (sound-for-sound), NOT semantic translation — this
+    matters because Akshara Sum is a phonetic weight system: translating a word's
+    MEANING (e.g. "Exports" -> "निर्यात") gives a real Hindi word but the WRONG
+    akshara, since it no longer sounds like the English name. Order of preference
+    per word: curated whole-name override > known business-term dictionary (WD) >
+    Google Input Tools transliteration (sound-based) > crude letter-map fallback."""
     if sym in CURATED: return CURATED[sym]
-    if not REQUESTS_OK:
-        out = []
-        for w in eng.upper().split():
-            cw = w.strip("&.,()-/")
-            out.append(WD.get(cw, "".join(PR.get(c,"") for c in cw)))
-        return " ".join(out)
-    try:
-        url = ("https://translate.googleapis.com/translate_a/single"
-               "?client=gtx&sl=en&tl=hi&dt=t&q=" + requests.utils.quote(eng))
-        d = requests.get(url, timeout=5).json()
-        t = "".join(p[0] for p in d[0] if p[0]).strip()
-        if t and t != eng:
-            time.sleep(0.15)
-            return t
-    except: pass
     out = []
     for w in eng.upper().split():
         cw = w.strip("&.,()-/")
-        if cw in WD: out.append(WD[cw]); continue
-        try:
-            r = requests.get(
-                "https://inputtools.google.com/request?text=" + cw + "&ime=transliteration_en_hi&num=1",
-                timeout=4).json()
-            out.append(r[1][0][1][0] if r[0]=="SUCCESS" else "".join(PR.get(c,"") for c in cw))
-        except: out.append("".join(PR.get(c,"") for c in cw))
+        if not cw:
+            continue
+        if cw in WD:
+            out.append(WD[cw])
+            continue
+        if REQUESTS_OK:
+            try:
+                r = requests.get(
+                    "https://inputtools.google.com/request?text=" + cw + "&ime=transliteration_en_hi&num=1",
+                    timeout=4).json()
+                out.append(r[1][0][1][0] if r[0]=="SUCCESS" else offline_translit(cw))
+                continue
+            except: pass
+        out.append(offline_translit(cw))
     return " ".join(out)
 
 def calc(name):

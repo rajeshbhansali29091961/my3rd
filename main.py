@@ -2031,9 +2031,15 @@ def main(page: ft.Page):
             page.update()
 
         def do_use_saved_place(e):
+            fresh = get_place_settings()          # re-read from DB, don't rely on a possibly-stale in-memory copy
+            current_place.update(fresh)
             fld_lat.value = current_place["latitude"]
             fld_lon.value = current_place["longitude"]
             fld_gmt.value = current_place["gmt_offset"]
+            fld_lat.update(); fld_lon.update(); fld_gmt.update()
+            set_status(f"Loaded saved place: {current_place['place_name']} "
+                       f"({current_place['latitude']}, {current_place['longitude']}, GMT+{current_place['gmt_offset']})", C["green"])
+            do_astro(e)   # immediately regenerate the D1/D9 charts with the loaded place, so the click is visibly acted on
             page.update()
 
         astro_screen = ft.Column(visible=False, controls=[

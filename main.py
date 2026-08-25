@@ -200,6 +200,7 @@ CURATED = {
     "APOLLOHOSP":"अपोलो हॉस्पिटल्स","DIVISLAB":"दिविस लेबोरेटरीज",
     "BIOCON":"बायोकॉन","LUPIN":"ल्यूपिन",
     "AUROPHARMA":"ऑरोबिंदो फार्मा","TORNTPHARM":"टोरेंट फार्मा",
+    "UNITECH":"यूनिटेक",
 }
 WD = {
     "LIMITED":"लिमिटेड","LTD":"लिमिटेड","BANK":"बैंक",
@@ -252,6 +253,12 @@ PR = {
 # reliably, so results won't always match the "textbook" spelling) but it
 # stays readable Hindi instead of garbled akshara.
 _TL_THREE_C = {'KSH':'क्ष','GYA':'ज्ञ','CHH':'छ'}
+# Whole chunks whose pronunciation breaks the normal consonant+vowel rules below
+# and are common enough in Indian company names to special-case directly:
+# "CH" is usually the "ch" in "chair", but in "TECH" it's a hard "k" sound;
+# a leading "U" is usually "oo", but in "UNI-" (university, union, unique...)
+# it's really "yoo". Checked longest-first, before the generic digraph rules.
+_TL_CHUNKS  = {'TECH':'टेक', 'UNI':'यूनि'}
 _TL_TWO_C   = {'SH':'श','CH':'च','TH':'थ','PH':'फ','KH':'ख','GH':'घ','JH':'झ','NG':'ङ'}
 _TL_TWO_V   = {'AA':'आ','EE':'ई','II':'ई','OO':'ऊ','UU':'ऊ'}
 _TL_ONE_C   = {
@@ -264,11 +271,16 @@ _TL_MATRA_SHORT = {'अ':'','इ':'ि','उ':'ु','ए':'े','ओ':'ो'}
 _TL_MATRA_LONG  = {'आ':'ा','ई':'ी','ऊ':'ू'}
 
 def _tl_tokenize(cw):
-    """Split an uppercase English word into (kind, base_devanagari, is_long) tokens."""
+    """Split an uppercase English word into (kind, base_devanagari, is_long) tokens.
+    kind 'X' = atomic chunk (from _TL_CHUNKS), inserted as-is, no matra combining."""
     toks, i, n = [], 0, len(cw)
     while i < n:
-        c3, c2, c1 = cw[i:i+3], cw[i:i+2], cw[i:i+1]
-        if c3 in _TL_THREE_C:
+        c4, c3, c2, c1 = cw[i:i+4], cw[i:i+3], cw[i:i+2], cw[i:i+1]
+        if c4 in _TL_CHUNKS:
+            toks.append(('X', _TL_CHUNKS[c4], False)); i += 4
+        elif c3 in _TL_CHUNKS:
+            toks.append(('X', _TL_CHUNKS[c3], False)); i += 3
+        elif c3 in _TL_THREE_C:
             toks.append(('C', _TL_THREE_C[c3], False)); i += 3
         elif c2 in _TL_TWO_C:
             toks.append(('C', _TL_TWO_C[c2], False)); i += 2
@@ -290,7 +302,10 @@ def offline_translit(cw):
     out, i, n = [], 0, len(toks)
     while i < n:
         kind, base, is_long = toks[i]
-        if kind == 'C':
+        if kind == 'X':
+            out.append(base)
+            i += 1
+        elif kind == 'C':
             nxt = toks[i + 1] if i + 1 < n else None
             if nxt and nxt[0] == 'V':
                 vbase, vlong = nxt[1], nxt[2]

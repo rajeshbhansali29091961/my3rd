@@ -851,6 +851,60 @@ def calc_planet_positions(jd, lat=19.076, lon=72.877):
     sid["As"] = (asc_trop - ay) % 360.0
     return sid, ay
 
+def ephemeris_diagnostics():
+    """On-device check of whether the real Swiss Ephemeris library AND its .se1
+    data files are actually present and working — not just whether the app
+    silently fell back after the fact. Meant to be run from a button on the
+    phone itself, since GitHub Actions succeeding at build time says nothing
+    about whether the files survived packaging into the installed APK."""
+    lines = []
+    try:
+        native_dir = _resolve_native_dir()
+        lines.append(f"native/ folder: {native_dir}")
+    except Exception as ex:
+        return "❌ native/ folder NOT FOUND on this device.\n" + str(ex) + \
+               "\n\n→ The APK build did not package the native/ folder (or it didn't survive install)."
+
+    machine = platform.machine().lower()
+    subdir = "arm64-v8a" if ("aarch64" in machine or "arm64" in machine) else "linux-x64"
+    so_path = os.path.join(native_dir, subdir, "libswe.so")
+    ephe_path = os.path.join(native_dir, "ephe")
+
+    lines.append(f"Device arch: {machine}  →  expecting subfolder: {subdir}")
+    lines.append(("✅" if os.path.exists(so_path) else "❌ MISSING —") + f" libswe.so: {so_path}")
+
+    if os.path.isdir(ephe_path):
+        try:
+            se1_files = sorted(f for f in os.listdir(ephe_path) if f.lower().endswith(".se1"))
+        except Exception:
+            se1_files = []
+        if se1_files:
+            preview = ", ".join(se1_files[:6]) + ("..." if len(se1_files) > 6 else "")
+            lines.append(f"✅ ephe/ folder found ({len(se1_files)} .se1 data file(s)): {preview}")
+        else:
+            lines.append(f"⚠️ ephe/ folder EXISTS but has NO .se1 files inside — download step likely ran into an empty/wrong path: {ephe_path}")
+    else:
+        lines.append(f"❌ MISSING — ephe/ folder not found: {ephe_path}")
+
+    swe = _get_swisseph()
+    if swe is None:
+        lines.append(f"❌ libswe.so failed to LOAD. Error: {_SWE_LOAD_ERROR}")
+        lines.append("   → App is using the approximate pure-Python engine right now (±1-3°, can shift the D9 sign).")
+        return "\n".join(lines)
+
+    try:
+        jd_test = jd_from_dt(2000, 1, 1, 12, 0)  # known reference instant
+        sid, ay = calc_planet_positions(jd_test)
+        if _USE_APPROX_EPHEMERIS:
+            lines.append("⚠️ libswe.so loaded OK, but a real test calculation still fell back to the approximate engine.")
+            lines.append("   → This means the .se1 data files are missing/corrupt/don't cover this date range, even though libswe.so itself is present.")
+        else:
+            lines.append(f"✅ Swiss Ephemeris test calculation SUCCEEDED (1 Jan 2000, 12:00 UT — Sun sidereal lon = {sid['Su']:.4f}°, Lahiri ayanamsa = {ay:.4f}°).")
+            lines.append("   → Full-precision Swiss Ephemeris IS active on this device right now. D1/D9 charts should match AstroSage.")
+    except Exception as ex:
+        lines.append(f"❌ Test calculation raised an error: {ex}")
+    return "\n".join(lines)
+
 def lon_to_sign_deg(lon):
     lon = lon % 360
     return int(lon / 30), round(lon % 30, 2)
@@ -2115,6 +2169,17 @@ def main(page: ft.Page):
                 set_status(f"Build failed: {str(ex)}", C["red"])
 
         db_place_summary_text = ft.Text(f"📍 Current astro Place: {current_place['place_name']} ({current_place['latitude']}, {current_place['longitude']}, GMT+{current_place['gmt_offset']})", size=12, color=C["black_txt"])
+
+        ephem_diag_text = ft.Text("", size=11, color=C["black_txt"], selectable=True, visible=False)
+
+        def do_check_ephemeris(e):
+            ephem_diag_text.value = "⏳ Checking native library and ephemeris data files on this device..."
+            ephem_diag_text.visible = True
+            page.update()
+            report = ephemeris_diagnostics()
+            ephem_diag_text.value = report
+            page.update()
+
         db_screen = ft.Column(visible=False, controls=[
             make_header("⚙️ DATABASE AND ENGINE SETUP"), ft.Divider(height=4, color=C["divider"]),
             ft.ElevatedButton("⚡ BUILD AUTOMATED DATABASE", bgcolor=C["orange"], color="#FFFFFF", height=54, on_click=lambda e: threading.Thread(target=build_db_thread, daemon=True).start()),
@@ -2122,6 +2187,9 @@ def main(page: ft.Page):
             ft.Divider(height=10, color=C["divider"]),
             db_place_summary_text,
             ft.ElevatedButton("📍 PLACE SETTINGS (City / Lat / Lon / GMT)", bgcolor="#455A64", color="#FFFFFF", height=48, on_click=lambda e: show_screen("place")),
+            ft.Divider(height=10, color=C["divider"]),
+            ft.ElevatedButton("🔧 CHECK EPHEMERIS FILES ON THIS DEVICE", bgcolor="#37474F", color="#FFFFFF", height=48, on_click=do_check_ephemeris),
+            ephem_diag_text,
         ])
 
         # ── SCREEN: PLACE SETTINGS ────────────────────────────────────────────

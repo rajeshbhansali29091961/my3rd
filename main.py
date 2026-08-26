@@ -927,20 +927,40 @@ def _diamond_shapes(positions, lagna_sign, title, chart_size=320, y_off=0, add_f
     x1, y1 = W - p, W - p + y_off
     cx, cy = W // 2, (W // 2) + y_off
 
+    # Each outer corner of the square is split into two houses by the SAME
+    # diagonal line that also passes through the center — but the diagonal
+    # crosses the corner region at the point exactly midway between that
+    # corner and the center (NOT at the center itself, and NOT along the
+    # simple corner-to-edge-midpoint line). Getting this point right is what
+    # makes houses 2/3, 5/6, 8/9, 11/12 into two DISTINCT, non-overlapping
+    # triangles instead of two copies of the same triangle.
+    m_tl = ((x0 + cx) / 2, (y0 + cy) / 2)
+    m_tr = ((x1 + cx) / 2, (y0 + cy) / 2)
+    m_br = ((x1 + cx) / 2, (y1 + cy) / 2)
+    m_bl = ((x0 + cx) / 2, (y1 + cy) / 2)
+
     HOUSES_GEOM = {
-        1:  {"poly": [(cx, y0), (x1, cy), (cx, y1), (x0, cy)], "txt": (cx, cy - 40),   "planets": (cx, cy - 15)},
-        2:  {"poly": [(x0, y0), (cx, y0), (x0, cy)],           "txt": (x0 + 35, y0 + 25), "planets": (x0 + 35, y0 + 45)},
-        3:  {"poly": [(x0, y0), (x0, cy), (cx, y0)],           "txt": (x0 + 25, y0 + 55), "planets": (x0 + 25, y0 + 75)},
-        4:  {"poly": [(x0, cy), (cx, y0), (cx, cy)],           "txt": (cx - 45, cy - 15), "planets": (cx - 45, cy + 5)},
-        5:  {"poly": [(x0, y1), (x0, cy), (cx, y1)],           "txt": (x0 + 25, y1 - 55), "planets": (x0 + 25, y1 - 35)},
-        6:  {"poly": [(x0, y1), (cx, y1), (x0, cy)],           "txt": (x0 + 35, y1 - 25), "planets": (x0 + 35, y1 - 5)},
-        7:  {"poly": [(cx, y1), (x0, cy), (cx, y0), (x1, cy)], "txt": (cx, cy + 40),   "planets": (cx, cy + 55)},
-        8:  {"poly": [(x1, y1), (cx, y1), (x1, cy)],           "txt": (x1 - 35, y1 - 25), "planets": (x1 - 35, y1 - 5)},
-        9:  {"poly": [(x1, y1), (x1, cy), (cx, y1)],           "txt": (x1 - 25, y1 - 55), "planets": (x1 - 25, y1 - 35)},
-        10: {"poly": [(x1, cy), (cx, y1), (cx, cy)],           "txt": (cx + 45, cy + 15), "planets": (cx + 45, cy - 5)},
-        11: {"poly": [(x1, y0), (x1, cy), (cx, y0)],           "txt": (x1 - 25, y0 + 55), "planets": (x1 - 25, y0 + 75)},
-        12: {"poly": [(x1, y0), (cx, y0), (x1, cy)],           "txt": (x1 - 35, y0 + 25), "planets": (x1 - 35, y0 + 45)},
+        # 4 kendra "kite" quadrants — each is its own quarter of the inner
+        # diamond, bounded by the center and the two nearest corner-split points.
+        1:  {"poly": [m_tl, (cx, y0), m_tr, (cx, cy)]},
+        4:  {"poly": [m_bl, (x0, cy), m_tl, (cx, cy)]},
+        7:  {"poly": [m_br, (cx, y1), m_bl, (cx, cy)]},
+        10: {"poly": [m_tr, (x1, cy), m_br, (cx, cy)]},
+        # 8 corner triangles, two per square corner, split at the m_* points.
+        2:  {"poly": [(x0, y0), (cx, y0), m_tl]},
+        3:  {"poly": [(x0, y0), m_tl, (x0, cy)]},
+        5:  {"poly": [(x0, y1), (x0, cy), m_bl]},
+        6:  {"poly": [(x0, y1), m_bl, (cx, y1)]},
+        8:  {"poly": [(x1, y1), (cx, y1), m_br]},
+        9:  {"poly": [(x1, y1), m_br, (x1, cy)]},
+        11: {"poly": [(x1, y0), (x1, cy), m_tr]},
+        12: {"poly": [(x1, y0), m_tr, (cx, y0)]},
     }
+    for h_num, info in HOUSES_GEOM.items():
+        xs = [pt[0] for pt in info["poly"]]
+        ys = [pt[1] for pt in info["poly"]]
+        info["txt"] = (sum(xs) / len(xs), sum(ys) / len(ys) - 8)
+        info["planets"] = (sum(xs) / len(xs), sum(ys) / len(ys) + 10)
 
     sign_planets = {i: [] for i in range(12)}
     for planet, s_idx in positions.items():

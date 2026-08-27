@@ -519,31 +519,101 @@ def ramal_recommendation(judge_info, final_info):
     else:
         return ("NEUTRAL", "⚪ NEUTRAL / WAIT FOR CONFIRMATION — mixed or non-agreeing Shakal signature; avoid trading without price-action support.")
 
+# Digits inside a stock name (e.g. "360 ONE WAM", "5PAISA CAPITAL", "3M INDIA",
+# "20 MICRONS") were previously silently DROPPED by every path below — neither the
+# WD dictionary, Google Input Tools, nor the offline engine has any entry for a
+# digit character, so they just vanished from the output instead of becoming a
+# Hindi word. Spelling each digit out (phonetically, as it's read aloud) closes
+# that gap so a result is always produced no matter what the input contains.
+DIGIT_WORDS = {'0':'ज़ीरो','1':'वन','2':'टू','3':'थ्री','4':'फोर','5':'फाइव',
+               '6':'सिक्स','7':'सेवन','8':'एट','9':'नाइन'}
+
+def _digit_run_to_hindi(run):
+    return " ".join(DIGIT_WORDS[d] for d in run if d in DIGIT_WORDS)
+
+def _split_alpha_digit_runs(cw):
+    """Split a token into alternating runs of digits and non-digits, in order,
+    e.g. '5PAISA' -> [('5', True), ('PAISA', False)]."""
+    runs, current, current_is_digit = [], cw[0], cw[0].isdigit()
+    for ch in cw[1:]:
+        ch_is_digit = ch.isdigit()
+        if ch_is_digit == current_is_digit:
+            current += ch
+        else:
+            runs.append((current, current_is_digit))
+            current, current_is_digit = ch, ch_is_digit
+    runs.append((current, current_is_digit))
+    return runs
+
+# A word with NO vowel letters at all (DCW, PVR, MRF, ...) cannot be split into
+# real consonant+vowel syllables — the syllable-based offline engine has no
+# choice but to glue bare consonants together (each with its silent inherent
+# "a"), producing a made-up sound like "डकव" for DCW instead of how the ticker
+# is actually said out loud: letter by letter, "D-C-W", the same way people say
+# "N-T-P-C" or "P-V-R". Spelling such tokens out by letter name fixes this
+# whether or not the network transliteration API is reachable, since Google
+# Input Tools has the same fundamental problem with an unpronounceable input.
+LETTER_NAMES = {
+    'A':'ए','B':'बी','C':'सी','D':'डी','E':'ई','F':'एफ','G':'जी','H':'एच',
+    'I':'आई','J':'जे','K':'के','L':'एल','M':'एम','N':'एन','O':'ओ','P':'पी',
+    'Q':'क्यू','R':'आर','S':'एस','T':'टी','U':'यू','V':'वी','W':'डब्ल्यू',
+    'X':'एक्स','Y':'वाई','Z':'ज़ेड',
+}
+
+def _is_unpronounceable_cluster(cw):
+    return cw.isalpha() and len(cw) > 1 and not any(v in cw for v in "AEIOU")
+
+def _spell_out_letters(cw):
+    return "".join(LETTER_NAMES.get(ch, "") for ch in cw)
+
+def _translit_one_word(cw):
+    """CURATED is checked by the caller (get_hindi) for the whole name; this handles
+    a single already-alphabetic word: unpronounceable all-consonant clusters (spelled
+    letter-by-letter) > known business-term dictionary (WD) > Google Input Tools
+    transliteration (sound-based) > offline syllable-aware fallback."""
+    if _is_unpronounceable_cluster(cw):
+        return _spell_out_letters(cw)
+    if cw in WD:
+        return WD[cw]
+    if REQUESTS_OK:
+        try:
+            r = requests.get(
+                "https://inputtools.google.com/request?text=" + cw + "&ime=transliteration_en_hi&num=1",
+                timeout=4).json()
+            return r[1][0][1][0] if r[0] == "SUCCESS" else offline_translit(cw)
+        except: pass
+    return offline_translit(cw)
+
 def get_hindi(sym, eng):
     """Phonetic transliteration (sound-for-sound), NOT semantic translation — this
     matters because Akshara Sum is a phonetic weight system: translating a word's
     MEANING (e.g. "Exports" -> "निर्यात") gives a real Hindi word but the WRONG
     akshara, since it no longer sounds like the English name. Order of preference
     per word: curated whole-name override > known business-term dictionary (WD) >
-    Google Input Tools transliteration (sound-based) > crude letter-map fallback."""
+    Google Input Tools transliteration (sound-based) > crude letter-map fallback.
+    Any digits are spelled out phonetically rather than silently dropped, so a
+    result is always produced regardless of what the input contains."""
     if sym in CURATED: return CURATED[sym]
     out = []
     for w in eng.upper().split():
         cw = w.strip("&.,()-/")
         if not cw:
             continue
-        if cw in WD:
-            out.append(WD[cw])
+        if any(ch.isdigit() for ch in cw):
+            sub_out = []
+            for run, is_digit in _split_alpha_digit_runs(cw):
+                if is_digit:
+                    piece = _digit_run_to_hindi(run)
+                elif run:
+                    piece = _translit_one_word(run)
+                else:
+                    piece = ""
+                if piece:
+                    sub_out.append(piece)
+            if sub_out:
+                out.append(" ".join(sub_out))
             continue
-        if REQUESTS_OK:
-            try:
-                r = requests.get(
-                    "https://inputtools.google.com/request?text=" + cw + "&ime=transliteration_en_hi&num=1",
-                    timeout=4).json()
-                out.append(r[1][0][1][0] if r[0]=="SUCCESS" else offline_translit(cw))
-                continue
-            except: pass
-        out.append(offline_translit(cw))
+        out.append(_translit_one_word(cw))
     return " ".join(out)
 
 def calc(name):

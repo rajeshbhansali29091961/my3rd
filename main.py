@@ -627,6 +627,72 @@ def calc(name):
             steps.append("|")
     return total, " ".join(steps)
 
+def _meter_bar(pct, filled_char, empty_char):
+    filled = min(5, max(0, round(pct / 20)))
+    return filled_char * filled + empty_char * (5 - filled)
+
+def compute_conviction_and_risk(g, b, has_vedha, panch_notes, combined_dir):
+    """This app's OWN synthesis (not classical scripture) of how strongly its
+    existing signals agree with each other (Conviction) and how much caution
+    they collectively warrant (Risk) — built entirely from values this app
+    already computes: the ruling Graha's own character, the Bandha traversal
+    pattern, the Sarvatobhadra Vedha obstruction check, and Panchanga caution
+    flags. Treat both numbers as a summary of THIS APP'S OWN SIGNALS agreeing
+    or disagreeing with each other — not an independent measure of real
+    market risk, which depends on price, volume, and fundamentals this app
+    never looks at.
+
+    RISK — built from: the ruling Graha's own character (Moon/Rahu are
+    classically volatile/speculative; Saturn is classically slow-moving),
+    an ambiguous/cyclical Bandha, a Graha-vs-Bandha conflict, a Vedha
+    obstruction, and Panchanga caution flags (Rikta Tithi / inauspicious
+    Yoga / Vishti Karana) — each adds risk points, capped and scaled to 0-100.
+
+    CONVICTION — counts how many of the two directional readings this app
+    has (Graha's direction, Bandha's direction) actually agree with each
+    other; a Vedha obstruction then caps the result at 50% regardless of
+    agreement, since classically a Vedha is a caution that overrides
+    alignment elsewhere."""
+    GRAHA_RISK_TIER = {
+        "VOLATILE": 3, "SPECULATIVE": 3,
+        "BULLISH": 2, "BEARISH": 2, "STRONGLY BULLISH": 2,
+        "SLOW BULLISH": 1,
+    }
+    risk_pts = GRAHA_RISK_TIER.get(g[1], 2)
+    if b[3] == "SIDEWAYS":
+        risk_pts += 1
+    if combined_dir == "MIXED":
+        risk_pts += 2
+    elif combined_dir == "SIDEWAYS":
+        risk_pts += 1
+    if has_vedha:
+        risk_pts += 2
+    risk_pts += min(len(panch_notes), 2)
+    risk_pct = min(100, round(risk_pts / 10 * 100))
+    if risk_pct <= 25:   risk_label = "LOW"
+    elif risk_pct <= 50: risk_label = "MEDIUM"
+    elif risk_pct <= 75: risk_label = "HIGH"
+    else:                risk_label = "VERY HIGH"
+
+    g_dir = GRAHA_DIRECTION.get(g[1], "SIDEWAYS")
+    votes_up = votes_down = 0
+    if g_dir == "UP": votes_up += 1
+    elif g_dir == "DOWN": votes_down += 1
+    if b[3] == "UP":
+        votes_up += 1
+    elif b[3] == "CONTINUATION":   # echoes whatever Graha already said, doesn't cast an independent vote
+        if g_dir == "UP": votes_up += 1
+        elif g_dir == "DOWN": votes_down += 1
+    total_votes = votes_up + votes_down
+    conviction_pct = round(max(votes_up, votes_down) / total_votes * 100) if total_votes else 0
+    if has_vedha:
+        conviction_pct = min(conviction_pct, 50)
+    if conviction_pct < 40:   conv_label = "LOW"
+    elif conviction_pct < 70: conv_label = "MEDIUM"
+    else:                     conv_label = "HIGH"
+
+    return risk_pct, risk_label, conviction_pct, conv_label, int(total_votes), int(max(votes_up, votes_down))
+
 def make_report(asum, tval, ldate):
     nv    = (asum % 9) or 9
     g     = GRAHA[(nv - 1) % 9]
@@ -637,6 +703,18 @@ def make_report(asum, tval, ldate):
     today = datetime.now()
     today_nak_idx = today.timetuple().tm_yday % 27
     nak   = NAK[today_nak_idx]
+    # Panchanga is needed for the Risk Meter's caution flags (Rikta Tithi / inauspicious
+    # Yoga / Vishti Karana); computed here from today's actual Sun/Moon longitude rather
+    # than re-deriving it, so it stays consistent with the D1/D9 chart elsewhere in the
+    # app. Wrapped defensively — if ephemeris ever fails for any reason, the Risk Meter
+    # still works, it just proceeds with zero Panchanga caution flags rather than crashing
+    # the whole Oracle report.
+    try:
+        jd_now = jd_ut_from_ist(today.year, today.month, today.day, today.hour, today.minute)
+        pos_now, _ = calc_planet_positions(jd_now)
+        _, _, _, _, _, panch_notes = compute_panchanga(pos_now["Su"], pos_now["Mo"])
+    except Exception:
+        panch_notes = []
     wday  = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][today.weekday()]
     bars  = {1:"★☆☆☆☆",2:"★★☆☆☆",3:"★★★☆☆",4:"★★★★☆",5:"★★★★★"}
     today_lord = nak_lord_graha(today_nak_idx)
@@ -661,6 +739,12 @@ def make_report(asum, tval, ldate):
         birth_lord = None
         vedha_line = "N/A (no listing date on record)"
         vedha_sector_line = ""
+        has_vedha = False
+        tara = "N/A"
+    risk_pct, risk_label, conviction_pct, conv_label, total_votes, agree_votes = \
+        compute_conviction_and_risk(g, b, has_vedha, panch_notes, combined_dir)
+    risk_bar = _meter_bar(risk_pct, "🟥", "⬜")
+    conv_bar = _meter_bar(conviction_pct, "🟩", "⬜")
     S  = "─" * 30
     S2 = "═" * 30
     return "\n".join([
@@ -698,6 +782,15 @@ def make_report(asum, tval, ldate):
         "  " + vedha_line,
     ] + ([vedha_sector_line] if vedha_sector_line else []) + [
         "  (Nakshatra-lord/sector link is this app's own symbolic extension —", "   classical Muhurta texts cover timing, not stock sectors)", S2,
+        "STEP 10: CONVICTION METER", "  (This app's own synthesis — how many of ITS OWN readings agree)",
+        "  " + conv_bar + f"  {conviction_pct}%  ({conv_label})",
+        f"  {agree_votes} of {total_votes} directional reading(s) agree" if total_votes else "  No directional reading available (both Graha and Bandha are range-bound)",
+        "  (Graha vs Bandha agreement" + (", capped by Vedha obstruction" if has_vedha else "") + ")", S,
+        "STEP 11: RISK METER", "  (This app's own synthesis — how much caution its signals collectively warrant)",
+        "  " + risk_bar + f"  {risk_pct}%  ({risk_label})",
+        "  Built from: Graha's own character (" + g[1] + "), Bandha ambiguity, Graha/Bandha conflict,",
+        "  Vedha obstruction, and " + str(len(panch_notes)) + " Panchanga caution flag(s) today.", S,
+        "  ⚠️ Both meters summarize AGREEMENT among this app's own symbolic signals —", "   not an independent measure of real market risk (price/volume/fundamentals).", S2,
         "  Research only. Not SEBI advice.", S2,
     ])
 
@@ -2575,10 +2668,12 @@ def main(page: ft.Page):
 
             def update_preview(e=None):
                 v = gather_values()
-                preview_text.value = "📝 " + describe_rule_english(
+                desc = describe_rule_english(
                     v["planet"], v["d1h"], v["d1r"], v["d1l"], v["d9h"], v["d9r"], v["d9_aspect"],
                     v["varg"], v["same"], v["comp_pl"], v["comp_h"], v["retro"], v["wt"], v["action"],
                     v["ssc"], v["ssh"], v["s_empty"], v["stc"], v["stl"], v["sasp"], v["saspp"], v["saspm"])
+                preview_text.value = "📝 " + desc
+                summary_text.value = desc
                 page.update()
 
             def do_save(e):
@@ -2685,38 +2780,66 @@ def main(page: ft.Page):
             if not is_new:
                 header_row_ctrls.append(ft.IconButton(icon=ft.Icons.DELETE, icon_color="#FFFFFF", on_click=do_delete))
 
-            update_preview()
+            # ── Collapsed-by-default summary line, tap to expand into the full form ──
+            # Every saved rule starts as ONE compact line (the same plain-English
+            # description shown in the live preview below) so a long rule list stays
+            # scannable; tapping it reveals the full editable form for that rule.
+            summary_text = ft.Text("", size=12.5, color="#FFFFFF", weight="bold")
+            expand_icon = ft.Icon(name=ft.Icons.EXPAND_MORE, color="#FFEB3B", size=26)
+            is_expanded = {"v": False}
+            form_col = ft.Column([
+                fld_name,
+                ft.Text("ACTION", size=11, color="#FFEB3B", weight="bold"),
+                action_box,
+                ft.Divider(height=6, color="#FFFFFF"),
+                ft.Text("PRIMARY CHART & HOUSE", size=11, color="#FFEB3B", weight="bold"),
+                ft.Row([dd_ssc, dd_ssh], spacing=8, wrap=True),
+                ft.Text("Occupancy — does this house have a planet sitting in it?", size=11, color="#FFFFFF"),
+                empty_box,
+                ft.Divider(height=6, color="#FFFFFF"),
+                ft.Text("RASHI LOCATION CHECK — does this house's sign also sit in one of these Target Chart houses?", size=11, color="#FFEB3B", weight="bold"),
+                ft.Row([dd_stc, dd_sasp], spacing=8, wrap=True),
+                house_grid,
+                ft.Divider(height=6, color="#FFFFFF"),
+                ft.Text("ASPECT RESTRICTION — is this house aspected by these named planets?", size=11, color="#FFEB3B", weight="bold"),
+                planet_grid,
+                dd_saspm,
+                ft.Divider(height=6, color="#FFFFFF"),
+                advanced_toggle_btn,
+                advanced_body,
+                ft.Divider(height=6, color="#FFFFFF"),
+                preview_text,
+                ft.Row([
+                    ft.ElevatedButton(("💾 SAVE RULE" if is_new else "💾 UPDATE"), bgcolor=C["green"], color="#FFFFFF", on_click=do_save),
+                    ft.ElevatedButton("🧪 TEST vs Last Chart", bgcolor=C["accent"], color="#FFFFFF", on_click=do_test),
+                ], spacing=8, wrap=True),
+                status_text,
+                test_result_text,
+            ], spacing=6, visible=False)
+
+            def toggle_expand(e):
+                is_expanded["v"] = not is_expanded["v"]
+                form_col.visible = is_expanded["v"]
+                expand_icon.name = ft.Icons.EXPAND_LESS if is_expanded["v"] else ft.Icons.EXPAND_MORE
+                page.update()
+
+            update_preview()  # fills in summary_text now that it exists
+
+            summary_row = ft.Container(
+                content=ft.Row([
+                    ft.Column([
+                        ft.Row(header_row_ctrls, alignment="spaceBetween"),
+                        summary_text,
+                    ], spacing=2, expand=True),
+                    expand_icon,
+                ], alignment="spaceBetween", vertical_alignment="start"),
+                on_click=toggle_expand, ink=True, border_radius=8, padding=4,
+            )
 
             return ft.Container(
                 content=ft.Column([
-                    ft.Row(header_row_ctrls, alignment="spaceBetween"),
-                    fld_name,
-                    ft.Text("ACTION", size=11, color="#FFEB3B", weight="bold"),
-                    action_box,
-                    ft.Divider(height=6, color="#FFFFFF"),
-                    ft.Text("PRIMARY CHART & HOUSE", size=11, color="#FFEB3B", weight="bold"),
-                    ft.Row([dd_ssc, dd_ssh], spacing=8, wrap=True),
-                    ft.Text("Occupancy — does this house have a planet sitting in it?", size=11, color="#FFFFFF"),
-                    empty_box,
-                    ft.Divider(height=6, color="#FFFFFF"),
-                    ft.Text("RASHI LOCATION CHECK — does this house's sign also sit in one of these Target Chart houses?", size=11, color="#FFEB3B", weight="bold"),
-                    ft.Row([dd_stc, dd_sasp], spacing=8, wrap=True),
-                    house_grid,
-                    ft.Divider(height=6, color="#FFFFFF"),
-                    ft.Text("ASPECT RESTRICTION — is this house aspected by these named planets?", size=11, color="#FFEB3B", weight="bold"),
-                    planet_grid,
-                    dd_saspm,
-                    ft.Divider(height=6, color="#FFFFFF"),
-                    advanced_toggle_btn,
-                    advanced_body,
-                    ft.Divider(height=6, color="#FFFFFF"),
-                    preview_text,
-                    ft.Row([
-                        ft.ElevatedButton(("💾 SAVE RULE" if is_new else "💾 UPDATE"), bgcolor=C["green"], color="#FFFFFF", on_click=do_save),
-                        ft.ElevatedButton("🧪 TEST vs Last Chart", bgcolor=C["accent"], color="#FFFFFF", on_click=do_test),
-                    ], spacing=8, wrap=True),
-                    status_text,
-                    test_result_text,
+                    summary_row,
+                    form_col,
                 ], spacing=6),
                 bgcolor=C["primary"], border_radius=10, padding=12,
                 border=ft.border.all(2, "#FFEB3B") if is_new else None

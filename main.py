@@ -1952,7 +1952,9 @@ def main(page: ft.Page):
 
         def compute_live_timing_signal():
             """Runs your custom Rules against the sky right now (same engine as this page's
-            Calculate Astro), independent of any specific stock — a general market-timing read."""
+            Calculate Astro), independent of any specific stock — a general market-timing read.
+            Also returns the raw chart data (not just the BUY/SELL/WAIT label) so a caller can
+            redraw the D1/D9 diamond chart with it too, without a second ephemeris calculation."""
             now = datetime.now()
             place_lat = float(current_place["latitude"])
             place_lon = float(current_place["longitude"])
@@ -1966,23 +1968,33 @@ def main(page: ft.Page):
             remember_chart_for_test(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set,
                                     f"Live Timing Signal @ {now.strftime('%d-%m-%Y %H:%M')}")
             matches, score, wait_matches = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
+            chart_data = {"d1_pos": d1_pos, "d9_pos": d9_pos, "lagna_idx": lagna_idx, "lagna_d9": lagna_d9,
+                          "retro_set": retro_set, "ay": ay, "pos": pos, "now": now,
+                          "lat": place_lat, "lon": place_lon, "gmt": place_gmt}
             if wait_matches:
-                return "WAIT", C["orange"], score, wait_matches
+                return "WAIT", C["orange"], score, wait_matches, chart_data
             elif score > 0:
-                return "BUY", C["green"], score, wait_matches
+                return "BUY", C["green"], score, wait_matches, chart_data
             elif score < 0:
-                return "SELL", C["red"], score, wait_matches
+                return "SELL", C["red"], score, wait_matches, chart_data
             else:
-                return "NEUTRAL", C["accent"], score, wait_matches
+                return "NEUTRAL", C["accent"], score, wait_matches, chart_data
 
         def stocks_recalc_loop(interval_seconds, stop_event):
             while not stop_event.is_set():
-                label, color, score, wait_matches = compute_live_timing_signal()
+                label, color, score, wait_matches, cd = compute_live_timing_signal()
                 live_signal_text.value = f"⏱ LIVE TIMING SIGNAL: {label}"
                 live_signal_container.bgcolor = color
                 live_signal_text.color = "#FFFFFF"
                 apply_timing_flag(score, wait_matches)
                 load_list(fld_list_search.value.strip().upper())
+                # If the D1/D9 chart is currently open on this page, keep it in sync with the
+                # live signal above instead of leaving it as a frozen snapshot from whenever it
+                # was first opened — this is the whole point of Auto Refresh being "live."
+                if astro_chart_container.controls:
+                    render_astro_chart_into(astro_chart_container, cd["d1_pos"], cd["lagna_idx"], cd["d9_pos"],
+                                             cd["lagna_d9"], cd["retro_set"], cd["ay"], cd["pos"],
+                                             cd["lat"], cd["lon"], cd["gmt"], extra_status_ok=False)
                 page.update()
                 if stop_event.wait(interval_seconds):
                     break
@@ -2212,6 +2224,45 @@ def main(page: ft.Page):
             astro_chart_container.controls.clear()
             page.update()
 
+        def render_astro_chart_into(container, d1_pos, lagna_idx, d9_pos, lagna_d9, retro_set, ay, pos, lat, lon, gmt_offset, extra_status_ok=True):
+            """Draws the D1/D9 diamond charts + Panchanga into the given container. Shared by
+            the manual CALCULATE ASTRO button and the Stocks page's auto-refresh loop, so a
+            chart left open during Auto Refresh stays in sync with the live signal instead of
+            being a frozen snapshot from whenever it was first opened."""
+            vargottama_set = {p for p in d1_pos if p != "As" and d1_pos.get(p) == d9_pos.get(p)}
+            container.controls.clear()
+            container.controls.append(ft.Text(
+                f"📍 Lat {lat:g}, Lon {lon:g}, GMT+{gmt_offset:g}   " +
+                "✨ SIDEREAL AYANAMSA (LAHIRI): " + str(round(ay, 4)) + "°" +
+                ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
+                ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else "") +
+                ("   ⚠️ Approx ephemeris (native libswe.so not found)" if _USE_APPROX_EPHEMERIS else ""),
+                size=13, color=C["primary"], weight="bold"))
+            container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
+
+            tithi_name, tithi_num, paksha, yoga_name, karana_name, panch_notes = compute_panchanga(pos["Su"], pos["Mo"])
+            container.controls.append(ft.Container(height=6))
+            container.controls.append(make_header("🗓️ PANCHANGA (Tithi · Yoga · Karana)", bgcolor="#4E342E"))
+            container.controls.append(ft.Text(
+                f"Tithi  : {tithi_name}  ({paksha}, #{tithi_num})\n"
+                f"Yoga   : {yoga_name}\n"
+                f"Karana : {karana_name}",
+                size=13, color=C["black_txt"], weight="bold", selectable=True
+            ))
+            if panch_notes:
+                container.controls.append(ft.Text("\n".join(panch_notes), size=11, color=C["orange"], weight="bold"))
+            else:
+                container.controls.append(ft.Text("✅ No classical Panchanga caution flags for this moment.", size=11, color=C["green"], weight="bold"))
+
+            container.controls.append(ft.Container(height=8))
+            container.controls.append(ft.ElevatedButton("✖  CLOSE CHARTS", bgcolor=C["red"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_astro_close))
+
+            if extra_status_ok:
+                if _USE_APPROX_EPHEMERIS:
+                    set_status("Charts OK (approximate ephemeris — add native/ for Swiss Ephemeris precision).", C["orange"])
+                else:
+                    set_status("Charts Calculated Successfully!", C["green"])
+
         def do_astro(e):
             try:
                 dt = parse_dt(fld_date.value)
@@ -2221,48 +2272,15 @@ def main(page: ft.Page):
                 gmt_offset = float(fld_gmt.value) if (fld_gmt.value or "").strip() else 5.5
                 jd = jd_ut_from_ist(dt.year, dt.month, dt.day, hh, mm, gmt_offset)
                 pos, ay = calc_planet_positions(jd, lat, lon)
-                
+
                 d1_pos = {p: lon_to_sign_deg(l)[0] for p, l in pos.items()}
                 d9_pos = {p: d9_sign(l) for p, l in pos.items()}
-                
+
                 lagna_idx = d1_pos["As"]
                 lagna_d9  = d9_pos["As"]
                 retro_set = get_retrograde_set(jd, lat, lon)
-                vargottama_set = {p for p in d1_pos if p != "As" and d1_pos.get(p) == d9_pos.get(p)}
 
-                astro_chart_container.controls.clear()
-                
-                astro_chart_container.controls.append(ft.Text(
-                    f"📍 Lat {lat:g}, Lon {lon:g}, GMT+{gmt_offset:g}   " +
-                    "✨ SIDEREAL AYANAMSA (LAHIRI): " + str(round(ay, 4)) + "°" +
-                    ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
-                    ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else "") +
-                    ("   ⚠️ Approx ephemeris (native libswe.so not found)" if _USE_APPROX_EPHEMERIS else ""),
-                    size=13, color=C["primary"], weight="bold"))
-                astro_chart_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
-
-                # ── PANCHANGA FOR THIS DATE/TIME ──
-                tithi_name, tithi_num, paksha, yoga_name, karana_name, panch_notes = compute_panchanga(pos["Su"], pos["Mo"])
-                astro_chart_container.controls.append(ft.Container(height=6))
-                astro_chart_container.controls.append(make_header("🗓️ PANCHANGA (Tithi · Yoga · Karana)", bgcolor="#4E342E"))
-                astro_chart_container.controls.append(ft.Text(
-                    f"Tithi  : {tithi_name}  ({paksha}, #{tithi_num})\n"
-                    f"Yoga   : {yoga_name}\n"
-                    f"Karana : {karana_name}",
-                    size=13, color=C["black_txt"], weight="bold", selectable=True
-                ))
-                if panch_notes:
-                    astro_chart_container.controls.append(ft.Text("\n".join(panch_notes), size=11, color=C["orange"], weight="bold"))
-                else:
-                    astro_chart_container.controls.append(ft.Text("✅ No classical Panchanga caution flags for this moment.", size=11, color=C["green"], weight="bold"))
-
-                astro_chart_container.controls.append(ft.Container(height=8))
-                astro_chart_container.controls.append(ft.ElevatedButton("✖  CLOSE CHARTS", bgcolor=C["red"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_astro_close))
-                
-                if _USE_APPROX_EPHEMERIS:
-                    set_status("Charts OK (approximate ephemeris — add native/ for Swiss Ephemeris precision).", C["orange"])
-                else:
-                    set_status("Charts Calculated Successfully!", C["green"])
+                render_astro_chart_into(astro_chart_container, d1_pos, lagna_idx, d9_pos, lagna_d9, retro_set, ay, pos, lat, lon, gmt_offset)
             except Exception as ex:
                 set_status(f"Error: {str(ex)}", C["red"])
             page.update()

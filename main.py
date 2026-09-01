@@ -1767,6 +1767,78 @@ def main(page: ft.Page):
             page.scroll_to(offset=0, duration=300)
             page.update()
 
+        def render_oracle_astro_into(container, d1_pos, lagna_idx, d9_pos, lagna_d9, retro_set, ay, pos, calc_time,
+                                      place_name, place_lat, place_lon, place_gmt):
+            """Draws the Oracle screen's D1/D9 chart + Panchanga + custom-rules recommendation
+            into the given container. Shared by the manual 'Auto Astro' button and the Stocks
+            page's Auto Refresh loop, so a chart left open here also stays live instead of being
+            a frozen snapshot from whenever it was first opened."""
+            vargottama_set = {p for p in d1_pos if p != "As" and d1_pos.get(p) == d9_pos.get(p)}
+
+            container.controls.clear()
+            container.controls.append(ft.Divider(height=6, color=C["divider"]))
+            container.controls.append(make_header("🕉️ VEDIC KUNDALI AT TIME OF CALCULATION"))
+            container.controls.append(ft.Text(
+                "📍 " + place_name + f" ({place_lat:g}, {place_lon:g}, GMT+{place_gmt:g})   " +
+                "📅 " + calc_time.strftime("%d-%m-%Y %H:%M") + "   ✨ Ayanamsa (Lahiri): " + str(round(ay, 4)) + "°" +
+                ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
+                ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else "") +
+                ("   ⚠️ Approx ephemeris (native libswe.so not found)" if _USE_APPROX_EPHEMERIS else ""),
+                size=13, color=C["primary"], weight="bold"
+            ))
+            container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
+
+            tithi_name, tithi_num, paksha, yoga_name, karana_name, panch_notes = compute_panchanga(pos["Su"], pos["Mo"])
+            container.controls.append(ft.Container(height=6))
+            container.controls.append(make_header("🗓️ PANCHANGA (Tithi · Yoga · Karana)", bgcolor="#4E342E"))
+            container.controls.append(ft.Text(
+                f"Tithi  : {tithi_name}  ({paksha}, #{tithi_num})\n"
+                f"Yoga   : {yoga_name}\n"
+                f"Karana : {karana_name}",
+                size=13, color=C["black_txt"], weight="bold", selectable=True
+            ))
+            if panch_notes:
+                container.controls.append(ft.Text("\n".join(panch_notes), size=11, color=C["orange"], weight="bold"))
+            else:
+                container.controls.append(ft.Text("✅ No classical Panchanga caution flags for this moment.", size=11, color=C["green"], weight="bold"))
+
+            matches, score, wait_matches = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
+            apply_timing_flag(score, wait_matches)  # keep the top-of-page flag in sync
+            if wait_matches:
+                rec_text, rec_color = f"🟡 CUSTOM RULES: WAIT ON THIS STOCK TODAY  ({len(wait_matches)} wait-rule match{'es' if len(wait_matches) != 1 else ''})", C["orange"]
+            elif score > 0:
+                rec_text, rec_color = f"🟢 CUSTOM RULES: NET BUY  (score {score:+.1f})", C["green"]
+            elif score < 0:
+                rec_text, rec_color = f"🔴 CUSTOM RULES: NET SELL  (score {score:+.1f})", C["red"]
+            else:
+                rec_text, rec_color = "⚪ CUSTOM RULES: NEUTRAL / no matching rules", C["black_txt"]
+            container.controls.append(ft.Container(height=10))
+            container.controls.append(ft.Container(
+                content=ft.Text(rec_text, size=15, color="#FFFFFF", weight="bold"),
+                bgcolor=rec_color, padding=12, border_radius=8, alignment=ft.alignment.center
+            ))
+            def _fmt_match(entry):
+                pl, d1h, d1r, d9h, d9r, asp, varg, same, act, wt = entry
+                bits = []
+                if d1h is not None: bits.append(f"D1 House {d1h}")
+                if d1r is not None: bits.append(f"D1 {RASHI_LIST[d1r-1]}")
+                if d9h is not None: bits.append(f"D9 {'aspects House' if asp else 'House'} {d9h}")
+                if d9r is not None: bits.append(f"D9 {RASHI_LIST[d9r-1]}")
+                if varg: bits.append("Vargottama")
+                if same: bits.append("D1=D9 House")
+                where = ", ".join(bits) if bits else "any placement"
+                return f"{pl}  [{where}]  → {act}  (w={wt:g})"
+            if wait_matches:
+                wait_detail = "\n".join("🟡 " + _fmt_match(m) for m in wait_matches)
+                container.controls.append(ft.Text(wait_detail, size=11, color=C["orange"], weight="bold", selectable=True))
+            if matches:
+                detail = "\n".join("• " + _fmt_match(m) for m in matches)
+                container.controls.append(ft.Text(detail, size=11, color=C["black_txt"], selectable=True))
+
+            container.controls.append(ft.Container(height=8))
+            container.controls.append(ft.ElevatedButton("⬅  CLOSE ASTRO CHART", bgcolor=C["primary"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_oracle_back))
+            container.visible = True
+
         def do_oracle_astro(e):
             # ── D1 / D9 VEDIC CHART AT TIME OF THIS CALCULATION (single combined canvas) ──
             try:
@@ -1782,75 +1854,11 @@ def main(page: ft.Page):
                 lagna_idx = d1_pos["As"]
                 lagna_d9  = d9_pos["As"]
                 retro_set = get_retrograde_set(jd, place_lat, place_lon)
-                vargottama_set = {p for p in d1_pos if p != "As" and d1_pos.get(p) == d9_pos.get(p)}
 
-                oracle_astro_container.controls.clear()
-                oracle_astro_container.controls.append(ft.Divider(height=6, color=C["divider"]))
-                oracle_astro_container.controls.append(make_header("🕉️ VEDIC KUNDALI AT TIME OF CALCULATION"))
-                oracle_astro_container.controls.append(ft.Text(
-                    "📍 " + current_place["place_name"] + f" ({place_lat:g}, {place_lon:g}, GMT+{place_gmt:g})   " +
-                    "📅 " + calc_time.strftime("%d-%m-%Y %H:%M") + "   ✨ Ayanamsa (Lahiri): " + str(round(ay, 4)) + "°" +
-                    ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
-                    ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else "") +
-                    ("   ⚠️ Approx ephemeris (native libswe.so not found)" if _USE_APPROX_EPHEMERIS else ""),
-                    size=13, color=C["primary"], weight="bold"
-                ))
-                oracle_astro_container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
-
-                # ── PANCHANGA (Tithi / Yoga / Karana) AT TIME OF CALCULATION ──
-                tithi_name, tithi_num, paksha, yoga_name, karana_name, panch_notes = compute_panchanga(pos["Su"], pos["Mo"])
-                oracle_astro_container.controls.append(ft.Container(height=6))
-                oracle_astro_container.controls.append(make_header("🗓️ PANCHANGA (Tithi · Yoga · Karana)", bgcolor="#4E342E"))
-                oracle_astro_container.controls.append(ft.Text(
-                    f"Tithi  : {tithi_name}  ({paksha}, #{tithi_num})\n"
-                    f"Yoga   : {yoga_name}\n"
-                    f"Karana : {karana_name}",
-                    size=13, color=C["black_txt"], weight="bold", selectable=True
-                ))
-                if panch_notes:
-                    oracle_astro_container.controls.append(ft.Text("\n".join(panch_notes), size=11, color=C["orange"], weight="bold"))
-                else:
-                    oracle_astro_container.controls.append(ft.Text("✅ No classical Panchanga caution flags for this moment.", size=11, color=C["green"], weight="bold"))
-
-                # ── CUSTOM RULES: BUY/SELL/WAIT RECOMMENDATION ──────────────
                 remember_chart_for_test(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set,
                                         f"CALCULATE ASTRO @ {calc_time.strftime('%d-%m-%Y %H:%M')}")
-                matches, score, wait_matches = evaluate_rules(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set)
-                apply_timing_flag(score, wait_matches)  # keep the top-of-page flag in sync
-                if wait_matches:
-                    rec_text, rec_color = f"🟡 CUSTOM RULES: WAIT ON THIS STOCK TODAY  ({len(wait_matches)} wait-rule match{'es' if len(wait_matches) != 1 else ''})", C["orange"]
-                elif score > 0:
-                    rec_text, rec_color = f"🟢 CUSTOM RULES: NET BUY  (score {score:+.1f})", C["green"]
-                elif score < 0:
-                    rec_text, rec_color = f"🔴 CUSTOM RULES: NET SELL  (score {score:+.1f})", C["red"]
-                else:
-                    rec_text, rec_color = "⚪ CUSTOM RULES: NEUTRAL / no matching rules", C["black_txt"]
-                oracle_astro_container.controls.append(ft.Container(height=10))
-                oracle_astro_container.controls.append(ft.Container(
-                    content=ft.Text(rec_text, size=15, color="#FFFFFF", weight="bold"),
-                    bgcolor=rec_color, padding=12, border_radius=8, alignment=ft.alignment.center
-                ))
-                def _fmt_match(entry):
-                    pl, d1h, d1r, d9h, d9r, asp, varg, same, act, wt = entry
-                    bits = []
-                    if d1h is not None: bits.append(f"D1 House {d1h}")
-                    if d1r is not None: bits.append(f"D1 {RASHI_LIST[d1r-1]}")
-                    if d9h is not None: bits.append(f"D9 {'aspects House' if asp else 'House'} {d9h}")
-                    if d9r is not None: bits.append(f"D9 {RASHI_LIST[d9r-1]}")
-                    if varg: bits.append("Vargottama")
-                    if same: bits.append("D1=D9 House")
-                    where = ", ".join(bits) if bits else "any placement"
-                    return f"{pl}  [{where}]  → {act}  (w={wt:g})"
-                if wait_matches:
-                    wait_detail = "\n".join("🟡 " + _fmt_match(m) for m in wait_matches)
-                    oracle_astro_container.controls.append(ft.Text(wait_detail, size=11, color=C["orange"], weight="bold", selectable=True))
-                if matches:
-                    detail = "\n".join("• " + _fmt_match(m) for m in matches)
-                    oracle_astro_container.controls.append(ft.Text(detail, size=11, color=C["black_txt"], selectable=True))
-
-                oracle_astro_container.controls.append(ft.Container(height=8))
-                oracle_astro_container.controls.append(ft.ElevatedButton("⬅  CLOSE ASTRO CHART", bgcolor=C["primary"], color="#FFFFFF", height=46, style=ft.ButtonStyle(text_style=ft.TextStyle(size=14, weight="bold")), on_click=do_oracle_back))
-                oracle_astro_container.visible = True
+                render_oracle_astro_into(oracle_astro_container, d1_pos, lagna_idx, d9_pos, lagna_d9, retro_set, ay, pos,
+                                          calc_time, current_place["place_name"], place_lat, place_lon, place_gmt)
             except Exception as aex:
                 oracle_astro_container.controls.clear()
                 oracle_astro_container.controls.append(ft.Text(f"Astro chart error: {str(aex)}", size=13, color=C["red"]))
@@ -1988,13 +1996,18 @@ def main(page: ft.Page):
                 live_signal_text.color = "#FFFFFF"
                 apply_timing_flag(score, wait_matches)
                 load_list(fld_list_search.value.strip().upper())
-                # If the D1/D9 chart is currently open on this page, keep it in sync with the
-                # live signal above instead of leaving it as a frozen snapshot from whenever it
-                # was first opened — this is the whole point of Auto Refresh being "live."
+                # If a D1/D9 chart is currently open — on THIS page, or on the Oracle screen —
+                # keep it in sync with the live signal above instead of leaving it as a frozen
+                # snapshot from whenever it was first opened. Both charts are checked
+                # independently since either, both, or neither may be open at any given time.
                 if astro_chart_container.controls:
                     render_astro_chart_into(astro_chart_container, cd["d1_pos"], cd["lagna_idx"], cd["d9_pos"],
                                              cd["lagna_d9"], cd["retro_set"], cd["ay"], cd["pos"],
                                              cd["lat"], cd["lon"], cd["gmt"], extra_status_ok=False)
+                if oracle_astro_container.controls and oracle_astro_container.visible:
+                    render_oracle_astro_into(oracle_astro_container, cd["d1_pos"], cd["lagna_idx"], cd["d9_pos"],
+                                              cd["lagna_d9"], cd["retro_set"], cd["ay"], cd["pos"], cd["now"],
+                                              current_place["place_name"], cd["lat"], cd["lon"], cd["gmt"])
                 page.update()
                 if stop_event.wait(interval_seconds):
                     break

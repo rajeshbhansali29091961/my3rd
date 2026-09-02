@@ -1951,14 +1951,13 @@ def main(page: ft.Page):
         # straight into the field below. That's a deliberate choice: it's Android's own
         # robust, already-working speech engine, rather than a custom in-app audio
         # recorder this app's build pipeline was never verified to support reliably.
-        fld_prashna_input = ft.TextField(
-            label="Type a word/sentence, or tap 🎤 on your keyboard to speak it",
-            hint_text="e.g. Will Reliance go up today", multiline=True, min_lines=2, max_lines=4,
-            label_style=ft.TextStyle(size=14, color=C["primary"]),
-            text_size=16, text_style=ft.TextStyle(size=16, color=C["black_txt"], weight="bold"),
-            border_color=C["primary"], focused_border_color=C["accent"], border_width=2,
-            bgcolor=C["inp_bg"], cursor_color=C["primary"],
-        )
+        # Single-line, using the same make_field() pattern as fld_oracle elsewhere in the
+        # app — multiline text fields are a known trouble spot for voice-dictated text
+        # failing to commit properly in Flutter-based apps (the mic icon shows and appears
+        # to work, but the transcribed words never land in the field). Single-line is the
+        # more standard, better-tested input path.
+        fld_prashna_input = make_field("Type a word/sentence, or tap 🎤 on your keyboard to speak it",
+                                        hint="e.g. Will Reliance go up today")
         prashna_result = ft.Column(spacing=8, visible=False)
 
         def do_word_prashna(e):

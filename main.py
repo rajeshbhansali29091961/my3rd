@@ -616,6 +616,40 @@ def get_hindi(sym, eng):
         out.append(_translit_one_word(cw))
     return " ".join(out)
 
+def text_to_hindi_phonetic(text):
+    """Convert a free-form sentence to Hindi for Prashna (question) purposes — same
+    phonetic engine as get_hindi() (digit spelling, unpronounceable-cluster letter
+    spelling, WD dictionary, Google Input Tools, offline syllable fallback), but for
+    ANY text, not just company names, and with no CURATED lookup (that's specific to
+    known stock symbols). Words already written in Devanagari are left untouched —
+    only English/Latin-script words get transliterated, matching "if words are in
+    English then convert to Hindi"."""
+    out = []
+    for w in text.split():
+        cw = w.strip("।.,!?()\"'-")
+        if not cw:
+            continue
+        if any('\u0900' <= ch <= '\u097F' for ch in cw):
+            out.append(cw)   # already Devanagari — use as typed/spoken
+            continue
+        cw_upper = cw.upper()
+        if any(ch.isdigit() for ch in cw_upper):
+            sub_out = []
+            for run, is_digit in _split_alpha_digit_runs(cw_upper):
+                if is_digit:
+                    piece = _digit_run_to_hindi(run)
+                elif run:
+                    piece = _translit_one_word(run)
+                else:
+                    piece = ""
+                if piece:
+                    sub_out.append(piece)
+            if sub_out:
+                out.append(" ".join(sub_out))
+            continue
+        out.append(_translit_one_word(cw_upper))
+    return " ".join(out)
+
 def calc(name):
     total, steps = 0, []
     for c in name:
@@ -1910,6 +1944,64 @@ def main(page: ft.Page):
             ramal_container.visible = True
             page.update()
 
+        # ── WORD / VOICE PRASHNA — Bhoovalaya reading for ANY sentence ──────────────
+        # "Voice" here means your phone keyboard's own 🎤 dictation button (Gboard and
+        # every stock Android keyboard has one on the toolbar whenever a text field is
+        # focused) — tap it, speak, and Android's own speech-to-text drops the words
+        # straight into the field below. That's a deliberate choice: it's Android's own
+        # robust, already-working speech engine, rather than a custom in-app audio
+        # recorder this app's build pipeline was never verified to support reliably.
+        fld_prashna_input = ft.TextField(
+            label="Type a word/sentence, or tap 🎤 on your keyboard to speak it",
+            hint_text="e.g. Will Reliance go up today", multiline=True, min_lines=2, max_lines=4,
+            label_style=ft.TextStyle(size=14, color=C["primary"]),
+            text_size=16, text_style=ft.TextStyle(size=16, color=C["black_txt"], weight="bold"),
+            border_color=C["primary"], focused_border_color=C["accent"], border_width=2,
+            bgcolor=C["inp_bg"], cursor_color=C["primary"],
+        )
+        prashna_result = ft.Column(spacing=8, visible=False)
+
+        def do_word_prashna(e):
+            text = (fld_prashna_input.value or "").strip()
+            if not text:
+                set_status("Type a word/sentence, or use your keyboard's 🎤 to speak one, first.", C["red"])
+                page.update()
+                return
+            hindi_text = text_to_hindi_phonetic(text)
+            asum, breakdown = calc(hindi_text)
+            tval = 0  # no "listing date" for a spoken question — Temporal Vibration doesn't apply here
+            nv = (asum % 9) or 9
+            g = GRAHA[(nv - 1) % 9]
+            b = BANDHA[(nv - 1) % 6]
+            combined_dir, combined_note = combine_direction(g[1], b[3])
+            risk_pct, risk_label, conviction_pct, conv_label, total_votes, agree_votes = \
+                compute_conviction_and_risk(g, b, False, [], combined_dir)
+            risk_bar = _meter_bar(risk_pct, "🟥", "⬜")
+            conv_bar = _meter_bar(conviction_pct, "🟩", "⬜")
+
+            prashna_result.controls.clear()
+            prashna_result.controls.append(ft.Divider(height=6, color=C["divider"]))
+            prashna_result.controls.append(make_header("🎤 WORD / VOICE PRASHNA RESULT", bgcolor="#4E342E"))
+            prashna_result.controls.append(ft.Text("You asked: " + text, size=13, color=C["hint_txt"], italic=True))
+            prashna_result.controls.append(ft.Text("Hindi (phonetic): " + hindi_text, size=15, color=C["primary"], weight="bold", selectable=True))
+            prashna_result.controls.append(ft.Text("Akshara Sum = " + str(asum) + "   →   Navaank = " + str(nv), size=13, color=C["black_txt"], weight="bold"))
+            prashna_result.controls.append(ft.Text(breakdown, size=10.5, color=C["hint_txt"], selectable=True))
+            prashna_result.controls.append(ft.Text("Ruling Graha: " + g[0], size=13, color=C["black_txt"]))
+            prashna_result.controls.append(ft.Text("Bandha: " + b[0] + " — " + b[1], size=13, color=C["black_txt"]))
+            verdict_color = {"UP": C["green"], "DOWN": C["red"], "SIDEWAYS": C["hint_txt"], "MIXED": C["orange"]}.get(combined_dir, C["hint_txt"])
+            prashna_result.controls.append(ft.Container(
+                content=ft.Text(DIR_ARROW.get(combined_dir, combined_dir) + "   " + combined_note, size=15, color="#FFFFFF", weight="bold"),
+                bgcolor=verdict_color, padding=12, border_radius=8, alignment=ft.alignment.center
+            ))
+            prashna_result.controls.append(ft.Text(conv_bar + f"  Conviction {conviction_pct}%  ({conv_label})", size=12, color=C["black_txt"], weight="bold"))
+            prashna_result.controls.append(ft.Text(risk_bar + f"  Risk {risk_pct}%  ({risk_label})", size=12, color=C["black_txt"], weight="bold"))
+            prashna_result.controls.append(ft.Text(
+                "⚠️ Symbolic reading of the words themselves — same phonetic Siribhoovalaya logic used "
+                "elsewhere in this app, applied to a sentence instead of a stock name. Not price data, "
+                "not a guarantee. Research/entertainment only.", size=10, color=C["hint_txt"]))
+            prashna_result.visible = True
+            page.update()
+
         oracle_screen = ft.Column(visible=True, controls=[
             make_header("🔮  ORACLE ANALYSIS"), ft.Divider(height=4, color=C["divider"]),
             ft.Text("Enter Stock Symbol or Name:", size=15, color=C["black_txt"], weight="bold"),
@@ -1920,7 +2012,12 @@ def main(page: ft.Page):
             ft.Text("🪐 Auto Astro (D1/D9) + Panchanga has moved to the Stocks / Show All page — tap the Stocks tab below.", size=12, color=C["hint_txt"]),
             ft.Container(height=10),
             ft.ElevatedButton("🎲  RAMAL PRASHNA (Cast Now)", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_ramal),
-            ramal_container
+            ramal_container,
+            ft.Divider(height=10, color=C["divider"]),
+            ft.Text("🎤 WORD / VOICE PRASHNA — ask in your own words", size=15, color=C["black_txt"], weight="bold"),
+            fld_prashna_input,
+            ft.ElevatedButton("🔮  CALCULATE BHOOVALAYA", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_word_prashna),
+            prashna_result,
         ])
 
         # ── SCREEN 2: STOCK LIST ──────────────────────────────────────────────

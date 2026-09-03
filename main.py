@@ -1987,9 +1987,13 @@ def main(page: ft.Page):
             prashna_result.controls.append(ft.Text(breakdown, size=10.5, color=C["hint_txt"], selectable=True))
             prashna_result.controls.append(ft.Text("Ruling Graha: " + g[0], size=13, color=C["black_txt"]))
             prashna_result.controls.append(ft.Text("Bandha: " + b[0] + " — " + b[1], size=13, color=C["black_txt"]))
+            # For a question ("will X happen"), POSITIVE/NEGATIVE reads more naturally than
+            # UP/DOWN (which is stock-chart language) — same underlying verdict, just labeled
+            # for a yes/no question instead of a price direction.
+            PRASHNA_LABEL = {"UP": "✅ POSITIVE", "DOWN": "❌ NEGATIVE", "SIDEWAYS": "➖ NEUTRAL / UNCLEAR", "MIXED": "⚠️ MIXED SIGNALS"}
             verdict_color = {"UP": C["green"], "DOWN": C["red"], "SIDEWAYS": C["hint_txt"], "MIXED": C["orange"]}.get(combined_dir, C["hint_txt"])
             prashna_result.controls.append(ft.Container(
-                content=ft.Text(DIR_ARROW.get(combined_dir, combined_dir) + "   " + combined_note, size=15, color="#FFFFFF", weight="bold"),
+                content=ft.Text(PRASHNA_LABEL.get(combined_dir, combined_dir) + "   " + combined_note, size=15, color="#FFFFFF", weight="bold"),
                 bgcolor=verdict_color, padding=12, border_radius=8, alignment=ft.alignment.center
             ))
             prashna_result.controls.append(ft.Text(conv_bar + f"  Conviction {conviction_pct}%  ({conv_label})", size=12, color=C["black_txt"], weight="bold"))

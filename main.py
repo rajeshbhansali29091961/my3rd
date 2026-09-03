@@ -200,7 +200,7 @@ CURATED = {
     "APOLLOHOSP":"अपोलो हॉस्पिटल्स","DIVISLAB":"दिविस लेबोरेटरीज",
     "BIOCON":"बायोकॉन","LUPIN":"ल्यूपिन",
     "AUROPHARMA":"ऑरोबिंदो फार्मा","TORNTPHARM":"टोरेंट फार्मा",
-    "UNITECH":"यूनिटेक",
+    "UNITECH":"यूनिटेक","IFCI":"आईएफसीआई",
 }
 WD = {
     "LIMITED":"लिमिटेड","LTD":"लिमिटेड","BANK":"बैंक",
@@ -2494,6 +2494,53 @@ def main(page: ft.Page):
             ephem_diag_text.value = report
             page.update()
 
+        # ── FIND MY CORRECTIONS ──────────────────────────────────────────────────
+        # Compares every stock's SAVED Hindi name against what get_hindi() would
+        # generate for it FRESH right now, using the exact same LIMITED-suffix
+        # normalization BUILD AUTOMATED DATABASE applies — so a stock only shows up
+        # here if you genuinely edited its name away from the auto-result, not due
+        # to some unrelated formatting difference. Anything already in CURATED is
+        # skipped, since that's already permanent. Output is ready-to-paste Python
+        # dict lines — send them to Claude, or paste directly into CURATED yourself.
+        corrections_output = ft.Text("", size=10.5, color=C["black_txt"], selectable=True, font_family="monospace", visible=False)
+
+        def find_corrections_thread():
+            try:
+                set_status("Comparing saved names against fresh auto-transliteration...", C["accent"])
+                conn = sqlite3.connect(db_path)
+                rows = conn.execute("SELECT symbol, eng_name, hindi_name FROM stocks ORDER BY symbol").fetchall()
+                conn.close()
+                total = len(rows)
+                corrections = []
+                for idx, (sym, eng, hindi) in enumerate(rows):
+                    if sym in CURATED or not hindi:
+                        continue
+                    auto_hi = get_hindi(sym, eng or sym)
+                    if "LIMITED" in (eng or "").upper() and not auto_hi.endswith("लिमिटेड"):
+                        auto_hi = auto_hi.replace("लिमिटेड", "").strip() + " लिमिटेड"
+                    if auto_hi != hindi:
+                        corrections.append((sym, hindi))
+                    if idx % 10 == 0:
+                        set_prg(idx / total if total else 0, f"Checking {idx}/{total}: {sym}")
+                hide_prg()
+                if not corrections:
+                    corrections_output.value = ("No corrections found — every stock's saved Hindi name still matches "
+                                                 "what the app generates automatically.\n\n(If you edited a name on the "
+                                                 "Entry screen, make sure you tapped UPDATE to actually save it.)")
+                else:
+                    lines = [f'    "{sym}":"{hindi}",' for sym, hindi in corrections]
+                    corrections_output.value = (
+                        f"# {len(corrections)} correction(s) found. Paste these lines into CURATED in lmain.py\n"
+                        f"# (or send them to Claude to add for you):\n\n" + "\n".join(lines)
+                    )
+                corrections_output.visible = True
+                set_status(f"Found {len(corrections)} correction(s) — see below.", C["green"] if corrections else C["hint_txt"])
+                page.update()
+            except Exception as ex:
+                hide_prg()
+                set_status(f"Check failed: {ex}", C["red"])
+                page.update()
+
         db_screen = ft.Column(visible=False, controls=[
             make_header("⚙️ DATABASE AND ENGINE SETUP"), ft.Divider(height=4, color=C["divider"]),
             ft.ElevatedButton("⚡ BUILD AUTOMATED DATABASE", bgcolor=C["orange"], color="#FFFFFF", height=54, on_click=lambda e: threading.Thread(target=build_db_thread, daemon=True).start()),
@@ -2504,6 +2551,13 @@ def main(page: ft.Page):
             ft.Divider(height=10, color=C["divider"]),
             ft.ElevatedButton("🔧 CHECK EPHEMERIS FILES ON THIS DEVICE", bgcolor="#37474F", color="#FFFFFF", height=48, on_click=do_check_ephemeris),
             ephem_diag_text,
+            ft.Divider(height=10, color=C["divider"]),
+            ft.Text("🔍 FIND MY HINDI-NAME CORRECTIONS", size=14, weight="bold", color=C["black_txt"]),
+            ft.Text("Scans every stock for names you've manually edited on the Entry screen, and gives you "
+                    "ready-to-paste CURATED code for exactly those — nothing else.", size=11, color=C["hint_txt"]),
+            ft.ElevatedButton("🔍 FIND MY CORRECTIONS", bgcolor=C["accent"], color="#FFFFFF", height=44,
+                               on_click=lambda e: threading.Thread(target=find_corrections_thread, daemon=True).start()),
+            corrections_output,
         ])
 
         # ── SCREEN: PLACE SETTINGS ────────────────────────────────────────────

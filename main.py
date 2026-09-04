@@ -1298,9 +1298,20 @@ def main(page: ft.Page):
                 asum        INTEGER,
                 breakdown   TEXT,
                 series      TEXT DEFAULT 'EQ',
-                portfolio   INTEGER DEFAULT 0)""")
+                portfolio   INTEGER DEFAULT 0,
+                hindi_manual INTEGER DEFAULT 0)""")
             try:
                 conn.execute("ALTER TABLE stocks ADD COLUMN portfolio INTEGER DEFAULT 0")
+                conn.commit()
+            except Exception:
+                pass  # column already exists on installs upgraded from an earlier version
+            try:
+                # Marks a stock's hindi_name as explicitly saved by the user via the Entry
+                # screen (as opposed to just auto-generated and never reviewed). BUILD
+                # AUTOMATED DATABASE checks this flag so it never silently overwrites a name
+                # you've confirmed/corrected — only stocks you've never manually saved get
+                # refreshed with the current auto-transliteration engine on rebuild.
+                conn.execute("ALTER TABLE stocks ADD COLUMN hindi_manual INTEGER DEFAULT 0")
                 conn.commit()
             except Exception:
                 pass  # column already exists on installs upgraded from an earlier version
@@ -1684,12 +1695,15 @@ def main(page: ft.Page):
                 conn = sqlite3.connect(db_path)
                 # Explicit UPSERT (not a blind REPLACE) so an existing stock's portfolio
                 # on/off flag is preserved when the entry is edited, not reset to 0.
-                conn.execute("""INSERT INTO stocks(symbol,eng_name,hindi_name,ldate,asum,breakdown,series,portfolio)
-                                VALUES(?,?,?,?,?,?,?,0)
+                # hindi_manual=1 marks this name as user-confirmed — BUILD AUTOMATED
+                # DATABASE will never silently overwrite it on a future rebuild.
+                conn.execute("""INSERT INTO stocks(symbol,eng_name,hindi_name,ldate,asum,breakdown,series,portfolio,hindi_manual)
+                                VALUES(?,?,?,?,?,?,?,0,1)
                                 ON CONFLICT(symbol) DO UPDATE SET
                                     eng_name=excluded.eng_name, hindi_name=excluded.hindi_name,
                                     ldate=excluded.ldate, asum=excluded.asum,
-                                    breakdown=excluded.breakdown, series=excluded.series""",
+                                    breakdown=excluded.breakdown, series=excluded.series,
+                                    hindi_manual=1""",
                              (sym, eng, hindi, ldate, asum, bk, series))
                 conn.commit()
                 conn.close()
@@ -2463,12 +2477,19 @@ def main(page: ft.Page):
                         hi = hi.replace("लिमिटेड", "").strip() + " लिमिटेड"
                     
                     asum, bk = calc(hi)
-                    conn.execute("""INSERT INTO stocks(symbol,eng_name,hindi_name,ldate,asum,breakdown,series,portfolio)
-                                    VALUES(?,?,?,?,?,?,?,0)
+                    # Preserve any hindi_name (and its asum/breakdown) the user has already
+                    # explicitly confirmed via the Entry screen — this is the actual fix for
+                    # corrections getting silently wiped on rebuild. hindi_manual itself is
+                    # left out of SET entirely, so it's never reset by this statement.
+                    conn.execute("""INSERT INTO stocks(symbol,eng_name,hindi_name,ldate,asum,breakdown,series,portfolio,hindi_manual)
+                                    VALUES(?,?,?,?,?,?,?,0,0)
                                     ON CONFLICT(symbol) DO UPDATE SET
-                                        eng_name=excluded.eng_name, hindi_name=excluded.hindi_name,
-                                        ldate=excluded.ldate, asum=excluded.asum,
-                                        breakdown=excluded.breakdown, series=excluded.series""",
+                                        eng_name=excluded.eng_name,
+                                        ldate=excluded.ldate,
+                                        hindi_name=CASE WHEN stocks.hindi_manual=1 THEN stocks.hindi_name ELSE excluded.hindi_name END,
+                                        asum=CASE WHEN stocks.hindi_manual=1 THEN stocks.asum ELSE excluded.asum END,
+                                        breakdown=CASE WHEN stocks.hindi_manual=1 THEN stocks.breakdown ELSE excluded.breakdown END,
+                                        series=excluded.series""",
                                  (sym, eng, hi, ldt, asum, bk, series))
                     
                     if idx % 10 == 0:
@@ -2495,38 +2516,25 @@ def main(page: ft.Page):
             page.update()
 
         # ── FIND MY CORRECTIONS ──────────────────────────────────────────────────
-        # Compares every stock's SAVED Hindi name against what get_hindi() would
-        # generate for it FRESH right now, using the exact same LIMITED-suffix
-        # normalization BUILD AUTOMATED DATABASE applies — so a stock only shows up
-        # here if you genuinely edited its name away from the auto-result, not due
-        # to some unrelated formatting difference. Anything already in CURATED is
+        # Now that every explicitly-saved name is marked with hindi_manual=1 (see
+        # db_save above), this is just a direct query — no need to re-run
+        # transliteration on every stock to detect differences, which was slow and
+        # made network calls for every single row. Anything already in CURATED is
         # skipped, since that's already permanent. Output is ready-to-paste Python
         # dict lines — send them to Claude, or paste directly into CURATED yourself.
         corrections_output = ft.Text("", size=10.5, color=C["black_txt"], selectable=True, font_family="monospace", visible=False)
 
         def find_corrections_thread():
             try:
-                set_status("Comparing saved names against fresh auto-transliteration...", C["accent"])
+                set_status("Looking up your manually-confirmed names...", C["accent"])
                 conn = sqlite3.connect(db_path)
-                rows = conn.execute("SELECT symbol, eng_name, hindi_name FROM stocks ORDER BY symbol").fetchall()
+                rows = conn.execute("SELECT symbol, hindi_name FROM stocks WHERE hindi_manual=1 ORDER BY symbol").fetchall()
                 conn.close()
-                total = len(rows)
-                corrections = []
-                for idx, (sym, eng, hindi) in enumerate(rows):
-                    if sym in CURATED or not hindi:
-                        continue
-                    auto_hi = get_hindi(sym, eng or sym)
-                    if "LIMITED" in (eng or "").upper() and not auto_hi.endswith("लिमिटेड"):
-                        auto_hi = auto_hi.replace("लिमिटेड", "").strip() + " लिमिटेड"
-                    if auto_hi != hindi:
-                        corrections.append((sym, hindi))
-                    if idx % 10 == 0:
-                        set_prg(idx / total if total else 0, f"Checking {idx}/{total}: {sym}")
-                hide_prg()
+                corrections = [(sym, hindi) for sym, hindi in rows if sym not in CURATED and hindi]
                 if not corrections:
-                    corrections_output.value = ("No corrections found — every stock's saved Hindi name still matches "
-                                                 "what the app generates automatically.\n\n(If you edited a name on the "
-                                                 "Entry screen, make sure you tapped UPDATE to actually save it.)")
+                    corrections_output.value = ("No corrections found — you haven't manually saved a Hindi-name edit "
+                                                 "for any stock not already in CURATED.\n\n(Edit a name on the Entry "
+                                                 "screen and tap UPDATE to create one.)")
                 else:
                     lines = [f'    "{sym}":"{hindi}",' for sym, hindi in corrections]
                     corrections_output.value = (
@@ -2537,9 +2545,36 @@ def main(page: ft.Page):
                 set_status(f"Found {len(corrections)} correction(s) — see below.", C["green"] if corrections else C["hint_txt"])
                 page.update()
             except Exception as ex:
-                hide_prg()
                 set_status(f"Check failed: {ex}", C["red"])
                 page.update()
+
+        # ── SEARCH CURATED LIST ──────────────────────────────────────────────────
+        # CURATED is the 74-ish hand-verified stock names baked into the app itself
+        # (SBIN, RELIANCE, UNITECH, IFCI, etc.) — separate from anything you've
+        # manually saved via the Entry screen. Filters as you type; no button needed
+        # since it's a small, fixed, in-memory list.
+        curated_results = ft.Text("", size=12, color=C["black_txt"], selectable=True, font_family="monospace")
+
+        def do_curated_search(e):
+            q = (fld_curated_search.value or "").strip().upper()
+            matches = sorted(
+                (sym, hi) for sym, hi in CURATED.items()
+                if q in sym or q in hi
+            ) if q else sorted(CURATED.items())
+            if not matches:
+                curated_results.value = f"No CURATED entry matches '{q}'."
+            else:
+                curated_results.value = f"{len(matches)} of {len(CURATED)} CURATED entries:\n\n" + \
+                    "\n".join(f"{sym:<14} {hi}" for sym, hi in matches)
+            page.update()
+
+        fld_curated_search = ft.TextField(
+            label="Search CURATED list (symbol or Hindi name)", hint_text="e.g. SBIN, or leave blank to see all",
+            label_style=ft.TextStyle(size=13, color=C["primary"]), text_size=14,
+            border_color=C["primary"], focused_border_color=C["accent"], border_width=2,
+            bgcolor=C["inp_bg"], on_change=do_curated_search,
+        )
+        curated_results.value = f"{len(CURATED)} CURATED entries:\n\n" + "\n".join(f"{sym:<14} {hi}" for sym, hi in sorted(CURATED.items()))
 
         db_screen = ft.Column(visible=False, controls=[
             make_header("⚙️ DATABASE AND ENGINE SETUP"), ft.Divider(height=4, color=C["divider"]),
@@ -2558,6 +2593,12 @@ def main(page: ft.Page):
             ft.ElevatedButton("🔍 FIND MY CORRECTIONS", bgcolor=C["accent"], color="#FFFFFF", height=44,
                                on_click=lambda e: threading.Thread(target=find_corrections_thread, daemon=True).start()),
             corrections_output,
+            ft.Divider(height=10, color=C["divider"]),
+            ft.Text("📖 SEARCH CURATED LIST", size=14, weight="bold", color=C["black_txt"]),
+            ft.Text("The stock names built into the app itself (permanent, same on every install) — separate from your own manual corrections above.",
+                    size=11, color=C["hint_txt"]),
+            fld_curated_search,
+            ft.Container(content=curated_results, bgcolor=C["res_bg"], padding=10, border_radius=6),
         ])
 
         # ── SCREEN: PLACE SETTINGS ────────────────────────────────────────────

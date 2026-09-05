@@ -162,7 +162,13 @@ def compute_panchanga(sun_lon, moon_lon):
         notes.append("⚠️ Vishti/Bhadra Karana — traditionally avoided for new undertakings")
     return tithi_name, tithi_num, paksha, yoga_name, karana_name, notes
 
-CURATED = {
+# One-time migration data only (see the seeding step near the other DB migrations below) —
+# this used to be a live "CURATED" lookup get_hindi() checked on every call, requiring a
+# fresh app rebuild every time one entry needed fixing. That's retired in favor of ONE
+# unified mechanism: these names are seeded into the database once, marked hindi_manual=1
+# exactly like any of your own corrections, protected from being overwritten by rebuilds
+# the same way, and editable the same way (Entry screen) — no separate list to maintain.
+_LEGACY_CURATED_SEED = {
     "SBIN":"भारतीय स्टेट बैंक","HDFCBANK":"एचडीएफसी बैंक",
     "ICICIBANK":"आईसीआईसीआई बैंक","AXISBANK":"एक्सिस बैंक",
     "RELIANCE":"रिलायंस लिमिटेड","TCS":"टाटा कंसल्टेंसी सर्विसेज",
@@ -567,10 +573,11 @@ def _spell_out_letters(cw):
     return "".join(LETTER_NAMES.get(ch, "") for ch in cw)
 
 def _translit_one_word(cw):
-    """CURATED is checked by the caller (get_hindi) for the whole name; this handles
-    a single already-alphabetic word: unpronounceable all-consonant clusters (spelled
-    letter-by-letter) > known business-term dictionary (WD) > Google Input Tools
-    transliteration (sound-based) > offline syllable-aware fallback."""
+    """Handles a single already-alphabetic word: unpronounceable all-consonant
+    clusters (spelled letter-by-letter) > known business-term dictionary (WD) >
+    Google Input Tools transliteration (sound-based) > offline syllable-aware
+    fallback. Whole-name overrides are handled upstream via the database's
+    hindi_manual flag, not here."""
     if _is_unpronounceable_cluster(cw):
         return _spell_out_letters(cw)
     if cw in WD:
@@ -589,11 +596,12 @@ def get_hindi(sym, eng):
     matters because Akshara Sum is a phonetic weight system: translating a word's
     MEANING (e.g. "Exports" -> "निर्यात") gives a real Hindi word but the WRONG
     akshara, since it no longer sounds like the English name. Order of preference
-    per word: curated whole-name override > known business-term dictionary (WD) >
-    Google Input Tools transliteration (sound-based) > crude letter-map fallback.
-    Any digits are spelled out phonetically rather than silently dropped, so a
-    result is always produced regardless of what the input contains."""
-    if sym in CURATED: return CURATED[sym]
+    per word: known business-term dictionary (WD) > Google Input Tools
+    transliteration (sound-based) > crude letter-map fallback. Any digits are
+    spelled out phonetically rather than silently dropped, so a result is always
+    produced regardless of what the input contains. Whole-name overrides (formerly
+    a separate CURATED lookup here) now live directly in the stocks database,
+    marked hindi_manual=1 — see db_save() and the migration seed near main()."""
     out = []
     for w in eng.upper().split():
         cw = w.strip("&.,()-/")
@@ -1315,6 +1323,23 @@ def main(page: ft.Page):
                 conn.commit()
             except Exception:
                 pass  # column already exists on installs upgraded from an earlier version
+            try:
+                # One-time seed of the former CURATED lookup into the SAME unified mechanism
+                # as any of your own corrections — one list, one place to look, instead of a
+                # separate hardcoded dictionary only Claude could update. Never overwrites a
+                # symbol you've already personally corrected (hindi_manual=1 already set).
+                for _sym, _hi in _LEGACY_CURATED_SEED.items():
+                    _row = conn.execute("SELECT hindi_manual FROM stocks WHERE symbol=?", (_sym,)).fetchone()
+                    _asum, _bk = calc(_hi)
+                    if _row is None:
+                        conn.execute("""INSERT INTO stocks(symbol,eng_name,hindi_name,ldate,asum,breakdown,series,portfolio,hindi_manual)
+                                        VALUES(?,?,?,?,?,?,?,0,1)""", (_sym, "", _hi, "", _asum, _bk, "EQ"))
+                    elif _row[0] != 1:
+                        conn.execute("UPDATE stocks SET hindi_name=?, asum=?, breakdown=?, hindi_manual=1 WHERE symbol=?",
+                                     (_hi, _asum, _bk, _sym))
+                conn.commit()
+            except Exception:
+                pass  # non-fatal — worst case, these names get auto-generated like any other stock
             conn.execute("""CREATE TABLE IF NOT EXISTS simple_rules(
                 id                  INTEGER PRIMARY KEY AUTOINCREMENT,
                 planet              TEXT NOT NULL DEFAULT 'ANY',
@@ -2116,7 +2141,7 @@ def main(page: ft.Page):
                 # independently since either, both, or neither may be open at any given time.
                 if astro_chart_container.controls:
                     render_astro_chart_into(astro_chart_container, cd["d1_pos"], cd["lagna_idx"], cd["d9_pos"],
-                                             cd["lagna_d9"], cd["retro_set"], cd["ay"], cd["pos"],
+                                             cd["lagna_d9"], cd["retro_set"], cd["ay"], cd["pos"], cd["now"],
                                              cd["lat"], cd["lon"], cd["gmt"], extra_status_ok=False)
                 if oracle_astro_container.controls and oracle_astro_container.visible:
                     render_oracle_astro_into(oracle_astro_container, cd["d1_pos"], cd["lagna_idx"], cd["d9_pos"],
@@ -2351,7 +2376,7 @@ def main(page: ft.Page):
             astro_chart_container.controls.clear()
             page.update()
 
-        def render_astro_chart_into(container, d1_pos, lagna_idx, d9_pos, lagna_d9, retro_set, ay, pos, lat, lon, gmt_offset, extra_status_ok=True):
+        def render_astro_chart_into(container, d1_pos, lagna_idx, d9_pos, lagna_d9, retro_set, ay, pos, calc_time, lat, lon, gmt_offset, extra_status_ok=True):
             """Draws the D1/D9 diamond charts + Panchanga into the given container. Shared by
             the manual CALCULATE ASTRO button and the Stocks page's auto-refresh loop, so a
             chart left open during Auto Refresh stays in sync with the live signal instead of
@@ -2359,6 +2384,7 @@ def main(page: ft.Page):
             vargottama_set = {p for p in d1_pos if p != "As" and d1_pos.get(p) == d9_pos.get(p)}
             container.controls.clear()
             container.controls.append(ft.Text(
+                "📅 " + calc_time.strftime("%d-%m-%Y %H:%M") + "   " +
                 f"📍 Lat {lat:g}, Lon {lon:g}, GMT+{gmt_offset:g}   " +
                 "✨ SIDEREAL AYANAMSA (LAHIRI): " + str(round(ay, 4)) + "°" +
                 ("   ⟲ Retrograde: " + ", ".join(sorted(retro_set)) if retro_set else "") +
@@ -2395,6 +2421,7 @@ def main(page: ft.Page):
                 dt = parse_dt(fld_date.value)
                 tm = fld_time.value.strip().split(":")
                 hh, mm = int(tm[0]), int(tm[1])
+                calc_time = dt.replace(hour=hh, minute=mm)
                 lat, lon = float(fld_lat.value), float(fld_lon.value)
                 gmt_offset = float(fld_gmt.value) if (fld_gmt.value or "").strip() else 5.5
                 jd = jd_ut_from_ist(dt.year, dt.month, dt.day, hh, mm, gmt_offset)
@@ -2407,7 +2434,7 @@ def main(page: ft.Page):
                 lagna_d9  = d9_pos["As"]
                 retro_set = get_retrograde_set(jd, lat, lon)
 
-                render_astro_chart_into(astro_chart_container, d1_pos, lagna_idx, d9_pos, lagna_d9, retro_set, ay, pos, lat, lon, gmt_offset)
+                render_astro_chart_into(astro_chart_container, d1_pos, lagna_idx, d9_pos, lagna_d9, retro_set, ay, pos, calc_time, lat, lon, gmt_offset)
             except Exception as ex:
                 set_status(f"Error: {str(ex)}", C["red"])
             page.update()
@@ -2515,66 +2542,47 @@ def main(page: ft.Page):
             ephem_diag_text.value = report
             page.update()
 
-        # ── FIND MY CORRECTIONS ──────────────────────────────────────────────────
-        # Now that every explicitly-saved name is marked with hindi_manual=1 (see
-        # db_save above), this is just a direct query — no need to re-run
-        # transliteration on every stock to detect differences, which was slow and
-        # made network calls for every single row. Anything already in CURATED is
-        # skipped, since that's already permanent. Output is ready-to-paste Python
-        # dict lines — send them to Claude, or paste directly into CURATED yourself.
+        # ── FIND MY PROTECTED HINDI NAMES ────────────────────────────────────────
+        # One unified list now — every stock whose Hindi name is protected from being
+        # overwritten by a future rebuild, whether that's a name you personally
+        # corrected via the Entry screen, or one of the pre-verified names seeded in
+        # above (formerly a separate hardcoded CURATED list). hindi_manual=1 is set
+        # the same way for both, so there's exactly one place to look, not two.
         corrections_output = ft.Text("", size=10.5, color=C["black_txt"], selectable=True, font_family="monospace", visible=False)
+        fld_corrections_search = ft.TextField(
+            label="Search protected names (symbol or Hindi text)", hint_text="e.g. SBIN, or leave blank to see all",
+            label_style=ft.TextStyle(size=13, color=C["primary"]), text_size=14,
+            border_color=C["primary"], focused_border_color=C["accent"], border_width=2,
+            bgcolor=C["inp_bg"], on_change=lambda e: threading.Thread(target=find_corrections_thread, daemon=True).start(),
+        )
 
         def find_corrections_thread():
             try:
-                set_status("Looking up your manually-confirmed names...", C["accent"])
+                q = (fld_corrections_search.value or "").strip().upper()
+                set_status("Looking up protected names...", C["accent"])
                 conn = sqlite3.connect(db_path)
-                rows = conn.execute("SELECT symbol, hindi_name FROM stocks WHERE hindi_manual=1 ORDER BY symbol").fetchall()
-                conn.close()
-                corrections = [(sym, hindi) for sym, hindi in rows if sym not in CURATED and hindi]
-                if not corrections:
-                    corrections_output.value = ("No corrections found — you haven't manually saved a Hindi-name edit "
-                                                 "for any stock not already in CURATED.\n\n(Edit a name on the Entry "
-                                                 "screen and tap UPDATE to create one.)")
+                if q:
+                    rows = conn.execute("SELECT symbol, hindi_name FROM stocks WHERE hindi_manual=1 AND (symbol LIKE ? OR hindi_name LIKE ?) ORDER BY symbol",
+                                        (f"%{q}%", f"%{q}%")).fetchall()
                 else:
-                    lines = [f'    "{sym}":"{hindi}",' for sym, hindi in corrections]
+                    rows = conn.execute("SELECT symbol, hindi_name FROM stocks WHERE hindi_manual=1 ORDER BY symbol").fetchall()
+                conn.close()
+                results = [(sym, hindi) for sym, hindi in rows if hindi]
+                if not results:
+                    corrections_output.value = (f"No protected name matches '{q}'." if q else
+                                                 "No protected names yet — edit a Hindi name on the Entry screen and tap UPDATE to create one.")
+                else:
+                    lines = [f'    "{sym}":"{hindi}",' for sym, hindi in results]
                     corrections_output.value = (
-                        f"# {len(corrections)} correction(s) found. Paste these lines into CURATED in lmain.py\n"
-                        f"# (or send them to Claude to add for you):\n\n" + "\n".join(lines)
+                        f"{len(results)} protected name(s)"
+                        + (f" matching '{q}'" if q else "") + ":\n\n" + "\n".join(lines)
                     )
                 corrections_output.visible = True
-                set_status(f"Found {len(corrections)} correction(s) — see below.", C["green"] if corrections else C["hint_txt"])
+                set_status(f"Found {len(results)} protected name(s).", C["green"] if results else C["hint_txt"])
                 page.update()
             except Exception as ex:
                 set_status(f"Check failed: {ex}", C["red"])
                 page.update()
-
-        # ── SEARCH CURATED LIST ──────────────────────────────────────────────────
-        # CURATED is the 74-ish hand-verified stock names baked into the app itself
-        # (SBIN, RELIANCE, UNITECH, IFCI, etc.) — separate from anything you've
-        # manually saved via the Entry screen. Filters as you type; no button needed
-        # since it's a small, fixed, in-memory list.
-        curated_results = ft.Text("", size=12, color=C["black_txt"], selectable=True, font_family="monospace")
-
-        def do_curated_search(e):
-            q = (fld_curated_search.value or "").strip().upper()
-            matches = sorted(
-                (sym, hi) for sym, hi in CURATED.items()
-                if q in sym or q in hi
-            ) if q else sorted(CURATED.items())
-            if not matches:
-                curated_results.value = f"No CURATED entry matches '{q}'."
-            else:
-                curated_results.value = f"{len(matches)} of {len(CURATED)} CURATED entries:\n\n" + \
-                    "\n".join(f"{sym:<14} {hi}" for sym, hi in matches)
-            page.update()
-
-        fld_curated_search = ft.TextField(
-            label="Search CURATED list (symbol or Hindi name)", hint_text="e.g. SBIN, or leave blank to see all",
-            label_style=ft.TextStyle(size=13, color=C["primary"]), text_size=14,
-            border_color=C["primary"], focused_border_color=C["accent"], border_width=2,
-            bgcolor=C["inp_bg"], on_change=do_curated_search,
-        )
-        curated_results.value = f"{len(CURATED)} CURATED entries:\n\n" + "\n".join(f"{sym:<14} {hi}" for sym, hi in sorted(CURATED.items()))
 
         db_screen = ft.Column(visible=False, controls=[
             make_header("⚙️ DATABASE AND ENGINE SETUP"), ft.Divider(height=4, color=C["divider"]),
@@ -2587,18 +2595,14 @@ def main(page: ft.Page):
             ft.ElevatedButton("🔧 CHECK EPHEMERIS FILES ON THIS DEVICE", bgcolor="#37474F", color="#FFFFFF", height=48, on_click=do_check_ephemeris),
             ephem_diag_text,
             ft.Divider(height=10, color=C["divider"]),
-            ft.Text("🔍 FIND MY HINDI-NAME CORRECTIONS", size=14, weight="bold", color=C["black_txt"]),
-            ft.Text("Scans every stock for names you've manually edited on the Entry screen, and gives you "
-                    "ready-to-paste CURATED code for exactly those — nothing else.", size=11, color=C["hint_txt"]),
-            ft.ElevatedButton("🔍 FIND MY CORRECTIONS", bgcolor=C["accent"], color="#FFFFFF", height=44,
+            ft.Text("🔍 FIND MY PROTECTED HINDI NAMES", size=14, weight="bold", color=C["black_txt"]),
+            ft.Text("Every stock name safe from being overwritten by a rebuild — your own corrections and the "
+                    "app's pre-verified names, in one place. Ready-to-paste for sending to Claude if you want "
+                    "one made the default for every install.", size=11, color=C["hint_txt"]),
+            fld_corrections_search,
+            ft.ElevatedButton("🔍 REFRESH LIST", bgcolor=C["accent"], color="#FFFFFF", height=44,
                                on_click=lambda e: threading.Thread(target=find_corrections_thread, daemon=True).start()),
             corrections_output,
-            ft.Divider(height=10, color=C["divider"]),
-            ft.Text("📖 SEARCH CURATED LIST", size=14, weight="bold", color=C["black_txt"]),
-            ft.Text("The stock names built into the app itself (permanent, same on every install) — separate from your own manual corrections above.",
-                    size=11, color=C["hint_txt"]),
-            fld_curated_search,
-            ft.Container(content=curated_results, bgcolor=C["res_bg"], padding=10, border_radius=6),
         ])
 
         # ── SCREEN: PLACE SETTINGS ────────────────────────────────────────────

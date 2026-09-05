@@ -2542,48 +2542,6 @@ def main(page: ft.Page):
             ephem_diag_text.value = report
             page.update()
 
-        # ── FIND MY PROTECTED HINDI NAMES ────────────────────────────────────────
-        # One unified list now — every stock whose Hindi name is protected from being
-        # overwritten by a future rebuild, whether that's a name you personally
-        # corrected via the Entry screen, or one of the pre-verified names seeded in
-        # above (formerly a separate hardcoded CURATED list). hindi_manual=1 is set
-        # the same way for both, so there's exactly one place to look, not two.
-        corrections_output = ft.Text("", size=10.5, color=C["black_txt"], selectable=True, font_family="monospace", visible=False)
-        fld_corrections_search = ft.TextField(
-            label="Search protected names (symbol or Hindi text)", hint_text="e.g. SBIN, or leave blank to see all",
-            label_style=ft.TextStyle(size=13, color=C["primary"]), text_size=14,
-            border_color=C["primary"], focused_border_color=C["accent"], border_width=2,
-            bgcolor=C["inp_bg"], on_change=lambda e: threading.Thread(target=find_corrections_thread, daemon=True).start(),
-        )
-
-        def find_corrections_thread():
-            try:
-                q = (fld_corrections_search.value or "").strip().upper()
-                set_status("Looking up protected names...", C["accent"])
-                conn = sqlite3.connect(db_path)
-                if q:
-                    rows = conn.execute("SELECT symbol, hindi_name FROM stocks WHERE hindi_manual=1 AND (symbol LIKE ? OR hindi_name LIKE ?) ORDER BY symbol",
-                                        (f"%{q}%", f"%{q}%")).fetchall()
-                else:
-                    rows = conn.execute("SELECT symbol, hindi_name FROM stocks WHERE hindi_manual=1 ORDER BY symbol").fetchall()
-                conn.close()
-                results = [(sym, hindi) for sym, hindi in rows if hindi]
-                if not results:
-                    corrections_output.value = (f"No protected name matches '{q}'." if q else
-                                                 "No protected names yet — edit a Hindi name on the Entry screen and tap UPDATE to create one.")
-                else:
-                    lines = [f'    "{sym}":"{hindi}",' for sym, hindi in results]
-                    corrections_output.value = (
-                        f"{len(results)} protected name(s)"
-                        + (f" matching '{q}'" if q else "") + ":\n\n" + "\n".join(lines)
-                    )
-                corrections_output.visible = True
-                set_status(f"Found {len(results)} protected name(s).", C["green"] if results else C["hint_txt"])
-                page.update()
-            except Exception as ex:
-                set_status(f"Check failed: {ex}", C["red"])
-                page.update()
-
         db_screen = ft.Column(visible=False, controls=[
             make_header("⚙️ DATABASE AND ENGINE SETUP"), ft.Divider(height=4, color=C["divider"]),
             ft.ElevatedButton("⚡ BUILD AUTOMATED DATABASE", bgcolor=C["orange"], color="#FFFFFF", height=54, on_click=lambda e: threading.Thread(target=build_db_thread, daemon=True).start()),
@@ -2594,15 +2552,6 @@ def main(page: ft.Page):
             ft.Divider(height=10, color=C["divider"]),
             ft.ElevatedButton("🔧 CHECK EPHEMERIS FILES ON THIS DEVICE", bgcolor="#37474F", color="#FFFFFF", height=48, on_click=do_check_ephemeris),
             ephem_diag_text,
-            ft.Divider(height=10, color=C["divider"]),
-            ft.Text("🔍 FIND MY PROTECTED HINDI NAMES", size=14, weight="bold", color=C["black_txt"]),
-            ft.Text("Every stock name safe from being overwritten by a rebuild — your own corrections and the "
-                    "app's pre-verified names, in one place. Ready-to-paste for sending to Claude if you want "
-                    "one made the default for every install.", size=11, color=C["hint_txt"]),
-            fld_corrections_search,
-            ft.ElevatedButton("🔍 REFRESH LIST", bgcolor=C["accent"], color="#FFFFFF", height=44,
-                               on_click=lambda e: threading.Thread(target=find_corrections_thread, daemon=True).start()),
-            corrections_output,
         ])
 
         # ── SCREEN: PLACE SETTINGS ────────────────────────────────────────────

@@ -1250,9 +1250,11 @@ def build_dual_diamond_chart(d1_pos, lagna_d1, d9_pos, lagna_d9, chart_size=320,
     return cv.Canvas(shapes=shapes, width=chart_size, height=total_h)
 
 
-def build_dual_diamond_chart_with_bars(d1_pos, lagna_d1, d9_pos, lagna_d9, chart_size=320, gap=30, bar_h=36, bar_color="#1A237E", retro=None, vargottama=None):
+def build_dual_diamond_chart_with_bars(d1_pos, lagna_d1, d9_pos, lagna_d9, chart_size=320, gap=30, bar_h=36, bar_color="#1A237E", retro=None, vargottama=None, calc_time=None):
     """Same single-canvas D1+D9 chart, but with a blue title bar overlaid above each diamond
-    (still only ONE cv.Canvas control underneath, so the Android dual-canvas bug is avoided)."""
+    (still only ONE cv.Canvas control underneath, so the Android dual-canvas bug is avoided).
+    calc_time, if given, is shown directly IN the D1 bar itself — not as separate text above
+    the chart — so the date/time this chart represents can't be missed or fail to render."""
     y1 = bar_h
     y2 = bar_h + chart_size + gap + bar_h
     total_h = y2 + chart_size
@@ -1262,14 +1264,16 @@ def build_dual_diamond_chart_with_bars(d1_pos, lagna_d1, d9_pos, lagna_d9, chart
     shapes.extend(_diamond_shapes(d9_pos, lagna_d9, "D9 NAVAMSHA", chart_size, y_off=y2, add_fill=False, retro=retro, vargottama=vargottama))
     canvas = cv.Canvas(shapes=shapes, width=chart_size, height=total_h)
 
-    def _bar(text, top):
+    def _bar(text, top, size=13):
         return ft.Container(
-            content=ft.Text(text, size=13, color="#FFFFFF", weight="bold"),
+            content=ft.Text(text, size=size, color="#FFFFFF", weight="bold"),
             bgcolor=bar_color, alignment=ft.alignment.center,
             border_radius=6, top=top, left=0, right=0, height=bar_h - 4
         )
 
-    bar1 = _bar("📊  D1 — RASI CHART", 0)
+    time_str = calc_time.strftime("%d-%m-%Y %H:%M") if calc_time else None
+    bar1_text = f"📊 D1 — RASI CHART   📅 {time_str}" if time_str else "📊  D1 — RASI CHART"
+    bar1 = _bar(bar1_text, 0, size=12 if time_str else 13)
     bar2 = _bar("📊  D9 — NAVAMSHA CHART", y2 - bar_h)
 
     stack = ft.Stack(controls=[canvas, bar1, bar2], width=chart_size, height=total_h)
@@ -1859,7 +1863,7 @@ def main(page: ft.Page):
                 ("   ⚠️ Approx ephemeris (native libswe.so not found)" if _USE_APPROX_EPHEMERIS else ""),
                 size=13, color=C["primary"], weight="bold"
             ))
-            container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
+            container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set, calc_time=calc_time))
 
             tithi_name, tithi_num, paksha, yoga_name, karana_name, panch_notes = compute_panchanga(pos["Su"], pos["Mo"])
             container.controls.append(ft.Container(height=6))
@@ -2391,7 +2395,7 @@ def main(page: ft.Page):
                 ("   ★ Vargottama: " + ", ".join(sorted(vargottama_set)) if vargottama_set else "") +
                 ("   ⚠️ Approx ephemeris (native libswe.so not found)" if _USE_APPROX_EPHEMERIS else ""),
                 size=13, color=C["primary"], weight="bold"))
-            container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set))
+            container.controls.append(build_dual_diamond_chart_with_bars(d1_pos, lagna_idx, d9_pos, lagna_d9, retro=retro_set, vargottama=vargottama_set, calc_time=calc_time))
 
             tithi_name, tithi_num, paksha, yoga_name, karana_name, panch_notes = compute_panchanga(pos["Su"], pos["Mo"])
             container.controls.append(ft.Container(height=6))

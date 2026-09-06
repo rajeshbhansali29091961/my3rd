@@ -456,6 +456,91 @@ def fetch_yahoo_fundamentals(symbol):
         "week52_low":      _raw(summ, "fiftyTwoWeekLow"),
     }
 
+SCREENER_LABELS = ["Market Cap", "Current Price", "High / Low", "Stock P/E", "Book Value",
+                   "Dividend Yield", "ROCE", "ROE", "Face Value"]
+
+def fetch_screener_fundamentals(symbol):
+    """Fallback fundamentals source when Yahoo's quoteSummary endpoint fails —
+    Screener.in, built specifically for Indian-market fundamentals (and has ROCE,
+    which Yahoo's endpoint doesn't). No login required to view a company page.
+
+    Deliberately does NOT use BeautifulSoup or any new dependency — this app's
+    build is carefully pinned (flet==0.28.3, swisseph-ffi) and adding a new pip
+    package means updating build.yml too, a real cost for one feature. Instead,
+    this strips HTML tags with a plain regex to get the same visible-text layout
+    a screen reader would see, then reads the label immediately followed by its
+    value — verified against a real Reliance Industries page to extract Market
+    Cap, Current Price, 52-week High/Low, Stock P/E, Book Value, Dividend Yield,
+    ROCE, ROE, and Face Value correctly. More resilient to markup/class-name
+    changes than a CSS-selector scraper would be, since it only depends on the
+    label TEXT staying the same, not the underlying HTML structure.
+
+    Tries /consolidated/ first (matches how Reliance's page was verified), then
+    falls back to the plain company URL in case a symbol has no consolidated
+    view (e.g. a company with no subsidiaries)."""
+    if not REQUESTS_OK:
+        raise RuntimeError("The 'requests' library is not available in this build.")
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"}
+    last_err = None
+    for suffix in ("consolidated/", ""):
+        try:
+            url = f"https://www.screener.in/company/{symbol}/{suffix}"
+            resp = requests.get(url, headers=headers, timeout=10)
+            resp.raise_for_status()
+            html = resp.text
+            html = re.sub(r"<script.*?</script>", " ", html, flags=re.S)
+            html = re.sub(r"<style.*?</style>", " ", html, flags=re.S)
+            text = re.sub(r"<[^>]+>", "\n", html)
+            text = text.replace("&nbsp;", " ")
+            lines = [l.strip() for l in text.split("\n") if l.strip()]
+
+            def find_value_after(label):
+                for i, l in enumerate(lines):
+                    if l == label:
+                        for j in range(i + 1, min(i + 3, len(lines))):
+                            if lines[j] and lines[j] != label:
+                                return lines[j]
+                return None
+
+            def parse_number(s):
+                if not s:
+                    return None
+                s = s.replace("₹", "").replace(",", "").replace("%", "").replace("Cr.", "").strip()
+                try:
+                    return float(s)
+                except ValueError:
+                    return None
+
+            pe = parse_number(find_value_after("Stock P/E"))
+            roe_raw = find_value_after("ROE")
+            roce_raw = find_value_after("ROCE")
+            if pe is None and roe_raw is None:
+                raise RuntimeError("Page loaded but none of the expected fields were found — Screener may have changed its layout, or this symbol has no page.")
+
+            high_low = find_value_after("High / Low")
+            week52_high = week52_low = None
+            if high_low and "/" in high_low:
+                parts = high_low.replace("₹", "").split("/")
+                if len(parts) == 2:
+                    week52_high = parse_number(parts[0])
+                    week52_low = parse_number(parts[1])
+
+            return {
+                "pe_trailing": pe,
+                "roe": (parse_number(roe_raw) / 100) if roe_raw else None,
+                "roce": (parse_number(roce_raw) / 100) if roce_raw else None,
+                "book_value": parse_number(find_value_after("Book Value")),
+                "dividend_yield": (parse_number(find_value_after("Dividend Yield")) or 0) / 100,
+                "market_cap": (parse_number(find_value_after("Market Cap")) or 0) * 1e7,  # Cr -> raw rupees, matches Yahoo's units
+                "week52_high": week52_high,
+                "week52_low": week52_low,
+                "_source": "Screener.in",
+            }
+        except Exception as ex:
+            last_err = ex
+            continue
+    raise RuntimeError(f"Screener.in fetch failed: {last_err}")
+
 def compute_fundamentals_summary(f):
     """Plain-English read of the raw fundamentals dict — same voting-tally spirit as
     compute_technical_summary, so this reads consistently with the rest of the app."""
@@ -473,6 +558,13 @@ def compute_fundamentals_summary(f):
         lines.append(f"Return on Equity: {roe*100:.1f}% — {tag}")
         votes_up += 1 if roe > 0.15 else 0
         votes_down += 1 if roe < 0.08 else 0
+
+    roce = f.get("roce")
+    if roce is not None:
+        tag = "strong" if roce > 0.15 else ("weak" if roce < 0.08 else "moderate")
+        lines.append(f"ROCE: {roce*100:.1f}% — {tag}")
+        votes_up += 1 if roce > 0.15 else 0
+        votes_down += 1 if roce < 0.08 else 0
 
     dte = f.get("debt_to_equity")
     if dte is not None:
@@ -508,6 +600,9 @@ def compute_fundamentals_summary(f):
     w52h, w52l = f.get("week52_high"), f.get("week52_low")
     if w52h is not None and w52l is not None:
         lines.append(f"52-Week Range: ₹{w52l:.2f} – ₹{w52h:.2f}")
+
+    if f.get("_source"):
+        lines.append(f"(Source: {f['_source']})")
 
     total = votes_up + votes_down
     if total == 0:
@@ -2385,7 +2480,11 @@ def main(page: ft.Page):
 
             def worker():
                 try:
-                    f = fetch_yahoo_fundamentals(sym)
+                    try:
+                        f = fetch_yahoo_fundamentals(sym)
+                        f["_source"] = "Yahoo Finance"
+                    except Exception as yahoo_err:
+                        f = fetch_screener_fundamentals(sym)  # already tags "_source": "Screener.in"
                     overall, up, down, total, lines = compute_fundamentals_summary(f)
                     color = {"FUNDAMENTALLY STRONG": C["green"], "FUNDAMENTALLY WEAK": C["red"], "MIXED": C["orange"]}.get(overall, C["hint_txt"])
 
@@ -2416,10 +2515,10 @@ def main(page: ft.Page):
                     fundamentals_container.controls.clear()
                     fundamentals_container.controls.append(ft.Divider(height=6, color=C["divider"]))
                     fundamentals_container.controls.append(ft.Text(
-                        f"⚠️ Could not fetch fundamentals for {sym}.\nReason: {str(ex)}\n\n"
-                        "Yahoo Finance sometimes restricts this specific data (different from price/quote data) "
-                        "more tightly than others — if this keeps failing while Technical Analysis above keeps "
-                        "working fine, that's a sign Yahoo needs an extra authentication step for this endpoint.",
+                        f"⚠️ Could not fetch fundamentals for {sym} from either source.\nReason (Screener.in, tried last): {str(ex)}\n\n"
+                        "Both Yahoo Finance and Screener.in were tried — if this keeps failing while Technical "
+                        "Analysis above keeps working fine, it's likely this specific symbol isn't listed the way "
+                        "expected on one or both sites, or a network/site issue right now rather than a bug.",
                         size=12, color=C["red"]
                     ))
                     fundamentals_container.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_close_fundamentals))

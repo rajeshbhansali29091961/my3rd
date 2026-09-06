@@ -402,6 +402,265 @@ def fetch_stock_quote(symbol):
         except Exception as yahoo_err:
             raise RuntimeError(f"NSE failed ({nse_err}); Yahoo Finance fallback also failed ({yahoo_err})")
 
+# ── TECHNICAL ANALYSIS ────────────────────────────────────────────────────────
+# Uses the SAME Yahoo chart endpoint as fetch_yahoo_quote above, just with
+# range/interval query params to get historical daily closes/volumes instead of
+# just the latest price — no new external dependency, same risk profile as the
+# quote fetcher you already trust.
+def fetch_yahoo_fundamentals(symbol):
+    """Company fundamentals (P/E, EPS, ROE, Debt/Equity, margins, revenue growth) via
+    Yahoo's quoteSummary endpoint — the same underlying source the 'yfinance' library
+    uses, same domain as fetch_yahoo_quote/fetch_yahoo_history above. Unlike those two,
+    this specific endpoint has at times required a cookie/crumb handshake when Yahoo
+    tightens access — if it starts failing where the quote/history endpoints still
+    work, that handshake is the first thing to add, mirroring fetch_nse_quote's
+    existing cookie-priming pattern above."""
+    if not REQUESTS_OK:
+        raise RuntimeError("The 'requests' library is not available in this build.")
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"}
+    modules = "defaultKeyStatistics,financialData,summaryDetail"
+    url = f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{symbol}.NS?modules={modules}"
+    resp = requests.get(url, headers=headers, timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+    qs = data.get("quoteSummary") or {}
+    if qs.get("error"):
+        raise RuntimeError(f"Yahoo Finance error: {qs['error']}")
+    result = qs.get("result")
+    if not result:
+        raise RuntimeError("No fundamentals data returned for this symbol on Yahoo Finance.")
+    r = result[0]
+    fin = r.get("financialData", {}) or {}
+    stats = r.get("defaultKeyStatistics", {}) or {}
+    summ = r.get("summaryDetail", {}) or {}
+
+    def _raw(d, key):
+        v = d.get(key)
+        return v.get("raw") if isinstance(v, dict) else v
+
+    return {
+        "pe_trailing":     _raw(summ, "trailingPE"),
+        "pe_forward":      _raw(summ, "forwardPE"),
+        "eps_trailing":    _raw(stats, "trailingEps"),
+        "eps_forward":     _raw(stats, "forwardEps"),
+        "book_value":      _raw(stats, "bookValue"),
+        "price_to_book":   _raw(stats, "priceToBook"),
+        "roe":             _raw(fin, "returnOnEquity"),
+        "debt_to_equity":  _raw(fin, "debtToEquity"),
+        "profit_margin":   _raw(fin, "profitMargins"),
+        "operating_margin":_raw(fin, "operatingMargins"),
+        "revenue_growth":  _raw(fin, "revenueGrowth"),
+        "market_cap":      _raw(summ, "marketCap"),
+        "dividend_yield":  _raw(summ, "dividendYield"),
+        "week52_high":     _raw(summ, "fiftyTwoWeekHigh"),
+        "week52_low":      _raw(summ, "fiftyTwoWeekLow"),
+    }
+
+def compute_fundamentals_summary(f):
+    """Plain-English read of the raw fundamentals dict — same voting-tally spirit as
+    compute_technical_summary, so this reads consistently with the rest of the app."""
+    lines = []
+    votes_up = votes_down = 0
+
+    pe = f.get("pe_trailing")
+    if pe is not None:
+        tag = "high (growth priced in, or expensive)" if pe > 40 else ("low (value, or market doubts growth)" if pe < 10 else "moderate")
+        lines.append(f"P/E (trailing): {pe:.1f} — {tag}")
+
+    roe = f.get("roe")
+    if roe is not None:
+        tag = "strong" if roe > 0.15 else ("weak" if roe < 0.08 else "moderate")
+        lines.append(f"Return on Equity: {roe*100:.1f}% — {tag}")
+        votes_up += 1 if roe > 0.15 else 0
+        votes_down += 1 if roe < 0.08 else 0
+
+    dte = f.get("debt_to_equity")
+    if dte is not None:
+        # Yahoo reports this as a percentage-style number (e.g. 45.2 means 0.45 ratio)
+        ratio = dte / 100 if dte > 5 else dte
+        tag = "low leverage (safer)" if ratio < 0.5 else ("high leverage (riskier)" if ratio > 1.5 else "moderate leverage")
+        lines.append(f"Debt/Equity: {ratio:.2f} — {tag}")
+        votes_up += 1 if ratio < 0.5 else 0
+        votes_down += 1 if ratio > 1.5 else 0
+
+    pm = f.get("profit_margin")
+    if pm is not None:
+        tag = "healthy" if pm > 0.10 else ("thin" if pm < 0.03 else "moderate")
+        lines.append(f"Profit Margin: {pm*100:.1f}% — {tag}")
+        votes_up += 1 if pm > 0.10 else 0
+        votes_down += 1 if pm < 0.03 else 0
+
+    rg = f.get("revenue_growth")
+    if rg is not None:
+        tag = "growing" if rg > 0.10 else ("shrinking" if rg < 0 else "flat/slow")
+        lines.append(f"Revenue Growth (YoY): {rg*100:+.1f}% — {tag}")
+        votes_up += 1 if rg > 0.10 else 0
+        votes_down += 1 if rg < 0 else 0
+
+    dy = f.get("dividend_yield")
+    if dy is not None:
+        lines.append(f"Dividend Yield: {dy*100:.2f}%")
+
+    mc = f.get("market_cap")
+    if mc is not None:
+        lines.append(f"Market Cap: ₹{mc/1e7:,.0f} Cr" if mc else "Market Cap: N/A")
+
+    w52h, w52l = f.get("week52_high"), f.get("week52_low")
+    if w52h is not None and w52l is not None:
+        lines.append(f"52-Week Range: ₹{w52l:.2f} – ₹{w52h:.2f}")
+
+    total = votes_up + votes_down
+    if total == 0:
+        overall = "NOT ENOUGH DATA"
+    elif votes_up > votes_down:
+        overall = "FUNDAMENTALLY STRONG"
+    elif votes_down > votes_up:
+        overall = "FUNDAMENTALLY WEAK"
+    else:
+        overall = "MIXED"
+    return overall, votes_up, votes_down, total, lines
+
+def fetch_yahoo_history(symbol, range_str="6mo", interval="1d"):
+    if not REQUESTS_OK:
+        raise RuntimeError("The 'requests' library is not available in this build.")
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"}
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range={range_str}&interval={interval}"
+    resp = requests.get(url, headers=headers, timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+    result = (data.get("chart") or {}).get("result")
+    if not result:
+        raise RuntimeError("No historical data returned for this symbol on Yahoo Finance.")
+    quote = result[0]["indicators"]["quote"][0]
+    closes = [c for c in quote.get("close", []) if c is not None]
+    volumes = [v for v in quote.get("volume", []) if v is not None]
+    if len(closes) < 20:
+        raise RuntimeError("Not enough price history returned to compute indicators (need at least 20 days).")
+    return closes, volumes
+
+def sma(prices, period):
+    """Simple Moving Average over the most recent `period` prices."""
+    if len(prices) < period:
+        return None
+    return sum(prices[-period:]) / period
+
+def _ema_series(prices, period):
+    """Full EMA series (not just the latest value) — MACD needs the whole series
+    of the fast/slow EMAs to then compute its own signal-line EMA on top."""
+    if len(prices) < period:
+        return []
+    k = 2 / (period + 1)
+    emas = [sum(prices[:period]) / period]
+    for p in prices[period:]:
+        emas.append(p * k + emas[-1] * (1 - k))
+    return emas
+
+def rsi(prices, period=14):
+    """Relative Strength Index, Wilder's smoothing method. Returns None if there
+    isn't enough history; otherwise always in [0, 100]."""
+    if len(prices) < period + 1:
+        return None
+    deltas = [prices[i] - prices[i - 1] for i in range(1, len(prices))]
+    gains  = [d if d > 0 else 0 for d in deltas]
+    losses = [-d if d < 0 else 0 for d in deltas]
+    avg_gain = sum(gains[:period]) / period
+    avg_loss = sum(losses[:period]) / period
+    for i in range(period, len(gains)):
+        avg_gain = (avg_gain * (period - 1) + gains[i]) / period
+        avg_loss = (avg_loss * (period - 1) + losses[i]) / period
+    if avg_loss == 0:
+        return 100.0
+    rs = avg_gain / avg_loss
+    return 100 - (100 / (1 + rs))
+
+def macd(prices, fast=12, slow=26, signal=9):
+    """Returns (macd_line, signal_line, histogram) using the most recent values,
+    or None if there isn't enough history yet."""
+    if len(prices) < slow + signal:
+        return None
+    ema_fast = _ema_series(prices, fast)
+    ema_slow = _ema_series(prices, slow)
+    offset = len(ema_fast) - len(ema_slow)
+    macd_line_series = [ema_fast[i + offset] - ema_slow[i] for i in range(len(ema_slow))]
+    signal_series = _ema_series(macd_line_series, signal)
+    if not signal_series:
+        return None
+    return macd_line_series[-1], signal_series[-1], macd_line_series[-1] - signal_series[-1]
+
+def volume_signal(volumes, period=20):
+    """Compares the latest volume against the recent average — a spike often
+    signals unusual institutional activity. Returns (latest, avg, ratio) or None."""
+    if len(volumes) < period + 1:
+        return None
+    latest = volumes[-1]
+    avg = sum(volumes[-period - 1:-1]) / period
+    if avg == 0:
+        return None
+    return latest, avg, latest / avg
+
+def compute_technical_summary(closes, volumes):
+    """Combines SMA/RSI/MACD/Volume into a plain-English summary + a simple vote
+    tally (same spirit as compute_conviction_and_risk elsewhere in this app) —
+    NOT a guarantee, just a structured read of the same numbers a chart shows."""
+    price = closes[-1]
+    sma20, sma50, sma200 = sma(closes, 20), sma(closes, 50), sma(closes, 200)
+    rsi14 = rsi(closes, 14)
+    macd_vals = macd(closes)
+    vol = volume_signal(volumes)
+
+    votes_up = votes_down = 0
+    lines = []
+
+    if sma20 is not None:
+        trend = "above" if price > sma20 else "below"
+        lines.append(f"Price vs SMA20: {price:.2f} {trend} {sma20:.2f}")
+        votes_up += 1 if price > sma20 else 0
+        votes_down += 1 if price < sma20 else 0
+    if sma50 is not None:
+        trend = "above" if price > sma50 else "below"
+        lines.append(f"Price vs SMA50: {price:.2f} {trend} {sma50:.2f}")
+        votes_up += 1 if price > sma50 else 0
+        votes_down += 1 if price < sma50 else 0
+    if sma200 is not None:
+        trend = "above" if price > sma200 else "below"
+        lines.append(f"Price vs SMA200: {price:.2f} {trend} {sma200:.2f}  (long-term trend)")
+        votes_up += 1 if price > sma200 else 0
+        votes_down += 1 if price < sma200 else 0
+    if rsi14 is not None:
+        if rsi14 >= 70:
+            tag = "overbought — caution on fresh buying"
+        elif rsi14 <= 30:
+            tag = "oversold — caution on fresh selling"
+        else:
+            tag = "neutral zone"
+        lines.append(f"RSI(14): {rsi14:.1f} — {tag}")
+        votes_up += 1 if 30 < rsi14 < 70 and rsi14 > 50 else 0
+        votes_down += 1 if rsi14 < 50 else 0
+    if macd_vals is not None:
+        macd_line, signal_line, hist = macd_vals
+        cross = "bullish (MACD above signal)" if hist > 0 else "bearish (MACD below signal)"
+        lines.append(f"MACD: {macd_line:.3f}, Signal: {signal_line:.3f} — {cross}")
+        votes_up += 1 if hist > 0 else 0
+        votes_down += 1 if hist <= 0 else 0
+    if vol is not None:
+        latest, avg, ratio = vol
+        spike_note = f" — {ratio:.1f}x average, notable spike" if ratio > 1.5 else ""
+        lines.append(f"Volume: {latest:,.0f} vs {period_avg_label(avg)}{spike_note}")
+
+    total = votes_up + votes_down
+    if total == 0:
+        overall = "NOT ENOUGH DATA"
+    elif votes_up > votes_down:
+        overall = "BULLISH"
+    elif votes_down > votes_up:
+        overall = "BEARISH"
+    else:
+        overall = "MIXED"
+    return overall, votes_up, votes_down, total, lines
+
+def period_avg_label(avg):
+    return f"{avg:,.0f} avg"
+
 # ── COLORS ─────────────────────────────────────────────────────────────────────
 C = {
     "bg":       "#FFFFFF",
@@ -1943,6 +2202,65 @@ def main(page: ft.Page):
                 oracle_astro_container.visible = True
             page.update()
 
+        # ── STOCKS TAB: SAME CHART, BUT WITH ITS OWN FLEXIBLE DATE/TIME/PLACE ────
+        # Independent from the Oracle screen's "Auto Astro" (always locked to right
+        # now) and from the Kundali tab's own separate fields — this lets you
+        # calculate the D1/D9 chart directly from the Stocks page for ANY date/time/
+        # place, not just the current moment.
+        fld_stocks_date = make_field("Date (DD-MM-YYYY)", value=datetime.now().strftime("%d-%m-%Y"))
+        fld_stocks_time = make_field("Time (HH:MM)", value=datetime.now().strftime("%H:%M"))
+        fld_stocks_lat  = make_field("Latitude", value=current_place["latitude"])
+        fld_stocks_lon  = make_field("Longitude", value=current_place["longitude"])
+        fld_stocks_gmt  = make_field("GMT Offset", value=current_place["gmt_offset"])
+        # Tracks whether the chart currently on screen represents a deliberately
+        # chosen custom moment (True) or "right now" (False) — Auto Refresh checks
+        # this so it never silently overwrites a custom-date chart you're
+        # intentionally looking at with live "now" data on its next tick.
+        stocks_chart_is_custom = {"value": False}
+
+        def do_stocks_use_now(e):
+            now = datetime.now()
+            fld_stocks_date.value = now.strftime("%d-%m-%Y")
+            fld_stocks_time.value = now.strftime("%H:%M")
+            fld_stocks_lat.value  = current_place["latitude"]
+            fld_stocks_lon.value  = current_place["longitude"]
+            fld_stocks_gmt.value  = current_place["gmt_offset"]
+            page.update()
+
+        def do_stocks_astro(e):
+            try:
+                dt = parse_dt(fld_stocks_date.value)
+                tm = fld_stocks_time.value.strip().split(":")
+                hh, mm = int(tm[0]), int(tm[1])
+                calc_time = dt.replace(hour=hh, minute=mm)
+                place_lat = float(fld_stocks_lat.value)
+                place_lon = float(fld_stocks_lon.value)
+                place_gmt = float(fld_stocks_gmt.value) if (fld_stocks_gmt.value or "").strip() else 5.5
+                jd = jd_ut_from_ist(dt.year, dt.month, dt.day, hh, mm, place_gmt)
+                pos, ay = calc_planet_positions(jd, place_lat, place_lon)
+
+                d1_pos = {p: lon_to_sign_deg(l)[0] for p, l in pos.items()}
+                d9_pos = {p: d9_sign(l) for p, l in pos.items()}
+                lagna_idx = d1_pos["As"]
+                lagna_d9  = d9_pos["As"]
+                retro_set = get_retrograde_set(jd, place_lat, place_lon)
+
+                # More than a minute off "now" counts as a deliberate custom moment —
+                # small rounding from typing/tapping shouldn't count as "custom".
+                stocks_chart_is_custom["value"] = abs((calc_time - datetime.now()).total_seconds()) > 60
+
+                remember_chart_for_test(d1_pos, d9_pos, lagna_idx, lagna_d9, retro_set,
+                                        f"STOCKS CALCULATE ASTRO @ {calc_time.strftime('%d-%m-%Y %H:%M')}")
+                render_oracle_astro_into(oracle_astro_container, d1_pos, lagna_idx, d9_pos, lagna_d9, retro_set, ay, pos,
+                                          calc_time, "Custom" if stocks_chart_is_custom["value"] else current_place["place_name"],
+                                          place_lat, place_lon, place_gmt)
+            except Exception as aex:
+                oracle_astro_container.controls.clear()
+                oracle_astro_container.controls.append(ft.Text(f"Astro chart error: {str(aex)}", size=13, color=C["red"]))
+                oracle_astro_container.controls.append(ft.ElevatedButton("⬅  CLOSE ASTRO CHART", bgcolor=C["primary"], color="#FFFFFF", height=46, on_click=do_oracle_back))
+                oracle_astro_container.visible = True
+            page.update()
+
         def do_oracle_ramal(e):
             # ── RAMAL PRASHNA — cast fresh right now, for whichever stock is already
             # loaded above. Never re-asks for the stock name or BUY/SELL intent. ──
@@ -1987,6 +2305,131 @@ def main(page: ft.Page):
             ramal_container.visible = True
             page.update()
 
+        # ── TECHNICAL ANALYSIS — SMA/RSI/MACD/Volume for whichever stock is loaded ──
+        technical_container = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False)
+
+        def do_close_technical(e=None):
+            technical_container.visible = False
+            page.update()
+
+        def do_oracle_technical(e):
+            sym = current_stock.get("sym")
+            if not sym:
+                set_status("Search a stock first, then run Technical Analysis.", C["red"])
+                page.update()
+                return
+
+            technical_container.controls.clear()
+            technical_container.controls.append(ft.Divider(height=6, color=C["divider"]))
+            technical_container.controls.append(ft.Text(f"⏳ Fetching price history for {sym} (Yahoo Finance)...", size=13, color=C["accent"]))
+            technical_container.visible = True
+            page.scroll_to(offset=0, duration=200)
+            page.update()
+
+            def worker():
+                try:
+                    closes, volumes = fetch_yahoo_history(sym, range_str="1y", interval="1d")
+                    overall, up, down, total, lines = compute_technical_summary(closes, volumes)
+                    color = {"BULLISH": C["green"], "BEARISH": C["red"], "MIXED": C["orange"]}.get(overall, C["hint_txt"])
+
+                    technical_container.controls.clear()
+                    technical_container.controls.append(ft.Divider(height=6, color=C["divider"]))
+                    technical_container.controls.append(make_header("📈 TECHNICAL ANALYSIS — " + sym, bgcolor="#0D47A1"))
+                    technical_container.controls.append(ft.Text(
+                        f"Based on {len(closes)} days of price history, up to today.", size=11, color=C["hint_txt"]))
+                    technical_container.controls.append(ft.Container(
+                        content=ft.Text(f"{overall}  ({up} bullish signal{'s' if up != 1 else ''}, {down} bearish signal{'s' if down != 1 else ''} of {total})",
+                                        size=15, color="#FFFFFF", weight="bold"),
+                        bgcolor=color, padding=12, border_radius=8, alignment=ft.alignment.center
+                    ))
+                    technical_container.controls.append(ft.Text("\n".join(lines), size=12.5, color=C["black_txt"], selectable=True))
+                    technical_container.controls.append(ft.Text(
+                        "⚠️ Price/volume pattern reading — a different kind of signal than the Bhoovalaya/Ramal "
+                        "readings above, based on real market data, but still not a guarantee. Verify against your "
+                        "own analysis and broker's terminal before trading.", size=10, color=C["hint_txt"]))
+                    technical_container.controls.append(ft.Container(height=4))
+                    technical_container.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_close_technical))
+                except Exception as ex:
+                    technical_container.controls.clear()
+                    technical_container.controls.append(ft.Divider(height=6, color=C["divider"]))
+                    technical_container.controls.append(ft.Text(
+                        f"⚠️ Could not fetch price history for {sym}.\nReason: {str(ex)}\n\n"
+                        "Check your internet connection, or the symbol may not be listed under '.NS' on Yahoo Finance.",
+                        size=12, color=C["red"]
+                    ))
+                    technical_container.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_close_technical))
+                page.update()
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        # ── FUNDAMENTALS — P/E, ROE, Debt/Equity, margins, revenue growth ───────────
+        fundamentals_container = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False)
+
+        def do_close_fundamentals(e=None):
+            fundamentals_container.visible = False
+            page.update()
+
+        def do_oracle_fundamentals(e):
+            sym = current_stock.get("sym")
+            if not sym:
+                set_status("Search a stock first, then run Fundamentals.", C["red"])
+                page.update()
+                return
+
+            fundamentals_container.controls.clear()
+            fundamentals_container.controls.append(ft.Divider(height=6, color=C["divider"]))
+            fundamentals_container.controls.append(ft.Text(f"⏳ Fetching fundamentals for {sym} (Yahoo Finance)...", size=13, color=C["accent"]))
+            fundamentals_container.visible = True
+            page.scroll_to(offset=0, duration=200)
+            page.update()
+
+            def worker():
+                try:
+                    f = fetch_yahoo_fundamentals(sym)
+                    overall, up, down, total, lines = compute_fundamentals_summary(f)
+                    color = {"FUNDAMENTALLY STRONG": C["green"], "FUNDAMENTALLY WEAK": C["red"], "MIXED": C["orange"]}.get(overall, C["hint_txt"])
+
+                    fundamentals_container.controls.clear()
+                    fundamentals_container.controls.append(ft.Divider(height=6, color=C["divider"]))
+                    fundamentals_container.controls.append(make_header("💼 FUNDAMENTALS — " + sym, bgcolor="#1B5E20"))
+                    if total == 0:
+                        fundamentals_container.controls.append(ft.Text(
+                            "Not enough data was available for this symbol to form an overall read — see whatever "
+                            "individual figures came back below.", size=12, color=C["hint_txt"]))
+                    else:
+                        fundamentals_container.controls.append(ft.Container(
+                            content=ft.Text(f"{overall}  ({up} strong signal{'s' if up != 1 else ''}, {down} weak signal{'s' if down != 1 else ''} of {total})",
+                                            size=15, color="#FFFFFF", weight="bold"),
+                            bgcolor=color, padding=12, border_radius=8, alignment=ft.alignment.center
+                        ))
+                    if lines:
+                        fundamentals_container.controls.append(ft.Text("\n".join(lines), size=12.5, color=C["black_txt"], selectable=True))
+                    else:
+                        fundamentals_container.controls.append(ft.Text("No fundamentals fields were returned for this symbol.", size=12, color=C["red"]))
+                    fundamentals_container.controls.append(ft.Text(
+                        "⚠️ Company financial-health data — a different kind of signal than the Bhoovalaya/Ramal/"
+                        "Technical readings, based on real filings, but still not investment advice. Verify against "
+                        "the company's own annual report before trading.", size=10, color=C["hint_txt"]))
+                    fundamentals_container.controls.append(ft.Container(height=4))
+                    fundamentals_container.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_close_fundamentals))
+                except Exception as ex:
+                    fundamentals_container.controls.clear()
+                    fundamentals_container.controls.append(ft.Divider(height=6, color=C["divider"]))
+                    fundamentals_container.controls.append(ft.Text(
+                        f"⚠️ Could not fetch fundamentals for {sym}.\nReason: {str(ex)}\n\n"
+                        "Yahoo Finance sometimes restricts this specific data (different from price/quote data) "
+                        "more tightly than others — if this keeps failing while Technical Analysis above keeps "
+                        "working fine, that's a sign Yahoo needs an extra authentication step for this endpoint.",
+                        size=12, color=C["red"]
+                    ))
+                    fundamentals_container.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_close_fundamentals))
+                page.update()
+
+            threading.Thread(target=worker, daemon=True).start()
+
+
+        # "Voice" here means your phone keyboard's own 🎤 dictation button (Gboard and
+        # every stock Android keyboard has one on the toolbar whenever a text field is
         # ── WORD / VOICE PRASHNA — Bhoovalaya reading for ANY sentence ──────────────
         # "Voice" here means your phone keyboard's own 🎤 dictation button (Gboard and
         # every stock Android keyboard has one on the toolbar whenever a text field is
@@ -2059,6 +2502,14 @@ def main(page: ft.Page):
             ft.Container(height=10),
             ft.ElevatedButton("🎲  RAMAL PRASHNA (Cast Now)", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_ramal),
             ramal_container,
+            ft.Divider(height=10, color=C["divider"]),
+            ft.Text("📈 TECHNICAL ANALYSIS — real price/volume data (SMA, RSI, MACD)", size=13, color=C["black_txt"], weight="bold"),
+            ft.ElevatedButton("📈  TECHNICAL ANALYSIS", bgcolor="#0D47A1", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_technical),
+            technical_container,
+            ft.Divider(height=10, color=C["divider"]),
+            ft.Text("💼 FUNDAMENTALS — P/E, ROE, Debt/Equity, margins, revenue growth", size=13, color=C["black_txt"], weight="bold"),
+            ft.ElevatedButton("💼  FUNDAMENTALS", bgcolor="#1B5E20", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_fundamentals),
+            fundamentals_container,
             ft.Divider(height=10, color=C["divider"]),
             ft.Text("🎤 WORD / VOICE PRASHNA — ask in your own words", size=15, color=C["black_txt"], weight="bold"),
             fld_prashna_input,
@@ -2147,7 +2598,7 @@ def main(page: ft.Page):
                     render_astro_chart_into(astro_chart_container, cd["d1_pos"], cd["lagna_idx"], cd["d9_pos"],
                                              cd["lagna_d9"], cd["retro_set"], cd["ay"], cd["pos"], cd["now"],
                                              cd["lat"], cd["lon"], cd["gmt"], extra_status_ok=False)
-                if oracle_astro_container.controls and oracle_astro_container.visible:
+                if oracle_astro_container.controls and oracle_astro_container.visible and not stocks_chart_is_custom["value"]:
                     render_oracle_astro_into(oracle_astro_container, cd["d1_pos"], cd["lagna_idx"], cd["d9_pos"],
                                               cd["lagna_d9"], cd["retro_set"], cd["ay"], cd["pos"], cd["now"],
                                               current_place["place_name"], cd["lat"], cd["lon"], cd["gmt"])
@@ -2293,8 +2744,11 @@ def main(page: ft.Page):
             ft.ElevatedButton("⬅  BACK TO ORACLE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("oracle")),
             price_popup,
             ft.Divider(height=4, color=C["divider"]),
-            ft.Text("🪐 AUTO ASTRO (D1/D9) — calculates the current-sky Vedic chart + Panchanga and runs your custom Rules against it, right here.", size=11, color=C["black_txt"]),
-            ft.ElevatedButton("🪐  CALCULATE ASTRO (D1 / D9)", bgcolor=C["primary"], color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_astro),
+            ft.Text("🪐 AUTO ASTRO (D1/D9) — calculates the Vedic chart + Panchanga for the date/time/place below and runs your custom Rules against it.", size=11, color=C["black_txt"]),
+            ft.Row([fld_stocks_date, fld_stocks_time]),
+            ft.Row([fld_stocks_lat, fld_stocks_lon, fld_stocks_gmt]),
+            ft.ElevatedButton("📡 USE CURRENT DATE/TIME/PLACE", bgcolor="#455A64", color="#FFFFFF", height=40, on_click=do_stocks_use_now),
+            ft.ElevatedButton("🪐  CALCULATE ASTRO (D1 / D9)", bgcolor=C["primary"], color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_stocks_astro),
             oracle_astro_container,
             ft.Divider(height=4, color=C["divider"]),
             ft.Text("⏱ LIVE TIMING SIGNAL — your custom Rules checked against the sky right now (one shared signal for all stocks, not per-row); updates every refresh interval", size=10, color=C["hint_txt"]),

@@ -2590,7 +2590,7 @@ def main(page: ft.Page):
             prashna_result.visible = True
             page.update()
 
-        oracle_screen = ft.Column(visible=True, controls=[
+        oracle_screen = ft.Column(visible=False, controls=[
             make_header("🔮  ORACLE ANALYSIS"), ft.Divider(height=4, color=C["divider"]),
             ft.Text("Enter Stock Symbol or Name:", size=15, color=C["black_txt"], weight="bold"),
             fld_oracle,
@@ -3905,8 +3905,63 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
             border_radius=10, padding=16, visible=False
         )
 
+        # ── GURU VANDANA — shown first, every time the app opens ────────────────
+        # A page of respect for the user's gurus, before anything else in the app.
+        # No biographical claims are made about either guru — only their names,
+        # as given — since Claude has no verified information about them to add.
+        def do_enter_app(e):
+            blessing_screen.visible = False
+            oracle_screen.visible = True
+            status_bar.visible = True
+            nav_row.visible = True
+            page.update()
+
+        blessing_screen = ft.Column(
+            visible=True,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Container(height=30),
+                ft.Text("🙏", size=48, text_align=ft.TextAlign.CENTER),
+                ft.Container(height=8),
+                ft.Text("ॐ", size=32, color="#FFD54F", weight="bold", text_align=ft.TextAlign.CENTER),
+                ft.Container(height=16),
+                ft.Container(
+                    padding=20, border_radius=14, bgcolor="#4A0E0E",
+                    border=ft.Border(top=ft.BorderSide(2, "#FFD54F"), bottom=ft.BorderSide(2, "#FFD54F"),
+                                      left=ft.BorderSide(2, "#FFD54F"), right=ft.BorderSide(2, "#FFD54F")),
+                    content=ft.Column(
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=14,
+                        controls=[
+                            ft.Text("॥ ॐ श्री ॐ ॥", size=17, color="#FFD54F", weight="bold", text_align=ft.TextAlign.CENTER),
+                            ft.Text("ॐ ऐं ह्रीं क्लीं चामुण्डायै विच्चे", size=15, color="#FFF8E1", weight="bold", text_align=ft.TextAlign.CENTER),
+                            ft.Divider(height=4, color="#FFD54F"),
+                            ft.Text("गुरुर्ब्रह्मा गुरुर्विष्णुः गुरुर्देवो महेश्वरः।",
+                                    size=15, color="#FFF8E1", weight="bold", text_align=ft.TextAlign.CENTER),
+                            ft.Text("गुरुः साक्षात् परं ब्रह्म तस्मै श्रीगुरवे नमः॥",
+                                    size=15, color="#FFF8E1", weight="bold", text_align=ft.TextAlign.CENTER),
+                            ft.Divider(height=4, color="#FFD54F"),
+                            ft.Text("With the Blessings of My Gurus", size=16, color="#FFD54F", weight="bold", text_align=ft.TextAlign.CENTER),
+                            ft.Container(height=6),
+                            ft.Text("🕉️  Sri Rang Avadhut", size=19, color="#FFFFFF", weight="bold", text_align=ft.TextAlign.CENTER),
+                            ft.Text("🙏  Krishna Bhalchandra Gaitonde", size=19, color="#FFFFFF", weight="bold", text_align=ft.TextAlign.CENTER),
+                            ft.Container(height=6),
+                            ft.Text("Every calculation in this app is offered under their guidance and blessing.",
+                                    size=12.5, color="#FFE0B2", text_align=ft.TextAlign.CENTER, italic=True),
+                        ]
+                    )
+                ),
+                ft.Container(height=26),
+                ft.ElevatedButton("🙏  ENTER", bgcolor="#4A0E0E", color="#FFD54F", height=52, width=200,
+                                   style=ft.ButtonStyle(text_style=ft.TextStyle(size=17, weight="bold")),
+                                   on_click=do_enter_app),
+                ft.Container(height=30),
+            ]
+        )
+
         # Paint UI first so Android/Codespace do not stay on a blank screen.
-        page.add(status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, place_screen, rules_screen, help_screen, confirm_exit_panel, nav_row)
+        status_bar.visible = False
+        nav_row.visible = False
+        page.add(blessing_screen, status_bar, oracle_screen, list_screen, entry_screen, astro_screen, db_screen, place_screen, rules_screen, help_screen, confirm_exit_panel, nav_row)
         page.update()
 
         try:

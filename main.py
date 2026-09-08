@@ -9,7 +9,7 @@ import math
 import json
 import random
 import platform
-from datetime import datetime
+from datetime import datetime, timedelta
 
 try:
     import requests
@@ -800,6 +800,34 @@ def quick_verdict(asum, ldt_str):
         vedha_partner = VEDHA_PAIRS.get(today_nak_idx)
         has_vedha = (vedha_partner is not None) and (vedha_partner == birth_nak_idx)
     return combined_dir, has_vedha
+
+def compute_5day_outlook(asum, ldt_str, days=5):
+    """Same Graha/Bandha/Vedha logic as quick_verdict above, but stepped across the
+    next several days. The Graha+Bandha combined direction is FIXED per stock — it's
+    derived only from the Akshara Sum, never from the date — so on its own it would
+    show the identical value every day. What genuinely varies day to day is the
+    Sarvatobhadra Vedha (nakshatra obstruction) check, since the Moon transits into a
+    new nakshatra roughly every 1-1.5 days. A day is marked "clear UP" (+) only when
+    the stock's fixed direction is UP AND no Vedha obstructs that specific day —
+    so the "+" marks are a genuine day-by-day read, not a repeated static value."""
+    ldate = parse_dt(ldt_str)
+    nv = (asum % 9) or 9
+    g = GRAHA[(nv - 1) % 9]
+    b = BANDHA[(nv - 1) % 6]
+    combined_dir, _ = combine_direction(g[1], b[3])
+    birth_nak_idx = ldate.timetuple().tm_yday % 27 if ldate else None
+    today = datetime.now()
+    outlook = []
+    for i in range(days):
+        d = today + timedelta(days=i)
+        has_vedha = False
+        if birth_nak_idx is not None:
+            day_nak_idx = d.timetuple().tm_yday % 27
+            vedha_partner = VEDHA_PAIRS.get(day_nak_idx)
+            has_vedha = (vedha_partner is not None) and (vedha_partner == birth_nak_idx)
+        is_clear_up = (combined_dir == "UP") and not has_vedha
+        outlook.append((d, has_vedha, is_clear_up))
+    return combined_dir, outlook
 
 # ── RAMAL PRASHNA (Arabic/Persian geomancy, cast at the moment of the question) ──
 # The 16 Ramal Shakals mapped to binary tuples (Top to Bottom: Agni, Vayu, Jala, Prithvi)
@@ -2400,6 +2428,55 @@ def main(page: ft.Page):
             ramal_container.visible = True
             page.update()
 
+        # ── 5-DAY OUTLOOK — next 5 days' clear-UP / Vedha-caution marks for this stock ──
+        outlook_container = ft.Column(spacing=8, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False)
+
+        def do_close_outlook(e=None):
+            outlook_container.visible = False
+            page.update()
+
+        def do_oracle_outlook(e):
+            sym, asum, ldt = current_stock.get("sym"), current_stock.get("asum"), current_stock.get("ldt")
+            if not sym:
+                set_status("Search a stock first, then check its 5-Day Outlook.", C["red"])
+                page.update()
+                return
+            combined_dir, outlook = compute_5day_outlook(asum, ldt)
+
+            outlook_container.controls.clear()
+            outlook_container.controls.append(ft.Divider(height=6, color=C["divider"]))
+            outlook_container.controls.append(make_header("📅 5-DAY OUTLOOK — " + sym, bgcolor="#4527A0"))
+            outlook_container.controls.append(ft.Text(
+                f"This stock's own Graha+Bandha direction: {DIR_ARROW.get(combined_dir, combined_dir)}  (fixed — same every day, from its Akshara Sum)",
+                size=12, color=C["black_txt"]))
+            outlook_container.controls.append(ft.Text(
+                "What changes day to day below is the Sarvatobhadra Vedha check — a \"+\" means this stock's "
+                "direction is UP AND no obstruction that day; \"⚠\" means avoid fresh entry that day regardless of direction.",
+                size=11, color=C["hint_txt"]))
+            outlook_container.controls.append(ft.Container(height=4))
+            for d, has_vedha, is_clear in outlook:
+                if has_vedha:
+                    mark, mark_color, note = "⚠", C["orange"], "Vedha — avoid fresh entry"
+                elif is_clear:
+                    mark, mark_color, note = "+", C["green"], "clear UP"
+                else:
+                    mark, mark_color, note = "·", C["hint_txt"], f"clear, but direction is {combined_dir.lower()}"
+                outlook_container.controls.append(ft.Row(
+                    controls=[
+                        ft.Text(d.strftime("%a %d-%m-%Y"), size=13, color=C["black_txt"], weight="bold"),
+                        ft.Text(mark, size=18, color=mark_color, weight="bold"),
+                        ft.Text(note, size=11, color=C["hint_txt"]),
+                    ], alignment="spaceBetween"
+                ))
+            outlook_container.controls.append(ft.Container(height=6))
+            outlook_container.controls.append(ft.Text(
+                "⚠️ Same symbolic Bhoovalaya reading as the rest of this app, just stepped forward a few days — "
+                "not a price forecast, and not a guarantee for any of these dates.", size=10, color=C["hint_txt"]))
+            outlook_container.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_close_outlook))
+            outlook_container.visible = True
+            page.scroll_to(offset=0, duration=200)
+            page.update()
+
         # ── TECHNICAL ANALYSIS — SMA/RSI/MACD/Volume for whichever stock is loaded ──
         technical_container = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False)
 
@@ -2601,6 +2678,10 @@ def main(page: ft.Page):
             ft.Container(height=10),
             ft.ElevatedButton("🎲  RAMAL PRASHNA (Cast Now)", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_ramal),
             ramal_container,
+            ft.Divider(height=10, color=C["divider"]),
+            ft.Text("📅 5-DAY OUTLOOK — clear-UP (+) vs Vedha-caution (⚠) for this stock, next 5 days", size=13, color=C["black_txt"], weight="bold"),
+            ft.ElevatedButton("📅  5-DAY OUTLOOK", bgcolor="#4527A0", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_outlook),
+            outlook_container,
             ft.Divider(height=10, color=C["divider"]),
             ft.Text("📈 TECHNICAL ANALYSIS — real price/volume data (SMA, RSI, MACD)", size=13, color=C["black_txt"], weight="bold"),
             ft.ElevatedButton("📈  TECHNICAL ANALYSIS", bgcolor="#0D47A1", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_technical),

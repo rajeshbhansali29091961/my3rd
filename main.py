@@ -8,6 +8,7 @@ import time
 import math
 import json
 import random
+import shutil
 import platform
 from datetime import datetime, timedelta
 
@@ -3180,6 +3181,53 @@ def main(page: ft.Page):
             ephem_diag_text.value = report
             page.update()
 
+        # ── FULL DATABASE BACKUP / RESTORE — survives even a full reinstall ────────
+        # The hindi_manual flag elsewhere protects your corrections from BUILD
+        # AUTOMATED DATABASE overwriting them WITHIN one install — it does NOT
+        # survive uninstalling/reinstalling the app, since that wipes app data
+        # entirely. This copies the actual bhuvalaya.db file using Android's own
+        # native Save-As/Open-File dialogs (not a custom-built picker), so you can
+        # save it anywhere (Downloads, Google Drive if mounted, SD card) and
+        # restore it after a fresh install — every stock, every correction, every
+        # custom Rule, all in one real file, not a manual JSON paste.
+        backup_status_text = ft.Text("", size=12, color=C["black_txt"], selectable=True)
+
+        def on_export_result(e: ft.FilePickerResultEvent):
+            if not e.path:
+                return  # user cancelled the Save dialog
+            try:
+                shutil.copy2(db_path, e.path)
+                backup_status_text.value = f"✅ Saved to: {e.path}"
+                backup_status_text.color = C["green"]
+            except Exception as ex:
+                backup_status_text.value = f"❌ Export failed: {ex}"
+                backup_status_text.color = C["red"]
+            page.update()
+
+        def on_import_result(e: ft.FilePickerResultEvent):
+            if not e.files:
+                return  # user cancelled the Open dialog
+            picked_path = e.files[0].path
+            try:
+                shutil.copy2(picked_path, db_path)
+                backup_status_text.value = "✅ Restored — go back and reopen any screen (e.g. Stocks) to see it."
+                backup_status_text.color = C["green"]
+            except Exception as ex:
+                backup_status_text.value = f"❌ Restore failed: {ex}"
+                backup_status_text.color = C["red"]
+            page.update()
+
+        export_picker = ft.FilePicker(on_result=on_export_result)
+        import_picker = ft.FilePicker(on_result=on_import_result)
+        page.overlay.append(export_picker)
+        page.overlay.append(import_picker)
+
+        def do_export_db(e):
+            export_picker.save_file(file_name="bhuvalaya_backup.db")
+
+        def do_import_db(e):
+            import_picker.pick_files(allow_multiple=False, file_type=ft.FilePickerFileType.ANY)
+
         db_screen = ft.Column(visible=False, controls=[
             make_header("⚙️ DATABASE AND ENGINE SETUP"), ft.Divider(height=4, color=C["divider"]),
             ft.ElevatedButton("⚡ BUILD AUTOMATED DATABASE", bgcolor=C["orange"], color="#FFFFFF", height=54, on_click=lambda e: threading.Thread(target=build_db_thread, daemon=True).start()),
@@ -3190,7 +3238,16 @@ def main(page: ft.Page):
             ft.Divider(height=10, color=C["divider"]),
             ft.ElevatedButton("🔧 CHECK EPHEMERIS FILES ON THIS DEVICE", bgcolor="#37474F", color="#FFFFFF", height=48, on_click=do_check_ephemeris),
             ephem_diag_text,
+            ft.Divider(height=10, color=C["divider"]),
+            ft.Text("💾 FULL DATABASE BACKUP / RESTORE", size=14, weight="bold", color=C["black_txt"]),
+            ft.Text("Do this BEFORE reinstalling — saves EVERY stock, Hindi correction, and custom Rule as one real file "
+                    "you choose where to keep (Downloads, Drive, SD card).", size=11, color=C["hint_txt"]),
+            ft.ElevatedButton("📤 EXPORT DATABASE (Save As...)", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=do_export_db),
+            ft.ElevatedButton("📥 RESTORE DATABASE (Open...)", bgcolor=C["green"], color="#FFFFFF", height=44, on_click=do_import_db),
+            backup_status_text,
         ])
+
+
 
         # ── SCREEN: PLACE SETTINGS ────────────────────────────────────────────
         # The reference location + GMT offset used by every automatic astro

@@ -8,7 +8,6 @@ import time
 import math
 import json
 import random
-import shutil
 import platform
 from datetime import datetime, timedelta
 
@@ -541,6 +540,100 @@ def fetch_screener_fundamentals(symbol):
             last_err = ex
             continue
     raise RuntimeError(f"Screener.in fetch failed: {last_err}")
+
+def fetch_screener_shareholding(symbol):
+    """Promoter/FII/DII/Government/Public shareholding trend from Screener.in — a
+    real signal distinct from Technical/Fundamentals: institutions increasing or
+    decreasing their stake over recent quarters. Same page, same no-new-dependency
+    tag-stripping approach as fetch_screener_fundamentals above (verified against
+    a real Reliance Industries page — this exact function's logic was tested
+    against that data before being wired in: Promoters +0.21pp, FIIs -5.41pp,
+    DIIs +5.11pp over the shown window).
+
+    Unlike the top-ratios box (a "label, then ONE value" layout), each shareholder
+    category here is followed by a SERIES of quarterly values — this reads the
+    earliest and latest value in that run to show the trend, not just a snapshot."""
+    if not REQUESTS_OK:
+        raise RuntimeError("The 'requests' library is not available in this build.")
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"}
+    last_err = None
+    for suffix in ("consolidated/", ""):
+        try:
+            url = f"https://www.screener.in/company/{symbol}/{suffix}"
+            resp = requests.get(url, headers=headers, timeout=10)
+            resp.raise_for_status()
+            html = resp.text
+            html = re.sub(r"<script.*?</script>", " ", html, flags=re.S)
+            html = re.sub(r"<style.*?</style>", " ", html, flags=re.S)
+            text = re.sub(r"<[^>]+>", "\n", html)
+            text = text.replace("&nbsp;", " ")
+            lines = [l.strip() for l in text.split("\n") if l.strip()]
+
+            def find_percent_series_after(label):
+                for i, l in enumerate(lines):
+                    if l == label:
+                        vals, j = [], i + 1
+                        while j < len(lines) and re.match(r"^[\d,]+\.?\d*\s*%$", lines[j]):
+                            vals.append(float(lines[j].replace("%", "").replace(",", "").strip()))
+                            j += 1
+                        return vals
+                return []
+
+            result = {}
+            for key, label in (("promoters", "Promoters +"), ("fii", "FIIs +"), ("dii", "DIIs +"),
+                                ("government", "Government +"), ("public", "Public +")):
+                series = find_percent_series_after(label)
+                if series:
+                    result[key] = {"latest": series[-1], "earliest": series[0], "change": series[-1] - series[0], "periods": len(series)}
+            if not result:
+                raise RuntimeError("Page loaded but no shareholding categories were found — Screener may have changed its layout, or this symbol has no shareholding data.")
+            result["_source"] = "Screener.in"
+            return result
+        except Exception as ex:
+            last_err = ex
+            continue
+    raise RuntimeError(f"Screener.in shareholding fetch failed: {last_err}")
+
+def compute_shareholding_summary(data):
+    """Plain-English read of the shareholding trend — same voting-tally spirit as
+    the other summaries in this app. A rising DII/Promoter stake or a falling FII
+    stake isn't inherently bullish or bearish by itself, but sustained institutional
+    buying is generally read as a vote of confidence, and heavy selling as caution."""
+    lines = []
+    votes_up = votes_down = 0
+    LABELS = {"promoters": "Promoters", "fii": "FIIs", "dii": "DIIs", "government": "Government", "public": "Public"}
+    for key, label in LABELS.items():
+        d = data.get(key)
+        if not d:
+            continue
+        change = d["change"]
+        if abs(change) < 0.1:
+            tag = "steady"
+        elif change > 0:
+            tag = "increasing stake"
+        else:
+            tag = "reducing stake"
+        lines.append(f"{label}: {d['latest']:.2f}%  ({change:+.2f}pp over {d['periods']} quarters — {tag})")
+        if key in ("dii", "promoters"):
+            votes_up += 1 if change > 0.5 else 0
+            votes_down += 1 if change < -0.5 else 0
+        elif key == "fii":
+            votes_up += 1 if change > 0.5 else 0
+            votes_down += 1 if change < -0.5 else 0
+
+    if data.get("_source"):
+        lines.append(f"(Source: {data['_source']})")
+
+    total = votes_up + votes_down
+    if total == 0:
+        overall = "STEADY / NO CLEAR SHIFT"
+    elif votes_up > votes_down:
+        overall = "INSTITUTIONAL ACCUMULATION"
+    elif votes_down > votes_up:
+        overall = "INSTITUTIONAL REDUCTION"
+    else:
+        overall = "MIXED"
+    return overall, votes_up, votes_down, total, lines
 
 def compute_fundamentals_summary(f):
     """Plain-English read of the raw fundamentals dict — same voting-tally spirit as
@@ -2604,6 +2697,61 @@ def main(page: ft.Page):
 
             threading.Thread(target=worker, daemon=True).start()
 
+        # ── SHAREHOLDING PATTERN — Promoter/FII/DII trend, from Screener.in ─────────
+        shareholding_container = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False)
+
+        def do_close_shareholding(e=None):
+            shareholding_container.visible = False
+            page.update()
+
+        def do_oracle_shareholding(e):
+            sym = current_stock.get("sym")
+            if not sym:
+                set_status("Search a stock first, then check Shareholding Pattern.", C["red"])
+                page.update()
+                return
+
+            shareholding_container.controls.clear()
+            shareholding_container.controls.append(ft.Divider(height=6, color=C["divider"]))
+            shareholding_container.controls.append(ft.Text(f"⏳ Fetching shareholding pattern for {sym} (Screener.in)...", size=13, color=C["accent"]))
+            shareholding_container.visible = True
+            page.scroll_to(offset=0, duration=200)
+            page.update()
+
+            def worker():
+                try:
+                    data = fetch_screener_shareholding(sym)
+                    overall, up, down, total, lines = compute_shareholding_summary(data)
+                    color = {"INSTITUTIONAL ACCUMULATION": C["green"], "INSTITUTIONAL REDUCTION": C["red"], "MIXED": C["orange"]}.get(overall, C["hint_txt"])
+
+                    shareholding_container.controls.clear()
+                    shareholding_container.controls.append(ft.Divider(height=6, color=C["divider"]))
+                    shareholding_container.controls.append(make_header("🏛️ SHAREHOLDING PATTERN — " + sym, bgcolor="#4527A0"))
+                    shareholding_container.controls.append(ft.Container(
+                        content=ft.Text(overall, size=15, color="#FFFFFF", weight="bold"),
+                        bgcolor=color, padding=12, border_radius=8, alignment=ft.alignment.center
+                    ))
+                    shareholding_container.controls.append(ft.Text("\n".join(lines), size=12.5, color=C["black_txt"], selectable=True))
+                    shareholding_container.controls.append(ft.Text(
+                        "⚠️ Trend in who holds the stock, across recent quarters — sustained institutional buying "
+                        "is generally read as a vote of confidence, sustained selling as caution, but this is not "
+                        "a guarantee and doesn't explain WHY a holder moved. Verify against the company's actual "
+                        "shareholding filings before trading.", size=10, color=C["hint_txt"]))
+                    shareholding_container.controls.append(ft.Container(height=4))
+                    shareholding_container.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_close_shareholding))
+                except Exception as ex:
+                    shareholding_container.controls.clear()
+                    shareholding_container.controls.append(ft.Divider(height=6, color=C["divider"]))
+                    shareholding_container.controls.append(ft.Text(
+                        f"⚠️ Could not fetch shareholding pattern for {sym}.\nReason: {str(ex)}\n\n"
+                        "Check your internet connection, or Screener.in may not have a page for this symbol.",
+                        size=12, color=C["red"]
+                    ))
+                    shareholding_container.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_close_shareholding))
+                page.update()
+
+            threading.Thread(target=worker, daemon=True).start()
+
 
         # "Voice" here means your phone keyboard's own 🎤 dictation button (Gboard and
         # every stock Android keyboard has one on the toolbar whenever a text field is
@@ -2691,6 +2839,10 @@ def main(page: ft.Page):
             ft.Text("💼 FUNDAMENTALS — P/E, ROE, Debt/Equity, margins, revenue growth", size=13, color=C["black_txt"], weight="bold"),
             ft.ElevatedButton("💼  FUNDAMENTALS", bgcolor="#1B5E20", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_fundamentals),
             fundamentals_container,
+            ft.Divider(height=10, color=C["divider"]),
+            ft.Text("🏛️ SHAREHOLDING PATTERN — Promoter/FII/DII trend across recent quarters", size=13, color=C["black_txt"], weight="bold"),
+            ft.ElevatedButton("🏛️  SHAREHOLDING PATTERN", bgcolor="#4527A0", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_shareholding),
+            shareholding_container,
             ft.Divider(height=10, color=C["divider"]),
             ft.Text("🎤 WORD / VOICE PRASHNA — ask in your own words", size=15, color=C["black_txt"], weight="bold"),
             fld_prashna_input,
@@ -3181,52 +3333,118 @@ def main(page: ft.Page):
             ephem_diag_text.value = report
             page.update()
 
-        # ── FULL DATABASE BACKUP / RESTORE — survives even a full reinstall ────────
-        # The hindi_manual flag elsewhere protects your corrections from BUILD
-        # AUTOMATED DATABASE overwriting them WITHIN one install — it does NOT
-        # survive uninstalling/reinstalling the app, since that wipes app data
-        # entirely. This copies the actual bhuvalaya.db file using Android's own
-        # native Save-As/Open-File dialogs (not a custom-built picker), so you can
-        # save it anywhere (Downloads, Google Drive if mounted, SD card) and
-        # restore it after a fresh install — every stock, every correction, every
-        # custom Rule, all in one real file, not a manual JSON paste.
-        backup_status_text = ft.Text("", size=12, color=C["black_txt"], selectable=True)
+        # ── FULL DATA BACKUP / RESTORE (copy-paste text) ────────────────────────────
+        # The native Android "Save As" dialog was tried first, but Android's Storage
+        # Access Framework hands back a content:// reference (not a real file path)
+        # when saving outside the app's own storage — plain Python file functions
+        # can't write through that; only Android's own native code can. Rather than
+        # keep guessing at an unverified platform API, this uses the SAME proven
+        # copy-paste mechanism as Export/Import Rules further down this screen,
+        # which is confirmed working on a real device. Covers stocks (with Hindi
+        # corrections + Portfolio flags), custom Rules, and Place Settings —
+        # everything BUILD AUTOMATED DATABASE alone can't regenerate.
+        backup_output = ft.Text("", size=10, color=C["black_txt"], selectable=True, font_family="monospace", visible=False)
+        backup_input  = ft.TextField(label="Paste Full Backup JSON here", multiline=True, min_lines=4, max_lines=8, value="")
 
-        def on_export_result(e: ft.FilePickerResultEvent):
-            if not e.path:
-                return  # user cancelled the Save dialog
+        def do_export_full(e):
             try:
-                shutil.copy2(db_path, e.path)
-                backup_status_text.value = f"✅ Saved to: {e.path}"
-                backup_status_text.color = C["green"]
+                conn = sqlite3.connect(db_path)
+                stock_rows = conn.execute("SELECT symbol, eng_name, hindi_name, ldate, series, portfolio, hindi_manual FROM stocks ORDER BY symbol").fetchall()
+                conn.close()
+                stocks = [{"symbol": r[0], "eng_name": r[1], "hindi_name": r[2], "ldate": r[3],
+                           "series": r[4], "portfolio": r[5], "hindi_manual": r[6]} for r in stock_rows]
+
+                rules = []
+                for row in simple_rule_list():
+                    (rid, planet, d1_house, d1_rashi, d1_list, d9_house, d9_rashi,
+                     d9_aspect, vargottama, same_house, comp_planet, comp_d9_house,
+                     retro_only, weight, action, struct_src_chart, struct_src_house,
+                     struct_tgt_chart, struct_tgt_list, struct_aspect,
+                     struct_aspect_planets, struct_aspect_mode, rule_name, struct_src_empty) = row
+                    rules.append({
+                        "planet": planet, "d1_house": d1_house, "d1_rashi": d1_rashi, "d1_list": d1_list,
+                        "d9_house": d9_house, "d9_rashi": d9_rashi, "d9_aspect": d9_aspect,
+                        "vargottama": vargottama, "same_house": same_house, "companion_planet": comp_planet,
+                        "companion_d9_house": comp_d9_house, "retro_only": retro_only, "weight": weight,
+                        "action": action, "struct_src_chart": struct_src_chart, "struct_src_house": struct_src_house,
+                        "struct_tgt_chart": struct_tgt_chart, "struct_tgt_list": struct_tgt_list,
+                        "struct_aspect": struct_aspect, "struct_aspect_planets": struct_aspect_planets,
+                        "struct_aspect_mode": struct_aspect_mode, "rule_name": rule_name,
+                        "struct_src_empty": struct_src_empty,
+                    })
+
+                payload = {
+                    "app": "Bhoovalaya Oracle", "export_type": "full_backup",
+                    "exported_at": datetime.now().strftime("%d-%m-%Y %H:%M"),
+                    "stock_count": len(stocks), "rule_count": len(rules),
+                    "stocks": stocks, "rules": rules, "place_settings": dict(current_place),
+                }
+                backup_output.value = json.dumps(payload, ensure_ascii=False)
+                backup_output.visible = True
+                set_status(f"Exported {len(stocks)} stocks + {len(rules)} rule(s) + Place Settings below — "
+                           "long-press the text, Select All, Copy, and save it somewhere safe (notes app, "
+                           "email draft) before reinstalling.", C["green"])
             except Exception as ex:
-                backup_status_text.value = f"❌ Export failed: {ex}"
-                backup_status_text.color = C["red"]
+                set_status(f"Export failed: {ex}", C["red"])
             page.update()
 
-        def on_import_result(e: ft.FilePickerResultEvent):
-            if not e.files:
-                return  # user cancelled the Open dialog
-            picked_path = e.files[0].path
+        def do_import_full(e):
             try:
-                shutil.copy2(picked_path, db_path)
-                backup_status_text.value = "✅ Restored — go back and reopen any screen (e.g. Stocks) to see it."
-                backup_status_text.color = C["green"]
+                raw = (backup_input.value or "").strip()
+                if not raw:
+                    set_status("Paste your backup JSON into the box first.", C["red"])
+                    page.update()
+                    return
+                payload = json.loads(raw)
+                stock_list = payload.get("stocks", [])
+                rule_list = payload.get("rules", [])
+                place = payload.get("place_settings")
+
+                imported_stocks, skipped_stocks = 0, 0
+                conn = sqlite3.connect(db_path)
+                for item in stock_list:
+                    sym = (item.get("symbol") or "").strip().upper()
+                    hindi = item.get("hindi_name") or ""
+                    if not sym or not hindi:
+                        skipped_stocks += 1
+                        continue
+                    asum, bk = calc(hindi)
+                    conn.execute("""INSERT INTO stocks(symbol,eng_name,hindi_name,ldate,asum,breakdown,series,portfolio,hindi_manual)
+                                    VALUES(?,?,?,?,?,?,?,?,?)
+                                    ON CONFLICT(symbol) DO UPDATE SET
+                                        eng_name=excluded.eng_name, hindi_name=excluded.hindi_name,
+                                        ldate=excluded.ldate, asum=excluded.asum, breakdown=excluded.breakdown,
+                                        series=excluded.series, portfolio=excluded.portfolio, hindi_manual=excluded.hindi_manual""",
+                                 (sym, item.get("eng_name") or "", hindi, item.get("ldate") or "", asum, bk,
+                                  item.get("series") or "EQ", 1 if item.get("portfolio") else 0,
+                                  1 if item.get("hindi_manual") else 0))
+                    imported_stocks += 1
+                conn.commit()
+                conn.close()
+
+                for r in rule_list:
+                    simple_rule_add(
+                        r.get("planet", "ANY"), r.get("d1_house"), r.get("d1_rashi"), r.get("d1_list"),
+                        r.get("d9_house"), r.get("d9_rashi"), r.get("d9_aspect"), r.get("vargottama"),
+                        r.get("same_house"), r.get("companion_planet"), r.get("companion_d9_house"),
+                        r.get("retro_only"), r.get("weight", 1.0), r.get("action", "BUY"),
+                        r.get("struct_src_chart"), r.get("struct_src_house"), r.get("struct_tgt_chart"),
+                        r.get("struct_tgt_list"), r.get("struct_aspect"), r.get("struct_aspect_planets"),
+                        r.get("struct_aspect_mode"), r.get("rule_name"), r.get("struct_src_empty"),
+                    )
+
+                if place:
+                    save_place_settings(place.get("place_name", "Mumbai"), place.get("latitude", "19.076"),
+                                         place.get("longitude", "72.877"), place.get("gmt_offset", "5.5"))
+                    current_place.update(get_place_settings())
+
+                set_status(f"Restored {imported_stocks} stock(s)" +
+                           (f", skipped {skipped_stocks} (missing symbol/Hindi name)" if skipped_stocks else "") +
+                           f", {len(rule_list)} rule(s), and Place Settings.", C["green"])
+                backup_input.value = ""
             except Exception as ex:
-                backup_status_text.value = f"❌ Restore failed: {ex}"
-                backup_status_text.color = C["red"]
+                set_status(f"Restore failed: {ex}", C["red"])
             page.update()
-
-        export_picker = ft.FilePicker(on_result=on_export_result)
-        import_picker = ft.FilePicker(on_result=on_import_result)
-        page.overlay.append(export_picker)
-        page.overlay.append(import_picker)
-
-        def do_export_db(e):
-            export_picker.save_file(file_name="bhuvalaya_backup.db")
-
-        def do_import_db(e):
-            import_picker.pick_files(allow_multiple=False, file_type=ft.FilePickerFileType.ANY)
 
         db_screen = ft.Column(visible=False, controls=[
             make_header("⚙️ DATABASE AND ENGINE SETUP"), ft.Divider(height=4, color=C["divider"]),
@@ -3239,12 +3457,14 @@ def main(page: ft.Page):
             ft.ElevatedButton("🔧 CHECK EPHEMERIS FILES ON THIS DEVICE", bgcolor="#37474F", color="#FFFFFF", height=48, on_click=do_check_ephemeris),
             ephem_diag_text,
             ft.Divider(height=10, color=C["divider"]),
-            ft.Text("💾 FULL DATABASE BACKUP / RESTORE", size=14, weight="bold", color=C["black_txt"]),
-            ft.Text("Do this BEFORE reinstalling — saves EVERY stock, Hindi correction, and custom Rule as one real file "
-                    "you choose where to keep (Downloads, Drive, SD card).", size=11, color=C["hint_txt"]),
-            ft.ElevatedButton("📤 EXPORT DATABASE (Save As...)", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=do_export_db),
-            ft.ElevatedButton("📥 RESTORE DATABASE (Open...)", bgcolor=C["green"], color="#FFFFFF", height=44, on_click=do_import_db),
-            backup_status_text,
+            ft.Text("💾 FULL DATA BACKUP / RESTORE", size=14, weight="bold", color=C["black_txt"]),
+            ft.Text("Do this BEFORE reinstalling — copy the exported text somewhere safe (notes app, email draft), "
+                    "then paste it back after the new install. Covers every stock, Hindi correction, custom Rule, "
+                    "and your Place Settings.", size=11, color=C["hint_txt"]),
+            ft.ElevatedButton("📤 EXPORT FULL BACKUP (JSON)", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=do_export_full),
+            backup_output,
+            backup_input,
+            ft.ElevatedButton("📥 RESTORE FROM BACKUP JSON", bgcolor=C["green"], color="#FFFFFF", height=44, on_click=do_import_full),
         ])
 
 

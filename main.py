@@ -541,100 +541,6 @@ def fetch_screener_fundamentals(symbol):
             continue
     raise RuntimeError(f"Screener.in fetch failed: {last_err}")
 
-def fetch_screener_shareholding(symbol):
-    """Promoter/FII/DII/Government/Public shareholding trend from Screener.in — a
-    real signal distinct from Technical/Fundamentals: institutions increasing or
-    decreasing their stake over recent quarters. Same page, same no-new-dependency
-    tag-stripping approach as fetch_screener_fundamentals above (verified against
-    a real Reliance Industries page — this exact function's logic was tested
-    against that data before being wired in: Promoters +0.21pp, FIIs -5.41pp,
-    DIIs +5.11pp over the shown window).
-
-    Unlike the top-ratios box (a "label, then ONE value" layout), each shareholder
-    category here is followed by a SERIES of quarterly values — this reads the
-    earliest and latest value in that run to show the trend, not just a snapshot."""
-    if not REQUESTS_OK:
-        raise RuntimeError("The 'requests' library is not available in this build.")
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"}
-    last_err = None
-    for suffix in ("consolidated/", ""):
-        try:
-            url = f"https://www.screener.in/company/{symbol}/{suffix}"
-            resp = requests.get(url, headers=headers, timeout=10)
-            resp.raise_for_status()
-            html = resp.text
-            html = re.sub(r"<script.*?</script>", " ", html, flags=re.S)
-            html = re.sub(r"<style.*?</style>", " ", html, flags=re.S)
-            text = re.sub(r"<[^>]+>", "\n", html)
-            text = text.replace("&nbsp;", " ")
-            lines = [l.strip() for l in text.split("\n") if l.strip()]
-
-            def find_percent_series_after(label):
-                for i, l in enumerate(lines):
-                    if l == label:
-                        vals, j = [], i + 1
-                        while j < len(lines) and re.match(r"^[\d,]+\.?\d*\s*%$", lines[j]):
-                            vals.append(float(lines[j].replace("%", "").replace(",", "").strip()))
-                            j += 1
-                        return vals
-                return []
-
-            result = {}
-            for key, label in (("promoters", "Promoters +"), ("fii", "FIIs +"), ("dii", "DIIs +"),
-                                ("government", "Government +"), ("public", "Public +")):
-                series = find_percent_series_after(label)
-                if series:
-                    result[key] = {"latest": series[-1], "earliest": series[0], "change": series[-1] - series[0], "periods": len(series)}
-            if not result:
-                raise RuntimeError("Page loaded but no shareholding categories were found — Screener may have changed its layout, or this symbol has no shareholding data.")
-            result["_source"] = "Screener.in"
-            return result
-        except Exception as ex:
-            last_err = ex
-            continue
-    raise RuntimeError(f"Screener.in shareholding fetch failed: {last_err}")
-
-def compute_shareholding_summary(data):
-    """Plain-English read of the shareholding trend — same voting-tally spirit as
-    the other summaries in this app. A rising DII/Promoter stake or a falling FII
-    stake isn't inherently bullish or bearish by itself, but sustained institutional
-    buying is generally read as a vote of confidence, and heavy selling as caution."""
-    lines = []
-    votes_up = votes_down = 0
-    LABELS = {"promoters": "Promoters", "fii": "FIIs", "dii": "DIIs", "government": "Government", "public": "Public"}
-    for key, label in LABELS.items():
-        d = data.get(key)
-        if not d:
-            continue
-        change = d["change"]
-        if abs(change) < 0.1:
-            tag = "steady"
-        elif change > 0:
-            tag = "increasing stake"
-        else:
-            tag = "reducing stake"
-        lines.append(f"{label}: {d['latest']:.2f}%  ({change:+.2f}pp over {d['periods']} quarters — {tag})")
-        if key in ("dii", "promoters"):
-            votes_up += 1 if change > 0.5 else 0
-            votes_down += 1 if change < -0.5 else 0
-        elif key == "fii":
-            votes_up += 1 if change > 0.5 else 0
-            votes_down += 1 if change < -0.5 else 0
-
-    if data.get("_source"):
-        lines.append(f"(Source: {data['_source']})")
-
-    total = votes_up + votes_down
-    if total == 0:
-        overall = "STEADY / NO CLEAR SHIFT"
-    elif votes_up > votes_down:
-        overall = "INSTITUTIONAL ACCUMULATION"
-    elif votes_down > votes_up:
-        overall = "INSTITUTIONAL REDUCTION"
-    else:
-        overall = "MIXED"
-    return overall, votes_up, votes_down, total, lines
-
 def compute_fundamentals_summary(f):
     """Plain-English read of the raw fundamentals dict — same voting-tally spirit as
     compute_technical_summary, so this reads consistently with the rest of the app."""
@@ -2697,60 +2603,6 @@ def main(page: ft.Page):
 
             threading.Thread(target=worker, daemon=True).start()
 
-        # ── SHAREHOLDING PATTERN — Promoter/FII/DII trend, from Screener.in ─────────
-        shareholding_container = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False)
-
-        def do_close_shareholding(e=None):
-            shareholding_container.visible = False
-            page.update()
-
-        def do_oracle_shareholding(e):
-            sym = current_stock.get("sym")
-            if not sym:
-                set_status("Search a stock first, then check Shareholding Pattern.", C["red"])
-                page.update()
-                return
-
-            shareholding_container.controls.clear()
-            shareholding_container.controls.append(ft.Divider(height=6, color=C["divider"]))
-            shareholding_container.controls.append(ft.Text(f"⏳ Fetching shareholding pattern for {sym} (Screener.in)...", size=13, color=C["accent"]))
-            shareholding_container.visible = True
-            page.scroll_to(offset=0, duration=200)
-            page.update()
-
-            def worker():
-                try:
-                    data = fetch_screener_shareholding(sym)
-                    overall, up, down, total, lines = compute_shareholding_summary(data)
-                    color = {"INSTITUTIONAL ACCUMULATION": C["green"], "INSTITUTIONAL REDUCTION": C["red"], "MIXED": C["orange"]}.get(overall, C["hint_txt"])
-
-                    shareholding_container.controls.clear()
-                    shareholding_container.controls.append(ft.Divider(height=6, color=C["divider"]))
-                    shareholding_container.controls.append(make_header("🏛️ SHAREHOLDING PATTERN — " + sym, bgcolor="#4527A0"))
-                    shareholding_container.controls.append(ft.Container(
-                        content=ft.Text(overall, size=15, color="#FFFFFF", weight="bold"),
-                        bgcolor=color, padding=12, border_radius=8, alignment=ft.alignment.center
-                    ))
-                    shareholding_container.controls.append(ft.Text("\n".join(lines), size=12.5, color=C["black_txt"], selectable=True))
-                    shareholding_container.controls.append(ft.Text(
-                        "⚠️ Trend in who holds the stock, across recent quarters — sustained institutional buying "
-                        "is generally read as a vote of confidence, sustained selling as caution, but this is not "
-                        "a guarantee and doesn't explain WHY a holder moved. Verify against the company's actual "
-                        "shareholding filings before trading.", size=10, color=C["hint_txt"]))
-                    shareholding_container.controls.append(ft.Container(height=4))
-                    shareholding_container.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_close_shareholding))
-                except Exception as ex:
-                    shareholding_container.controls.clear()
-                    shareholding_container.controls.append(ft.Divider(height=6, color=C["divider"]))
-                    shareholding_container.controls.append(ft.Text(
-                        f"⚠️ Could not fetch shareholding pattern for {sym}.\nReason: {str(ex)}\n\n"
-                        "Check your internet connection, or Screener.in may not have a page for this symbol.",
-                        size=12, color=C["red"]
-                    ))
-                    shareholding_container.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_close_shareholding))
-                page.update()
-
-            threading.Thread(target=worker, daemon=True).start()
 
 
         # "Voice" here means your phone keyboard's own 🎤 dictation button (Gboard and
@@ -2839,10 +2691,6 @@ def main(page: ft.Page):
             ft.Text("💼 FUNDAMENTALS — P/E, ROE, Debt/Equity, margins, revenue growth", size=13, color=C["black_txt"], weight="bold"),
             ft.ElevatedButton("💼  FUNDAMENTALS", bgcolor="#1B5E20", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_fundamentals),
             fundamentals_container,
-            ft.Divider(height=10, color=C["divider"]),
-            ft.Text("🏛️ SHAREHOLDING PATTERN — Promoter/FII/DII trend across recent quarters", size=13, color=C["black_txt"], weight="bold"),
-            ft.ElevatedButton("🏛️  SHAREHOLDING PATTERN", bgcolor="#4527A0", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_shareholding),
-            shareholding_container,
             ft.Divider(height=10, color=C["divider"]),
             ft.Text("🎤 WORD / VOICE PRASHNA — ask in your own words", size=15, color=C["black_txt"], weight="bold"),
             fld_prashna_input,
@@ -3349,7 +3197,12 @@ def main(page: ft.Page):
         def do_export_full(e):
             try:
                 conn = sqlite3.connect(db_path)
-                stock_rows = conn.execute("SELECT symbol, eng_name, hindi_name, ldate, series, portfolio, hindi_manual FROM stocks ORDER BY symbol").fetchall()
+                # Only your verified corrections (hindi_manual=1) — NOT all 2306+ stocks.
+                # BUILD AUTOMATED DATABASE regenerates everything else fresh on a new
+                # install anyway, so there's no need to carry the full list; this stays
+                # small and fast to copy, and Import overwrites the matching symbol in
+                # whatever fresh database is already there.
+                stock_rows = conn.execute("SELECT symbol, eng_name, hindi_name, ldate, series, portfolio, hindi_manual FROM stocks WHERE hindi_manual=1 ORDER BY symbol").fetchall()
                 conn.close()
                 stocks = [{"symbol": r[0], "eng_name": r[1], "hindi_name": r[2], "ldate": r[3],
                            "series": r[4], "portfolio": r[5], "hindi_manual": r[6]} for r in stock_rows]
@@ -3381,9 +3234,13 @@ def main(page: ft.Page):
                 }
                 backup_output.value = json.dumps(payload, ensure_ascii=False)
                 backup_output.visible = True
-                set_status(f"Exported {len(stocks)} stocks + {len(rules)} rule(s) + Place Settings below — "
-                           "long-press the text, Select All, Copy, and save it somewhere safe (notes app, "
-                           "email draft) before reinstalling.", C["green"])
+                if stocks:
+                    set_status(f"Exported {len(stocks)} verified correction(s) + {len(rules)} rule(s) + Place Settings below — "
+                               "long-press the text, Select All, Copy, and save it somewhere safe (notes app, "
+                               "email draft) before reinstalling.", C["green"])
+                else:
+                    set_status("No verified stock corrections found — only your Rules and Place Settings were exported. "
+                               "(A correction is created when you edit a Hindi name on the Entry screen and tap UPDATE.)", C["orange"])
             except Exception as ex:
                 set_status(f"Export failed: {ex}", C["red"])
             page.update()
@@ -3457,14 +3314,15 @@ def main(page: ft.Page):
             ft.ElevatedButton("🔧 CHECK EPHEMERIS FILES ON THIS DEVICE", bgcolor="#37474F", color="#FFFFFF", height=48, on_click=do_check_ephemeris),
             ephem_diag_text,
             ft.Divider(height=10, color=C["divider"]),
-            ft.Text("💾 FULL DATA BACKUP / RESTORE", size=14, weight="bold", color=C["black_txt"]),
-            ft.Text("Do this BEFORE reinstalling — copy the exported text somewhere safe (notes app, email draft), "
-                    "then paste it back after the new install. Covers every stock, Hindi correction, custom Rule, "
-                    "and your Place Settings.", size=11, color=C["hint_txt"]),
-            ft.ElevatedButton("📤 EXPORT FULL BACKUP (JSON)", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=do_export_full),
+            ft.Text("💾 MY CORRECTIONS BACKUP / RESTORE", size=14, weight="bold", color=C["black_txt"]),
+            ft.Text("Small and fast — only YOUR verified Hindi corrections (not all 2000+ stocks), plus your custom "
+                    "Rules and Place Settings. After reinstalling: run BUILD AUTOMATED DATABASE first to rebuild the "
+                    "full list, THEN restore this to overwrite just your corrections back on top of it.",
+                    size=11, color=C["hint_txt"]),
+            ft.ElevatedButton("📤 EXPORT MY CORRECTIONS (JSON)", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=do_export_full),
             backup_output,
             backup_input,
-            ft.ElevatedButton("📥 RESTORE FROM BACKUP JSON", bgcolor=C["green"], color="#FFFFFF", height=44, on_click=do_import_full),
+            ft.ElevatedButton("📥 RESTORE MY CORRECTIONS (overwrites matching stocks)", bgcolor=C["green"], color="#FFFFFF", height=44, on_click=do_import_full),
         ])
 
 

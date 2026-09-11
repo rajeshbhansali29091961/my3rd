@@ -2668,6 +2668,30 @@ def main(page: ft.Page):
             prashna_result.visible = True
             page.update()
 
+        def make_collapsible_section(title, controls_list, start_expanded=False):
+            """Collapsible section — same collapsed-by-default, tap-to-expand pattern
+            already used for Rules cards — so searching a stock doesn't mean scrolling
+            past every analysis tool (Ramal, Outlook, Technical, Fundamentals, Prashna)
+            just to reach the one you actually want right now."""
+            is_expanded = {"v": start_expanded}
+            body = ft.Column(controls=controls_list, visible=start_expanded, spacing=8)
+            chevron = ft.Icon(name=(ft.Icons.EXPAND_LESS if start_expanded else ft.Icons.EXPAND_MORE), color=C["primary"], size=24)
+
+            def toggle(e):
+                is_expanded["v"] = not is_expanded["v"]
+                body.visible = is_expanded["v"]
+                chevron.name = ft.Icons.EXPAND_LESS if is_expanded["v"] else ft.Icons.EXPAND_MORE
+                page.update()
+
+            header = ft.Container(
+                content=ft.Row([
+                    ft.Text(title, size=14, color=C["black_txt"], weight="bold", expand=True),
+                    chevron,
+                ], alignment="spaceBetween"),
+                bgcolor=C["row_odd"], padding=10, border_radius=8, on_click=toggle, ink=True,
+            )
+            return ft.Column([header, body], spacing=4)
+
         oracle_screen = ft.Column(visible=False, controls=[
             make_header("🔮  ORACLE ANALYSIS"), ft.Divider(height=4, color=C["divider"]),
             ft.Text("Enter Stock Symbol or Name:", size=15, color=C["black_txt"], weight="bold"),
@@ -2677,25 +2701,31 @@ def main(page: ft.Page):
             ft.Container(height=10),
             ft.Text("🪐 Auto Astro (D1/D9) + Panchanga has moved to the Stocks / Show All page — tap the Stocks tab below.", size=12, color=C["hint_txt"]),
             ft.Container(height=10),
-            ft.ElevatedButton("🎲  RAMAL PRASHNA (Cast Now)", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_ramal),
-            ramal_container,
-            ft.Divider(height=10, color=C["divider"]),
-            ft.Text("📅 5-DAY OUTLOOK — clear-UP (+) vs Vedha-caution (⚠) for this stock, next 5 days", size=13, color=C["black_txt"], weight="bold"),
-            ft.ElevatedButton("📅  5-DAY OUTLOOK", bgcolor="#4527A0", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_outlook),
-            outlook_container,
-            ft.Divider(height=10, color=C["divider"]),
-            ft.Text("📈 TECHNICAL ANALYSIS — real price/volume data (SMA, RSI, MACD)", size=13, color=C["black_txt"], weight="bold"),
-            ft.ElevatedButton("📈  TECHNICAL ANALYSIS", bgcolor="#0D47A1", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_technical),
-            technical_container,
-            ft.Divider(height=10, color=C["divider"]),
-            ft.Text("💼 FUNDAMENTALS — P/E, ROE, Debt/Equity, margins, revenue growth", size=13, color=C["black_txt"], weight="bold"),
-            ft.ElevatedButton("💼  FUNDAMENTALS", bgcolor="#1B5E20", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_fundamentals),
-            fundamentals_container,
-            ft.Divider(height=10, color=C["divider"]),
-            ft.Text("🎤 WORD / VOICE PRASHNA — ask in your own words", size=15, color=C["black_txt"], weight="bold"),
-            fld_prashna_input,
-            ft.ElevatedButton("🔮  CALCULATE BHOOVALAYA", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_word_prashna),
-            prashna_result,
+            make_collapsible_section("🎲  Ramal Prashna", [
+                ft.ElevatedButton("🎲  RAMAL PRASHNA (Cast Now)", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_ramal),
+                ramal_container,
+            ]),
+            make_collapsible_section("📅  5-Day Outlook", [
+                ft.Text("clear-UP (+) vs Vedha-caution (⚠) for this stock, next 5 days", size=12, color=C["hint_txt"]),
+                ft.ElevatedButton("📅  5-DAY OUTLOOK", bgcolor="#4527A0", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_outlook),
+                outlook_container,
+            ]),
+            make_collapsible_section("📈  Technical Analysis", [
+                ft.Text("real price/volume data (SMA, RSI, MACD)", size=12, color=C["hint_txt"]),
+                ft.ElevatedButton("📈  TECHNICAL ANALYSIS", bgcolor="#0D47A1", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_technical),
+                technical_container,
+            ]),
+            make_collapsible_section("💼  Fundamentals", [
+                ft.Text("P/E, ROE, Debt/Equity, margins, revenue growth", size=12, color=C["hint_txt"]),
+                ft.ElevatedButton("💼  FUNDAMENTALS", bgcolor="#1B5E20", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_fundamentals),
+                fundamentals_container,
+            ]),
+            make_collapsible_section("🎤  Word / Voice Prashna", [
+                ft.Text("ask in your own words", size=12, color=C["hint_txt"]),
+                fld_prashna_input,
+                ft.ElevatedButton("🔮  CALCULATE BHOOVALAYA", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_word_prashna),
+                prashna_result,
+            ]),
         ])
 
         # ── SCREEN 2: STOCK LIST ──────────────────────────────────────────────

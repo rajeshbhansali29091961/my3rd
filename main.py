@@ -2181,6 +2181,12 @@ def main(page: ft.Page):
             last_chart_state.update({"d1_pos": d1_pos, "d9_pos": d9_pos, "lagna_d1": lagna_d1,
                                       "lagna_d9": lagna_d9, "retro_set": retro_set, "label": label})
 
+        # ── COMBINED VIEW tracking — captures what each tool ALREADY computes ──────
+        # No new analysis here — just remembering the verdict each of the four tools
+        # (Bhoovalaya, Ramal, Technical, Fundamentals) already produces, so they can
+        # be shown side by side once you've run some or all of them for this stock.
+        latest_verdicts = {"sym": None, "bhoovalaya": None, "ramal": None, "technical": None, "fundamentals": None}
+
         def do_oracle(e):
             q = fld_oracle.value.strip().upper()
             if not q:
@@ -2211,6 +2217,11 @@ def main(page: ft.Page):
                 oracle_astro_container.visible = False   # hide any chart from a previous search
                 ramal_container.visible = False          # hide any Ramal result from a previous search
                 current_stock["sym"], current_stock["asum"], current_stock["ldt"] = sym, asum, ldt
+                # New symbol -> reset the Combined View and capture Bhoovalaya's own verdict now
+                combined_dir, has_vedha = quick_verdict(asum, ldt)
+                bhoovalaya_label = ("⚠️ VEDHA — avoid entry" if has_vedha else DIR_ARROW.get(combined_dir, combined_dir))
+                latest_verdicts.update({"sym": sym, "bhoovalaya": (bhoovalaya_label, combined_dir),
+                                        "ramal": None, "technical": None, "fundamentals": None})
             else:
                 set_status("Not found: " + q, C["red"])
                 result_txt.value = f"'{q}' NOT FOUND\n\nTry: RELIANCE TCS SBIN"
@@ -2218,6 +2229,7 @@ def main(page: ft.Page):
                 oracle_astro_container.visible = False
                 ramal_container.visible = False
                 current_stock["sym"], current_stock["asum"], current_stock["ldt"] = None, None, None
+                latest_verdicts.update({"sym": None, "bhoovalaya": None, "ramal": None, "technical": None, "fundamentals": None})
             page.update()
 
         def do_oracle_back(e):
@@ -2396,6 +2408,7 @@ def main(page: ft.Page):
             ji, fi = cast["judge_info"], cast["final_info"]
             direction, ramal_line = ramal_recommendation(ji, fi)
             ramal_color = {"BUY": C["green"], "SELL": C["red"], "NEUTRAL": C["black_txt"]}[direction]
+            latest_verdicts["ramal"] = (direction, direction)
 
             # Cross-check against the Bhoovalaya combined direction (Step 8) for this same stock
             bhoovalaya_dir, has_vedha = quick_verdict(current_stock["asum"], current_stock["ldt"])
@@ -2503,6 +2516,7 @@ def main(page: ft.Page):
                     closes, volumes = fetch_yahoo_history(sym, range_str="1y", interval="1d")
                     overall, up, down, total, lines = compute_technical_summary(closes, volumes)
                     color = {"BULLISH": C["green"], "BEARISH": C["red"], "MIXED": C["orange"]}.get(overall, C["hint_txt"])
+                    latest_verdicts["technical"] = (overall, overall)
 
                     technical_container.controls.clear()
                     technical_container.controls.append(ft.Divider(height=6, color=C["divider"]))
@@ -2564,6 +2578,7 @@ def main(page: ft.Page):
                         f = fetch_screener_fundamentals(sym)  # already tags "_source": "Screener.in"
                     overall, up, down, total, lines = compute_fundamentals_summary(f)
                     color = {"FUNDAMENTALLY STRONG": C["green"], "FUNDAMENTALLY WEAK": C["red"], "MIXED": C["orange"]}.get(overall, C["hint_txt"])
+                    latest_verdicts["fundamentals"] = (overall, overall)
 
                     fundamentals_container.controls.clear()
                     fundamentals_container.controls.append(ft.Divider(height=6, color=C["divider"]))
@@ -2668,6 +2683,72 @@ def main(page: ft.Page):
             prashna_result.visible = True
             page.update()
 
+        # ── COMBINED VIEW — lays the already-computed verdicts side by side ─────────
+        # No new analysis logic — purely a display of what latest_verdicts already
+        # holds from whichever of the four tools above have actually been run for
+        # the current stock. A tool that hasn't been tapped yet just shows as
+        # "not yet run", rather than being silently left out of the count.
+        combined_container = ft.Column(spacing=8, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False)
+        POSITIVE_LABELS = {"UP", "BUY", "BULLISH", "FUNDAMENTALLY STRONG", "INSTITUTIONAL ACCUMULATION"}
+        NEGATIVE_LABELS = {"DOWN", "SELL", "BEARISH", "FUNDAMENTALLY WEAK", "INSTITUTIONAL REDUCTION"}
+
+        def do_close_combined(e=None):
+            combined_container.visible = False
+            page.update()
+
+        def do_oracle_combined(e):
+            sym = current_stock.get("sym")
+            if not sym:
+                set_status("Search a stock first, then check the Combined View.", C["red"])
+                page.update()
+                return
+
+            rows_out, votes_up, votes_down, run_count = [], 0, 0, 0
+            for key, tool_label in (("bhoovalaya", "🔮 Bhoovalaya"), ("ramal", "🎲 Ramal Prashna"),
+                                     ("technical", "📈 Technical"), ("fundamentals", "💼 Fundamentals")):
+                entry = latest_verdicts.get(key)
+                if entry is None:
+                    rows_out.append((tool_label, "not yet run — tap it above first", C["hint_txt"]))
+                    continue
+                display_label, vote_label = entry
+                run_count += 1
+                if vote_label in POSITIVE_LABELS:
+                    votes_up += 1
+                    color = C["green"]
+                elif vote_label in NEGATIVE_LABELS:
+                    votes_down += 1
+                    color = C["red"]
+                else:
+                    color = C["hint_txt"]
+                rows_out.append((tool_label, display_label, color))
+
+            combined_container.controls.clear()
+            combined_container.controls.append(ft.Divider(height=6, color=C["divider"]))
+            combined_container.controls.append(make_header("📊 COMBINED VIEW — " + sym, bgcolor="#37474F"))
+            if run_count == 0:
+                combined_container.controls.append(ft.Text(
+                    "None of the four tools above have been run for this stock yet — tap Ramal, Technical, "
+                    "or Fundamentals first, then come back here.", size=12, color=C["hint_txt"]))
+            else:
+                verdict_summary = f"{votes_up} of {run_count} run so far lean POSITIVE" if votes_up >= votes_down else f"{votes_down} of {run_count} run so far lean NEGATIVE"
+                if votes_up == votes_down:
+                    verdict_summary = f"{run_count} tool(s) run — evenly split, no clear lean"
+                combined_container.controls.append(ft.Text(verdict_summary, size=13, color=C["black_txt"], weight="bold"))
+            for tool_label, display_label, color in rows_out:
+                combined_container.controls.append(ft.Row(
+                    controls=[
+                        ft.Text(tool_label, size=13, color=C["black_txt"], weight="bold"),
+                        ft.Text(display_label, size=13, color=color, weight="bold"),
+                    ], alignment="spaceBetween"
+                ))
+            combined_container.controls.append(ft.Text(
+                "⚠️ A side-by-side view of readings you've already run — not a new calculation, and agreement "
+                "between tools is not itself a guarantee.", size=10, color=C["hint_txt"]))
+            combined_container.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_close_combined))
+            combined_container.visible = True
+            page.scroll_to(offset=0, duration=200)
+            page.update()
+
         def make_collapsible_section(title, controls_list, start_expanded=False):
             """Collapsible section — same collapsed-by-default, tap-to-expand pattern
             already used for Rules cards — so searching a stock doesn't mean scrolling
@@ -2692,8 +2773,26 @@ def main(page: ft.Page):
             )
             return ft.Column([header, body], spacing=4)
 
+        # ── EMPTY-DATABASE NUDGE — shown on Oracle when no stocks are loaded yet ────
+        # A brand-new install has no database until BUILD AUTOMATED DATABASE is run
+        # once — without this, a first-time search just fails with "DATABASE IS
+        # EMPTY" and the person has to figure out where to go on their own. Its
+        # visibility is re-checked every time Oracle is opened (see show_screen
+        # below), so it correctly disappears the moment the database is built,
+        # without needing the app to be restarted.
+        db_empty_banner = ft.Container(
+            content=ft.Row([
+                ft.Text("📭 No stocks loaded yet — tap here to build your database", size=13, color="#FFFFFF", weight="bold", expand=True),
+                ft.Icon(name=ft.Icons.ARROW_FORWARD, color="#FFFFFF", size=20),
+            ], alignment="spaceBetween"),
+            bgcolor=C["orange"], padding=12, border_radius=8,
+            on_click=lambda e: show_screen("db"), ink=True,
+            visible=(db_count() < 5),
+        )
+
         oracle_screen = ft.Column(visible=False, controls=[
             make_header("🔮  ORACLE ANALYSIS"), ft.Divider(height=4, color=C["divider"]),
+            db_empty_banner,
             ft.Text("Enter Stock Symbol or Name:", size=15, color=C["black_txt"], weight="bold"),
             fld_oracle,
             ft.ElevatedButton("🔍  SEARCH AND CALCULATE", bgcolor=C["green"], color="#FFFFFF", height=52, style=ft.ButtonStyle(text_style=ft.TextStyle(size=17, weight="bold")), on_click=do_oracle),
@@ -2725,6 +2824,11 @@ def main(page: ft.Page):
                 fld_prashna_input,
                 ft.ElevatedButton("🔮  CALCULATE BHOOVALAYA", bgcolor="#4E342E", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_word_prashna),
                 prashna_result,
+            ]),
+            make_collapsible_section("📊  Combined View", [
+                ft.Text("lays Bhoovalaya, Ramal, Technical, and Fundamentals side by side — run the ones you want first", size=12, color=C["hint_txt"]),
+                ft.ElevatedButton("📊  SHOW COMBINED VIEW", bgcolor="#37474F", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_combined),
+                combined_container,
             ]),
         ])
 
@@ -4072,6 +4176,8 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
             confirm_exit_panel.visible = False
             floating_back_to_oracle.visible = (name == "list")
             az_index_strip.visible = (name == "list")
+            if name == "oracle":
+                db_empty_banner.visible = (db_count() < 5)
             page.update()
 
         # Each tab gets its own distinct color (Flet's built-in NavigationBar can't do

@@ -9,6 +9,8 @@ import math
 import json
 import random
 import platform
+import wave
+import struct
 from datetime import datetime, timedelta
 
 try:
@@ -401,6 +403,44 @@ def fetch_stock_quote(symbol):
             return fetch_yahoo_quote(symbol)
         except Exception as yahoo_err:
             raise RuntimeError(f"NSE failed ({nse_err}); Yahoo Finance fallback also failed ({yahoo_err})")
+
+# ── ALERT SOUNDS — generated locally, no bundled asset file, no network needed ──
+# Deliberately NOT using a bundled sound file (which would need build.yml changes,
+# another moving part that can't be verified without live testing) or a remote
+# URL (network-dependent, and can't be verified from this environment either).
+# Instead these are synthesized on-device using only Python's standard library
+# (wave + struct + math — no new dependency), written once to the app's own
+# writable storage, and played from that local path — the same proven-writable
+# location the database already uses.
+def generate_chime(path, notes, volume=0.5, sample_rate=22050):
+    """notes = list of (frequency_hz, duration_seconds) tuples, played in sequence.
+    Each note fades out to avoid an audible click at its end."""
+    with wave.open(path, "w") as f:
+        f.setnchannels(1)
+        f.setsampwidth(2)
+        f.setframerate(sample_rate)
+        for freq, duration in notes:
+            n_samples = int(duration * sample_rate)
+            for i in range(n_samples):
+                t = i / sample_rate
+                envelope = 1.0 - (i / n_samples)
+                sample = volume * envelope * math.sin(2 * math.pi * freq * t)
+                f.writeframes(struct.pack("<h", int(sample * 32767)))
+
+def ensure_alert_sounds(storage_dir):
+    """Creates buy_alert.wav (rising two-note chime — bright, ascending) and
+    sell_alert.wav (falling two-note chime — descending, cautionary) once, if they
+    don't already exist. Returns (buy_path, sell_path)."""
+    buy_path = os.path.join(storage_dir, "buy_alert.wav")
+    sell_path = os.path.join(storage_dir, "sell_alert.wav")
+    try:
+        if not os.path.exists(buy_path):
+            generate_chime(buy_path, [(660, 0.15), (880, 0.22)])
+        if not os.path.exists(sell_path):
+            generate_chime(sell_path, [(660, 0.15), (440, 0.22)])
+    except Exception:
+        pass  # non-fatal — the app just won't have sound alerts if this fails
+    return buy_path, sell_path
 
 # ── TECHNICAL ANALYSIS ────────────────────────────────────────────────────────
 # Uses the SAME Yahoo chart endpoint as fetch_yahoo_quote above, just with
@@ -1682,6 +1722,14 @@ def main(page: ft.Page):
         storage = os.getenv("FLET_APP_STORAGE_DATA", ".")
         db_path = os.path.join(storage, "bhuvalaya.db")
 
+        # ── Sound alerts for the Stocks page's Live Timing Signal (see stocks_recalc_loop
+        # further down) — a distinct chime for BUY vs SELL, generated locally above.
+        buy_alert_path, sell_alert_path = ensure_alert_sounds(storage)
+        buy_alert_audio = ft.Audio(src=buy_alert_path, autoplay=False)
+        sell_alert_audio = ft.Audio(src=sell_alert_path, autoplay=False)
+        page.overlay.append(buy_alert_audio)
+        page.overlay.append(sell_alert_audio)
+
         try:
             conn = sqlite3.connect(db_path)
             conn.execute("""CREATE TABLE IF NOT EXISTS stocks(
@@ -2897,6 +2945,12 @@ def main(page: ft.Page):
             else:
                 return "NEUTRAL", C["accent"], score, wait_matches, chart_data
 
+        # Tracks the PREVIOUS tick's label, so a sound only plays on a genuine
+        # transition INTO BUY or SELL — not repeatedly every single refresh while
+        # the signal stays the same, which would be far more annoying than helpful.
+        last_signal_state = {"label": None}
+        fld_sound_alerts = ft.Switch(label="🔔 Sound alert when signal changes to BUY/SELL", value=True, active_color=C["green"])
+
         def stocks_recalc_loop(interval_seconds, stop_event):
             while not stop_event.is_set():
                 label, color, score, wait_matches, cd = compute_live_timing_signal()
@@ -2905,6 +2959,12 @@ def main(page: ft.Page):
                 live_signal_text.color = "#FFFFFF"
                 apply_timing_flag(score, wait_matches)
                 load_list(fld_list_search.value.strip().upper())
+                if fld_sound_alerts.value and label != last_signal_state["label"]:
+                    if label == "BUY":
+                        buy_alert_audio.play()
+                    elif label == "SELL":
+                        sell_alert_audio.play()
+                last_signal_state["label"] = label
                 # If a D1/D9 chart is currently open — on THIS page, or on the Oracle screen —
                 # keep it in sync with the live signal above instead of leaving it as a frozen
                 # snapshot from whenever it was first opened. Both charts are checked
@@ -3068,6 +3128,7 @@ def main(page: ft.Page):
             ft.Divider(height=4, color=C["divider"]),
             ft.Text("⏱ LIVE TIMING SIGNAL — your custom Rules checked against the sky right now (one shared signal for all stocks, not per-row); updates every refresh interval", size=10, color=C["hint_txt"]),
             fld_stocks_auto_interval, btn_stocks_auto_refresh, live_signal_container,
+            fld_sound_alerts,
             ft.Divider(height=4, color=C["divider"]),
             ft.Text("🔼 UP  🔽 DOWN  ↔️ SIDE  ⚠️ MIXED — Bhoovalaya (Graha+Bandha) combined direction | Vedha = Sarvatobhadra caution flag", size=10, color=C["hint_txt"]),
             fld_list_search,
@@ -4338,4 +4399,4 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
             pass
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.app(target=main

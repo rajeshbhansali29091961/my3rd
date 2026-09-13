@@ -4399,4 +4399,4 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
             pass
 
 if __name__ == "__main__":
-    ft.app(target=main
+    ft.app(target=main)

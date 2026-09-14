@@ -430,17 +430,20 @@ def generate_chime(path, notes, volume=0.5, sample_rate=22050):
 def ensure_alert_sounds(storage_dir):
     """Creates buy_alert.wav (rising two-note chime — bright, ascending) and
     sell_alert.wav (falling two-note chime — descending, cautionary) once, if they
-    don't already exist. Returns (buy_path, sell_path)."""
+    don't already exist. Returns (buy_path, sell_path, error) — error is None on
+    success, or the failure reason as a string, so a caller can actually surface
+    it instead of sound alerts just silently not working with no way to tell why."""
     buy_path = os.path.join(storage_dir, "buy_alert.wav")
     sell_path = os.path.join(storage_dir, "sell_alert.wav")
+    error = None
     try:
         if not os.path.exists(buy_path):
             generate_chime(buy_path, [(660, 0.15), (880, 0.22)])
         if not os.path.exists(sell_path):
             generate_chime(sell_path, [(660, 0.15), (440, 0.22)])
-    except Exception:
-        pass  # non-fatal — the app just won't have sound alerts if this fails
-    return buy_path, sell_path
+    except Exception as ex:
+        error = str(ex)
+    return buy_path, sell_path, error
 
 # ── TECHNICAL ANALYSIS ────────────────────────────────────────────────────────
 # Uses the SAME Yahoo chart endpoint as fetch_yahoo_quote above, just with
@@ -1724,7 +1727,7 @@ def main(page: ft.Page):
 
         # ── Sound alerts for the Stocks page's Live Timing Signal (see stocks_recalc_loop
         # further down) — a distinct chime for BUY vs SELL, generated locally above.
-        buy_alert_path, sell_alert_path = ensure_alert_sounds(storage)
+        buy_alert_path, sell_alert_path, alert_sound_error = ensure_alert_sounds(storage)
         buy_alert_audio = ft.Audio(src=buy_alert_path, autoplay=False)
         sell_alert_audio = ft.Audio(src=sell_alert_path, autoplay=False)
         page.overlay.append(buy_alert_audio)
@@ -2951,6 +2954,38 @@ def main(page: ft.Page):
         last_signal_state = {"label": None}
         fld_sound_alerts = ft.Switch(label="🔔 Sound alert when signal changes to BUY/SELL", value=True, active_color=C["green"])
 
+        # ── SOUND ALERT DIAGNOSTICS — isolates "does sound work at all" from "is the
+        # signal-transition logic working" — same reasoning as the ephemeris checker
+        # elsewhere: don't leave "it doesn't play" as a mystery, show WHY.
+        def _sound_file_status(path):
+            try:
+                size = os.path.getsize(path)
+                return f"✅ {os.path.basename(path)}: {size} bytes" if size > 0 else f"⚠️ {os.path.basename(path)}: exists but EMPTY (0 bytes)"
+            except Exception as ex:
+                return f"❌ {os.path.basename(path)}: NOT FOUND ({ex})"
+
+        if alert_sound_error:
+            sound_diag_text = ft.Text(f"❌ Sound file generation FAILED: {alert_sound_error}", size=11, color=C["red"], selectable=True)
+        else:
+            sound_diag_text = ft.Text(
+                _sound_file_status(buy_alert_path) + "\n" + _sound_file_status(sell_alert_path),
+                size=11, color=C["black_txt"], selectable=True)
+
+        def do_test_buy_sound(e):
+            set_status("Playing BUY test sound now — listen for a rising two-note chime...", C["green"])
+            buy_alert_audio.play()
+            page.update()
+
+        def do_test_sell_sound(e):
+            set_status("Playing SELL test sound now — listen for a falling two-note chime...", C["orange"])
+            sell_alert_audio.play()
+            page.update()
+
+        sound_test_row = ft.Row([
+            ft.ElevatedButton("🔊 TEST BUY SOUND", bgcolor=C["green"], color="#FFFFFF", height=40, on_click=do_test_buy_sound),
+            ft.ElevatedButton("🔊 TEST SELL SOUND", bgcolor=C["red"], color="#FFFFFF", height=40, on_click=do_test_sell_sound),
+        ], wrap=True, spacing=8)
+
         def stocks_recalc_loop(interval_seconds, stop_event):
             while not stop_event.is_set():
                 label, color, score, wait_matches, cd = compute_live_timing_signal()
@@ -3129,6 +3164,8 @@ def main(page: ft.Page):
             ft.Text("⏱ LIVE TIMING SIGNAL — your custom Rules checked against the sky right now (one shared signal for all stocks, not per-row); updates every refresh interval", size=10, color=C["hint_txt"]),
             fld_stocks_auto_interval, btn_stocks_auto_refresh, live_signal_container,
             fld_sound_alerts,
+            sound_diag_text,
+            sound_test_row,
             ft.Divider(height=4, color=C["divider"]),
             ft.Text("🔼 UP  🔽 DOWN  ↔️ SIDE  ⚠️ MIXED — Bhoovalaya (Graha+Bandha) combined direction | Vedha = Sarvatobhadra caution flag", size=10, color=C["hint_txt"]),
             fld_list_search,

@@ -3003,6 +3003,15 @@ def main(page: ft.Page):
 
             threading.Thread(target=worker, daemon=True).start()
 
+        # Rendering cap: each row below builds ~15 nested Flet controls (switch, 4
+        # action buttons, badges, containers). At the old un-capped 200-500 rows that
+        # meant 3,000-7,500 live controls in the widget tree at once, which is what
+        # made typing in the search box stutter and backspacing crawl — Flutter has to
+        # manage that whole tree on every keystroke. The DB query still counts ALL
+        # matches (so the count text stays truthful); only the number actually BUILT
+        # as UI is limited. Narrowing the search or using the A-Z strip reveals the rest.
+        LIST_RENDER_CAP = 60
+
         def load_list(q=""):
             list_rows.controls.clear()
             rows = db_search(q, portfolio_only=fld_portfolio_only.value, letter=selected_letter["value"])
@@ -3015,7 +3024,13 @@ def main(page: ft.Page):
                 filter_note += " — UP signal only"
             if selected_letter["value"]:
                 filter_note += f" — starting with '{selected_letter['value']}'"
-            list_count_txt.value = f"Showing {len(rows)} stocks" + filter_note
+            total_matches = len(rows)
+            rows = rows[:LIST_RENDER_CAP]
+            if total_matches > LIST_RENDER_CAP:
+                list_count_txt.value = (f"Showing first {LIST_RENDER_CAP} of {total_matches} stocks" + filter_note +
+                                         " — type more letters or use the A-Z strip to narrow it down")
+            else:
+                list_count_txt.value = f"Showing {total_matches} stocks" + filter_note
             for i, r in enumerate(rows):
                 sym, eng, hi, ldt, asum, portfolio = r
                 current_list_symbols.append(sym)

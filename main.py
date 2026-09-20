@@ -4311,6 +4311,7 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
                             ft.Container(height=6),
                             ft.Text("🕉️  Sri Rang Avadhut", size=19, color="#FFFFFF", weight="bold", text_align=ft.TextAlign.CENTER),
                             ft.Text("Sri Krishna Bhalchandra Gaitonde", size=19, color="#FFFFFF", weight="bold", text_align=ft.TextAlign.CENTER),
+                            ft.Text("Kumudendu Muni — author of Siribhoovalaya", size=16, color="#FFE0B2", weight="bold", text_align=ft.TextAlign.CENTER),
                             ft.Text("🙏", size=22, text_align=ft.TextAlign.CENTER),
                             ft.Container(height=6),
                             ft.Text("Every calculation in this app is offered under their guidance and blessing.",

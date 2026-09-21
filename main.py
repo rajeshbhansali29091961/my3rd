@@ -83,19 +83,25 @@ GRAHA_DIRECTION = {
 }
 
 def combine_direction(graha_signal, bandha_dir):
+    # BANDHA DOWN is real bearish (Chatra, Kamala) - map it to DOWN for combination
     g_dir = GRAHA_DIRECTION.get(graha_signal, "SIDEWAYS")
+    # Normalize BANDHA DOWN to DOWN for comparison
+    b_dir_norm = bandha_dir  # keep original for display, but DOWN is valid direction
     if bandha_dir == "CONTINUATION":
         return g_dir, "Bandha reinforces the Graha's own direction (trend continuation)"
-    if g_dir == bandha_dir:
+    if g_dir == b_dir_norm:
         return g_dir, "Graha and Bandha AGREE — higher-confidence signal"
-    if g_dir == "SIDEWAYS" or bandha_dir == "SIDEWAYS":
+    if g_dir == "SIDEWAYS" or b_dir_norm == "SIDEWAYS":
         return "SIDEWAYS", "One signal points range-bound — lower conviction either way"
+    if (g_dir == "UP" and b_dir_norm == "DOWN") or (g_dir == "DOWN" and b_dir_norm == "UP"):
+        return "MIXED", "Graha and Bandha CONFLICT (UP vs DOWN) — avoid strong conviction"
     return "MIXED", "Graha and Bandha CONFLICT — contradictory signals, avoid strong conviction"
 
 
 DIR_ARROW = {"UP": "🔼 UP", "DOWN": "🔽 DOWN", "SIDEWAYS": "↔️ SIDEWAYS", "MIXED": "⚠️ MIXED"}
 
-# ── EXPANDED BANDHA TRAVERSAL + NSE 42D BACKTEST ENGINE ─────────────────────
+# ── EXPANDED BANDHA TRAVERSAL + NSE 42D BACKTEST ENGINE (FULLY OFFLINE AFTER FIRST BUILD) ─────
+# Offline logic: CSV cache first, no API needed. SwissEph Moshier fallback is 100% offline.
 try:
     import swisseph as swe
     SWE_OK = True
@@ -110,6 +116,7 @@ except Exception:
     YF_OK = False
 
 from pathlib import Path
+OFFLINE_MODE = True  # True = prefer cached CSV, no internet after first DB build
 CACHE_DIR = Path("data/nse_cache")
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -171,9 +178,27 @@ def bandha_modifier(bandha_idx, base_value, day_offset=0):
         return v
 
 def get_planet_longitudes_for_date(dt: datetime):
+    if SWE_OK:
+        # auto-set ephe path - supports both .se1 (new) and .ep1/.se2 (old) - you have .ep1 on github
+        try:
+            import os
+            for p in ["./ephe", "./sweph", "ephe", "sweph", "data/ephe", "./data/ephe", "/usr/share/ephe", "C:\\sweph\\ephe"]:
+                if os.path.exists(p):
+                    try:
+                        files = os.listdir(p)
+                        if any(f.endswith(".se1") or f.endswith(".se2") or f.endswith(".ep1") or f.endswith(".se1") or "sepl" in f or "semo" in f for f in files):
+                            swe.set_ephe_path(p)
+                            # print(f"SwissEph path set to {p} with {len(files)} files")
+                            break
+                    except:
+                        swe.set_ephe_path(p)
+                        break
+        except Exception as e:
+            # print(f"ephe path set fail {e}")
+            pass
     if not SWE_OK:
-        random.seed(dt.toordinal())
-        return {i: random.uniform(0,360) for i in range(9)}
+        rnd = random.Random(dt.toordinal())
+        return {i: rnd.uniform(0,360) for i in range(9)}
     try:
         swe.set_sid_mode(swe.SIDM_LAHIRI)
         jd = swe.julday(dt.year, dt.month, dt.day, 12.0)
@@ -195,7 +220,11 @@ def akshara_sum_for_text(text_str):
     for ch in text_str:
         if ch in AKSHARA_VALS:
             s+=AKSHARA_VALS[ch]
-    return s if s>0 else sum(ord(c)%9 for c in text_str)+27
+    # If user entered English symbol (RELIANCE), fallback to deterministic hash, but prefer Hindi name from DB
+    if s==0:
+        # Use Hindi transliteration logic if possible, else hash
+        s = sum((ord(c) % 9)+1 for c in text_str) + 27
+    return s
 
 def derive_graha_and_sutra_enhanced(stock_name, listing_date, target_date, bandha_idx):
     base = akshara_sum_for_text(stock_name)
@@ -216,7 +245,7 @@ def derive_graha_and_sutra_enhanced(stock_name, listing_date, target_date, bandh
             day_offset = (tgt - datetime(2000,1,1).date()).days
         except:
             day_offset = 0
-    mod = bandha_modifier(bandha_idx, base, day_offset % 30)
+    mod = bandha_modifier(bandha_idx, base, day_offset % 108)  # 108 = Siribhoovalaya sacred number, keeps long listing age
     graha_idx = mod % 9
     sutra_idx = mod % 9
     dt_for_swe = target_date if isinstance(target_date, datetime) else datetime.combine(target_date, datetime.min.time())
@@ -230,33 +259,119 @@ def derive_graha_and_sutra_enhanced(stock_name, listing_date, target_date, bandh
     bonus = 1 if lord_graha == graha_idx else 0
     return graha_idx, sutra_idx, moon_nak, bonus, mod, day_offset
 
-def fetch_nse_history_42d(symbol, listing_date=None):
-    """Fetch last 42 trading days, store CSV, return list oldest->newest"""
+
+def fetch_listing_date_from_nse(symbol):
+    """Auto-fetch listing date from NSE API - returns string DD-MM-YYYY or YYYY-MM-DD"""
+    if not REQUESTS_OK:
+        return None
+    try:
+        import requests
+        sess = requests.Session()
+        sess.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "application/json",
+            "Accept-Language": "en-US,en;q=0.9"
+        })
+        # Get cookies first
+        try:
+            sess.get("https://www.nseindia.com", timeout=10)
+        except:
+            pass
+        # Try equity-meta-info
+        for api_url in [
+            f"https://www.nseindia.com/api/equity-meta-info?symbol={symbol.upper()}",
+            f"https://www.nseindia.com/api/quote-equity?symbol={symbol.upper()}",
+        ]:
+            try:
+                r = sess.get(api_url, timeout=12)
+                if r.status_code==200:
+                    j = r.json()
+                    # paths: listingDate or metadata.listingDate or info listingDate
+                    ld = None
+                    if "listingDate" in j:
+                        ld = j["listingDate"]
+                    elif "metadata" in j and "listingDate" in j["metadata"]:
+                        ld = j["metadata"]["listingDate"]
+                    elif "info" in j and "listingDate" in j["info"]:
+                        ld = j["info"]["listingDate"]
+                    elif "dateOfListing" in j:
+                        ld = j["dateOfListing"]
+                    if ld:
+                        # NSE returns like "19-Jun-1995" or "1995-06-19"
+                        # Normalize to DD-MM-YYYY for your app field
+                        from datetime import datetime
+                        for fmt in ("%d-%b-%Y", "%d-%B-%Y", "%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y"):
+                            try:
+                                dt = datetime.strptime(ld.strip(), fmt)
+                                return dt.strftime("%d-%m-%Y")
+                            except:
+                                continue
+                        return ld
+            except Exception as e:
+                continue
+    except Exception as ex:
+        print(f"fetch_listing_date error {ex}")
+    return None
+
+def fetch_nse_history_42d(symbol, listing_date=None, force_online=False):
+    """Fully offline-first: 
+    1. If CSV exists in data/nse_cache/ -> load it (100% offline, no API)
+    2. Else if force_online or first-time DB build -> try yfinance/NSE (online once)
+    3. Else -> synthetic deterministic fallback (offline demo)
+    CSV is created only on first online fetch, thereafter used forever offline.
+    """
     csv_path = CACHE_DIR / f"{symbol.upper()}_42d.csv"
     data = []
-    if YF_OK:
+
+    # STEP 1: OFFLINE - try load existing CSV first (no internet needed)
+    if csv_path.exists() and not force_online:
         try:
-            ticker = symbol if symbol.endswith(".NS") else symbol + ".NS"
-            df = yf.download(ticker, period="90d", interval="1d", progress=False, auto_adjust=False)
-            if df is not None and not df.empty:
-                df = df.tail(60)
-                for idx, row in df.iterrows():
+            with open(csv_path, "r", encoding="utf-8") as f:
+                r = csv.DictReader(f)
+                for row in r:
                     try:
-                        d = idx.date()
-                        # handle multi-index
-                        c = float(row["Close"].iloc[0] if hasattr(row["Close"], "iloc") else row["Close"])
-                        o = float(row["Open"].iloc[0] if hasattr(row["Open"], "iloc") else row["Open"])
-                        h = float(row["High"].iloc[0] if hasattr(row["High"], "iloc") else row["High"])
-                        lo = float(row["Low"].iloc[0] if hasattr(row["Low"], "iloc") else row["Low"])
-                        if c>0:
-                            data.append({"date": d, "open": o, "high": h, "low": lo, "close": c})
-                    except Exception:
+                        d = datetime.strptime(row["date"], "%Y-%m-%d").date()
+                        data.append({
+                            "date": d,
+                            "open": float(row["open"]),
+                            "high": float(row["high"]),
+                            "low": float(row["low"]),
+                            "close": float(row["close"])
+                        })
+                    except:
                         continue
-                data = data[-42:]
+            if len(data) >= 10:  # valid cache
+                # print(f"Loaded offline cache {symbol} {len(data)} days")
+                return data[-42:]
         except Exception as e:
-            print(f"yfinance error {e}")
+            print(f"Cache load fail {e}")
+            data = []
+
+    # STEP 2: ONLINE - only if cache missing and online allowed (first time DB build)
+    if not data and (force_online or not csv_path.exists()):
+        if YF_OK:
+            try:
+                ticker = symbol if symbol.endswith(".NS") else symbol + ".NS"
+                df = yf.download(ticker, period="90d", interval="1d", progress=False, auto_adjust=False)
+                if df is not None and not df.empty:
+                    df = df.tail(60)
+                    for idx, row in df.iterrows():
+                        try:
+                            d = idx.date()
+                            c = float(row["Close"].iloc[0] if hasattr(row["Close"], "iloc") else row["Close"])
+                            o = float(row["Open"].iloc[0] if hasattr(row["Open"], "iloc") else row["Open"])
+                            h = float(row["High"].iloc[0] if hasattr(row["High"], "iloc") else row["High"])
+                            lo = float(row["Low"].iloc[0] if hasattr(row["Low"], "iloc") else row["Low"])
+                            if c>0:
+                                data.append({"date": d, "open": o, "high": h, "low": lo, "close": c})
+                        except Exception:
+                            continue
+                    data = data[-42:]
+            except Exception as e:
+                print(f"yfinance error {e}")
+
+    # STEP 3: OFFLINE SYNTHETIC - deterministic based on symbol hash (no internet)
     if not data:
-        # synthetic fallback deterministic
         base_price = 100 + (sum(ord(c) for c in symbol) % 900)
         cur = datetime.now().date() - timedelta(days=90)
         price = base_price
@@ -267,15 +382,16 @@ def fetch_nse_history_42d(symbol, listing_date=None):
                 price = max(5, price+change)
                 data.append({"date": cur, "open": price-0.5, "high": price+1, "low": price-1, "close": price})
             cur += timedelta(days=1)
-    # store CSV
-    try:
-        with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=["date","open","high","low","close"])
-            w.writeheader()
-            for r in data:
-                w.writerow({"date": r["date"].isoformat(), "open": r["open"], "high": r["high"], "low": r["low"], "close": r["close"]})
-    except Exception as e:
-        print(f"CSV write fail {e}")
+    # Store CSV if we have data and (no cache or force_online) - so refresh works
+    if data and (not csv_path.exists() or force_online):
+        try:
+            with open(csv_path, "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=["date","open","high","low","close"])
+                w.writeheader()
+                for r in data:
+                    w.writerow({"date": r["date"].isoformat(), "open": r["open"], "high": r["high"], "low": r["low"], "close": r["close"]})
+        except Exception as e:
+            print(f"CSV write fail {e}")
     return data
 
 def compute_actual_direction(history):
@@ -295,18 +411,35 @@ def compute_actual_direction(history):
 def backtest_all_bandhas(symbol, stock_name, listing_date, history_42d):
     results = {}
     actual_dirs = compute_actual_direction(history_42d)
+    # Pre-calculate listing nakshatra once (for Vedha)
+    listing_nak_idx = None
+    if listing_date:
+        try:
+            ld_dt = datetime.combine(listing_date, datetime.min.time()) if not isinstance(listing_date, datetime) else listing_date
+            listing_nak_idx = get_nakshatra_for_date(ld_dt)
+        except:
+            listing_nak_idx = None
+
     for b_idx, b_info in BANDHA.items():
         hits = 0
         misses = 0
         predictions = []
+        predictions_raw = []  # before vedha
+        vedha_hits = 0
         for i in range(1, len(history_42d)):
             target_day = history_42d[i]["date"]
             tgt_dt = datetime.combine(target_day, datetime.min.time())
             graha_idx, sutra_idx, moon_nak, bonus, mod, _ = derive_graha_and_sutra_enhanced(stock_name, listing_date, tgt_dt, b_idx)
             graha_signal = GRAHA[graha_idx][1]
             bandha_dir = b_info[3]
-            combined, reason = combine_direction(graha_signal, bandha_dir)
+            combined_raw, reason = combine_direction(graha_signal, bandha_dir)
+            # Sarvatobhadra Vedha check: listing nak vs today nak
+            has_vedha = check_sarvatobhadra_vedha(listing_nak_idx, moon_nak)
+            combined, vedha_reason = get_vedha_impact_on_direction(combined_raw, has_vedha)
             predictions.append(combined)
+            predictions_raw.append(combined_raw)
+            if has_vedha:
+                vedha_hits += 1
             actual = actual_dirs[i-1]
             if combined == actual:
                 hits += 1
@@ -324,11 +457,15 @@ def backtest_all_bandhas(symbol, stock_name, listing_date, history_42d):
             "misses": misses,
             "accuracy": acc,
             "predictions": predictions,
+            "predictions_raw": predictions_raw,
+            "vedha_days": vedha_hits,
             "description": b_info[1],
             "base_dir": b_info[3],
             "hint": b_info[2]
         }
     return results, actual_dirs
+# Note: VEDHA_PAIRS check is intentionally kept only in quick_verdict/oracle main report,
+# not in 24 Bandha backtest table, to avoid double-penalizing. Backtest is pure Graha+Bandha direction vs price.
 
 def predict_next_9_days(symbol, stock_name, listing_date, history_42d, backtest_results):
     if not history_42d:
@@ -349,19 +486,38 @@ def predict_next_9_days(symbol, stock_name, listing_date, history_42d, backtest_
         avg_vol = sum(abs(history_42d[i]["close"]-history_42d[i-1]["close"])/history_42d[i-1]["close"] for i in range(1,len(history_42d)))/len(history_42d)
     else:
         avg_vol = 0.01
+    # Listing nakshatra for Vedha (once)
+    listing_nak_idx = None
+    if listing_date:
+        try:
+            ld_dt = datetime.combine(listing_date, datetime.min.time()) if not isinstance(listing_date, datetime) else listing_date
+            listing_nak_idx = get_nakshatra_for_date(ld_dt)
+        except:
+            listing_nak_idx = None
+
     daily_forecast = []
     for fdate in future_dates:
         tgt_dt = datetime.combine(fdate, datetime.min.time())
         votes = {"UP":0,"DOWN":0,"SIDEWAYS":0,"MIXED":0}
+        votes_raw = {"UP":0,"DOWN":0,"SIDEWAYS":0,"MIXED":0}
         details = []
+        moon_nak_idx_today = None
+        has_vedha_any = False
         for b_idx in BANDHA.keys():
             g_idx, s_idx, moon_nak, bonus, mod, _ = derive_graha_and_sutra_enhanced(stock_name, listing_date, tgt_dt, b_idx)
+            moon_nak_idx_today = moon_nak
             graha_sig = GRAHA[g_idx][1]
             b_dir = BANDHA[b_idx][3]
-            combined, _ = combine_direction(graha_sig, b_dir)
+            combined_raw, _ = combine_direction(graha_sig, b_dir)
+            has_vedha = check_sarvatobhadra_vedha(listing_nak_idx, moon_nak)
+            combined, _ = get_vedha_impact_on_direction(combined_raw, has_vedha)
+            if has_vedha:
+                has_vedha_any = True
             votes[combined] += norm_w[b_idx]
-            details.append((b_idx, combined, g_idx))
+            votes_raw[combined_raw] += norm_w[b_idx]
+            details.append((b_idx, combined, g_idx, has_vedha))
         winner = max(votes, key=lambda k: votes[k])
+        winner_raw = max(votes_raw, key=lambda k: votes_raw[k])
         confidence = votes[winner]*100
         if winner=="UP":
             exp_change = avg_vol * (confidence/80) * 1.1
@@ -370,17 +526,20 @@ def predict_next_9_days(symbol, stock_name, listing_date, history_42d, backtest_
         else:
             exp_change = 0
         last_close = last_close * (1+exp_change)
-        longs = get_planet_longitudes_for_date(tgt_dt)
-        moon_nak_idx = get_nakshatra_from_longitude(longs.get(2,0))
         daily_forecast.append({
             "date": fdate,
             "predicted_dir": winner,
+            "predicted_dir_raw": winner_raw,
+            "has_vedha": has_vedha_any,
+            "listing_nak_idx": listing_nak_idx,
+            "listing_nak": NAK[listing_nak_idx] if listing_nak_idx is not None else "N/A",
             "confidence": confidence,
             "exp_close": round(last_close,2),
             "votes": votes,
+            "votes_raw": votes_raw,
             "details": details,
-            "moon_nak": NAK[moon_nak_idx],
-            "moon_nak_idx": moon_nak_idx
+            "moon_nak": NAK[moon_nak_idx_today] if moon_nak_idx_today is not None else "N/A",
+            "moon_nak_idx": moon_nak_idx_today
         })
     return daily_forecast
 
@@ -388,15 +547,20 @@ def full_analysis_for_stock(symbol, stock_name_devanagari=None, listing_date_str
     stock_name = stock_name_devanagari or symbol
     listing_date = None
     if listing_date_str:
-        try:
-            for fmt in ("%Y-%m-%d","%d-%m-%Y","%d/%m/%Y"):
-                try:
-                    listing_date = datetime.strptime(str(listing_date_str), fmt).date()
-                    break
-                except:
-                    continue
-        except:
-            listing_date = None
+        s = str(listing_date_str).strip()
+        # NSE gives 19-Jun-1995, 19-JUN-1995, 19/06/1995, 1995-06-19, DD-MM-YYYY
+        for fmt in ("%d-%b-%Y", "%d-%B-%Y", "%d-%b-%y", "%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%d-%m-%y"):
+            try:
+                listing_date = datetime.strptime(s, fmt).date()
+                break
+            except:
+                continue
+        # Try upper case month
+        if not listing_date:
+            try:
+                listing_date = datetime.strptime(s.upper(), "%d-%b-%Y").date()
+            except:
+                pass
     history = fetch_nse_history_42d(symbol, listing_date)
     backtest, actual_dirs = backtest_all_bandhas(symbol, stock_name, listing_date, history)
     forecast = predict_next_9_days(symbol, stock_name, listing_date, history, backtest)
@@ -406,7 +570,9 @@ def full_analysis_for_stock(symbol, stock_name_devanagari=None, listing_date_str
         "backtest": backtest,
         "forecast": forecast,
         "actual_dirs": actual_dirs,
-        "csv_path": str(CACHE_DIR / f"{symbol.upper()}_42d.csv")
+        "csv_path": str(CACHE_DIR / f"{symbol.upper()}_42d.csv"),
+        "listing_nak": forecast[0]["listing_nak"] if forecast else "N/A",
+        "listing_nak_idx": forecast[0]["listing_nak_idx"] if forecast else None
     }
 
 
@@ -426,6 +592,35 @@ VEDHA_PAIRS = {
     18:26, 26:18, 19:25, 25:19, 20:24, 24:20, 21:23, 23:21,
     22: None,
 }
+
+def get_nakshatra_for_date(dt: datetime):
+    """Moon Nakshatra for any date using swisseph (offline)"""
+    longs = get_planet_longitudes_for_date(dt)
+    moon_lon = longs.get(2, 0)
+    return get_nakshatra_from_longitude(moon_lon)
+
+def check_sarvatobhadra_vedha(listing_nak_idx, target_nak_idx):
+    """Returns True if Vedha (obstruction) exists between listing nak and target nak as per Sarvatobhadra Chakra"""
+    if listing_nak_idx is None or target_nak_idx is None:
+        return False
+    if listing_nak_idx == 22 or target_nak_idx == 22:  # Dhanishta has no vedha
+        return False
+    return VEDHA_PAIRS.get(listing_nak_idx) == target_nak_idx
+
+def get_vedha_impact_on_direction(combined_dir, has_vedha):
+    """As per Sarvatobhadra rules: Vedha = obstruction -> reduces UP to SIDEWAYS, DOWN to more DOWN, SIDEWAYS stays"""
+    if not has_vedha:
+        return combined_dir, "No Vedha - clear"
+    # Vedha present = inauspicious, avoid new entry
+    if combined_dir == "UP":
+        return "SIDEWAYS", "Vedha (obstruction) between Listing Nakshatra and Today Nakshatra -> UP weakened to SIDEWAYS (WAIT)"
+    elif combined_dir == "DOWN":
+        return "DOWN", "Vedha + DOWN -> stronger bearish, avoid buy (Vedha confirms inauspicious)"
+    elif combined_dir == "SIDEWAYS":
+        return "SIDEWAYS", "Vedha + SIDEWAYS -> stay WAIT, no clear breakout"
+    else:  # MIXED
+        return "MIXED", "Vedha makes MIXED more inauspicious -> WAIT"
+
 # Classical Nakshatra Lord cycle (Vimshottari Dasha order) — this part IS standard,
 # well-documented Vedic astrology, repeating 3x across all 27 nakshatras.
 NAKSHATRA_LORD_CYCLE = ["Ke","Ve","Su","Mo","Ma","Ra","Ju","Sa","Me"]
@@ -1127,7 +1322,7 @@ def quick_verdict(asum, ldt_str):
     tval = ((today - ldate).days % 730) if ldate else 0
     nv = (asum % 9) or 9
     g = GRAHA[(nv - 1) % 9]
-    b = BANDHA[(nv - 1) % 6]
+    b = BANDHA[(nv - 1) % 24]
     combined_dir, _ = combine_direction(g[1], b[3])
     has_vedha = False
     if ldate:
@@ -1149,7 +1344,7 @@ def compute_5day_outlook(asum, ldt_str, days=5):
     ldate = parse_dt(ldt_str)
     nv = (asum % 9) or 9
     g = GRAHA[(nv - 1) % 9]
-    b = BANDHA[(nv - 1) % 6]
+    b = BANDHA[(nv - 1) % 24]
     combined_dir, _ = combine_direction(g[1], b[3])
     birth_nak_idx = ldate.timetuple().tm_yday % 27 if ldate else None
     today = datetime.now()
@@ -1456,7 +1651,7 @@ def compute_conviction_and_risk(g, b, has_vedha, panch_notes, combined_dir):
 def make_report(asum, tval, ldate):
     nv    = (asum % 9) or 9
     g     = GRAHA[(nv - 1) % 9]
-    b     = BANDHA[(nv - 1) % 6]
+    b     = BANDHA[(nv - 1) % 24]
     combined_dir, combined_note = combine_direction(g[1], b[3])
     total = asum + tval
     sutra = SUTRA_MAP.get(total % 9, "")
@@ -2902,7 +3097,7 @@ def main(page: ft.Page):
             listing_str = current_stock.get("listing_date") or current_stock.get("ldt") or ""
             bandha_backtest_container.controls.clear()
             bandha_backtest_container.controls.append(ft.Divider(height=6, color=C["divider"]))
-            bandha_backtest_container.controls.append(ft.Text(f"⏳ Fetching 42D NSE history for {sym} & testing all 24 Bandhas (with Swisseph)...", size=13, color=C["accent"]))
+            bandha_backtest_container.controls.append(ft.Text(f"⏳ Loading offline cache for {sym} (data/nse_cache/) & testing 24 Bandhas — 100% offline...", size=13, color=C["accent"]))
             bandha_backtest_container.visible = True
             page.update()
 
@@ -2955,12 +3150,21 @@ def main(page: ft.Page):
                     bandha_backtest_container.controls.append(make_header(f"🔮  NEXT 9 DAYS FORECAST (Weighted Ensemble)", bgcolor="#4527A0"))
                     bandha_backtest_container.controls.append(ft.Text("Based on weighted votes of all 24 Bandhas (weight = accuracy%). Price estimate = last_close * (1 ± avg_vol * confidence).", size=10, color=C["hint_txt"]))
 
+                    # Show listing nak once
+                    if forecast and forecast[0].get("listing_nak"):
+                        bandha_backtest_container.controls.append(ft.Container(
+                            content=ft.Text(f"📿 Listing Nakshatra: {forecast[0]['listing_nak']} (Idx {forecast[0]['listing_nak_idx']}) | Sarvatobhadra Vedha = {VEDHA_PAIRS.get(forecast[0]['listing_nak_idx'], 'None (Dhanishta no vedha)')} -> {NAK[VEDHA_PAIRS[forecast[0]['listing_nak_idx']]] if VEDHA_PAIRS.get(forecast[0]['listing_nak_idx']) is not None else 'No Vedha'}", size=11, weight="bold", color="#FFFFFF"),
+                            bgcolor="#4A148C", padding=8, border_radius=6
+                        ))
+
                     forecast_header = ft.Row([
-                        ft.Container(ft.Text("Date", size=10, weight="bold", color="#FFFFFF"), width=85, bgcolor="#37474F", padding=4, border_radius=4),
-                        ft.Container(ft.Text("Dir", size=10, weight="bold", color="#FFFFFF"), width=75, bgcolor="#37474F", padding=4, border_radius=4),
-                        ft.Container(ft.Text("Conf", size=10, weight="bold", color="#FFFFFF"), width=55, bgcolor="#37474F", padding=4, border_radius=4),
-                        ft.Container(ft.Text("Exp Close", size=10, weight="bold", color="#FFFFFF"), width=80, bgcolor="#37474F", padding=4, border_radius=4),
-                        ft.Container(ft.Text("Moon Nak", size=10, weight="bold", color="#FFFFFF"), width=110, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Date", size=10, weight="bold", color="#FFFFFF"), width=75, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Dir", size=10, weight="bold", color="#FFFFFF"), width=65, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Raw", size=10, weight="bold", color="#FFFFFF"), width=45, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Vedha", size=10, weight="bold", color="#FFFFFF"), width=50, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Conf", size=10, weight="bold", color="#FFFFFF"), width=45, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Exp Close", size=10, weight="bold", color="#FFFFFF"), width=70, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Moon Nak", size=10, weight="bold", color="#FFFFFF"), width=95, bgcolor="#37474F", padding=4, border_radius=4),
                     ], spacing=2)
                     bandha_backtest_container.controls.append(forecast_header)
 
@@ -3100,7 +3304,7 @@ def main(page: ft.Page):
             tval = 0  # no "listing date" for a spoken question — Temporal Vibration doesn't apply here
             nv = (asum % 9) or 9
             g = GRAHA[(nv - 1) % 9]
-            b = BANDHA[(nv - 1) % 6]
+            b = BANDHA[(nv - 1) % 24]
             combined_dir, combined_note = combine_direction(g[1], b[3])
             risk_pct, risk_label, conviction_pct, conv_label, total_votes, agree_votes = \
                 compute_conviction_and_risk(g, b, False, [], combined_dir)
@@ -3595,7 +3799,18 @@ def main(page: ft.Page):
             make_header("✏️ MANAGE STOCK ENTRY"), ft.Divider(height=4, color=C["divider"]),
             fld_sym, fld_eng, ft.ElevatedButton("🌐 AUTO TRANSLITERATE HINDI", bgcolor=C["accent"], color="#FFFFFF", on_click=do_transliterate),
             fld_hindi, ft.ElevatedButton("👁️ PREVIEW SOUND WEIGHTS", bgcolor=C["secondary"], color="#FFFFFF", on_click=lambda e: (asum:=calc(fld_hindi.value.strip())) and setattr(akshara_preview.content,'value',f"Akshara: {asum[0]}\n{asum[1]}") or setattr(akshara_preview,'visible',True) or page.update()),
-            akshara_preview, fld_ldate, fld_series,
+            akshara_preview, 
+            ft.Row([
+                fld_ldate,
+                ft.ElevatedButton("📅 FETCH LISTING DATE FROM NSE", bgcolor="#6A1B9A", color="#FFFFFF", 
+                    on_click=lambda e: (
+                        setattr(fld_ldate, 'value', fetch_listing_date_from_nse(fld_sym.value.strip().upper()) or "Not found - check symbol / internet"),
+                        page.update(),
+                        set_status(f"Listing date fetched: {fld_ldate.value}", C["green"]) if "Not found" not in fld_ldate.value else set_status("Listing date not found from NSE", C["red"])
+                    ) if fld_sym.value.strip() else (setattr(entry_status,'value',"Enter Symbol first"), page.update())
+                )
+            ]),
+            fld_series,
             ft.Container(height=4),
             fld_portfolio_entry,
             ft.Text("This is the SAME Portfolio flag shown as a switch next to each stock on the Stocks tab — setting it here keeps both in sync.", size=10, color=C["hint_txt"]),

@@ -2884,6 +2884,121 @@ def main(page: ft.Page):
 
             threading.Thread(target=worker, daemon=True).start()
 
+        # ── BANDHA BACKTEST — 24 Bandhas + 42D history + 9D forecast ───────────
+        bandha_backtest_container = ft.Column(spacing=8, horizontal_alignment=ft.CrossAxisAlignment.START, visible=False, scroll=ft.ScrollMode.AUTO)
+        bandha_summary_text = ft.Text("", size=12, color="#000000", selectable=True)
+
+        def do_close_bandha_backtest(e=None):
+            bandha_backtest_container.visible = False
+            page.update()
+
+        def do_oracle_bandha_backtest(e):
+            sym = current_stock.get("sym")
+            if not sym:
+                set_status("Search a stock first, then run Bandha Backtest.", C["red"])
+                page.update()
+                return
+            stock_name = current_stock.get("name") or sym
+            listing_str = current_stock.get("listing_date") or current_stock.get("ldt") or ""
+            bandha_backtest_container.controls.clear()
+            bandha_backtest_container.controls.append(ft.Divider(height=6, color=C["divider"]))
+            bandha_backtest_container.controls.append(ft.Text(f"⏳ Fetching 42D NSE history for {sym} & testing all 24 Bandhas (with Swisseph)...", size=13, color=C["accent"]))
+            bandha_backtest_container.visible = True
+            page.update()
+
+            def worker():
+                try:
+                    res = full_analysis_for_stock(sym, stock_name, listing_str)
+                    backtest = res["backtest"]
+                    forecast = res["forecast"]
+                    history = res["history"]
+                    csv_path = res["csv_path"]
+
+                    bandha_backtest_container.controls.clear()
+                    bandha_backtest_container.controls.append(ft.Divider(height=6, color=C["divider"]))
+                    bandha_backtest_container.controls.append(make_header(f"🕉️  24 BANDHA BACKTEST — {sym}", bgcolor="#6A1B9A"))
+                    bandha_backtest_container.controls.append(ft.Text(f"History: {len(history)} trading days from NSE (CSV: {csv_path}) | Listing: {listing_str or 'N/A'}", size=11, color=C["hint_txt"]))
+                    bandha_backtest_container.controls.append(ft.Text(f"Last close: {history[-1]['close']:.2f} on {history[-1]['date']} | SwissEph: {'OK' if SWE_OK else 'Fallback'}", size=11, color=C["black_txt"], weight="bold"))
+
+                    # Sort bandhas by accuracy desc
+                    sorted_b = sorted(backtest.items(), key=lambda x: x[1]["accuracy"], reverse=True)
+
+                    # Table header
+                    header_row = ft.Row([
+                        ft.Container(ft.Text("Rank", size=10, weight="bold", color="#FFFFFF"), width=35, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Bandha", size=10, weight="bold", color="#FFFFFF"), width=210, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Hit", size=10, weight="bold", color="#FFFFFF"), width=40, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Miss", size=10, weight="bold", color="#FFFFFF"), width=45, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Acc%", size=10, weight="bold", color="#FFFFFF"), width=55, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Dir", size=10, weight="bold", color="#FFFFFF"), width=55, bgcolor="#37474F", padding=4, border_radius=4),
+                    ], spacing=2)
+
+                    bandha_backtest_container.controls.append(header_row)
+
+                    for rank, (b_idx, r) in enumerate(sorted_b, 1):
+                        acc = r["accuracy"]
+                        col = C["green"] if acc>=60 else C["orange"] if acc>=45 else C["red"]
+                        dir_icon = {"UP":"🔼","DOWN":"🔽","SIDEWAYS":"↔️","CONTINUATION":"➡️"}.get(r["base_dir"], r["base_dir"])
+                        bandha_backtest_container.controls.append(
+                            ft.Row([
+                                ft.Container(ft.Text(str(rank), size=10), width=35, bgcolor="#ECEFF1", padding=4, border_radius=4),
+                                ft.Container(ft.Text(r["bandha_name"][:32], size=10, weight="bold"), width=210, bgcolor="#F3E5F5", padding=4, border_radius=4),
+                                ft.Container(ft.Text(f"{r['hits']:.0f}", size=10, color=C["green"]), width=40, bgcolor="#E8F5E9", padding=4, border_radius=4, alignment=ft.alignment.center),
+                                ft.Container(ft.Text(f"{r['misses']:.0f}", size=10, color=C["red"]), width=45, bgcolor="#FFEBEE", padding=4, border_radius=4, alignment=ft.alignment.center),
+                                ft.Container(ft.Text(f"{acc:.1f}%", size=10, weight="bold", color=col), width=55, bgcolor="#FFF8E1", padding=4, border_radius=4, alignment=ft.alignment.center),
+                                ft.Container(ft.Text(dir_icon, size=11), width=55, bgcolor="#E3F2FD", padding=4, border_radius=4, alignment=ft.alignment.center),
+                            ], spacing=2)
+                        )
+
+                    # 9-Day forecast
+                    bandha_backtest_container.controls.append(ft.Divider(height=4, color=C["divider"]))
+                    bandha_backtest_container.controls.append(make_header(f"🔮  NEXT 9 DAYS FORECAST (Weighted Ensemble)", bgcolor="#4527A0"))
+                    bandha_backtest_container.controls.append(ft.Text("Based on weighted votes of all 24 Bandhas (weight = accuracy%). Price estimate = last_close * (1 ± avg_vol * confidence).", size=10, color=C["hint_txt"]))
+
+                    forecast_header = ft.Row([
+                        ft.Container(ft.Text("Date", size=10, weight="bold", color="#FFFFFF"), width=85, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Dir", size=10, weight="bold", color="#FFFFFF"), width=75, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Conf", size=10, weight="bold", color="#FFFFFF"), width=55, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Exp Close", size=10, weight="bold", color="#FFFFFF"), width=80, bgcolor="#37474F", padding=4, border_radius=4),
+                        ft.Container(ft.Text("Moon Nak", size=10, weight="bold", color="#FFFFFF"), width=110, bgcolor="#37474F", padding=4, border_radius=4),
+                    ], spacing=2)
+                    bandha_backtest_container.controls.append(forecast_header)
+
+                    for f in forecast:
+                        dir_color = C["green"] if f["predicted_dir"]=="UP" else C["red"] if f["predicted_dir"]=="DOWN" else C["orange"]
+                        bandha_backtest_container.controls.append(
+                            ft.Row([
+                                ft.Container(ft.Text(str(f["date"]), size=10), width=85, bgcolor="#ECEFF1", padding=4, border_radius=4),
+                                ft.Container(ft.Text(DIR_ARROW.get(f["predicted_dir"], f["predicted_dir"]), size=10, weight="bold", color="#FFFFFF"), width=75, bgcolor=dir_color, padding=4, border_radius=4, alignment=ft.alignment.center),
+                                ft.Container(ft.Text(f"{f['confidence']:.0f}%", size=10), width=55, bgcolor="#FFF8E1", padding=4, border_radius=4, alignment=ft.alignment.center),
+                                ft.Container(ft.Text(f"{f['exp_close']:.2f}", size=10, weight="bold"), width=80, bgcolor="#E8F5E9", padding=4, border_radius=4, alignment=ft.alignment.center),
+                                ft.Container(ft.Text(f["moon_nak"][:18], size=10), width=110, bgcolor="#F3E5F5", padding=4, border_radius=4),
+                            ], spacing=2)
+                        )
+
+                    # Overall verdict
+                    up_votes = sum(1 for f in forecast if f["predicted_dir"]=="UP")
+                    down_votes = sum(1 for f in forecast if f["predicted_dir"]=="DOWN")
+                    side_votes = 9 - up_votes - down_votes
+                    verdict = f"UP {up_votes}/9 days" if up_votes>down_votes else f"DOWN {down_votes}/9" if down_votes>up_votes else f"SIDEWAYS {side_votes}/9"
+                    verdict_color = C["green"] if up_votes>down_votes else C["red"] if down_votes>up_votes else C["orange"]
+
+                    bandha_backtest_container.controls.append(ft.Container(height=8))
+                    bandha_backtest_container.controls.append(ft.Container(
+                        content=ft.Text(f"📊 9-Day Verdict: {verdict} | Best Bandha: {sorted_b[0][1]['bandha_name']} ({sorted_b[0][1]['accuracy']:.1f}%) | Avg Accuracy: {sum(r['accuracy'] for _,r in sorted_b)/len(sorted_b):.1f}%", size=12, weight="bold", color="#FFFFFF"),
+                        bgcolor=verdict_color, padding=10, border_radius=8, alignment=ft.alignment.center
+                    ))
+                    bandha_backtest_container.controls.append(ft.Text("⚠️ This is Bhoovalaya + Swisseph + NSE backtest educational model. Not financial advice. Verify with your own analysis.", size=9, color=C["hint_txt"]))
+                    bandha_backtest_container.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_close_bandha_backtest))
+
+                except Exception as ex:
+                    bandha_backtest_container.controls.clear()
+                    bandha_backtest_container.controls.append(ft.Text(f"⚠️ Bandha Backtest failed: {ex}", size=12, color=C["red"]))
+                    bandha_backtest_container.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_close_bandha_backtest))
+                page.update()
+
+            threading.Thread(target=worker, daemon=True).start()
+
         # ── FUNDAMENTALS — P/E, ROE, Debt/Equity, margins, revenue growth ───────────
         fundamentals_container = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False)
 
@@ -3144,6 +3259,11 @@ def main(page: ft.Page):
                 ft.Text("clear-UP (+) vs Vedha-caution (⚠) for this stock, next 5 days", size=12, color=C["hint_txt"]),
                 ft.ElevatedButton("📅  5-DAY OUTLOOK", bgcolor="#4527A0", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_outlook),
                 outlook_container,
+            ]),
+            make_collapsible_section("🕉️  24 Bandha Backtest (Full Siribhoovalaya)", [
+                ft.Text("42 days NSE history + all 24 Bandhas with hit/miss + 9-day prediction (listing date + swisseph)", size=12, color=C["hint_txt"]),
+                ft.ElevatedButton("🕉️  RUN 24 BANDHA BACKTEST", bgcolor="#6A1B9A", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_bandha_backtest),
+                bandha_backtest_container,
             ]),
             make_collapsible_section("📈  Technical Analysis", [
                 ft.Text("real price/volume data (SMA, RSI, MACD)", size=12, color=C["hint_txt"]),

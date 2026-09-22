@@ -3136,12 +3136,12 @@ def main(page: ft.Page):
                         dir_icon = {"UP":"🔼","DOWN":"🔽","SIDEWAYS":"↔️","CONTINUATION":"➡️"}.get(r["base_dir"], r["base_dir"])
                         bandha_backtest_container.controls.append(
                             ft.Row([
-                                ft.Container(ft.Text(str(rank), size=10), width=35, bgcolor="#ECEFF1", padding=4, border_radius=4),
-                                ft.Container(ft.Text(r["bandha_name"][:32], size=10, weight="bold"), width=210, bgcolor="#F3E5F5", padding=4, border_radius=4),
-                                ft.Container(ft.Text(f"{r['hits']:.0f}", size=10, color=C["green"]), width=40, bgcolor="#E8F5E9", padding=4, border_radius=4, alignment=ft.alignment.center),
-                                ft.Container(ft.Text(f"{r['misses']:.0f}", size=10, color=C["red"]), width=45, bgcolor="#FFEBEE", padding=4, border_radius=4, alignment=ft.alignment.center),
-                                ft.Container(ft.Text(f"{acc:.1f}%", size=10, weight="bold", color=col), width=55, bgcolor="#FFF8E1", padding=4, border_radius=4, alignment=ft.alignment.center),
-                                ft.Container(ft.Text(dir_icon, size=11), width=55, bgcolor="#E3F2FD", padding=4, border_radius=4, alignment=ft.alignment.center),
+                                ft.Container(ft.Text(str(rank), size=12, weight="bold", color="#000000"), width=35, bgcolor="#FFFFFF", padding=6, border_radius=4, border=ft.border.all(1, "#B0BEC5")),
+                                ft.Container(ft.Text(r["bandha_name"][:32], size=11, weight="bold", color="#000000"), width=210, bgcolor="#FFFFFF", padding=6, border_radius=4, border=ft.border.all(1, "#CE93D8")),
+                                ft.Container(ft.Text(f"{r['hits']:.0f}", size=11, weight="bold", color="#000000"), width=40, bgcolor="#C8E6C9", padding=6, border_radius=4, alignment=ft.alignment.center),
+                                ft.Container(ft.Text(f"{r['misses']:.0f}", size=11, weight="bold", color="#000000"), width=45, bgcolor="#FFCDD2", padding=6, border_radius=4, alignment=ft.alignment.center),
+                                ft.Container(ft.Text(f"{acc:.1f}%", size=11, weight="bold", color="#000000"), width=55, bgcolor="#FFE082", padding=6, border_radius=4, alignment=ft.alignment.center),
+                                ft.Container(ft.Text(dir_icon, size=12, weight="bold", color="#000000"), width=55, bgcolor="#BBDEFB", padding=6, border_radius=4, alignment=ft.alignment.center),
                             ], spacing=2)
                         )
 
@@ -3172,10 +3172,10 @@ def main(page: ft.Page):
                         dir_color = C["green"] if f["predicted_dir"]=="UP" else C["red"] if f["predicted_dir"]=="DOWN" else C["orange"]
                         bandha_backtest_container.controls.append(
                             ft.Row([
-                                ft.Container(ft.Text(str(f["date"]), size=10), width=85, bgcolor="#ECEFF1", padding=4, border_radius=4),
+                                ft.Container(ft.Text(str(f["date"]), size=11, weight="bold", color="#000000"), width=85, bgcolor="#FFFFFF", padding=6, border_radius=4, border=ft.border.all(1, "#90A4AE")),
                                 ft.Container(ft.Text(DIR_ARROW.get(f["predicted_dir"], f["predicted_dir"]), size=10, weight="bold", color="#FFFFFF"), width=75, bgcolor=dir_color, padding=4, border_radius=4, alignment=ft.alignment.center),
-                                ft.Container(ft.Text(f"{f['confidence']:.0f}%", size=10), width=55, bgcolor="#FFF8E1", padding=4, border_radius=4, alignment=ft.alignment.center),
-                                ft.Container(ft.Text(f"{f['exp_close']:.2f}", size=10, weight="bold"), width=80, bgcolor="#E8F5E9", padding=4, border_radius=4, alignment=ft.alignment.center),
+                                ft.Container(ft.Text(f"{f['confidence']:.0f}%", size=11, weight="bold", color="#000000"), width=55, bgcolor="#FFE082", padding=6, border_radius=4, alignment=ft.alignment.center, border=ft.border.all(1, "#FFB300")),
+                                ft.Container(ft.Text(f"{f['exp_close']:.2f}", size=11, weight="bold", color="#000000"), width=80, bgcolor="#C8E6C9", padding=6, border_radius=4, alignment=ft.alignment.center, border=ft.border.all(1, "#66BB6A")),
                                 ft.Container(ft.Text(f["moon_nak"][:18], size=10), width=110, bgcolor="#F3E5F5", padding=4, border_radius=4),
                             ], spacing=2)
                         )

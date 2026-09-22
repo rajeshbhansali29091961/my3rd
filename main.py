@@ -313,87 +313,85 @@ def fetch_listing_date_from_nse(symbol):
         print(f"fetch_listing_date error {ex}")
     return None
 
+
 def fetch_nse_history_42d(symbol, listing_date=None, force_online=False):
-    """Fully offline-first: 
-    1. If CSV exists in data/nse_cache/ -> load it (100% offline, no API)
-    2. Else if force_online or first-time DB build -> try yfinance/NSE (online once)
-    3. Else -> synthetic deterministic fallback (offline demo)
-    CSV is created only on first online fetch, thereafter used forever offline.
-    """
+    """Offline-first with auto-refresh if stale: today is 22.09.2026, cache from 21.08.2026 is stale -> auto download"""
     csv_path = CACHE_DIR / f"{symbol.upper()}_42d.csv"
     data = []
+    today = datetime.now().date()
 
-    # STEP 1: OFFLINE - try load existing CSV first (no internet needed)
+    # STEP 1: Load cache
     if csv_path.exists() and not force_online:
         try:
+            import csv as _csv
             with open(csv_path, "r", encoding="utf-8") as f:
-                r = csv.DictReader(f)
+                r = _csv.DictReader(f)
                 for row in r:
                     try:
                         d = datetime.strptime(row["date"], "%Y-%m-%d").date()
-                        data.append({
-                            "date": d,
-                            "open": float(row["open"]),
-                            "high": float(row["high"]),
-                            "low": float(row["low"]),
-                            "close": float(row["close"])
-                        })
+                        data.append({"date": d, "open": float(row["open"]), "high": float(row["high"]), "low": float(row["low"]), "close": float(row["close"])})
                     except:
                         continue
-            if len(data) >= 10:  # valid cache
-                # print(f"Loaded offline cache {symbol} {len(data)} days")
-                return data[-42:]
+            if len(data) >= 10:
+                last_dt = data[-1]["date"]
+                is_stale = (today - last_dt).days > 3
+                if not is_stale:
+                    return data[-42:]
+                print(f"Cache stale {symbol} last {last_dt} today {today} -> refreshing")
         except Exception as e:
             print(f"Cache load fail {e}")
             data = []
 
-    # STEP 2: ONLINE - only if cache missing and online allowed (first time DB build)
-    if not data and (force_online or not csv_path.exists()):
-        if YF_OK:
-            try:
-                ticker = symbol if symbol.endswith(".NS") else symbol + ".NS"
-                df = yf.download(ticker, period="90d", interval="1d", progress=False, auto_adjust=False)
-                if df is not None and not df.empty:
-                    df = df.tail(60)
-                    for idx, row in df.iterrows():
-                        try:
-                            d = idx.date()
-                            c = float(row["Close"].iloc[0] if hasattr(row["Close"], "iloc") else row["Close"])
-                            o = float(row["Open"].iloc[0] if hasattr(row["Open"], "iloc") else row["Open"])
-                            h = float(row["High"].iloc[0] if hasattr(row["High"], "iloc") else row["High"])
-                            lo = float(row["Low"].iloc[0] if hasattr(row["Low"], "iloc") else row["Low"])
-                            if c>0:
-                                data.append({"date": d, "open": o, "high": h, "low": lo, "close": c})
-                        except Exception:
-                            continue
-                    data = data[-42:]
-            except Exception as e:
-                print(f"yfinance error {e}")
-
-    # STEP 3: OFFLINE SYNTHETIC - deterministic based on symbol hash (no internet)
-    if not data:
-        base_price = 100 + (sum(ord(c) for c in symbol) % 900)
-        cur = datetime.now().date() - timedelta(days=90)
-        price = base_price
-        rnd = random.Random(sum(ord(c) for c in symbol))
-        while len(data) < 42:
-            if cur.weekday() < 5:
-                change = rnd.uniform(-2.0, 2.2)
-                price = max(5, price+change)
-                data.append({"date": cur, "open": price-0.5, "high": price+1, "low": price-1, "close": price})
-            cur += timedelta(days=1)
-    # Store CSV if we have data and (no cache or force_online) - so refresh works
-    if data and (not csv_path.exists() or force_online):
+    # STEP 2: Try online refresh
+    fresh = []
+    if YF_OK:
         try:
+            ticker = symbol if symbol.endswith(".NS") else symbol + ".NS"
+            df = yf.download(ticker, period="90d", interval="1d", progress=False, auto_adjust=False)
+            if df is not None and not df.empty:
+                df = df.tail(60)
+                for idx, row in df.iterrows():
+                    try:
+                        d = idx.date()
+                        c = float(row["Close"].iloc[0] if hasattr(row["Close"], "iloc") else row["Close"])
+                        o = float(row["Open"].iloc[0] if hasattr(row["Open"], "iloc") else row["Open"])
+                        h = float(row["High"].iloc[0] if hasattr(row["High"], "iloc") else row["High"])
+                        lo = float(row["Low"].iloc[0] if hasattr(row["Low"], "iloc") else row["Low"])
+                        if c>0:
+                            fresh.append({"date": d, "open": o, "high": h, "low": lo, "close": c})
+                    except:
+                        continue
+                fresh = fresh[-42:]
+        except Exception as e:
+            print(f"yf err {e}")
+
+    if fresh:
+        try:
+            import csv as _csv2
             with open(csv_path, "w", newline="", encoding="utf-8") as f:
-                w = csv.DictWriter(f, fieldnames=["date","open","high","low","close"])
+                w = _csv2.DictWriter(f, fieldnames=["date","open","high","low","close"])
                 w.writeheader()
-                for r in data:
+                for r in fresh:
                     w.writerow({"date": r["date"].isoformat(), "open": r["open"], "high": r["high"], "low": r["low"], "close": r["close"]})
         except Exception as e:
-            print(f"CSV write fail {e}")
-    return data
+            print(f"write fail {e}")
+        return fresh
 
+    if data:
+        return data[-42:]
+
+    # synthetic fallback
+    base_price = 100 + (sum(ord(c) for c in symbol) % 900)
+    cur = today - timedelta(days=90)
+    price = base_price
+    rnd = random.Random(sum(ord(c) for c in symbol))
+    while len(data) < 42:
+        if cur.weekday() < 5:
+            change = rnd.uniform(-2.0, 2.2)
+            price = max(5, price+change)
+            data.append({"date": cur, "open": price-0.5, "high": price+1, "low": price-1, "close": price})
+        cur += timedelta(days=1)
+    return data
 def compute_actual_direction(history):
     dirs = []
     for i in range(1, len(history)):
@@ -471,10 +469,17 @@ def predict_next_9_days(symbol, stock_name, listing_date, history_42d, backtest_
     if not history_42d:
         return []
     last_close = history_42d[-1]["close"]
-    start_date = history_42d[-1]["date"] + timedelta(days=1)
+    real_today = datetime.now().date()
+    cache_last = history_42d[-1]["date"]
+    # User wants TODAY included + 9 next trading sessions = 10 days total
+    # If today is trading day, start from today, else next trading day
+    start_date = real_today  # include today
+    # If cache is very old, still start from today
+    # No max with cache_last+1, because user wants today forecast even if cache old
     future_dates = []
     cur = start_date
-    while len(future_dates) < 9:
+    # Today + 9 next = 10 trading sessions
+    while len(future_dates) < 10:
         if cur.weekday() < 5:
             future_dates.append(cur)
         cur += timedelta(days=1)
@@ -3147,8 +3152,8 @@ def main(page: ft.Page):
 
                     # 9-Day forecast
                     bandha_backtest_container.controls.append(ft.Divider(height=4, color=C["divider"]))
-                    bandha_backtest_container.controls.append(make_header(f"🔮  NEXT 9 DAYS FORECAST (Weighted Ensemble)", bgcolor="#4527A0"))
-                    bandha_backtest_container.controls.append(ft.Text("Based on weighted votes of all 24 Bandhas (weight = accuracy%). Price estimate = last_close * (1 ± avg_vol * confidence).", size=10, color=C["hint_txt"]))
+                    bandha_backtest_container.controls.append(make_header(f"🔮  TODAY + TODAY + NEXT 9 DAYS FORECAST (10 Trading Sessions)", bgcolor="#4527A0"))
+                    bandha_backtest_container.controls.append(ft.Text("Today inclusive + 9 next sessions. Based on weighted votes of all 24 Bandhas (weight = accuracy%). Price estimate = last_close * (1 ± avg_vol * confidence).", size=10, color=C["hint_txt"]))
 
                     # Show listing nak once
                     if forecast and forecast[0].get("listing_nak"):
@@ -3183,7 +3188,7 @@ def main(page: ft.Page):
                     # Overall verdict
                     up_votes = sum(1 for f in forecast if f["predicted_dir"]=="UP")
                     down_votes = sum(1 for f in forecast if f["predicted_dir"]=="DOWN")
-                    side_votes = 9 - up_votes - down_votes
+                    side_votes = len(forecast) - up_votes - down_votes
                     verdict = f"UP {up_votes}/9 days" if up_votes>down_votes else f"DOWN {down_votes}/9" if down_votes>up_votes else f"SIDEWAYS {side_votes}/9"
                     verdict_color = C["green"] if up_votes>down_votes else C["red"] if down_votes>up_votes else C["orange"]
 

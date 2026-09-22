@@ -3163,26 +3163,31 @@ def main(page: ft.Page):
                         ))
 
                     forecast_header = ft.Row([
-                        ft.Container(ft.Text("Date", size=10, weight="bold", color="#FFFFFF"), width=75, bgcolor="#37474F", padding=4, border_radius=4),
-                        ft.Container(ft.Text("Dir", size=10, weight="bold", color="#FFFFFF"), width=65, bgcolor="#37474F", padding=4, border_radius=4),
-                        ft.Container(ft.Text("Raw", size=10, weight="bold", color="#FFFFFF"), width=45, bgcolor="#37474F", padding=4, border_radius=4),
-                        ft.Container(ft.Text("Vedha", size=10, weight="bold", color="#FFFFFF"), width=50, bgcolor="#37474F", padding=4, border_radius=4),
-                        ft.Container(ft.Text("Conf", size=10, weight="bold", color="#FFFFFF"), width=45, bgcolor="#37474F", padding=4, border_radius=4),
-                        ft.Container(ft.Text("Exp Close", size=10, weight="bold", color="#FFFFFF"), width=70, bgcolor="#37474F", padding=4, border_radius=4),
-                        ft.Container(ft.Text("Moon Nak", size=10, weight="bold", color="#FFFFFF"), width=95, bgcolor="#37474F", padding=4, border_radius=4),
-                    ], spacing=2)
+                        ft.Container(ft.Text("Date", size=11, weight="bold", color="#FFFFFF"), width=75, bgcolor="#000000", padding=6, border_radius=4),
+                        ft.Container(ft.Text("Dir", size=11, weight="bold", color="#FFFFFF"), width=65, bgcolor="#000000", padding=6, border_radius=4),
+                        ft.Container(ft.Text("Raw", size=11, weight="bold", color="#FFFFFF"), width=45, bgcolor="#000000", padding=6, border_radius=4),
+                        ft.Container(ft.Text("Vedha", size=11, weight="bold", color="#FFFFFF"), width=50, bgcolor="#000000", padding=6, border_radius=4),
+                        ft.Container(ft.Text("Conf", size=11, weight="bold", color="#FFFFFF"), width=45, bgcolor="#000000", padding=6, border_radius=4),
+                        ft.Container(ft.Text("Exp Close", size=11, weight="bold", color="#FFFFFF"), width=75, bgcolor="#000000", padding=6, border_radius=4),
+                        ft.Container(ft.Text("Moon Nak", size=11, weight="bold", color="#FFFFFF"), width=95, bgcolor="#000000", padding=6, border_radius=4),
+                    ], spacing=2, scroll=ft.ScrollMode.AUTO)
                     bandha_backtest_container.controls.append(forecast_header)
 
                     for f in forecast:
-                        dir_color = C["green"] if f["predicted_dir"]=="UP" else C["red"] if f["predicted_dir"]=="DOWN" else C["orange"]
+                        dir_color = C["green"] if f["predicted_dir"]=="UP" else C["red"] if f["predicted_dir"]=="DOWN" else "#EF6C00"
+                        raw_dir = f.get("predicted_dir_raw","")
+                        vedha_txt = "VEDHA" if f.get("has_vedha") else "Clear"
+                        vedha_bg = "#EF9A9A" if f.get("has_vedha") else "#A5D6A7"
                         bandha_backtest_container.controls.append(
                             ft.Row([
-                                ft.Container(ft.Text(str(f["date"]), size=11, weight="bold", color="#000000"), width=85, bgcolor="#FFFFFF", padding=6, border_radius=4, border=ft.border.all(1, "#90A4AE")),
-                                ft.Container(ft.Text(DIR_ARROW.get(f["predicted_dir"], f["predicted_dir"]), size=10, weight="bold", color="#FFFFFF"), width=75, bgcolor=dir_color, padding=4, border_radius=4, alignment=ft.alignment.center),
-                                ft.Container(ft.Text(f"{f['confidence']:.0f}%", size=11, weight="bold", color="#000000"), width=55, bgcolor="#FFE082", padding=6, border_radius=4, alignment=ft.alignment.center, border=ft.border.all(1, "#FFB300")),
-                                ft.Container(ft.Text(f"{f['exp_close']:.2f}", size=11, weight="bold", color="#000000"), width=80, bgcolor="#C8E6C9", padding=6, border_radius=4, alignment=ft.alignment.center, border=ft.border.all(1, "#66BB6A")),
-                                ft.Container(ft.Text(f["moon_nak"][:18], size=10), width=110, bgcolor="#F3E5F5", padding=4, border_radius=4),
-                            ], spacing=2)
+                                ft.Container(ft.Text(str(f["date"]), size=11, weight="bold", color="#000000"), width=75, bgcolor="#FFFFFF", padding=6, border_radius=4, border=ft.border.all(1, "#000000")),
+                                ft.Container(ft.Text(DIR_ARROW.get(f["predicted_dir"], f["predicted_dir"]), size=11, weight="bold", color="#FFFFFF"), width=65, bgcolor=dir_color, padding=6, border_radius=4, alignment=ft.alignment.center),
+                                ft.Container(ft.Text(DIR_ARROW.get(raw_dir, raw_dir)[:6], size=10, weight="bold", color="#000000"), width=45, bgcolor="#FFFFFF", padding=6, border_radius=4, alignment=ft.alignment.center, border=ft.border.all(1, "#000000")),
+                                ft.Container(ft.Text(vedha_txt, size=9, weight="bold", color="#000000"), width=50, bgcolor=vedha_bg, padding=6, border_radius=4, alignment=ft.alignment.center, border=ft.border.all(1, "#000000")),
+                                ft.Container(ft.Text(f"{f['confidence']:.0f}%", size=11, weight="bold", color="#000000"), width=45, bgcolor="#FFE082", padding=6, border_radius=4, alignment=ft.alignment.center, border=ft.border.all(1, "#000000")),
+                                ft.Container(ft.Text(f"{f['exp_close']:.2f}", size=11, weight="bold", color="#000000"), width=75, bgcolor="#C8E6C9", padding=6, border_radius=4, alignment=ft.alignment.center, border=ft.border.all(1, "#000000")),
+                                ft.Container(ft.Text(f["moon_nak"][:12], size=10, weight="bold", color="#000000"), width=95, bgcolor="#FFFFFF", padding=6, border_radius=4, border=ft.border.all(1, "#6A1B9A")),
+                            ], spacing=2, scroll=ft.ScrollMode.AUTO)
                         )
 
                     # Overall verdict
@@ -4677,7 +4682,37 @@ def main(page: ft.Page):
                 page.update()
 
 
-        HELP_TEXT = """HOW THE BUY/SELL/NEUTRAL/WAIT SIGNAL WORKS
+        HELP_TEXT = """🙏 सिरिभूवलय के 24 बंधों का हिंदी नोट — ट्रेडिंग नियम
+
+सिरिभूवलय ग्रंथ में 24 बंध (Bandha) हैं, जो कुमुदेन्दु मुनि द्वारा रचित जैन मंत्र-चित्र हैं। हर बंध का अपना दिशा-संकेत है:
+
+1. वज्रबंध, रथबंध, वरदबंध, भद्रबंध, तिलकबंध, पद्मबंध, द्वारबंध, मधुबंध, श्रीबंध, इंद्रबंध, सिंहबंध, मयूरबंध, नागबंध, गरुड़बंध, कच्छपबंध, वराहबंध, शरभबंध, हंसबंध, क्रौंचबंध, वृषभबंध — ये ज्यादातर UP (तेजी) या CONTINUATION (ट्रेंड जारी) संकेत देते हैं।
+2. छत्रबंध और कमलबंध — DOWN (मंदी) संकेत, मतलब सावधानी या बिक्री।
+3. सर्वतोभद्र, मुक्तावली, चक्रबंध — SIDEWAYS (साइडवेज / रेंज-बाउंड), मतलब इंतजार करो, साफ ब्रेकआउट का इंतजार।
+
+UP / DOWN / SIDEWAYS / MIXED का नियम:
+
+• Graha (ग्रह) संकेत: Stock नाम के अक्षरों के योग (अक्षर-योग) + Listing Date + आज की तिथि + SwissEph चंद्र नक्षत्र से ग्रह निकलता है। Graha का दिशा-निर्देश (BULLISH=UP, BEARISH=DOWN, NEUTRAL=SIDEWAYS) तय होता है।
+
+• Bandha (बंध) दिशा: ऊपर लिखे 24 बंधों में से जिस बंध में stock का नाम फंसता है, उसकी base दिशा (UP/DOWN/SIDEWAYS/CONTINUATION) ली जाती है।
+
+• Combine Direction (मिलाकर अंतिम दिशा):
+  - Graha UP + Bandha UP/CONTINUATION = 🔼 UP (खरीदो)
+  - Graha DOWN + Bandha DOWN = 🔽 DOWN (बेचो / बचो)
+  - एक UP और दूसरा DOWN = ⚠️ MIXED (मिला-जुला, ट्रेड से बचो)
+  - कोई भी SIDEWAYS = ↔️ SIDEWAYS (रेंज, इंतजार करो)
+
+• Sarvatobhadra Vedha (वेध) नियम: Stock के Listing नक्षत्र और आज के चंद्र नक्षत्र में अगर वेध (जैसे अश्विनी ↔ ज्येष्ठा, भरणी ↔ अनुराधा) हो, तो:
+  - UP + वेध = SIDEWAYS (तेजी कमजोर, WAIT)
+  - DOWN + वेध = और ज्यादा DOWN (मंदी मजबूत)
+  - Dhanishta नक्षत्र का कोई वेध नहीं होता।
+
+• 9 दिन का Forecast: आज + अगले 9 ट्रेडिंग दिन (कुल 10 दिन) के लिए सभी 24 बंधों के वोट को accuracy% के weight से गिना जाता है। सबसे ज्यादा वोट वाली दिशा ही final दिशा होती है। Exp Close = last close ± (avg volatility × confidence)।
+
+यह शैक्षिक मॉडल है, वित्तीय सलाह नहीं। हमेशा अपने विश्लेषण से पुष्टि करें।
+
+------------------------------------------------------------
+HOW THE BUY/SELL/NEUTRAL/WAIT SIGNAL WORKS
 
 Every rule — saved or brand new — is ONE FRIENDLY CARD on the Rules page. ANY field you actually set (leave anything else at its default — Any / No / unchecked / blank) must ALL be true at the same time for that rule to fire. Leaving a field at its default just means "don't check this" — it does not mean "must be empty." A blank ➕ NEW RULE card always sits at the bottom of the list, ready to fill in.
 

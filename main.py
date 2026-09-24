@@ -431,9 +431,10 @@ def backtest_all_bandhas(symbol, stock_name, listing_date, history_42d):
             graha_signal = GRAHA[graha_idx][1]
             bandha_dir = b_info[3]
             combined_raw, reason = combine_direction(graha_signal, bandha_dir)
-            # Sarvatobhadra Vedha check: listing nak vs today nak
             has_vedha = check_sarvatobhadra_vedha(listing_nak_idx, moon_nak)
-            combined, vedha_reason = get_vedha_impact_on_direction(combined_raw, has_vedha)
+            combined_after_vedha, vedha_reason = get_vedha_impact_on_direction(combined_raw, has_vedha)
+            tara_num_bt, _ = get_tara_bala(listing_nak_idx, moon_nak)
+            combined, tara_reason = get_tara_impact_on_direction(combined_after_vedha, tara_num_bt, has_vedha)
             predictions.append(combined)
             predictions_raw.append(combined_raw)
             if has_vedha:
@@ -515,12 +516,14 @@ def predict_next_9_days(symbol, stock_name, listing_date, history_42d, backtest_
             b_dir = BANDHA[b_idx][3]
             combined_raw, _ = combine_direction(graha_sig, b_dir)
             has_vedha = check_sarvatobhadra_vedha(listing_nak_idx, moon_nak)
-            combined, _ = get_vedha_impact_on_direction(combined_raw, has_vedha)
+            combined_after_vedha, _ = get_vedha_impact_on_direction(combined_raw, has_vedha)
+            tara_num_tmp, _ = get_tara_bala(listing_nak_idx, moon_nak)
+            combined_final, _ = get_tara_impact_on_direction(combined_after_vedha, tara_num_tmp, has_vedha)
             if has_vedha:
                 has_vedha_any = True
-            votes[combined] += norm_w[b_idx]
+            votes[combined_final] += norm_w[b_idx]
             votes_raw[combined_raw] += norm_w[b_idx]
-            details.append((b_idx, combined, g_idx, has_vedha))
+            details.append((b_idx, combined_final, g_idx, has_vedha, tara_num_tmp))
         winner = max(votes, key=lambda k: votes[k])
         winner_raw = max(votes_raw, key=lambda k: votes_raw[k])
         confidence = votes[winner]*100
@@ -531,11 +534,15 @@ def predict_next_9_days(symbol, stock_name, listing_date, history_42d, backtest_
         else:
             exp_change = 0
         last_close = last_close * (1+exp_change)
+        t_num, t_name = get_tara_bala(listing_nak_idx, moon_nak_idx_today)
         daily_forecast.append({
             "date": fdate,
             "predicted_dir": winner,
             "predicted_dir_raw": winner_raw,
             "has_vedha": has_vedha_any,
+            "tara_num": t_num,
+            "tara_name": t_name,
+            "tara_short": t_name.split(" ")[0] if t_name else "N/A",
             "listing_nak_idx": listing_nak_idx,
             "listing_nak": NAK[listing_nak_idx] if listing_nak_idx is not None else "N/A",
             "confidence": confidence,
@@ -611,6 +618,53 @@ def check_sarvatobhadra_vedha(listing_nak_idx, target_nak_idx):
     if listing_nak_idx == 22 or target_nak_idx == 22:  # Dhanishta has no vedha
         return False
     return VEDHA_PAIRS.get(listing_nak_idx) == target_nak_idx
+
+
+# ── TARA BALA (Sampat/Vipat etc) ── As per Muhurta: Listing Nak = Janma (1)
+TARA_NAMES = {
+    1: "Janma (जन्म) - Neutral, self",
+    2: "Sampat (संपत्) - Wealth, VERY GOOD",
+    3: "Vipat (विपत्) - Danger, BAD",
+    4: "Kshema (क्षेम) - Safety, GOOD",
+    5: "Pratyari (प्रत्यरि) - Enemy, BAD",
+    6: "Sadhaka (साधक) - Achievement, VERY GOOD",
+    7: "Vadha (वध) - Destruction, VERY BAD",
+    8: "Mitra (मित्र) - Friend, GOOD",
+    9: "Parama Mitra (परम मित्र) - Best Friend, VERY GOOD"
+}
+TARA_GOOD = {2,4,6,8,9}
+TARA_BAD = {3,5,7}
+
+def get_tara_bala(listing_nak_idx, target_nak_idx):
+    if listing_nak_idx is None or target_nak_idx is None:
+        return 0, "Unknown"
+    diff = (target_nak_idx - listing_nak_idx) % 27
+    tara_num = (diff % 9) + 1
+    return tara_num, TARA_NAMES.get(tara_num, "Unknown")
+
+def get_tara_impact_on_direction(combined_dir, tara_num, has_vedha):
+    if tara_num == 0:
+        return combined_dir, "Tara unknown"
+    if tara_num in TARA_GOOD:
+        if combined_dir == "UP":
+            return "UP", f"{TARA_NAMES[tara_num]} = GOOD"
+        elif combined_dir == "SIDEWAYS":
+            return "UP", f"{TARA_NAMES[tara_num]} = GOOD -> SIDEWAYS to UP"
+        elif combined_dir == "MIXED":
+            return "SIDEWAYS", f"{TARA_NAMES[tara_num]} = GOOD -> MIXED to SIDEWAYS"
+        else:
+            return "SIDEWAYS", f"{TARA_NAMES[tara_num]} = GOOD -> DOWN to SIDEWAYS"
+    elif tara_num in TARA_BAD:
+        if combined_dir == "UP":
+            return "SIDEWAYS", f"{TARA_NAMES[tara_num]} = BAD -> UP to SIDEWAYS"
+        elif combined_dir == "DOWN":
+            return "DOWN", f"{TARA_NAMES[tara_num]} = BAD -> DOWN strong"
+        elif combined_dir == "SIDEWAYS":
+            return "SIDEWAYS", f"{TARA_NAMES[tara_num]} = BAD -> SIDEWAYS WAIT"
+        else:
+            return "MIXED", f"{TARA_NAMES[tara_num]} = BAD -> MIXED bad"
+    else:
+        return combined_dir, f"{TARA_NAMES[tara_num]} = NEUTRAL"
 
 def get_vedha_impact_on_direction(combined_dir, has_vedha):
     """As per Sarvatobhadra rules: Vedha = obstruction -> reduces UP to SIDEWAYS, DOWN to more DOWN, SIDEWAYS stays"""
@@ -3164,12 +3218,13 @@ def main(page: ft.Page):
 
                     forecast_header = ft.Row([
                         ft.Container(ft.Text("Date", size=11, weight="bold", color="#FFFFFF"), width=75, bgcolor="#000000", padding=6, border_radius=4),
-                        ft.Container(ft.Text("Dir", size=11, weight="bold", color="#FFFFFF"), width=65, bgcolor="#000000", padding=6, border_radius=4),
-                        ft.Container(ft.Text("Raw", size=11, weight="bold", color="#FFFFFF"), width=45, bgcolor="#000000", padding=6, border_radius=4),
-                        ft.Container(ft.Text("Vedha", size=11, weight="bold", color="#FFFFFF"), width=50, bgcolor="#000000", padding=6, border_radius=4),
+                        ft.Container(ft.Text("Dir", size=11, weight="bold", color="#FFFFFF"), width=55, bgcolor="#000000", padding=6, border_radius=4),
+                        ft.Container(ft.Text("Raw", size=11, weight="bold", color="#FFFFFF"), width=40, bgcolor="#000000", padding=6, border_radius=4),
+                        ft.Container(ft.Text("Vedha", size=11, weight="bold", color="#FFFFFF"), width=45, bgcolor="#000000", padding=6, border_radius=4),
+                        ft.Container(ft.Text("Tara", size=11, weight="bold", color="#FFFFFF"), width=70, bgcolor="#000000", padding=6, border_radius=4),
                         ft.Container(ft.Text("Conf", size=11, weight="bold", color="#FFFFFF"), width=45, bgcolor="#000000", padding=6, border_radius=4),
-                        ft.Container(ft.Text("Exp Close", size=11, weight="bold", color="#FFFFFF"), width=75, bgcolor="#000000", padding=6, border_radius=4),
-                        ft.Container(ft.Text("Moon Nak", size=11, weight="bold", color="#FFFFFF"), width=95, bgcolor="#000000", padding=6, border_radius=4),
+                        ft.Container(ft.Text("Exp Close", size=11, weight="bold", color="#FFFFFF"), width=70, bgcolor="#000000", padding=6, border_radius=4),
+                        ft.Container(ft.Text("Moon Nak", size=11, weight="bold", color="#FFFFFF"), width=85, bgcolor="#000000", padding=6, border_radius=4),
                     ], spacing=2, scroll=ft.ScrollMode.AUTO)
                     bandha_backtest_container.controls.append(forecast_header)
 
@@ -4709,7 +4764,7 @@ UP / DOWN / SIDEWAYS / MIXED का नियम:
 
 • 9 दिन का Forecast: आज + अगले 9 ट्रेडिंग दिन (कुल 10 दिन) के लिए सभी 24 बंधों के वोट को accuracy% के weight से गिना जाता है। सबसे ज्यादा वोट वाली दिशा ही final दिशा होती है। Exp Close = last close ± (avg volatility × confidence)।
 
-यह शैक्षिक मॉडल है, वित्तीय सलाह नहीं। हमेशा अपने विश्लेषण से पुष्टि करें।
+तारा बल (Sampat/Vipat आदि): Listing नक्षत्र को जन्म (1) मानकर गिनती: 1=जन्म Neutral, 2=संपत् VERY GOOD धन, 3=विपत् BAD, 4=क्षेम GOOD, 5=प्रत्यरि BAD, 6=साधक VERY GOOD, 7=वध VERY BAD, 8=मित्र GOOD, 9=परम मित्र VERY GOOD. अच्छे तारे (2,4,6,8,9) = UP मजबूत, खराब (3,5,7)= UP->SIDEWAYS, DOWN मजबूत। यह शैक्षिक मॉडल है, वित्तीय सलाह नहीं।
 
 ------------------------------------------------------------
 HOW THE BUY/SELL/NEUTRAL/WAIT SIGNAL WORKS

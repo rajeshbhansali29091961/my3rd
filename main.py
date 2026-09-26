@@ -3306,6 +3306,53 @@ def main(page: ft.Page):
                         content=ft.Text(f"📊 9-Day Verdict: {verdict} | Best Bandha: {sorted_b[0][1]['bandha_name']} ({sorted_b[0][1]['accuracy']:.1f}%) | Avg Accuracy: {sum(r['accuracy'] for _,r in sorted_b)/len(sorted_b):.1f}%", size=12, weight="bold", color="#FFFFFF"),
                         bgcolor=verdict_color, padding=10, border_radius=8, alignment=ft.alignment.center
                     ))
+
+                    # ── SINGLE LINE AI CONSOLIDATED SUGGESTION ──
+                    try:
+                        # Tara counts
+                        good_tara = sum(1 for f in forecast if f.get("tara_num",0) in [2,4,6,8,9])
+                        bad_tara = sum(1 for f in forecast if f.get("tara_num",0) in [3,5,7])
+                        vedha_days = sum(1 for f in forecast if f.get("has_vedha"))
+                        # Best tara name for today
+                        today_tara = forecast[0].get("tara_name","") if forecast else ""
+                        today_vedha = "VEDHA" if forecast[0].get("has_vedha") else "No Vedha"
+                        # Confidence label
+                        if ensemble_acc >= 60:
+                            conf_label = "HIGH"
+                        elif ensemble_acc >= 45:
+                            conf_label = "MEDIUM"
+                        else:
+                            conf_label = "LOW"
+                        # Final single line logic
+                        if up_votes > down_votes and good_tara >= bad_tara and vedha_days <= 3 and ensemble_acc >= 55:
+                            ai_action = "🟢 BUY / तेजी"
+                            ai_reason = f"UP {up_votes}/{len(forecast)} दिन, {good_tara} अच्छे तारे (Sampat/Kshema/Sadhaka), {today_vedha}, Best {sorted_b[0][1]['bandha_name']} {best_acc:.0f}%"
+                        elif down_votes > up_votes and (bad_tara >= good_tara or vedha_days >= 4):
+                            ai_action = "🔴 SELL / AVOID - मंदी / बचो"
+                            ai_reason = f"DOWN {down_votes}/{len(forecast)} दिन, {bad_tara} खराब तारे (Vipat/Vadha) + {vedha_days} दिन Vedha, {today_tara}"
+                        elif ensemble_acc < 45 or (good_tara == bad_tara):
+                            ai_action = "⚪ WAIT / इंतजार - MIXED"
+                            ai_reason = f"Mixed संकेत, Confidence {conf_label} {ensemble_acc:.0f}%, Vedha {vedha_days}/{len(forecast)} दिन, Tara {good_tara} अच्छे / {bad_tara} खराब - साफ ब्रेकआउट का इंतजार"
+                        else:
+                            ai_action = "🟡 SIDEWAYS / रेंज - WAIT"
+                            ai_reason = f"Sideways {side_votes}/{len(forecast)} दिन, {today_tara} + {today_vedha}, Ensemble {ensemble_acc:.0f}% - रेंज बाउंड, इंतजार करो"
+
+                        ai_single_line = f"🤖 AI Suggestion: {ai_action} | Confidence: {conf_label} {ensemble_acc:.1f}% ({ensemble_hits:.0f}/{ensemble_total} days correct) | {ai_reason}"
+                        # Hindi + English combined single line for decision
+                        ai_hindi_line = f"निर्णय: {ai_action.split('/')[0].strip()} - {ai_reason}"
+
+                        bandha_backtest_container.controls.append(ft.Container(
+                            content=ft.Column([
+                                ft.Text(ai_single_line, size=13, weight="bold", color="#000000", selectable=True),
+                                ft.Text(ai_hindi_line, size=12, weight="bold", color="#1A237E", selectable=True),
+                                ft.Text(f"All Theory Combined: 24 Bandha + Sarvatobhadra Vedha + Tara Bala (Sampat {good_tara} / Vipat {bad_tara}) + Graha + 42-Day Backtest {ensemble_acc:.1f}% = Final Call", size=10, weight="bold", color="#000000"),
+                            ], spacing=4),
+                            bgcolor="#E8F5E9" if "BUY" in ai_action else "#FFEBEE" if "SELL" in ai_action else "#FFF9C4",
+                            padding=14, border_radius=10, border=ft.border.all(3, "#000000")
+                        ))
+                    except Exception as e:
+                        print(f"AI suggestion err {e}")
+                        bandha_backtest_container.controls.append(ft.Text(f"AI Suggestion error: {e}", size=10, color="#FF0000"))
                     bandha_backtest_container.controls.append(ft.Text("⚠️ This is Bhoovalaya + Swisseph + NSE backtest educational model. Not financial advice. Verify with your own analysis.", size=9, color=C["hint_txt"]))
                     bandha_backtest_container.controls.append(ft.ElevatedButton("✖  CLOSE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=do_close_bandha_backtest))
 

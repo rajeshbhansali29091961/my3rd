@@ -3350,6 +3350,40 @@ def main(page: ft.Page):
                             bgcolor="#E8F5E9" if "BUY" in ai_action else "#FFEBEE" if "SELL" in ai_action else "#FFF9C4",
                             padding=14, border_radius=10, border=ft.border.all(3, "#000000")
                         ))
+
+                        # ── AUTO I CHING FOR THIS STOCK (Combined view) ──
+                        try:
+                            stock_sym = res.get("symbol","ASSET")
+                            iching_reading = run_iching_reading_for_stock(stock_sym, f"Should I trade {stock_sym} now? {ai_action}")
+                            iching_sig = iching_to_trading_signal(iching_reading['primary_desc'], iching_reading['future_desc'] or "", iching_reading['has_changes'])
+                            # Merge I Ching signal with Bhoovalaya signal for final super-consolidated suggestion
+                            final_merge = ai_action
+                            if iching_sig == "UP" and "BUY" in ai_action:
+                                final_merge = "🟢🟢 STRONG BUY - Both Bhoovalaya + I Ching agree UP"
+                            elif iching_sig == "DOWN" and "SELL" in ai_action:
+                                final_merge = "🔴🔴 STRONG SELL - Both Bhoovalaya + I Ching agree DOWN"
+                            elif iching_sig == "UP" and "SELL" in ai_action:
+                                final_merge = "⚠️ CONFLICT - Bhoovalaya SELL but I Ching UP - WAIT, check again"
+                            elif iching_sig == "DOWN" and "BUY" in ai_action:
+                                final_merge = "⚠️ CONFLICT - Bhoovalaya BUY but I Ching DOWN - WAIT, cautious"
+                            
+                            iching_box_color = "#E8F5E9" if iching_sig=="UP" else "#FFEBEE" if iching_sig=="DOWN" else "#FFF9C4"
+                            bandha_backtest_container.controls.append(ft.Container(
+                                content=ft.Column([
+                                    ft.Text(f"☯️ I CHING (Chinese) FOR {stock_sym}: Hexagram #{iching_reading['primary_id']} - {iching_reading['primary_name']}", size=12, weight="bold", color="#FFFFFF"),
+                                    ft.Text(f"{iching_reading['primary_desc']}", size=11, weight="bold", color="#FFFFFF", selectable=True),
+                                    ft.Text(f"Future: #{iching_reading['future_id']} {iching_reading['future_name'] or 'No change'} - {iching_reading['future_desc'] or 'Static'}", size=10, weight="bold", color="#FFFFFF", selectable=True) if iching_reading['has_changes'] else ft.Text("Static - No changing lines", size=10, color="#FFFFFF"),
+                                    ft.Text(f"I Ching Signal: {iching_sig} | Lines: {', '.join([l['symbol'] for l in iching_reading['lines']])}", size=11, weight="bold", color="#000000"),
+                                    ft.Container(
+                                        content=ft.Text(f"🤖 FINAL SUPER CONSOLIDATED: {final_merge}", size=13, weight="bold", color="#FFFFFF"),
+                                        bgcolor="#000000", padding=8, border_radius=6, alignment=ft.alignment.center
+                                    ),
+                                ], spacing=4),
+                                bgcolor=iching_box_color, padding=12, border_radius=10, border=ft.border.all(2, "#B71C1C")
+                            ))
+                        except Exception as e:
+                            print(f"I Ching auto err {e}")
+
                     except Exception as e:
                         print(f"AI suggestion err {e}")
                         bandha_backtest_container.controls.append(ft.Text(f"AI Suggestion error: {e}", size=10, color="#FF0000"))
@@ -4973,6 +5007,119 @@ Rule (2) — D9 house 11 → D1 kendra/trikona, unaspected by Mars/Saturn → SE
 
 Tap any field on an existing rule row to change it — it saves as soon as you leave the field. Tap the trash icon to delete a row."""
 
+
+        # ── I CHING ORACLE SCREEN ──
+        iching_question_input = ft.TextField(label="Ask your question (e.g. Should I BUY RELIANCE now?)", value="", multiline=True, min_lines=2, max_lines=4)
+        iching_framing = ft.Dropdown(label="Framing", value="1", options=[
+            ft.dropdown.Option("1", "What will be outcome if I BUY now?"),
+            ft.dropdown.Option("2", "What if I SELL/EXIT today?"),
+            ft.dropdown.Option("3", "Momentum for next 30 days?"),
+            ft.dropdown.Option("4", "Custom question above"),
+        ], width=400)
+        iching_result_container = ft.Column(spacing=8, scroll="auto")
+        iching_stock_label = ft.Text("Select a stock from Stocks tab first, then cast I Ching.", size=12, weight="bold", color=C["black_txt"])
+
+        def do_cast_iching(e):
+            try:
+                # Get selected stock symbol from current oracle context or list selection
+                symbol = "ASSET"
+                try:
+                    # Try to get from last selected list item if available
+                    if 'selected_stock_symbol' in globals():
+                        symbol = globals()['selected_stock_symbol']
+                    # Fallback: use text from search or default
+                    if hasattr(fld_list_search, 'value') and fld_list_search.value.strip():
+                        # not reliable, keep ASSET
+                        pass
+                except:
+                    pass
+                # Get actual selected stock from UI state - we store in page data
+                try:
+                    sym = page.session.get("selected_symbol") or "ASSET"
+                    symbol = sym
+                except:
+                    pass
+                # If user typed ticker in question, extract
+                q_text = iching_question_input.value.strip() or "Market energy for selected stock"
+                framing_map = {
+                    "1": f"What will be outcome if I BUY {symbol} now? {q_text}",
+                    "2": f"What are implications if I SELL {symbol} today? {q_text}",
+                    "3": f"What is momentum state of {symbol} for next 30 days? {q_text}",
+                    "4": q_text
+                }
+                full_question = framing_map.get(iching_framing.value, q_text)
+
+                reading = run_iching_reading_for_stock(symbol, full_question)
+                iching_result_container.controls.clear()
+
+                iching_result_container.controls.append(ft.Text(f"📈 I CHING READING FOR {reading['ticker']}", size=14, weight="bold", color="#FFFFFF"))
+                iching_result_container.controls.append(ft.Container(
+                    content=ft.Text(f"Question: {reading['question']}", size=12, weight="bold", color="#000000", selectable=True),
+                    bgcolor="#FFF9C4", padding=10, border_radius=8, border=ft.border.all(1, "#000000")
+                ))
+
+                # Show 6 lines
+                lines_col = ft.Column(spacing=2)
+                for idx, l in enumerate(reversed(reading['lines'])): # top to bottom display
+                    orig_idx = 6-idx
+                    lines_col.controls.append(ft.Text(f"Line {orig_idx}: {l['symbol']}  ({l['value']} - {l['type']})", size=12, weight="bold", color="#000000", font_family="monospace"))
+
+                iching_result_container.controls.append(ft.Container(content=lines_col, bgcolor="#FFFFFF", padding=10, border_radius=8, border=ft.border.all(1, "#000000")))
+
+                # Primary hexagram
+                p_color = C["green"] if "bullish" in reading['primary_desc'].lower() or "buy" in reading['primary_desc'].lower() else C["red"] if "bearish" in reading['primary_desc'].lower() or "sell" in reading['primary_desc'].lower() else C["orange"]
+                iching_result_container.controls.append(ft.Container(
+                    content=ft.Column([
+                        ft.Text(f"📊 PRESENT STATE: Hexagram #{reading['primary_id']} - {reading['primary_name']}", size=13, weight="bold", color="#FFFFFF"),
+                        ft.Text(f"Market Reading: {reading['primary_desc']}", size=12, weight="bold", color="#FFFFFF", selectable=True),
+                    ], spacing=4),
+                    bgcolor=p_color, padding=12, border_radius=10
+                ))
+
+                if reading['has_changes']:
+                    f_color = C["green"] if "bullish" in (reading['future_desc'] or "").lower() else C["red"] if "bearish" in (reading['future_desc'] or "").lower() else C["accent"]
+                    iching_result_container.controls.append(ft.Container(
+                        content=ft.Column([
+                            ft.Text(f"🔄 FUTURE TRANSITION: Hexagram #{reading['future_id']} - {reading['future_name']}", size=13, weight="bold", color="#FFFFFF"),
+                            ft.Text(f"Future Outlook: {reading['future_desc']}", size=12, weight="bold", color="#FFFFFF", selectable=True),
+                        ], spacing=4),
+                        bgcolor=f_color, padding=12, border_radius=10
+                    ))
+                    iching_result_container.controls.append(ft.Text("⚠️ Changing lines present - transition energy active. Trend will evolve.", size=11, weight="bold", color="#000000"))
+                else:
+                    iching_result_container.controls.append(ft.Container(
+                        content=ft.Text("🔒 STATIC ENERGY: No changing lines. Current trend/stable condition will remain.", size=12, weight="bold", color="#FFFFFF"),
+                        bgcolor="#37474F", padding=10, border_radius=8
+                    ))
+
+                # Trading signal from I Ching
+                iching_signal = iching_to_trading_signal(reading['primary_desc'], reading['future_desc'] or "", reading['has_changes'])
+                sig_color = C["green"] if iching_signal=="UP" else C["red"] if iching_signal=="DOWN" else C["orange"]
+                iching_result_container.controls.append(ft.Container(
+                    content=ft.Text(f"🤖 I CHING TRADING SIGNAL: {iching_signal} | Based on Chinese astrology for {symbol}", size=13, weight="bold", color="#FFFFFF"),
+                    bgcolor=sig_color, padding=12, border_radius=10, alignment=ft.alignment.center
+                ))
+                iching_result_container.controls.append(ft.Text("⚠️ I Ching measures macro psychological momentum. Always use with stop-loss and Bhoovalaya analysis. Not financial advice.", size=9, color=C["hint_txt"]))
+
+                page.update()
+            except Exception as ex:
+                iching_result_container.controls.clear()
+                iching_result_container.controls.append(ft.Text(f"I Ching cast failed: {ex}", size=12, color=C["red"]))
+                page.update()
+
+        iching_screen = ft.Column(visible=False, scroll="auto", controls=[
+            make_header("☯️ I CHING - CHINESE TRADING ORACLE"),
+            ft.Divider(height=4, color=C["divider"]),
+            iching_stock_label,
+            iching_question_input,
+            iching_framing,
+            ft.ElevatedButton("🎲 CAST I CHING COINS FOR SELECTED STOCK", bgcolor="#B71C1C", color="#FFFFFF", height=48, on_click=do_cast_iching),
+            ft.Divider(height=6, color=C["divider"]),
+            iching_result_container,
+            ft.ElevatedButton("⬅ BACK TO ORACLE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("oracle")),
+        ])
+
+
         help_screen = ft.Column(visible=False, scroll="auto", controls=[
             make_header("📖 HELP / REFERENCE GUIDE"), ft.Divider(height=4, color=C["divider"]),
             ft.Text(HELP_TEXT, size=12.5, color=C["black_txt"], selectable=True),
@@ -4996,7 +5143,7 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
 
 
         # ── NAVIGATION CONTROL ────────────────────────────────────────────────
-        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen, "place": place_screen, "rules": rules_screen, "help": help_screen}
+        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen, "place": place_screen, "rules": rules_screen, "help": help_screen, "iching": iching_screen}
 
         AZ_LETTERS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
         az_letter_containers = {}  # letter -> its Container, so we can restyle the selected one
@@ -5066,6 +5213,7 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
             (ft.Icons.STARS,                  "Kundali",  "astro",  "#EF6C00"),
             (ft.Icons.STORAGE,                "Data",     "db",     "#455A64"),
             (ft.Icons.RULE,                   "Rules",    "rules",  "#2E7D32"),
+            (ft.Icons.SELF_IMPROVEMENT,      "I Ching",  "iching", "#B71C1C"),
         ]
 
         def nav_button(icon, label, target, color):

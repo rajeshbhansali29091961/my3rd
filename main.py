@@ -3455,6 +3455,17 @@ def main(page: ft.Page):
                                     q = base_q or f"Market energy for {stock_sym}"
                                 r2=run_iching_reading_for_stock(stock_sym, q)
                                 sig2=iching_to_trading_signal(r2['primary_desc'], r2['future_desc'] or "", r2['has_changes'])
+                                # Bhoovalaya direction from outer scope
+                                try:
+                                    b_dir = "UP" if up_votes>=down_votes and up_votes>=side_votes else "DOWN" if down_votes>=up_votes and down_votes>=side_votes else "SIDEWAYS"
+                                except:
+                                    b_dir = verdict.split()[0] if 'verdict' in locals() or 'verdict' in globals() else "MIXED"
+                                if sig2==b_dir:
+                                    final_msg = f"🟢🟢 STRONG {b_dir} - Both agree"
+                                elif sig2 in ["SIDEWAYS","MIXED"]:
+                                    final_msg = f"{b_dir} (I Ching {sig2} mixed)"
+                                else:
+                                    final_msg = f"⚠️ CONFLICT - Bhoovalaya {b_dir} vs I Ching {sig2} - WAIT"
                                 analysis_iching_result.controls.clear()
                                 analysis_iching_result.controls.append(ft.Container(content=ft.Column([
                                     ft.Text(f"Q: {q}", size=11, weight="bold", color="#000000", selectable=True),
@@ -3462,12 +3473,13 @@ def main(page: ft.Page):
                                     ft.Text(r2['primary_desc'], size=11, color="#FFFFFF", selectable=True),
                                     ft.Text(f"Future: #{r2['future_id']} {r2['future_name']} - {r2['future_desc']}" if r2['has_changes'] else "🔒 Static - stable", size=10, color="#FFFFFF", selectable=True),
                                     ft.Text(f"Lines: {' '.join([l['symbol'] for l in r2['lines']])} | Changing: {'Yes' if r2['has_changes'] else 'No'}", size=10, weight="bold", color="#000000"),
-                                    ft.Container(content=ft.Text(f"🤖 Final: Bhoovalaya {winner} + I Ching {sig2} = {'🟢🟢 STRONG '+winner if sig2==winner else '⚠️ CONFLICT - WAIT' if sig2!=winner and sig2!='SIDEWAYS' and sig2!='MIXED' else winner+' (mixed)'}", size=12, weight="bold", color="#FFFFFF"), bgcolor="#000000", padding=8, border_radius=6, alignment=ft.alignment.center)
+                                    ft.Container(content=ft.Text(f"🤖 Final: Bhoovalaya {b_dir} + I Ching {sig2} = {final_msg}", size=12, weight="bold", color="#FFFFFF"), bgcolor="#000000", padding=8, border_radius=6, alignment=ft.alignment.center)
                                 ]), bgcolor="#E3F2FD" if sig2=="UP" else "#FFEBEE" if sig2=="DOWN" else "#FFF9C4", padding=10, border_radius=8, border=ft.border.all(2, "#B71C1C")))
                                 page.update()
                             except Exception as ex2:
                                 import traceback
-                                analysis_iching_result.controls.append(ft.Text(f"Error: {ex2} {traceback.format_exc()[:500]}", color="#FF0000", selectable=True))
+                                analysis_iching_result.controls.clear()
+                                analysis_iching_result.controls.append(ft.Container(content=ft.Text(f"Error: {ex2} {traceback.format_exc()[:800]}", color="#FFFFFF", selectable=True, size=10), bgcolor="#B71C1C", padding=10, border_radius=8))
                                 page.update()
                         bandha_backtest_container.controls.append(ft.Container(content=ft.Column([
                             ft.Text(f"☯️ ASK I CHING ABOUT {stock_sym} - Choose BUY/SELL/Momentum", size=13, weight="bold", color="#FFFFFF"),
@@ -5331,7 +5343,6 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
             (ft.Icons.STARS,                  "Kundali",  "astro",  "#EF6C00"),
             (ft.Icons.STORAGE,                "Data",     "db",     "#455A64"),
             (ft.Icons.RULE,                   "Rules",    "rules",  "#2E7D32"),
-            (ft.Icons.SELF_IMPROVEMENT,      "I Ching",  "iching", "#B71C1C"),
         ]
 
         def nav_button(icon, label, target, color):

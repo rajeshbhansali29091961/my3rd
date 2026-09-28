@@ -18,6 +18,128 @@ except Exception:
     REQUESTS_OK = False
 
 import flet as ft
+
+# ── I CHING 64 HEXAGRAM FULL TRADING ARCHETYPES ──
+import random as _iching_random
+
+HEXAGRAM_FULL = {
+1: ("Qian - Creative Pure Yang", "Strong bullish momentum. High energy but watch overextended. BUY momentum trail stop."),
+2: ("Kun - Receptive Pure Yin", "Bearish/bottom/consolidation. Wait observe do not force trade."),
+3: ("Zhun - Difficulty at Beginning", "Early accumulation risky start. Small position only."),
+4: ("Meng - Youthful Folly", "Uncertainty market learning. Avoid aggressive."),
+5: ("Xu - Waiting", "Waiting for breakout. Sideways patience."),
+6: ("Song - Conflict", "Choppy conflict high whipsaw risk AVOID."),
+7: ("Shi - Army", "Organized institutional trend. Follow big players BUY."),
+8: ("Bi - Holding Together", "Consolidation support holding. Range bound buy support."),
+9: ("Xiao Chu - Small Taming", "Small profit limited upside."),
+10: ("Lu - Treading", "Cautious advance small BUY."),
+11: ("Tai - Peace", "Bullish equilibrium smooth uptrend HOLD BUY."),
+12: ("Pi - Standstill", "Stagnation bearish divergence Avoid SELL on rally."),
+13: ("Tong Ren - Fellowship", "Sector momentum together BUY sector."),
+14: ("Da You - Great Possession", "Strong holding wealth take partial profit."),
+15: ("Qian - Modesty", "Low volatility safe HOLD."),
+16: ("Yu - Enthusiasm", "Momentum building crowd enthusiasm BUY early."),
+17: ("Sui - Following", "Follow trend BUY."),
+18: ("Gu - Work on Decay", "Portfolio repair needed exit decaying."),
+19: ("Lin - Approach", "Approaching breakout prepare BUY."),
+20: ("Guan - Contemplation", "Observe wait clarity No trade."),
+21: ("Shi He - Biting Through", "Breakthrough resistance Strong breakout BUY."),
+22: ("Bi - Grace", "Cosmetic rally not real Avoid chasing."),
+23: ("Bo - Splitting Apart Decay", "Extreme downside risk Structures collapsing Protect capital EXIT."),
+24: ("Fu - Return Turning Point", "Bottom is in Reversal to upside Accumulation BUY."),
+25: ("Wu Wang - Innocence", "Unexpected move careful no greed."),
+26: ("Da Chu - Great Taming", "Big players accumulating Strong HOLD."),
+27: ("Yi - Nourishment", "Fundamentals strong Long term BUY."),
+28: ("Da Guo - Great Excess", "Overbought heavy Take profit reduce."),
+29: ("Kan - Abysmal Water Danger", "High volatility trap Strict stop-loss WAIT."),
+30: ("Li - Clinging Fire Radiance", "Euphoric breakout Highly visible trend Take profits before burn out SELL."),
+31: ("Xian - Influence", "Sentiment driven rally."),
+32: ("Heng - Duration", "Sustainable trend HOLD long."),
+33: ("Dun - Retreat", "Pullback retreat Wait lower entry."),
+34: ("Da Zhuang - Great Power", "Strong bullish but peak near cautious BUY."),
+35: ("Jin - Progress", "Steady advance gradual UP BUY on dips."),
+36: ("Ming Yi - Darkening Light", "Bearish hiding accumulate quietly."),
+37: ("Jia Ren - Family", "Portfolio balance Diversify HOLD."),
+38: ("Kui - Opposition", "Divergence caution."),
+39: ("Jian - Obstruction", "Resistance heavy WAIT."),
+40: ("Jie - Deliverance", "Release from downtrend Breakout BUY."),
+41: ("Sun - Decrease", "Profit taking SELL reduce."),
+42: ("Yi - Increase", "Growth BUY."),
+43: ("Guai - Breakthrough", "Decisive breakout Strong BUY."),
+44: ("Gou - Coming to Meet", "Sudden news spike quick profit."),
+45: ("Cui - Gathering Together", "Volume gathering accumulation BUY."),
+46: ("Sheng - Pushing Upward", "Uptrend pushing BUY momentum."),
+47: ("Kun - Oppression Exhaustion", "Exhaustion bottoming careful BUY."),
+48: ("Jing - Well", "Value stable long HOLD."),
+49: ("Ge - Revolution", "Trend reversal Major reversal."),
+50: ("Ding - Cauldron", "Transformation new paradigm."),
+51: ("Zhen - Arousing Shock", "Sudden volatility tight stops WAIT."),
+52: ("Gen - Keeping Still Mountain", "Sideways mountain SIDEWAYS WAIT."),
+53: ("Jian - Gradual Development", "Slow uptrend Gradual BUY."),
+54: ("Gui Mei - Marrying Maiden", "Risky chase Avoid."),
+55: ("Feng - Abundance", "Peak abundance full Take profit."),
+56: ("Lu - Wanderer", "Uncertain drift WAIT."),
+57: ("Xun - Gentle Wind", "Gradual penetration Slow BUY."),
+58: ("Dui - Joyous Lake", "Optimistic frothy Take profit."),
+59: ("Huan - Dispersion", "Distribution Big players distributing SELL."),
+60: ("Jie - Limitation", "Range bound limited."),
+61: ("Zhong Fu - Inner Truth", "High conviction High confidence."),
+62: ("Xiao Guo - Small Excess", "Minor pullback Buy dip."),
+63: ("Ji Ji - After Completion", "Peak equilibrium Perfect entry passed Take profit."),
+64: ("Wei Ji - Before Completion", "Transition state Trend forming but not confirmed Chaos before order cautious."),
+}
+
+def iching_roll_one_line():
+    coins = [_iching_random.choice([3,2]) for _ in range(3)]
+    total = sum(coins)
+    if total==6:
+        return {"value":6,"type":"Old Yin Changing","symbol":"-- x --","binary_start":0,"binary_end":1}
+    elif total==7:
+        return {"value":7,"type":"Young Yang Static","symbol":"-----","binary_start":1,"binary_end":1}
+    elif total==8:
+        return {"value":8,"type":"Young Yin Static","symbol":"--   --","binary_start":0,"binary_end":0}
+    else:
+        return {"value":9,"type":"Old Yang Changing","symbol":"-- o --","binary_start":1,"binary_end":0}
+
+def iching_binary_to_num(binary_list):
+    val = sum(int(b)*(2**i) for i,b in enumerate(binary_list))
+    return (val % 64) + 1
+
+def iching_lookup_full(binary_list):
+    num = iching_binary_to_num(binary_list)
+    name, desc = HEXAGRAM_FULL.get(num, ("Unknown","Standard churn"))
+    return num, name, desc
+
+def run_iching_reading_for_stock(ticker, question_text):
+    lines=[]
+    for _ in range(6):
+        lines.append(iching_roll_one_line())
+    start_binary=[l['binary_start'] for l in lines]
+    end_binary=[l['binary_end'] for l in lines]
+    has_changes=any(l['value'] in [6,9] for l in lines)
+    pid,pname,pdesc=iching_lookup_full(start_binary)
+    fid,fname,fdesc=None,None,None
+    if has_changes:
+        fid,fname,fdesc=iching_lookup_full(end_binary)
+    return {"ticker":ticker,"question":question_text,"lines":lines,"start_binary":start_binary,"end_binary":end_binary,"has_changes":has_changes,"primary_id":pid,"primary_name":pname,"primary_desc":pdesc,"future_id":fid,"future_name":fname,"future_desc":fdesc}
+
+def iching_to_trading_signal(primary_desc, future_desc, has_changes):
+    text=(primary_desc+" "+(future_desc or "")).lower()
+    bullish=["bullish","buy","accumulation","uptrend","return","growth","progress","breakthrough","momentum","peace","increase","gathering","pushing"]
+    bearish=["bearish","sell","decay","risk","exit","overbought","distribution","avoid","splitting","collapse","standstill","decrease","dispersion"]
+    sideways=["consolidation","wait","sideways","range","observe","stagnation","still","waiting","obstruction","limitation","retreat","wanderer","contemplation"]
+    score=0
+    for k in bullish:
+        if k in text: score+=1
+    for k in bearish:
+        if k in text: score-=1
+    if "extreme downside" in text or "protect capital" in text: score-=2
+    if "bottom is in" in text or "reversal to the upside" in text: score+=2
+    if score>=2: return "UP"
+    elif score<=-2: return "DOWN"
+    elif any(k in text for k in sideways): return "SIDEWAYS"
+    else: return "MIXED"
+
 import flet.canvas as cv
 
 # ── CONSTANTS ──────────────────────────────────────────────────────────────────
@@ -3307,6 +3429,58 @@ def main(page: ft.Page):
                         bgcolor=verdict_color, padding=10, border_radius=8, alignment=ft.alignment.center
                     ))
 
+                    # AI single line already added before, now I Ching interactive inside analysis
+                    try:
+                        stock_sym = res.get("symbol","RELIANCE")
+                        analysis_iching_q = ft.TextField(label=f"Ask I Ching about {stock_sym} (optional custom)", value="", hint_text=f"Leave blank for BUY/SELL selection, or type custom e.g. Hold till Diwali?", multiline=True, min_lines=1, max_lines=2)
+                        analysis_iching_framing = ft.RadioGroup(value="1", content=ft.Column([
+                            ft.Radio(value="1", label=f"BUY {stock_sym} now?"),
+                            ft.Radio(value="2", label=f"SELL {stock_sym} today?"),
+                            ft.Radio(value="3", label=f"{stock_sym} 30-day momentum?"),
+                            ft.Radio(value="4", label="Use Custom question above"),
+                        ]))
+                        analysis_iching_result = ft.Column(spacing=6)
+                        def do_analysis_iching_cast(e):
+                            try:
+                                custom_q = analysis_iching_q.value.strip()
+                                framing_val = analysis_iching_framing.value
+                                base_q = custom_q if custom_q else ""
+                                if framing_val=="1":
+                                    q = f"What will be outcome if I BUY {stock_sym} now? {base_q}".strip()
+                                elif framing_val=="2":
+                                    q = f"What are implications if I SELL {stock_sym} today? {base_q}".strip()
+                                elif framing_val=="3":
+                                    q = f"What is momentum state of {stock_sym} for next 30 days? {base_q}".strip()
+                                else:
+                                    q = base_q or f"Market energy for {stock_sym}"
+                                r2=run_iching_reading_for_stock(stock_sym, q)
+                                sig2=iching_to_trading_signal(r2['primary_desc'], r2['future_desc'] or "", r2['has_changes'])
+                                analysis_iching_result.controls.clear()
+                                analysis_iching_result.controls.append(ft.Container(content=ft.Column([
+                                    ft.Text(f"Q: {q}", size=11, weight="bold", color="#000000", selectable=True),
+                                    ft.Text(f"☯️ I Ching for {stock_sym}: #{r2['primary_id']} {r2['primary_name']}", size=12, weight="bold", color="#FFFFFF"),
+                                    ft.Text(r2['primary_desc'], size=11, color="#FFFFFF", selectable=True),
+                                    ft.Text(f"Future: #{r2['future_id']} {r2['future_name']} - {r2['future_desc']}" if r2['has_changes'] else "🔒 Static - stable", size=10, color="#FFFFFF", selectable=True),
+                                    ft.Text(f"Lines: {' '.join([l['symbol'] for l in r2['lines']])} | Changing: {'Yes' if r2['has_changes'] else 'No'}", size=10, weight="bold", color="#000000"),
+                                    ft.Container(content=ft.Text(f"🤖 Final: Bhoovalaya {winner} + I Ching {sig2} = {'🟢🟢 STRONG '+winner if sig2==winner else '⚠️ CONFLICT - WAIT' if sig2!=winner and sig2!='SIDEWAYS' and sig2!='MIXED' else winner+' (mixed)'}", size=12, weight="bold", color="#FFFFFF"), bgcolor="#000000", padding=8, border_radius=6, alignment=ft.alignment.center)
+                                ]), bgcolor="#E3F2FD" if sig2=="UP" else "#FFEBEE" if sig2=="DOWN" else "#FFF9C4", padding=10, border_radius=8, border=ft.border.all(2, "#B71C1C")))
+                                page.update()
+                            except Exception as ex2:
+                                import traceback
+                                analysis_iching_result.controls.append(ft.Text(f"Error: {ex2} {traceback.format_exc()[:500]}", color="#FF0000", selectable=True))
+                                page.update()
+                        bandha_backtest_container.controls.append(ft.Container(content=ft.Column([
+                            ft.Text(f"☯️ ASK I CHING ABOUT {stock_sym} - Choose BUY/SELL/Momentum", size=13, weight="bold", color="#FFFFFF"),
+                            analysis_iching_framing,
+                            analysis_iching_q,
+                            ft.ElevatedButton(f"🎲 ASK I CHING FOR {stock_sym} - CAST COINS", bgcolor="#B71C1C", color="#FFFFFF", height=48, on_click=do_analysis_iching_cast),
+                            analysis_iching_result
+                        ], spacing=8), bgcolor="#212121", padding=12, border_radius=10))
+                    except Exception as e:
+                        print(f"analysis iching input err {e}")
+
+
+
                     # ── SINGLE LINE AI CONSOLIDATED SUGGESTION ──
                     try:
                         # Tara counts
@@ -3350,85 +3524,6 @@ def main(page: ft.Page):
                             bgcolor="#E8F5E9" if "BUY" in ai_action else "#FFEBEE" if "SELL" in ai_action else "#FFF9C4",
                             padding=14, border_radius=10, border=ft.border.all(3, "#000000")
                         ))
-
-                        # ── I CHING IN ANALYSIS - Interactive for this stock ──
-                        try:
-                            stock_sym = res.get("symbol","ASSET")
-                            # Add interactive question box inside analysis for this stock
-                            analysis_iching_q = ft.TextField(label=f"Ask I Ching about {stock_sym} (e.g. Should I BUY {stock_sym} now?)", value=f"Should I BUY {stock_sym} now?", multiline=True, min_lines=1, max_lines=2)
-                            analysis_iching_result = ft.Column(spacing=6)
-                            
-                            def do_analysis_iching_cast(e):
-                                try:
-                                    q = analysis_iching_q.value.strip() or f"Should I trade {stock_sym}?"
-                                    reading2 = run_iching_reading_for_stock(stock_sym, q)
-                                    sig2 = iching_to_trading_signal(reading2['primary_desc'], reading2['future_desc'] or "", reading2['has_changes'])
-                                    analysis_iching_result.controls.clear()
-                                    analysis_iching_result.controls.append(ft.Container(
-                                        content=ft.Column([
-                                            ft.Text(f"☯️ I Ching Answer for {stock_sym}: #{reading2['primary_id']} {reading2['primary_name']}", size=12, weight="bold", color="#FFFFFF"),
-                                            ft.Text(reading2['primary_desc'], size=11, color="#FFFFFF", selectable=True),
-                                            ft.Text(f"Future: #{reading2['future_id']} {reading2['future_name']}" if reading2['has_changes'] else "Static - stable", size=10, color="#FFFFFF"),
-                                            ft.Text(f"Signal: {sig2} | Lines: {', '.join([l['symbol'] for l in reading2['lines']])}", size=11, weight="bold", color="#000000"),
-                                            ft.Container(
-                                                content=ft.Text(f"Final for {stock_sym}: Bhoovalaya {winner} + I Ching {sig2} = {'STRONG ' + winner if sig2==winner else 'CONFLICT - WAIT' if sig2!=winner and sig2!='SIDEWAYS' else winner}", size=12, weight="bold", color="#FFFFFF"),
-                                                bgcolor="#000000", padding=8, border_radius=6
-                                            ),
-                                        ]),
-                                        bgcolor="#E3F2FD" if sig2=="UP" else "#FFEBEE" if sig2=="DOWN" else "#FFF9C4",
-                                        padding=10, border_radius=8, border=ft.border.all(2, "#B71C1C")
-                                    ))
-                                    page.update()
-                                except Exception as ex2:
-                                    analysis_iching_result.controls.append(ft.Text(f"Error: {ex2}", color="#FF0000"))
-                                    page.update()
-
-                            bandha_backtest_container.controls.append(ft.Container(
-                                content=ft.Column([
-                                    ft.Text(f"☯️ ASK I CHING ABOUT {stock_sym} - Chinese Oracle for this stock", size=13, weight="bold", color="#FFFFFF"),
-                                    analysis_iching_q,
-                                    ft.ElevatedButton(f"🎲 ASK I CHING FOR {stock_sym}", bgcolor="#B71C1C", color="#FFFFFF", height=44, on_click=do_analysis_iching_cast),
-                                    analysis_iching_result,
-                                ], spacing=6),
-                                bgcolor="#212121", padding=12, border_radius=10
-                            ))
-
-                        except Exception as e:
-                            print(f"analysis iching input err {e}")
-
-                        # ── AUTO I CHING FOR THIS STOCK (Combined view) ──
-                        try:
-                            stock_sym = res.get("symbol","ASSET")
-                            iching_reading = run_iching_reading_for_stock(stock_sym, f"Should I trade {stock_sym} now? {ai_action}")
-                            iching_sig = iching_to_trading_signal(iching_reading['primary_desc'], iching_reading['future_desc'] or "", iching_reading['has_changes'])
-                            # Merge I Ching signal with Bhoovalaya signal for final super-consolidated suggestion
-                            final_merge = ai_action
-                            if iching_sig == "UP" and "BUY" in ai_action:
-                                final_merge = "🟢🟢 STRONG BUY - Both Bhoovalaya + I Ching agree UP"
-                            elif iching_sig == "DOWN" and "SELL" in ai_action:
-                                final_merge = "🔴🔴 STRONG SELL - Both Bhoovalaya + I Ching agree DOWN"
-                            elif iching_sig == "UP" and "SELL" in ai_action:
-                                final_merge = "⚠️ CONFLICT - Bhoovalaya SELL but I Ching UP - WAIT, check again"
-                            elif iching_sig == "DOWN" and "BUY" in ai_action:
-                                final_merge = "⚠️ CONFLICT - Bhoovalaya BUY but I Ching DOWN - WAIT, cautious"
-                            
-                            iching_box_color = "#E8F5E9" if iching_sig=="UP" else "#FFEBEE" if iching_sig=="DOWN" else "#FFF9C4"
-                            bandha_backtest_container.controls.append(ft.Container(
-                                content=ft.Column([
-                                    ft.Text(f"☯️ I CHING (Chinese) FOR {stock_sym}: Hexagram #{iching_reading['primary_id']} - {iching_reading['primary_name']}", size=12, weight="bold", color="#FFFFFF"),
-                                    ft.Text(f"{iching_reading['primary_desc']}", size=11, weight="bold", color="#FFFFFF", selectable=True),
-                                    ft.Text(f"Future: #{iching_reading['future_id']} {iching_reading['future_name'] or 'No change'} - {iching_reading['future_desc'] or 'Static'}", size=10, weight="bold", color="#FFFFFF", selectable=True) if iching_reading['has_changes'] else ft.Text("Static - No changing lines", size=10, color="#FFFFFF"),
-                                    ft.Text(f"I Ching Signal: {iching_sig} | Lines: {', '.join([l['symbol'] for l in iching_reading['lines']])}", size=11, weight="bold", color="#000000"),
-                                    ft.Container(
-                                        content=ft.Text(f"🤖 FINAL SUPER CONSOLIDATED: {final_merge}", size=13, weight="bold", color="#FFFFFF"),
-                                        bgcolor="#000000", padding=8, border_radius=6, alignment=ft.alignment.center
-                                    ),
-                                ], spacing=4),
-                                bgcolor=iching_box_color, padding=12, border_radius=10, border=ft.border.all(2, "#B71C1C")
-                            ))
-                        except Exception as e:
-                            print(f"I Ching auto err {e}")
-
                     except Exception as e:
                         print(f"AI suggestion err {e}")
                         bandha_backtest_container.controls.append(ft.Text(f"AI Suggestion error: {e}", size=10, color="#FF0000"))
@@ -5054,120 +5149,76 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
 
 
         # ── I CHING ORACLE SCREEN ──
-        iching_question_input = ft.TextField(label="Ask your question (e.g. Should I BUY RELIANCE now?)", value="", multiline=True, min_lines=2, max_lines=4)
-        iching_framing = ft.Dropdown(label="Framing", value="1", options=[
-            ft.dropdown.Option("1", "What will be outcome if I BUY now?"),
-            ft.dropdown.Option("2", "What if I SELL/EXIT today?"),
-            ft.dropdown.Option("3", "Momentum for next 30 days?"),
-            ft.dropdown.Option("4", "Custom question above"),
-        ], width=400)
+        iching_question_input = ft.TextField(label="Custom Question (optional) - e.g. Should I hold for Diwali?", value="", multiline=True, min_lines=1, max_lines=3, hint_text="Leave blank if using BUY/SELL/Momentum buttons below")
+        iching_framing = ft.RadioGroup(value="1", content=ft.Column([
+            ft.Radio(value="1", label="1️⃣ What will be outcome if I BUY now?"),
+            ft.Radio(value="2", label="2️⃣ What if I SELL/EXIT today?"),
+            ft.Radio(value="3", label="3️⃣ Momentum for next 30 days?"),
+            ft.Radio(value="4", label="4️⃣ Use Custom Question above only"),
+        ]))
         iching_result_container = ft.Column(spacing=8, scroll="auto")
-        iching_stock_label = ft.Text("Select a stock from Stocks tab first, then cast I Ching.", size=12, weight="bold", color=C["black_txt"])
+        iching_stock_label = ft.Text("Select stock in Stocks → Analyse, then choose BUY/SELL/Momentum above and CAST.", size=12, weight="bold", color=C["black_txt"])
+        iching_selected_type_txt = ft.Text("Selected: BUY outcome", size=11, weight="bold", color="#B71C1C")
+
+        def on_framing_change(e):
+            try:
+                v = iching_framing.value
+                map_txt = {"1":"BUY outcome","2":"SELL/EXIT today","3":"30-day Momentum","4":"Custom Question"}
+                iching_selected_type_txt.value = f"Selected: {map_txt.get(v,'BUY outcome')}"
+                page.update()
+            except:
+                pass
+        iching_framing.on_change = on_framing_change
+
 
         def do_cast_iching(e):
             try:
-                # Get selected stock symbol - robust for Android
-                symbol = "RELIANCE"
+                symbol="RELIANCE"
                 try:
                     if fld_oracle.value and fld_oracle.value.strip():
-                        symbol = fld_oracle.value.strip().upper()
+                        symbol=fld_oracle.value.strip().upper()
                 except:
                     pass
-                if symbol == "RELIANCE" and iching_question_input.value.strip():
-                    # Try extract ticker from question like "Should I buy TCS?"
-                    import re
-                    m = re.search(r'\b([A-Z]{2,10})\b', iching_question_input.value.upper())
-                    if m:
-                        maybe = m.group(1)
-                        if len(maybe)>=2 and maybe not in ["SHOULD","WHAT","WILL","BUY","SELL","THE","FOR","AND"]:
-                            symbol = maybe
-
-                q_text = iching_question_input.value.strip() or f"Should I trade {symbol}?"
-                framing_map = {
-                    "1": f"What will be outcome if I BUY {symbol} now? {q_text}",
-                    "2": f"What are implications if I SELL {symbol} today? {q_text}",
-                    "3": f"What is momentum state of {symbol} for next 30 days? {q_text}",
-                    "4": q_text
-                }
-                full_question = framing_map.get(str(iching_framing.value), q_text)
-
-                # Clear and show loading
-                iching_result_container.controls.clear()
-                iching_result_container.controls.append(ft.Container(
-                    content=ft.Text(f"🎲 Casting coins for {symbol}... {full_question[:80]}", size=12, weight="bold", color="#000000"),
-                    bgcolor="#FFF9C4", padding=10, border_radius=8
-                ))
-                page.update()
-
-                reading = run_iching_reading_for_stock(symbol, full_question)
-                iching_result_container.controls.clear()
-
-                iching_result_container.controls.append(ft.Container(
-                    content=ft.Text(f"📈 I CHING READING FOR {reading['ticker']}", size=14, weight="bold", color="#FFFFFF"),
-                    bgcolor="#000000", padding=10, border_radius=8, alignment=ft.alignment.center
-                ))
-                iching_result_container.controls.append(ft.Container(
-                    content=ft.Text(f"Question: {reading['question']}", size=12, weight="bold", color="#000000", selectable=True),
-                    bgcolor="#FFF9C4", padding=10, border_radius=8, border=ft.border.all(2, "#000000")
-                ))
-
-                # Show 6 lines top to bottom
-                lines_col = ft.Column(spacing=2)
-                for idx, l in enumerate(reversed(reading['lines'])):
-                    orig_idx = 6-idx
-                    lines_col.controls.append(ft.Text(f"Line {orig_idx}: {l['symbol']}  ({l['value']} - {l['type']})", size=13, weight="bold", color="#000000", font_family="monospace"))
-
-                iching_result_container.controls.append(ft.Container(content=lines_col, bgcolor="#FFFFFF", padding=12, border_radius=8, border=ft.border.all(2, "#000000")))
-
-                # Primary
-                p_color = C["green"] if "bullish" in reading['primary_desc'].lower() or "buy" in reading['primary_desc'].lower() or "accumulation" in reading['primary_desc'].lower() else C["red"] if "bearish" in reading['primary_desc'].lower() or "sell" in reading['primary_desc'].lower() or "decay" in reading['primary_desc'].lower() else "#EF6C00"
-                iching_result_container.controls.append(ft.Container(
-                    content=ft.Column([
-                        ft.Text(f"📊 PRESENT: Hexagram #{reading['primary_id']} - {reading['primary_name']}", size=13, weight="bold", color="#FFFFFF"),
-                        ft.Text(f"{reading['primary_desc']}", size=12, weight="bold", color="#FFFFFF", selectable=True),
-                    ], spacing=6),
-                    bgcolor=p_color, padding=14, border_radius=10
-                ))
-
-                if reading['has_changes']:
-                    f_color = "#2E7D32" if "bullish" in (reading['future_desc'] or "").lower() else "#B71C1C" if "bearish" in (reading['future_desc'] or "").lower() else C["accent"]
-                    iching_result_container.controls.append(ft.Container(
-                        content=ft.Column([
-                            ft.Text(f"🔄 FUTURE: Hexagram #{reading['future_id']} - {reading['future_name']}", size=13, weight="bold", color="#FFFFFF"),
-                            ft.Text(f"{reading['future_desc']}", size=12, weight="bold", color="#FFFFFF", selectable=True),
-                        ], spacing=6),
-                        bgcolor=f_color, padding=14, border_radius=10
-                    ))
-                    iching_result_container.controls.append(ft.Container(
-                        content=ft.Text("⚠️ Changing lines present - transition active. Trend will evolve.", size=11, weight="bold", color="#000000"),
-                        bgcolor="#FFE082", padding=8, border_radius=6
-                    ))
+                custom_text=iching_question_input.value.strip()
+                framing_val=str(iching_framing.value) if iching_framing.value else "1"
+                if framing_val=="1":
+                    full_question=f"What will be outcome if I BUY {symbol} now? {custom_text}".strip()
+                elif framing_val=="2":
+                    full_question=f"What are implications if I SELL {symbol} today? {custom_text}".strip()
+                elif framing_val=="3":
+                    full_question=f"What is momentum state of {symbol} for next 30 days? {custom_text}".strip()
                 else:
-                    iching_result_container.controls.append(ft.Container(
-                        content=ft.Text("🔒 STATIC ENERGY: No changing lines. Current condition will remain stable.", size=12, weight="bold", color="#FFFFFF"),
-                        bgcolor="#37474F", padding=12, border_radius=8
-                    ))
+                    full_question=custom_text or f"What is market energy for {symbol}?"
 
-                iching_signal = iching_to_trading_signal(reading['primary_desc'], reading['future_desc'] or "", reading['has_changes'])
-                sig_color = C["green"] if iching_signal=="UP" else C["red"] if iching_signal=="DOWN" else "#EF6C00"
-                iching_result_container.controls.append(ft.Container(
-                    content=ft.Text(f"🤖 I CHING SIGNAL: {iching_signal} | {symbol} | Chinese Oracle", size=14, weight="bold", color="#FFFFFF"),
-                    bgcolor=sig_color, padding=14, border_radius=10, alignment=ft.alignment.center, border=ft.border.all(2, "#000000")
-                ))
-                iching_result_container.controls.append(ft.Text("⚠️ I Ching = macro psychology. Use with stop-loss + Bhoovalaya. Not financial advice.", size=10, color="#000000", weight="bold"))
+                iching_result_container.controls.clear()
+                iching_result_container.controls.append(ft.Container(content=ft.Text(f"🎲 Casting coins for {symbol}...", size=12, weight="bold", color="#000000"), bgcolor="#FFF9C4", padding=10, border_radius=8))
+                page.update()
+                reading=run_iching_reading_for_stock(symbol, full_question)
+                iching_result_container.controls.clear()
+                iching_result_container.controls.append(ft.Container(content=ft.Text(f"📈 I CHING READING FOR {reading['ticker']}", size=14, weight="bold", color="#FFFFFF"), bgcolor="#000000", padding=10, border_radius=8, alignment=ft.alignment.center))
+                iching_result_container.controls.append(ft.Container(content=ft.Text(f"Q: {reading['question']}", size=12, weight="bold", color="#000000", selectable=True), bgcolor="#FFF9C4", padding=10, border_radius=8, border=ft.border.all(2, "#000000")))
+                lines_col=ft.Column(spacing=2)
+                for idx,l in enumerate(reversed(reading['lines'])):
+                    orig_idx=6-idx
+                    lines_col.controls.append(ft.Text(f"Line {orig_idx}: {l['symbol']} ({l['value']} - {l['type']})", size=13, weight="bold", color="#000000", font_family="monospace"))
+                iching_result_container.controls.append(ft.Container(content=lines_col, bgcolor="#FFFFFF", padding=12, border_radius=8, border=ft.border.all(2, "#000000")))
+                p_color=C["green"] if "bullish" in reading['primary_desc'].lower() or "buy" in reading['primary_desc'].lower() else C["red"] if "bearish" in reading['primary_desc'].lower() or "sell" in reading['primary_desc'].lower() else "#EF6C00"
+                iching_result_container.controls.append(ft.Container(content=ft.Column([ft.Text(f"📊 PRESENT: #{reading['primary_id']} - {reading['primary_name']}", size=13, weight="bold", color="#FFFFFF"), ft.Text(f"{reading['primary_desc']}", size=12, weight="bold", color="#FFFFFF", selectable=True)], spacing=6), bgcolor=p_color, padding=14, border_radius=10))
+                if reading['has_changes']:
+                    f_color="#2E7D32" if "bullish" in (reading['future_desc'] or "").lower() else "#B71C1C" if "bearish" in (reading['future_desc'] or "").lower() else C["accent"]
+                    iching_result_container.controls.append(ft.Container(content=ft.Column([ft.Text(f"🔄 FUTURE: #{reading['future_id']} - {reading['future_name']}", size=13, weight="bold", color="#FFFFFF"), ft.Text(f"{reading['future_desc']}", size=12, weight="bold", color="#FFFFFF", selectable=True)], spacing=6), bgcolor=f_color, padding=14, border_radius=10))
+                else:
+                    iching_result_container.controls.append(ft.Container(content=ft.Text("🔒 STATIC: No changing lines. Stable.", size=12, weight="bold", color="#FFFFFF"), bgcolor="#37474F", padding=12, border_radius=8))
+                iching_signal=iching_to_trading_signal(reading['primary_desc'], reading['future_desc'] or "", reading['has_changes'])
+                sig_color=C["green"] if iching_signal=="UP" else C["red"] if iching_signal=="DOWN" else "#EF6C00"
+                iching_result_container.controls.append(ft.Container(content=ft.Text(f"🤖 I CHING SIGNAL: {iching_signal} | {symbol}", size=14, weight="bold", color="#FFFFFF"), bgcolor=sig_color, padding=14, border_radius=10, alignment=ft.alignment.center, border=ft.border.all(2, "#000000")))
                 iching_result_container.controls.append(ft.ElevatedButton("🎲 CAST AGAIN", bgcolor="#B71C1C", color="#FFFFFF", height=44, on_click=do_cast_iching))
                 page.update()
             except Exception as ex:
                 import traceback
-                tb = traceback.format_exc()
+                tb=traceback.format_exc()
                 iching_result_container.controls.clear()
-                iching_result_container.controls.append(ft.Container(
-                    content=ft.Column([
-                        ft.Text(f"❌ I Ching error: {ex}", size=12, weight="bold", color="#FFFFFF", selectable=True),
-                        ft.Text(tb[:1000], size=9, color="#FFFFFF", font_family="monospace", selectable=True),
-                    ]),
-                    bgcolor="#B71C1C", padding=12, border_radius=8
-                ))
+                iching_result_container.controls.append(ft.Container(content=ft.Column([ft.Text(f"❌ Error: {ex}", size=12, weight="bold", color="#FFFFFF"), ft.Text(tb[:1500], size=9, color="#FFFFFF", font_family="monospace")]), bgcolor="#B71C1C", padding=12, border_radius=8))
                 try:
                     page.update()
                 except:
@@ -5177,8 +5228,9 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
             make_header("☯️ I CHING - CHINESE TRADING ORACLE"),
             ft.Divider(height=4, color=C["divider"]),
             iching_stock_label,
-            iching_question_input,
+            iching_selected_type_txt,
             iching_framing,
+            iching_question_input,
             ft.ElevatedButton("🎲 CAST I CHING COINS FOR SELECTED STOCK", bgcolor="#B71C1C", color="#FFFFFF", height=48, on_click=do_cast_iching),
             ft.Divider(height=6, color=C["divider"]),
             iching_result_container,

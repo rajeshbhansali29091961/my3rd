@@ -3468,11 +3468,11 @@ def main(page: ft.Page):
                                     final_msg = f"⚠️ CONFLICT - Bhoovalaya {b_dir} vs I Ching {sig2} - WAIT"
                                 analysis_iching_result.controls.clear()
                                 analysis_iching_result.controls.append(ft.Container(content=ft.Column([
-                                    ft.Text(f"Q: {q}", size=11, weight="bold", color="#000000", selectable=True),
-                                    ft.Text(f"☯️ I Ching for {stock_sym}: #{r2['primary_id']} {r2['primary_name']}", size=12, weight="bold", color="#FFFFFF"),
-                                    ft.Text(r2['primary_desc'], size=11, color="#FFFFFF", selectable=True),
-                                    ft.Text(f"Future: #{r2['future_id']} {r2['future_name']} - {r2['future_desc']}" if r2['has_changes'] else "🔒 Static - stable", size=10, color="#FFFFFF", selectable=True),
-                                    ft.Text(f"Lines: {' '.join([l['symbol'] for l in r2['lines']])} | Changing: {'Yes' if r2['has_changes'] else 'No'}", size=10, weight="bold", color="#000000"),
+                                    ft.Text(f"Q: {q}", size=12, weight="bold", color="#000000", selectable=True),
+                                    ft.Text(f"☯️ I Ching for {stock_sym}: #{r2['primary_id']} {r2['primary_name']}", size=12, weight="bold", color="#000000"),
+                                    ft.Text(r2['primary_desc'], size=12, weight="bold", color="#000000", selectable=True),
+                                    ft.Text(f"Future: #{r2['future_id']} {r2['future_name']} - {r2['future_desc']}" if r2['has_changes'] else "🔒 Static - stable", size=11, weight="bold", color="#000000", selectable=True),
+                                    ft.Text(f"Lines: {' '.join([l['symbol'] for l in r2['lines']])} | Changing: {'Yes' if r2['has_changes'] else 'No'}", size=11, weight="bold", color="#000000"),
                                     ft.Container(content=ft.Text(f"🤖 Final: Bhoovalaya {b_dir} + I Ching {sig2} = {final_msg}", size=12, weight="bold", color="#FFFFFF"), bgcolor="#000000", padding=8, border_radius=6, alignment=ft.alignment.center)
                                 ]), bgcolor="#E3F2FD" if sig2=="UP" else "#FFEBEE" if sig2=="DOWN" else "#FFF9C4", padding=10, border_radius=8, border=ft.border.all(2, "#B71C1C")))
                                 page.update()

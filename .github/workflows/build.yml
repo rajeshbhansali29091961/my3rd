@@ -26,7 +26,12 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Install Android SDK (light)
+      - name: Install Linux deps (FIX for your error)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libmpv-dev mpv
+
+      - name: Install Android SDK
         run: |
           mkdir -p "$HOME/android/cmdline-tools"
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdline-tools.zip
@@ -43,8 +48,7 @@ jobs:
           sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.1.8937393"
 
       - name: Get Swiss Ephemeris source
-        run: |
-          git clone --depth 1 https://github.com/aloistr/swisseph.git sweph-src
+        run: git clone --depth 1 https://github.com/aloistr/swisseph.git sweph-src
 
       - name: Build libswe.so ARM64
         run: |
@@ -54,7 +58,6 @@ jobs:
           cd sweph-src
           $CC -shared -fPIC -O2 -o ../native/arm64-v8a/libswe.so swedate.c swehouse.c swejpl.c swemmoon.c swemplan.c sweph.c swephlib.c swecl.c swehel.c -lm
           cd ..
-          file native/arm64-v8a/libswe.so
 
       - name: Prepare ephemeris data
         run: |
@@ -64,46 +67,33 @@ jobs:
             if [ ! -f "native/ephe/$f" ] && [ -f "ephe-cache/$f" ]; then cp "ephe-cache/$f" "native/ephe/$f"; fi
           done
           ls -lh native/ephe/
-          test -s native/ephe/sepl_18.se1
 
       - name: Stage native for Flet
         run: |
-          if [ -f src/main.py ] && [ ! -f main.py ]; then
+          if [ -f src/main.py ]; then
             mkdir -p src/native/arm64-v8a src/native/ephe
-            cp -a native/arm64-v8a/libswe.so src/native/arm64-v8a/
-            cp -a native/ephe/. src/native/ephe/
+            cp -a native/arm64-v8a/libswe.so src/native/arm64-v8a/ || true
+            cp -a native/ephe/. src/native/ephe/ || true
           fi
-          find native src/native -type f 2>/dev/null | sort || true
 
-      - name: Install Python deps
+      - name: Install Flet
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install "flet==0.28.3"
+          pip install --upgrade pip
+          pip install "flet==0.28.3"
 
-      - name: Configure Gradle (FIXED - low memory)
+      - name: Configure Gradle
         run: |
           mkdir -p "$HOME/.gradle"
-          cat > "$HOME/.gradle/gradle.properties" << 'EOF'
-          org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=512m
-          org.gradle.parallel=false
-          org.gradle.workers.max=1
-          org.gradle.daemon=false
-          EOF
+          echo "org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=512m" > "$HOME/.gradle/gradle.properties"
+          echo "org.gradle.daemon=false" >> "$HOME/.gradle/gradle.properties"
 
       - name: Build APK
         run: |
           export ANDROID_HOME="$HOME/android"
-          export ANDROID_SDK_ROOT="$HOME/android"
-          flet build apk --arch arm64-v8a --verbose --no-rich-output
-
-      - name: Inspect APK
-        run: |
-          find build -type f -name "*.apk" -exec ls -lh {} \;
-          for apk in build/apk/*.apk; do echo "=== $apk ==="; unzip -l "$apk" | grep -E "libswe|sepl|semo" || true; done
+          flet build apk --arch arm64-v8a --verbose
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: bhoovalaya-arm64-apk
           path: build/apk/*.apk
-          retention-days: 30

@@ -140,31 +140,7 @@ def iching_to_trading_signal(primary_desc, future_desc, has_changes):
     elif any(k in text for k in sideways): return "SIDEWAYS"
     else: return "MIXED"
 
-
-def gann_levels(price):
-    try:
-        import math
-        p=float(price); s=math.sqrt(p); res=[]
-        for ang in [45,90,135,180,360]:
-            inc=(ang/360.0)*2.0
-            up=(s+inc)**2; down=(s-inc)**2 if s>inc else 0
-            res.append((ang, round(up,2), round(down,2) if down>0 else 0))
-        return res
-    except: return []
-
-def gann_sig(price, levels):
-    try:
-        if not levels: return "MIXED",""
-        sup_vals=[l[2] for l in levels if l[2]>0 and l[2]<price]
-        res_vals=[l[1] for l in levels if l[1]>price]
-        sup=min(sup_vals) if sup_vals else 0
-        resi=min(res_vals) if res_vals else 0
-        if sup and price-sup < price*0.02: return "UP", f"Near Sup {sup}"
-        if resi and resi-price < price*0.02: return "DOWN", f"Near Res {resi}"
-        return "SIDEWAYS", f"Between {sup}-{resi}"
-    except: return "MIXED",""
-
-
+import flet.canvas as cv
 
 # ── CONSTANTS ──────────────────────────────────────────────────────────────────
 AKSHARA_VALS = {
@@ -3505,60 +3481,9 @@ def main(page: ft.Page):
                                 analysis_iching_result.controls.clear()
                                 analysis_iching_result.controls.append(ft.Container(content=ft.Text(f"Error: {ex2} {traceback.format_exc()[:800]}", color="#FFFFFF", selectable=True, size=10), bgcolor="#B71C1C", padding=10, border_radius=8))
                                 page.update()
-                        bandha_backtest_container.controls.append(ft.Container(content=ft.Column([
-                            ft.Text(f"☯️ ASK I CHING ABOUT {stock_sym} - Choose BUY/SELL/Momentum", size=13, weight="bold", color="#FFFFFF"),
-                            analysis_iching_framing,
-                            analysis_iching_q,
-                            ft.ElevatedButton(f"🎲 ASK I CHING FOR {stock_sym} - CAST COINS", bgcolor="#B71C1C", color="#FFFFFF", height=48, on_click=do_analysis_iching_cast),
-                            analysis_iching_result
-                        ], spacing=8), bgcolor="#212121", padding=12, border_radius=10))
+                        
                     except Exception as e:
                         print(f"analysis iching input err {e}")
-
-                    # GANN COMPACT
-                    try:
-                        g_price = res.get("current_price") or 0
-                        if not g_price:
-                            try:
-                                g_price = history_42d[-1]
-                            except:
-                                g_price = 100
-                        g_lvls = gann_levels(g_price)
-                        g_sig, g_reason = gann_sig(g_price, g_lvls)
-                        try:
-                            b_dir_final = "UP" if up_votes>=down_votes and up_votes>=side_votes else "DOWN" if down_votes>=up_votes else "SIDEWAYS"
-                        except:
-                            b_dir_final = "MIXED"
-                        try:
-                            last_i_sig = sig2
-                        except:
-                            last_i_sig = "MIXED"
-                        votes = [b_dir_final, last_i_sig, g_sig]
-                        up_c = votes.count("UP")
-                        down_c = votes.count("DOWN")
-                        if up_c >= 2:
-                            s_final = f"STRONG BUY {up_c}/3 UP Bhoov {b_dir_final} IChing {last_i_sig} Gann {g_sig}"
-                            s_col = "#2E7D32"
-                        elif down_c >= 2:
-                            s_final = f"STRONG SELL {down_c}/3 DOWN Bhoov {b_dir_final} IChing {last_i_sig} Gann {g_sig}"
-                            s_col = "#B71C1C"
-                        else:
-                            s_final = f"WAIT Bhoov {b_dir_final} IChing {last_i_sig} Gann {g_sig} {g_reason}"
-                            s_col = "#37474F"
-                        gl_col = ft.Column(spacing=2)
-                        for ang, up, down in g_lvls[:5]:
-                            gl_col.controls.append(ft.Text(f"{ang}deg Res {up} Sup {down}", size=11, weight="bold", color="#000000"))
-                        bandha_backtest_container.controls.append(ft.Container(
-                            content=ft.Column([
-                                ft.Text(f"GANN Square {stock_sym} @ {g_price} Gann {g_sig} {g_reason}", size=12, weight="bold", color="#FFFFFF"),
-                                ft.Container(content=gl_col, bgcolor="#FFFFFF", padding=8, border_radius=6),
-                                ft.Container(content=ft.Text(s_final, size=12, weight="bold", color="#FFFFFF", selectable=True), bgcolor=s_col, padding=10, border_radius=8, alignment=ft.alignment.center)
-                            ], spacing=6),
-                            bgcolor="#E3F2FD" if g_sig=="UP" else "#FFEBEE" if g_sig=="DOWN" else "#FFF9C4",
-                            padding=10, border_radius=10, border=ft.border.all(2,"#000000")
-                        ))
-                    except Exception as eg:
-                        bandha_backtest_container.controls.append(ft.Text(f"Gann err {eg}", size=10, color="#B71C1C"))
 
 
 

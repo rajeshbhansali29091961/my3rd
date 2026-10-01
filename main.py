@@ -140,92 +140,30 @@ def iching_to_trading_signal(primary_desc, future_desc, has_changes):
     elif any(k in text for k in sideways): return "SIDEWAYS"
     else: return "MIXED"
 
-import flet.canvas as cv
 
-
-# ── W.D. GANN THEORY - Square of Nine + Angles + Time Cycles ──
-import math as _gann_math
-
-def gann_square_of_nine_levels(price):
-    """Returns Gann Square of Nine support/resistance levels for given price"""
+def gann_levels(price):
     try:
-        price = float(price)
-        if price <=0:
-            return []
-        sqrt_p = _gann_math.sqrt(price)
-        angles = [45,90,135,180,225,270,315,360]
-        levels=[]
-        for ang in angles:
-            # 360° = 2.0 sqrt units (standard Gann)
-            inc = (ang/360.0)*2.0
-            up = (sqrt_p + inc)**2
-            down = (sqrt_p - inc)**2 if sqrt_p>inc else None
-            levels.append({"angle":ang, "direction":"UP", "level":round(up,2), "type":"Resistance" if ang>=90 else "Near Res"})
-            if down and down>0:
-                levels.append({"angle":ang, "direction":"DOWN", "level":round(down,2), "type":"Support" if ang>=90 else "Near Sup"})
-        # Sort by distance
-        levels_sorted = sorted(levels, key=lambda x: abs(x["level"]-price))
-        return levels_sorted[:16]
-    except Exception as e:
-        return []
+        import math
+        p=float(price); s=math.sqrt(p); res=[]
+        for ang in [45,90,135,180,360]:
+            inc=(ang/360.0)*2.0
+            up=(s+inc)**2; down=(s-inc)**2 if s>inc else 0
+            res.append((ang, round(up,2), round(down,2) if down>0 else 0))
+        return res
+    except: return []
 
-def gann_angles_from_price(price, days=10):
-    """Gann 1x1, 2x1, 1x2 angles projection"""
+def gann_sig(price, levels):
     try:
-        price=float(price)
-        # 1x1 = 45 deg, 1 unit price per 1 unit time
-        # Simplified: daily angle levels
-        angles_info=[]
-        for mult in [0.25,0.5,1,2,4]: # 4x1,2x1,1x1,1x2,1x4
-            proj_up = price + (price*0.01*mult*days)
-            proj_down = price - (price*0.01*mult*days)
-            angles_info.append({"angle":f"{mult}x1", "up":round(proj_up,2), "down":round(proj_down,2)})
-        return angles_info
-    except:
-        return []
+        if not levels: return "MIXED",""
+        sup_vals=[l[2] for l in levels if l[2]>0 and l[2]<price]
+        res_vals=[l[1] for l in levels if l[1]>price]
+        sup=min(sup_vals) if sup_vals else 0
+        resi=min(res_vals) if res_vals else 0
+        if sup and price-sup < price*0.02: return "UP", f"Near Sup {sup}"
+        if resi and resi-price < price*0.02: return "DOWN", f"Near Res {resi}"
+        return "SIDEWAYS", f"Between {sup}-{resi}"
+    except: return "MIXED",""
 
-def gann_time_cycles(listing_date_str):
-    """Calculate Gann time cycles from listing date - 90, 180, 360 days etc"""
-    try:
-        from datetime import datetime
-        ld = datetime.strptime(listing_date_str, "%d-%m-%Y")
-        now = datetime.now()
-        diff_days = (now - ld).days
-        cycles = [30,45,60,90,120,180,360,720]
-        upcoming=[]
-        for cyc in cycles:
-            mod = diff_days % cyc
-            days_to_next = cyc - mod if mod!=0 else 0
-            upcoming.append({"cycle":cyc, "mod":mod, "days_to_next":days_to_next, "importance":"HIGH" if cyc in [90,180,360] else "MEDIUM"})
-        return sorted(upcoming, key=lambda x: x["days_to_next"])[:5]
-    except:
-        return []
-
-def gann_signal(current_price, gann_levels):
-    """Decide Gann UP/DOWN/SIDEWAYS based on price vs nearest Gann levels"""
-    try:
-        if not gann_levels:
-            return "MIXED", "No levels"
-        # Find nearest support and resistance
-        supports = [l for l in gann_levels if l["direction"]=="DOWN"]
-        resistances = [l for l in gann_levels if l["direction"]=="UP"]
-        if not supports or not resistances:
-            return "MIXED", "No S/R"
-        nearest_sup = min(supports, key=lambda x: abs(x["level"]-current_price)) if supports else None
-        nearest_res = min(resistances, key=lambda x: abs(x["level"]-current_price)) if resistances else None
-        # If closer to support -> bounce UP, closer to resistance -> DOWN
-        if nearest_sup and nearest_res:
-            dist_sup = abs(current_price - nearest_sup["level"])
-            dist_res = abs(nearest_res["level"] - current_price)
-            if dist_sup < dist_res and dist_sup/current_price < 0.02: # within 2% of support
-                return "UP", f"Near Support {nearest_sup['level']} ({nearest_sup['angle']}°)"
-            elif dist_res < dist_sup and dist_res/current_price < 0.02:
-                return "DOWN", f"Near Resistance {nearest_res['level']} ({nearest_res['angle']}°)"
-            else:
-                return "SIDEWAYS", f"Between Sup {nearest_sup['level']} and Res {nearest_res['level']}"
-        return "MIXED", "Between levels"
-    except Exception as e:
-        return "MIXED", str(e)
 
 
 # ── CONSTANTS ──────────────────────────────────────────────────────────────────
@@ -3577,94 +3515,50 @@ def main(page: ft.Page):
                     except Exception as e:
                         print(f"analysis iching input err {e}")
 
-                    # ── GANN SQUARE OF NINE + ANGLES FOR THIS STOCK ──
+                    # GANN COMPACT
                     try:
-                        stock_price_for_gann = None
+                        g_price = res.get("current_price") or 0
+                        if not g_price:
+                            try:
+                                g_price = history_42d[-1]
+                            except:
+                                g_price = 100
+                        g_lvls = gann_levels(g_price)
+                        g_sig, g_reason = gann_sig(g_price, g_lvls)
                         try:
-                            # Try to get price from res or quote
-                            stock_price_for_gann = res.get("current_price") or res.get("price") or 0
-                            if not stock_price_for_gann:
-                                # Try fetch from history if available
-                                if 'history_42d' in locals() and history_42d:
-                                    stock_price_for_gann = history_42d[-1] if isinstance(history_42d, list) else 0
-                        except:
-                            pass
-                        if not stock_price_for_gann or stock_price_for_gann==0:
-                            stock_price_for_gann = 100  # fallback for calculation demo
-                        
-                        gann_levels = gann_square_of_nine_levels(stock_price_for_gann)
-                        gann_sig, gann_reason = gann_signal(stock_price_for_gann, gann_levels)
-                        gann_time = gann_time_cycles(res.get("listing_date","01-01-2000"))
-                        gann_angles = gann_angles_from_price(stock_price_for_gann, days=9)
-
-                        # Gann container with dark text for readability
-                        gann_levels_col = ft.Column(spacing=2)
-                        for lvl in gann_levels[:8]:
-                            col = "#000000"
-                            gann_levels_col.controls.append(ft.Text(f"{lvl['angle']}° {lvl['direction']} {lvl['type']}: {lvl['level']}", size=11, weight="bold", color=col))
-
-                        gann_time_col = ft.Column(spacing=2)
-                        for tc in gann_time[:4]:
-                            gann_time_col.controls.append(ft.Text(f"Cycle {tc['cycle']}d: {tc['days_to_next']} days to next | {tc['importance']}", size=10, weight="bold", color="#000000"))
-
-                        gann_box_color = "#E8F5E9" if gann_sig=="UP" else "#FFEBEE" if gann_sig=="DOWN" else "#FFF9C4"
-
-                        # Final Super Decision: Bhoovalaya + I Ching + Gann
-                        try:
-                            b_dir_final = "UP" if up_votes>=down_votes and up_votes>=side_votes else "DOWN" if down_votes>=up_votes and down_votes>=side_votes else "SIDEWAYS"
+                            b_dir_final = "UP" if up_votes>=down_votes and up_votes>=side_votes else "DOWN" if down_votes>=up_votes else "SIDEWAYS"
                         except:
                             b_dir_final = "MIXED"
-
-                        # Get last I Ching signal if available from previous cast, else MIXED
                         try:
-                            last_iching_sig = sig2
+                            last_i_sig = sig2
                         except:
-                            last_iching_sig = "MIXED"
-
-                        # Super consensus
-                        votes = [b_dir_final, last_iching_sig, gann_sig]
-                        up_count = votes.count("UP")
-                        down_count = votes.count("DOWN")
-                        if up_count>=2:
-                            super_final = f"🟢🟢 STRONG BUY - {up_count}/3 systems agree UP (Bhoovalaya {b_dir_final}, I Ching {last_iching_sig}, Gann {gann_sig})"
-                            super_color = "#2E7D32"
-                        elif down_count>=2:
-                            super_final = f"🔴🔴 STRONG SELL - {down_count}/3 systems agree DOWN (Bhoovalaya {b_dir_final}, I Ching {last_iching_sig}, Gann {gann_sig})"
-                            super_color = "#B71C1C"
-                        elif b_dir_final=="SIDEWAYS" and last_iching_sig in ["SIDEWAYS","MIXED"] and gann_sig in ["SIDEWAYS","MIXED"]:
-                            super_final = f"⚪ WAIT SIDEWAYS - All 3 systems show consolidation"
-                            super_color = "#EF6C00"
+                            last_i_sig = "MIXED"
+                        votes = [b_dir_final, last_i_sig, g_sig]
+                        up_c = votes.count("UP")
+                        down_c = votes.count("DOWN")
+                        if up_c >= 2:
+                            s_final = f"STRONG BUY {up_c}/3 UP Bhoov {b_dir_final} IChing {last_i_sig} Gann {g_sig}"
+                            s_col = "#2E7D32"
+                        elif down_c >= 2:
+                            s_final = f"STRONG SELL {down_c}/3 DOWN Bhoov {b_dir_final} IChing {last_i_sig} Gann {g_sig}"
+                            s_col = "#B71C1C"
                         else:
-                            super_final = f"⚠️ MIXED SIGNALS - Bhoovalaya {b_dir_final} | I Ching {last_iching_sig} | Gann {gann_sig} ({gann_reason}) - WAIT for confirmation"
-                            super_color = "#37474F"
-
+                            s_final = f"WAIT Bhoov {b_dir_final} IChing {last_i_sig} Gann {g_sig} {g_reason}"
+                            s_col = "#37474F"
+                        gl_col = ft.Column(spacing=2)
+                        for ang, up, down in g_lvls[:5]:
+                            gl_col.controls.append(ft.Text(f"{ang}deg Res {up} Sup {down}", size=11, weight="bold", color="#000000"))
                         bandha_backtest_container.controls.append(ft.Container(
                             content=ft.Column([
-                                ft.Text(f"📐 GANN THEORY - Square of Nine for {stock_sym} @ {stock_price_for_gann}", size=13, weight="bold", color="#FFFFFF"),
-                                ft.Text(f"Current Price: {stock_price_for_gann} | Gann Signal: {gann_sig} | {gann_reason}", size=12, weight="bold", color="#000000"),
-                                ft.Container(content=ft.Column([
-                                    ft.Text("Gann S/R Levels (Square of Nine):", size=11, weight="bold", color="#000000"),
-                                    gann_levels_col
-                                ]), bgcolor="#FFFFFF", padding=8, border_radius=6, border=ft.border.all(1, "#000000")),
-                                ft.Container(content=ft.Column([
-                                    ft.Text("Gann Time Cycles from Listing Date:", size=11, weight="bold", color="#000000"),
-                                    gann_time_col
-                                ]), bgcolor="#FFFFFF", padding=8, border_radius=6, border=ft.border.all(1, "#000000")),
-                                ft.Container(
-                                    content=ft.Text(super_final, size=13, weight="bold", color="#FFFFFF", selectable=True),
-                                    bgcolor=super_color, padding=12, border_radius=8, alignment=ft.alignment.center, border=ft.border.all(2, "#000000")
-                                ),
-                                ft.Text("Gann = W.D. Gann Square of Nine + 45°/90°/180°/360° levels + Time cycles. Combines Technical + Astrology.", size=9, weight="bold", color="#000000"),
+                                ft.Text(f"GANN Square {stock_sym} @ {g_price} Gann {g_sig} {g_reason}", size=12, weight="bold", color="#FFFFFF"),
+                                ft.Container(content=gl_col, bgcolor="#FFFFFF", padding=8, border_radius=6),
+                                ft.Container(content=ft.Text(s_final, size=12, weight="bold", color="#FFFFFF", selectable=True), bgcolor=s_col, padding=10, border_radius=8, alignment=ft.alignment.center)
                             ], spacing=6),
-                            bgcolor=gann_box_color, padding=12, border_radius=10, border=ft.border.all(3, "#000000")
+                            bgcolor="#E3F2FD" if g_sig=="UP" else "#FFEBEE" if g_sig=="DOWN" else "#FFF9C4",
+                            padding=10, border_radius=10, border=ft.border.all(2,"#000000")
                         ))
-                    except Exception as e_gann:
-                        import traceback
-                        bandha_backtest_container.controls.append(ft.Container(
-                            content=ft.Text(f"Gann error: {e_gann} {traceback.format_exc()[:500]}", size=10, color="#FFFFFF"),
-                            bgcolor="#B71C1C", padding=8, border_radius=6
-                        ))
-
+                    except Exception as eg:
+                        bandha_backtest_container.controls.append(ft.Text(f"Gann err {eg}", size=10, color="#B71C1C"))
 
 
 

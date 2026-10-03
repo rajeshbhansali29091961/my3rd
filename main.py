@@ -2338,6 +2338,7 @@ def build_dual_diamond_chart_with_bars(d1_pos, lagna_d1, d9_pos, lagna_d9, chart
 def main(page: ft.Page):
     try:
         page.title   = "Bhoovalaya Oracle"
+        personal_confluence_container = ft.Column(spacing=8, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False)
         page.bgcolor = C["bg"]
         page.padding = 8
         page.scroll  = "auto"
@@ -5089,7 +5090,6 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
         fld_profile_charan = ft.Dropdown(label="Charan / Pada 1-4", value="1", options=[ft.dropdown.Option("1"), ft.dropdown.Option("2"), ft.dropdown.Option("3"), ft.dropdown.Option("4")], width=160)
         profile_detail_text = ft.Text("", size=12, color=C["black_txt"], selectable=True)
         profile_saved_banner = ft.Text("", size=13, weight="bold", color=C["green"])
-        personal_confluence_container = ft.Column(spacing=8, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False)
 
         def refresh_profile_display():
             prof = load_user_profile_db()

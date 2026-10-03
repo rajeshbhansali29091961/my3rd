@@ -588,6 +588,7 @@ def full_analysis_for_stock(symbol, stock_name_devanagari=None, listing_date_str
     }
 
 
+
 NAK = [
     "अश्विनी","भरणी","कृत्तिका","रोहिणी","मृगशिरा","आर्द्रा",
     "पुनर्वसु","पुष्य","आश्लेषा","मघा","पूर्वाफाल्गुनी","उत्तराफाल्गुनी",
@@ -595,6 +596,50 @@ NAK = [
     "मूल","पूर्वाषाढ़ा","उत्तराषाढ़ा","श्रवण","धनिष्ठा","शतभिषा",
     "पूर्वाभाद्रपद","उत्तराभाद्रपद","रेवती"
 ]
+NAK_EN = ["Ashwini","Bharani","Krittika","Rohini","Mrigashira","Ardra","Punarvasu","Pushya","Ashlesha","Magha","P.Phalguni","U.Phalguni","Hasta","Chitra","Swati","Vishakha","Anuradha","Jyeshtha","Mula","P.Shadha","U.Shadha","Shravana","Dhanishtha","Shatabhisha","P.Bhadra","U.Bhadra","Revati"]
+NAK_SYLLABLES = {0:["Chu","Che","Cho","La"],1:["Li","Lu","Le","Lo"],2:["A","I","U","E"],3:["O","Va","Vi","Vu"],4:["Ve","Vo","Ka","Ki"],5:["Ku","Gha","Ng","Chha"],6:["Ke","Ko","Ha","Hi"],7:["Hu","He","Ho","Da"],8:["Di","Du","De","Do"],9:["Ma","Mi","Mu","Me"],10:["Mo","Ta","Ti","Tu"],11:["Te","To","Pa","Pi"],12:["Pu","Sha","Na","Tha"],13:["Pe","Po","Ra","Ri"],14:["Ru","Re","Ro","Ta"],15:["Ti","Tu","Te","To"],16:["Na","Ni","Nu","Ne"],17:["No","Ya","Yi","Yu"],18:["Ye","Yo","Bha","Bhi"],19:["Bhu","Dha","Pha","Dha"],20:["Bhe","Bho","Ja","Ji"],21:["Ju","Je","Jo","Gha"],22:["Ga","Gi","Gu","Ge"],23:["Go","Sa","Si","Su"],24:["Se","So","Da","Di"],25:["Du","Tha","Jha","Na"],26:["De","Do","Cha","Chi"]}
+CHARAN_RASHI_108 = ["Aries","Aries","Aries","Aries","Taurus","Taurus","Taurus","Taurus","Taurus","Taurus","Gemini","Gemini","Gemini","Gemini","Gemini","Gemini","Gemini","Cancer","Cancer","Cancer","Cancer","Cancer","Cancer","Cancer","Leo","Leo","Leo","Leo","Leo","Virgo","Virgo","Virgo","Virgo","Virgo","Virgo","Libra","Libra","Libra","Libra","Libra","Libra","Libra","Scorpio","Scorpio","Scorpio","Scorpio","Scorpio","Sagittarius","Sagittarius","Sagittarius","Sagittarius","Sagittarius","Capricorn","Capricorn","Capricorn","Capricorn","Capricorn","Capricorn","Capricorn","Aquarius","Aquarius","Aquarius","Aquarius","Aquarius","Pisces","Pisces","Pisces","Pisces","Pisces","Pisces","Pisces","Pisces","Aries","Aries","Aries","Aries","Taurus","Taurus","Taurus","Taurus","Taurus","Gemini","Gemini","Gemini","Gemini","Gemini","Cancer","Cancer","Cancer","Cancer","Cancer","Leo","Leo","Leo","Leo","Leo","Virgo","Virgo","Virgo","Virgo","Virgo","Libra","Libra","Libra","Libra","Libra"]
+
+def get_charan_details(nak_idx, charan):
+    if nak_idx is None or charan is None:
+        return {"rashi":"-","syllable":"-","navamsa":"-","pada":0,"deg":"-"}
+    full_idx = nak_idx*4 + (charan-1)
+    rashi = CHARAN_RASHI_108[full_idx] if full_idx < len(CHARAN_RASHI_108) else "Unknown"
+    syll = NAK_SYLLABLES.get(nak_idx, ["-"]*4)[charan-1] if charan<=4 else "-"
+    nav_rashi = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"][full_idx%12]
+    return {"rashi":rashi,"syllable":syll,"navamsa":nav_rashi,"pada":full_idx+1,"deg":f"{full_idx*3.333:.2f}°"}
+
+def calc_user_tara_chandra_sbc(birth_nak_idx, moon_nak_idx):
+    if birth_nak_idx is None or moon_nak_idx is None:
+        return None
+    diff = (moon_nak_idx - birth_nak_idx) % 27
+    tara_num = (diff % 9) + 1
+    tara_name = list(TARA_NAMES.values())[tara_num-1] if tara_num in TARA_NAMES else f"Tara {tara_num}"
+    tara_good = tara_num in TARA_GOOD
+    tara_bad = tara_num in TARA_BAD
+    birth_rashi_idx = int(birth_nak_idx // 2.25)
+    moon_rashi_idx = int(moon_nak_idx // 2.25)
+    dist = (moon_rashi_idx - birth_rashi_idx) % 12 + 1
+    chandra_good = dist not in [6,8,12]
+    tikshna = [1,2,8,9,17,18]
+    mridu = [3,4,6,7,12,13,16,26,21,23]
+    if moon_nak_idx in tikshna:
+        sbc_score, sbc_sig = 35, "BEARISH Volatile"
+    elif moon_nak_idx in mridu:
+        sbc_score, sbc_sig = 80, "BULLISH Stable"
+    else:
+        sbc_score, sbc_sig = 60, "NEUTRAL"
+    vedha = VEDHA_PAIRS.get(birth_nak_idx) == moon_nak_idx if birth_nak_idx is not None else False
+    points = 0
+    if tara_good: points+=1
+    if tara_bad: points-=1
+    if chandra_good: points+=1
+    else: points-=1
+    if sbc_score>=70: points+=1
+    elif sbc_score<=40: points-=1
+    if vedha: points-=1
+    return {"tara_num":tara_num,"tara_name":tara_name,"tara_good":tara_good,"tara_bad":tara_bad,"chandra_dist":dist,"chandra_good":chandra_good,"sbc_score":sbc_score,"sbc_sig":sbc_sig,"vedha":vedha,"points":points}
+
 # Sarvatobhadra Chakra Vedha (obstruction) pairs — classical Muhurta-shastra nakshatra
 # pairing used to flag an afflicted/inauspicious combination. Indices are 0-based to
 # match NAK above (0=Ashwini ... 26=Revati). Dhanishta (22) traditionally has no partner.
@@ -641,6 +686,34 @@ def get_tara_bala(listing_nak_idx, target_nak_idx):
     diff = (target_nak_idx - listing_nak_idx) % 27
     tara_num = (diff % 9) + 1
     return tara_num, TARA_NAMES.get(tara_num, "Unknown")
+
+
+def save_user_profile_db(birth_nak_idx, birth_charan):
+    try:
+        conn = sqlite3.connect(str(DB_PATH))
+        cur = conn.cursor()
+        details = get_charan_details(birth_nak_idx, birth_charan)
+        cur.execute("INSERT OR REPLACE INTO user_profile(id,birth_nak_idx,birth_nak_en,birth_nak_hi,birth_charan,rashi,syllable,navamsa,pada,created) VALUES(1,?,?,?,?,?,?,?,?,?)",
+            (birth_nak_idx, NAK_EN[birth_nak_idx] if birth_nak_idx < len(NAK_EN) else "", NAK[birth_nak_idx] if birth_nak_idx < len(NAK) else "", birth_charan, details["rashi"], details["syllable"], details["navamsa"], details["pada"], datetime.now().isoformat()))
+        conn.commit()
+        conn.close()
+        return True, details
+    except Exception as e:
+        return False, str(e)
+
+def load_user_profile_db():
+    try:
+        conn = sqlite3.connect(str(DB_PATH))
+        cur = conn.cursor()
+        cur.execute("SELECT birth_nak_idx,birth_nak_en,birth_nak_hi,birth_charan,rashi,syllable,navamsa,pada FROM user_profile WHERE id=1")
+        row = cur.fetchone()
+        conn.close()
+        if row:
+            return {"nak_idx":row[0],"nak_name":row[1],"nak_hi":row[2],"charan":row[3],"rashi":row[4],"syllable":row[5],"navamsa":row[6],"pada":row[7]}
+        return None
+    except:
+        return None
+
 
 def get_tara_impact_on_direction(combined_dir, tara_num, has_vedha):
     if tara_num == 0:
@@ -2316,6 +2389,18 @@ def main(page: ft.Page):
                 conn.commit()
             except Exception:
                 pass  # non-fatal — worst case, these names get auto-generated like any other stock
+            conn.execute("""CREATE TABLE IF NOT EXISTS user_profile(
+                id INTEGER PRIMARY KEY CHECK(id=1),
+                birth_nak_idx INTEGER,
+                birth_nak_en TEXT,
+                birth_nak_hi TEXT,
+                birth_charan INTEGER,
+                rashi TEXT,
+                syllable TEXT,
+                navamsa TEXT,
+                pada INTEGER,
+                created TEXT
+            )""")
             conn.execute("""CREATE TABLE IF NOT EXISTS simple_rules(
                 id                  INTEGER PRIMARY KEY AUTOINCREMENT,
                 planet              TEXT NOT NULL DEFAULT 'ANY',
@@ -3629,6 +3714,7 @@ def main(page: ft.Page):
                 ft.Text("42 days NSE history + all 24 Bandhas with hit/miss + 9-day prediction (listing date + swisseph)", size=12, color=C["hint_txt"]),
                 ft.ElevatedButton("🕉️  RUN 24 BANDHA BACKTEST", bgcolor="#6A1B9A", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_bandha_backtest),
                 bandha_backtest_container,
+            personal_confluence_container,
             ]),
             make_collapsible_section("📈  Technical Analysis", [
                 ft.Text("real price/volume data (SMA, RSI, MACD)", size=12, color=C["hint_txt"]),
@@ -4996,7 +5082,100 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
 
 
         # ── NAVIGATION CONTROL ────────────────────────────────────────────────
-        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen, "place": place_screen, "rules": rules_screen, "help": help_screen}
+
+        # ── USER BIRTH PROFILE SCREEN — Birth Nakshatra + Charan (separate button) ──
+        birth_nak_options = [ft.dropdown.Option(f"{en} ({hi})") for en, hi in zip(NAK_EN, NAK_HI)]
+        fld_profile_nak = ft.Dropdown(label="Birth Nakshatra (27)", value=f"{NAK_EN[0]} ({NAK_HI[0]})", options=birth_nak_options, width=360)
+        fld_profile_charan = ft.Dropdown(label="Charan / Pada 1-4", value="1", options=[ft.dropdown.Option("1"), ft.dropdown.Option("2"), ft.dropdown.Option("3"), ft.dropdown.Option("4")], width=160)
+        profile_detail_text = ft.Text("", size=12, color=C["black_txt"], selectable=True)
+        profile_saved_banner = ft.Text("", size=13, weight="bold", color=C["green"])
+        personal_confluence_container = ft.Column(spacing=8, visible=False)
+
+        def refresh_profile_display():
+            prof = load_user_profile_db()
+            if prof:
+                det = get_charan_details(prof["nak_idx"], prof["charan"])
+                profile_saved_banner.value = f"Saved: {prof['nak_name']} Charan {prof['charan']} | Rashi {det['rashi']} | Akshar {det['syllable']} | Navamsa {det['navamsa']} | Pada {det['pada']}/108"
+                profile_detail_text.value = f"Rashi: {det['rashi']} | Syllable: {det['syllable']} | Navamsa: {det['navamsa']} | Full Pada: {det['pada']} | Deg: {det['deg']} | Lord: {NAKSHATRA_LORD_CYCLE[prof['nak_idx']%9]} | Use for Tara/Chandra/SBC"
+            else:
+                profile_saved_banner.value = "No birth profile saved yet."
+                profile_detail_text.value = "Select your birth Nakshatra (from Kundli) and Charan 1-4. Each Charan = 3°20'. Used for Tara Bala, Chandra Bala, Vedha, SBC - all-round Indian prediction."
+
+        def do_save_birth_profile(e):
+            try:
+                sel = fld_profile_nak.value
+                nak_idx = 0
+                for i, en in enumerate(NAK_EN):
+                    if en in sel:
+                        nak_idx = i
+                        break
+                charan = int(fld_profile_charan.value)
+                ok, det = save_user_profile_db(nak_idx, charan)
+                if ok:
+                    refresh_profile_display()
+                    set_status(f"Birth saved: {NAK_EN[nak_idx]} Charan {charan} Rashi {det['rashi']}", C["green"])
+                else:
+                    set_status(f"Save failed: {det}", C["red"])
+                page.update()
+            except Exception as ex:
+                set_status(f"Save error: {ex}", C["red"])
+                page.update()
+
+        btn_save_profile = ft.ElevatedButton("💾 SET BIRTH NAKSHATRA + CHARAN", bgcolor=C["primary"], color="#FFFFFF", height=50, on_click=do_save_birth_profile)
+
+        profile_screen = ft.Column(visible=False, scroll="auto", controls=[
+            make_header("👤 MY BIRTH - Nakshatra + Charan (Indian All-Round)"),
+            ft.Text("Set your birth Nakshatra and Charan once - used for Tara Bala, Chandra Bala, Vedha, SBC confluence with Bhoovalaya. This makes prediction personal and all-round as per Indian culture.", size=12, color=C["black_txt"]),
+            ft.Divider(height=4, color=C["divider"]),
+            fld_profile_nak,
+            fld_profile_charan,
+            btn_save_profile,
+            ft.Divider(height=4, color=C["divider"]),
+            profile_saved_banner,
+            profile_detail_text,
+            ft.Container(height=10),
+            ft.Text("Charan Details: 1 Charan = 3°20'. 108 Charan = 12 Rashi x 9 Navamsa. Your syllable (e.g., Chu, Che, Cho, La for Ashwini) is your name's starting sound as per Indian naming.", size=11, color=C["hint_txt"]),
+            ft.Text("How it helps: Birth Nak vs Today Moon = Tara (Sampat good, Vipat bad). Rashi vs Moon Rashi = Chandra Bala (6/8/12 weak). Birth Nak vs Moon Vedha = obstruction. Combined with Bhoovalaya Bandha + SBC = 7-point all-round signal.", size=11, color=C["hint_txt"]),
+        ])
+
+        refresh_profile_display()
+
+        def render_personal_confluence(moon_nak_idx):
+            prof = load_user_profile_db()
+            personal_confluence_container.controls.clear()
+            if not prof:
+                personal_confluence_container.controls.append(ft.Container(content=ft.Text("👤 Set Birth Nakshatra + Charan in My Birth tab for personal all-round prediction - Tara/Chandra/SBC", size=12, color="#FFFFFF", weight="bold"), bgcolor="#6A1B9A", padding=10, border_radius=8))
+                personal_confluence_container.visible=True
+                return
+            calc = calc_user_tara_chandra_sbc(prof["nak_idx"], moon_nak_idx)
+            char_det = get_charan_details(prof["nak_idx"], prof["charan"])
+            if not calc:
+                personal_confluence_container.visible=False
+                return
+            tara_color = C["green"] if calc["tara_good"] else C["red"] if calc["tara_bad"] else C["orange"]
+            chandra_color = C["green"] if calc["chandra_good"] else C["red"]
+            vedha_color = C["red"] if calc["vedha"] else C["green"]
+            if calc["points"]>=3:
+                final_personal="STRONG BULLISH for YOU"; final_col=C["green"]
+            elif calc["points"]>=1:
+                final_personal="BULLISH for YOU - Buy on dip"; final_col=C["green"]
+            elif calc["points"]<=-2:
+                final_personal="STRONG BEARISH for YOU - Avoid"; final_col=C["red"]
+            elif calc["points"]<=0:
+                final_personal="BEARISH for YOU - Caution"; final_col=C["orange"]
+            else:
+                final_personal="NEUTRAL for YOU - Wait"; final_col=C["orange"]
+            personal_confluence_container.controls.append(ft.Divider(height=4, color=C["divider"]))
+            personal_confluence_container.controls.append(ft.Container(content=ft.Column([
+                ft.Text(f"👤 PERSONAL ALL-ROUND (Birth: {prof['nak_name']} Charan {prof['charan']} Rashi {char_det['rashi']} Akshar {char_det['syllable']} Navamsa {char_det['navamsa']} Pada {char_det['pada']}/108)", size=12, weight="bold", color="#FFFFFF"),
+                ft.Text(f"Tara: {calc['tara_num']} {calc['tara_name']} - {'GOOD' if calc['tara_good'] else 'BAD' if calc['tara_bad'] else 'NEUTRAL'} | Chandra: {calc['chandra_dist']}th - {'GOOD' if calc['chandra_good'] else 'WEAK 6/8/12'} | Vedha: {'YES Obstruction' if calc['vedha'] else 'No Clear'} | SBC: {calc['sbc_score']} {calc['sbc_sig']}", size=11, color="#000000", weight="bold"),
+                ft.Text(f"Personal Score: {calc['points']}/5 | {final_personal}", size=13, weight="bold", color="#FFFFFF"),
+            ], spacing=4), bgcolor=final_col, padding=10, border_radius=8))
+            personal_confluence_container.controls.append(ft.Text(f"Your birth Nak {prof['nak_name']} vs Today Moon {NAK_HI[moon_nak_idx] if moon_nak_idx < len(NAK_HI) else ''} = Tara {calc['tara_name']}. Rashi {char_det['rashi']} vs Moon Rashi = Chandra Bala. Combined with Bhoovalaya Bandha + SBC = all-round.", size=10, color=C["hint_txt"]))
+            personal_confluence_container.visible=True
+
+
+        all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen, "place": place_screen, "rules": rules_screen, "help": help_screen, "profile": profile_screen}
 
         AZ_LETTERS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
         az_letter_containers = {}  # letter -> its Container, so we can restyle the selected one
@@ -5066,6 +5245,7 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
             (ft.Icons.STARS,                  "Kundali",  "astro",  "#EF6C00"),
             (ft.Icons.STORAGE,                "Data",     "db",     "#455A64"),
             (ft.Icons.RULE,                   "Rules",    "rules",  "#2E7D32"),
+            (ft.Icons.PERSON,                 "My Birth", "profile", "#6A1B9A"),
         ]
 
         def nav_button(icon, label, target, color):

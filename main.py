@@ -5085,8 +5085,8 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
         # ── NAVIGATION CONTROL ────────────────────────────────────────────────
 
         # ── USER BIRTH PROFILE SCREEN — Birth Nakshatra + Charan (separate button) ──
-        birth_nak_options = [ft.dropdown.Option(f"{en} ({hi})") for en, hi in zip(NAK_EN, NAK_HI)]
-        fld_profile_nak = ft.Dropdown(label="Birth Nakshatra (27)", value=f"{NAK_EN[0]} ({NAK_HI[0]})", options=birth_nak_options, width=360)
+        birth_nak_options = [ft.dropdown.Option(f"{en} ({hi})") for en, hi in zip(NAK_EN, NAK)]
+        fld_profile_nak = ft.Dropdown(label="Birth Nakshatra (27)", value=f"{NAK_EN[0]} ({NAK[0]})", options=birth_nak_options, width=360)
         fld_profile_charan = ft.Dropdown(label="Charan / Pada 1-4", value="1", options=[ft.dropdown.Option("1"), ft.dropdown.Option("2"), ft.dropdown.Option("3"), ft.dropdown.Option("4")], width=160)
         profile_detail_text = ft.Text("", size=12, color=C["black_txt"], selectable=True)
         profile_saved_banner = ft.Text("", size=13, weight="bold", color=C["green"])
@@ -5171,7 +5171,7 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
                 ft.Text(f"Tara: {calc['tara_num']} {calc['tara_name']} - {'GOOD' if calc['tara_good'] else 'BAD' if calc['tara_bad'] else 'NEUTRAL'} | Chandra: {calc['chandra_dist']}th - {'GOOD' if calc['chandra_good'] else 'WEAK 6/8/12'} | Vedha: {'YES Obstruction' if calc['vedha'] else 'No Clear'} | SBC: {calc['sbc_score']} {calc['sbc_sig']}", size=11, color="#000000", weight="bold"),
                 ft.Text(f"Personal Score: {calc['points']}/5 | {final_personal}", size=13, weight="bold", color="#FFFFFF"),
             ], spacing=4), bgcolor=final_col, padding=10, border_radius=8))
-            personal_confluence_container.controls.append(ft.Text(f"Your birth Nak {prof['nak_name']} vs Today Moon {NAK_HI[moon_nak_idx] if moon_nak_idx < len(NAK_HI) else ''} = Tara {calc['tara_name']}. Rashi {char_det['rashi']} vs Moon Rashi = Chandra Bala. Combined with Bhoovalaya Bandha + SBC = all-round.", size=10, color=C["hint_txt"]))
+            personal_confluence_container.controls.append(ft.Text(f"Your birth Nak {prof['nak_name']} vs Today Moon {NAK[moon_nak_idx] if moon_nak_idx < len(NAK) else ''} = Tara {calc['tara_name']}. Rashi {char_det['rashi']} vs Moon Rashi = Chandra Bala. Combined with Bhoovalaya Bandha + SBC = all-round.", size=10, color=C["hint_txt"]))
             personal_confluence_container.visible=True
 
 

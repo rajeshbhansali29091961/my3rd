@@ -1,47 +1,126 @@
-name: Build APK
-on: [push]
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
 
-      - name: Set up Python 3.11
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Set up Java 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: "17"
 
-      - name: Set up Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
-          channel: 'stable'
+          flutter-version: "3.27.4"
+          channel: stable
+          cache: true
+
+      - name: Install Android SDK
+        run: |
+          mkdir -p "$HOME/android/cmdline-tools"
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdline-tools.zip
+          unzip -q /tmp/cmdline-tools.zip -d "$HOME/android/cmdline-tools"
+          mv "$HOME/android/cmdline-tools/cmdline-tools" "$HOME/android/cmdline-tools/latest"
+          echo "ANDROID_HOME=$HOME/android" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$HOME/android" >> "$GITHUB_ENV"
+          echo "$HOME/android/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$HOME/android/platform-tools" >> "$GITHUB_PATH"
+
+      - name: Install Android packages
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.1.8937393"
+
+      - name: Get Swiss Ephemeris source
+        run: |
+          set -eux
+          git clone --depth 1 https://github.com/aloistr/swisseph.git sweph-src
+          ls -la sweph-src
+
+      - name: Build libswe.so ARM64 + ARMv7
+        run: |
+          set -eux
+          NDK="$HOME/android/ndk/25.1.8937393"
+          TOOLCHAIN="$NDK/toolchains/llvm/prebuilt/linux-x86_64"
+          mkdir -p native/arm64-v8a native/armeabi-v7a assets/native/ephe
+          $TOOLCHAIN/bin/aarch64-linux-android24-clang -shared -fPIC -O2 -o native/arm64-v8a/libswe.so sweph-src/swedate.c sweph-src/swehouse.c sweph-src/swejpl.c sweph-src/swemmoon.c sweph-src/swemplan.c sweph-src/sweph.c sweph-src/swephlib.c sweph-src/swecl.c sweph-src/swehel.c -lm
+          $TOOLCHAIN/bin/armv7a-linux-androideabi24-clang -shared -fPIC -O2 -o native/armeabi-v7a/libswe.so sweph-src/swedate.c sweph-src/swehouse.c sweph-src/swejpl.c sweph-src/swemmoon.c sweph-src/swemplan.c sweph-src/sweph.c sweph-src/swephlib.c sweph-src/swecl.c sweph-src/swehel.c -lm
+          file native/arm64-v8a/libswe.so native/armeabi-v7a/libswe.so
+
+      - name: Prepare ephemeris data
+        run: |
+          set -eux
+          mkdir -p native/ephe assets/native/ephe
+          for f in sepl_18.se1 semo_18.se1 seas_18.se1; do
+            if [ -f "sweph-src/ephe/$f" ]; then cp "sweph-src/ephe/$f" "native/ephe/$f"; echo "Copied from clone: $f"; fi
+            if [ -f "ephe-cache/$f" ]; then cp "ephe-cache/$f" "native/ephe/$f"; echo "Copied from ephe-cache: $f"; fi
+          done
+          cp native/ephe/* assets/native/ephe/ 2>/dev/null || true
+          cp -r native assets/ 2>/dev/null || true
+          ls -lh native/ephe/ assets/native/ephe/ || true
 
       - name: Install Flet
         run: |
           python -m pip install --upgrade pip
-          pip install flet==0.28.3
-          pip install flet-cli
+          pip install "flet==0.28.3"
 
-      - name: Create Flet project structure
+      - name: Show project layout
         run: |
-          mkdir -p temp_build/src
-          cp main.py temp_build/src/main.py
-          echo -e "name: bhoovalaya_oracle\nflet:\n " > temp_build/pyproject.toml
-          cat pyproject.toml >> temp_build/pyproject.toml || echo "dependencies = [\"flet==0.28.3\"]" >> temp_build/pyproject.toml
-          cd temp_build
+          flet --version
+          python --version
+          flutter --version
+          find . -maxdepth 3 -type f ! -path './.git/*' ! -path './sweph-src/*' | sort
+          find native assets -type f 2>/dev/null | sort || true
+
+      - name: Configure Gradle
+        run: |
+          mkdir -p "$HOME/.gradle"
+          cat > "$HOME/.gradle/gradle.properties" << 'EOF'
+          org.gradle.jvmargs=-Xmx5120m -XX:MaxMetaspaceSize=1g
+          org.gradle.parallel=false
+          org.gradle.workers.max=1
+          org.gradle.daemon=false
+          EOF
+
+      - name: Build APK
+        run: |
+          set -eux
+          export ANDROID_HOME="$HOME/android"
+          export ANDROID_SDK_ROOT="$HOME/android"
           flutter config --no-analytics
-          flet build apk --verbose
+          printf "y\n" | flet build apk --verbose --no-rich-output
+
+      - name: Inspect APK
+        run: |
+          set -eux
+          find build -type f -name "*.apk" -print
+          for apk in $(find build -type f -name "*.apk"); do
+            echo "=== $apk ==="
+            ls -lh "$apk"
+            unzip -l "$apk" | grep -E "libswe|sepl|semo|native|libflutter" || echo "checking apk content..."
+          done
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: apk
-          path: temp_build/build/apk
+          name: bhoovalaya-universal-apk
+          path: build/apk/*.apk
+          retention-days: 30

@@ -4261,8 +4261,6 @@ def main(page: ft.Page):
 
         db_place_summary_text = ft.Text(f"📍 Current astro Place: {current_place['place_name']} ({current_place['latitude']}, {current_place['longitude']}, GMT+{current_place['gmt_offset']})", size=12, color=C["black_txt"])
         db_profile_summary_text = ft.Text("👤 Birth: Not set — will show after you save in My Birth / Data tab", size=12, weight="bold", color="#4A148C")
-        db_profile_saved_banner = ft.Text("", size=13, weight="bold", color=C["green"])
-        db_profile_detail_text = ft.Text("", size=12, color=C["black_txt"], selectable=True)
 
         ephem_diag_text = ft.Text("", size=11, color=C["black_txt"], selectable=True, visible=False)
 
@@ -5109,78 +5107,127 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
 
         # ── NAVIGATION CONTROL ────────────────────────────────────────────────
 
-        # ── USER BIRTH PROFILE SCREEN — Birth Nakshatra + Charan (with DOB auto-calc) ──
+
+        # ── USER BIRTH PROFILE SCREEN — CLEAN FINAL FIX — NO PARENT CONFLICT ──
         birth_nak_options = [ft.dropdown.Option(f"{en} ({hi})") for en, hi in zip(NAK_EN, NAK)]
-        fld_profile_nak = ft.Dropdown(label="Birth Nakshatra (27)", value=f"{NAK_EN[0]} ({NAK[0]})", options=birth_nak_options, width=360)
+
+        def get_nak_idx_from_dropdown_value(val):
+            if not val: return 0
+            for i, en in enumerate(NAK_EN):
+                if en in val:
+                    return i
+            return 0
+
+        def calculate_janam_from_dob(d_str, t_str, lat_f, lon_f, gmt_f):
+            dt_date = parse_dt(d_str)
+            if not dt_date:
+                raise ValueError("Invalid DOB format, use DD-MM-YYYY")
+            hh, mm = 12, 0
+            if t_str and ":" in t_str:
+                try:
+                    hh = int(t_str.split(":")[0]); mm = int(t_str.split(":")[1])
+                except:
+                    hh, mm = 12, 0
+            local_dt = datetime(dt_date.year, dt_date.month, dt_date.day, hh, mm)
+            try:
+                gmt = float(gmt_f)
+            except:
+                gmt = 5.5
+            ut_dt = local_dt - timedelta(hours=gmt)
+            jd = (ut_dt - datetime(2000,1,1,12,0,0)).total_seconds()/86400.0 + 2451545.0
+            try:
+                sid, ay = calc_planet_positions(jd, float(lat_f), float(lon_f))
+                moon_sid = sid.get("Mo", 0.0)
+            except Exception:
+                moon_sid = get_planet_longitudes_for_date(local_dt).get(2, 0.0)
+                ay = 0.0
+            nak_idx, charan, _ = get_nakshatra_charan_from_lon(moon_sid)
+            det = get_charan_details(nak_idx, charan)
+            return nak_idx, charan, moon_sid, ay, det, local_dt
+
+        # PROFILE SCREEN FIELDS
+        fld_profile_dob = make_field("Date of Birth (DD-MM-YYYY)", value="15-08-1990", hint="DD-MM-YYYY")
+        fld_profile_time = make_field("Time of Birth (HH:MM 24h)", value="10:30", hint="HH:MM")
+        fld_profile_place = make_field("Place of Birth", value=current_place["place_name"], hint="e.g. Delhi, India")
+        fld_profile_lat = make_field("Birth Latitude", value=current_place["latitude"])
+        fld_profile_lon = make_field("Birth Longitude", value=current_place["longitude"])
+        fld_profile_gmt = make_field("Birth GMT Offset", value=current_place["gmt_offset"])
+        fld_profile_nak = ft.Dropdown(label="Janam Nakshatra (27)", value=f"{NAK_EN[0]} ({NAK[0]})", options=birth_nak_options, width=360)
         fld_profile_charan = ft.Dropdown(label="Charan / Pada 1-4", value="1", options=[ft.dropdown.Option("1"), ft.dropdown.Option("2"), ft.dropdown.Option("3"), ft.dropdown.Option("4")], width=160)
-
-        # NEW DOB fields - shared for both Data and My Birth tabs
-        fld_birth_dob = make_field("Date of Birth (DD-MM-YYYY)", value="15-08-1990", hint="e.g. 15-08-1990")
-        fld_birth_time = make_field("Time of Birth (HH:MM 24h)", value="10:30", hint="e.g. 10:30")
-        fld_birth_place = make_field("Birth Place", value=current_place["place_name"], hint="e.g. Delhi")
-        fld_birth_lat = make_field("Birth Latitude", value=current_place["latitude"])
-        fld_birth_lon = make_field("Birth Longitude", value=current_place["longitude"])
-        fld_birth_gmt = make_field("Birth GMT Offset", value=current_place["gmt_offset"])
-
-        profile_detail_text = ft.Text("", size=12, color=C["black_txt"], selectable=True)
+        profile_calc_preview = ft.Container(content=ft.Text("", size=13, weight="bold", color="#FFFFFF"), bgcolor="#4A148C", padding=12, border_radius=10, visible=False)
         profile_saved_banner = ft.Text("", size=13, weight="bold", color=C["green"])
-        profile_calc_preview = ft.Container(content=ft.Text("", size=13, weight="bold", color="#4A148C"), bgcolor="#F3E5F5", padding=10, border_radius=8, visible=False)
+        profile_detail_text = ft.Text("", size=12, color=C["black_txt"], selectable=True)
+
+        # DATA SCREEN FIELDS - SEPARATE OBJECTS
+        fld_data_dob = make_field("Date of Birth (DD-MM-YYYY)", value="15-08-1990", hint="DD-MM-YYYY")
+        fld_data_time = make_field("Time of Birth (HH:MM 24h)", value="10:30", hint="HH:MM")
+        fld_data_place = make_field("Place of Birth", value=current_place["place_name"], hint="e.g. Delhi, India")
+        fld_data_lat = make_field("Birth Latitude", value=current_place["latitude"])
+        fld_data_lon = make_field("Birth Longitude", value=current_place["longitude"])
+        fld_data_gmt = make_field("Birth GMT Offset", value=current_place["gmt_offset"])
+        fld_data_nak = ft.Dropdown(label="Janam Nakshatra (27)", value=f"{NAK_EN[0]} ({NAK[0]})", options=birth_nak_options, width=360)
+        fld_data_charan = ft.Dropdown(label="Charan / Pada 1-4", value="1", options=[ft.dropdown.Option("1"), ft.dropdown.Option("2"), ft.dropdown.Option("3"), ft.dropdown.Option("4")], width=160)
+        data_calc_preview = ft.Container(content=ft.Text("", size=13, weight="bold", color="#FFFFFF"), bgcolor="#6A1B9A", padding=12, border_radius=10, visible=False)
+        db_profile_summary_text = ft.Text("👤 Birth: Not set", size=12, weight="bold", color="#4A148C")
+        db_profile_saved_banner = ft.Text("", size=13, weight="bold", color=C["green"])
+        db_profile_detail_text = ft.Text("", size=12, color=C["black_txt"], selectable=True)
 
         def refresh_profile_display():
             prof = load_user_profile_db()
             if prof:
                 det = get_charan_details(prof["nak_idx"], prof["charan"])
-                profile_saved_banner.value = f"Saved: {prof['nak_name']} Charan {prof['charan']} | Rashi {det['rashi']} | Akshar {det['syllable']} | Navamsa {det['navamsa']} | Pada {det['pada']}/108"
-                profile_detail_text.value = f"Rashi: {det['rashi']} | Syllable: {det['syllable']} | Navamsa: {det['navamsa']} | Full Pada: {det['pada']} | Deg: {det['deg']} | Lord: {NAKSHATRA_LORD_CYCLE[prof['nak_idx']%9]}"
+                txt_saved = f"Saved: {prof['nak_name']} Charan {prof['charan']} | Rashi {det['rashi']} | Akshar {det['syllable']} | Navamsa {det['navamsa']} | Pada {det['pada']}/108"
+                txt_detail = f"Rashi: {det['rashi']} | Syllable: {det['syllable']} | Navamsa: {det['navamsa']} | Full Pada: {det['pada']} | Deg: {det['deg']} | Lord: {NAKSHATRA_LORD_CYCLE[prof['nak_idx']%9]}"
+                profile_saved_banner.value = txt_saved
+                profile_detail_text.value = txt_detail
+                db_profile_saved_banner.value = txt_saved
+                db_profile_detail_text.value = txt_detail
+                db_profile_summary_text.value = f"👤 Birth: {prof['nak_name']} C{prof['charan']} | {det['rashi']} | Akshar {det['syllable']}"
                 try:
                     fld_profile_nak.value = f"{NAK_EN[prof['nak_idx']]} ({NAK[prof['nak_idx']]})"
                     fld_profile_charan.value = str(prof["charan"])
-                except:
-                    pass
-                try:
-                    db_profile_summary_text.value = f"👤 Birth: {prof['nak_name']} C{prof['charan']} | {det['rashi']} | Akshar {det['syllable']} | Lord {NAKSHATRA_LORD_CYCLE[prof['nak_idx']%9]}"
-                    db_profile_saved_banner.value = f"Saved: {prof['nak_name']} Charan {prof['charan']} | Rashi {det['rashi']} | Pada {det['pada']}/108"
-                    db_profile_detail_text.value = f"Rashi: {det['rashi']} | Syllable: {det['syllable']} | Navamsa: {det['navamsa']} | Full Pada: {det['pada']} | Lord: {NAKSHATRA_LORD_CYCLE[prof['nak_idx']%9]}"
+                    fld_data_nak.value = f"{NAK_EN[prof['nak_idx']]} ({NAK[prof['nak_idx']]})"
+                    fld_data_charan.value = str(prof["charan"])
                 except:
                     pass
             else:
                 profile_saved_banner.value = "No birth profile saved yet."
-                profile_detail_text.value = "Enter DOB above and tap CALCULATE, or select Nakshatra/Charan manually if you already know from Kundli."
-                try:
-                    db_profile_summary_text.value = "👤 Birth: Not set — enter DOB in Data / My Birth tab"
-                    db_profile_saved_banner.value = "No birth profile saved yet."
-                    db_profile_detail_text.value = "Enter DOB above and tap CALCULATE"
-                except:
-                    pass
+                profile_detail_text.value = "Enter DOB + Time + Place and tap CALCULATE"
+                db_profile_saved_banner.value = "No birth profile saved yet."
+                db_profile_detail_text.value = "Enter DOB + Time + Place and tap CALCULATE"
+                db_profile_summary_text.value = "👤 Birth: Not set — enter DOB below"
 
-        def do_calc_from_dob(e):
+        def do_calc_from_dob_profile(e):
             try:
-                d_str = fld_birth_dob.value.strip()
-                t_str = fld_birth_time.value.strip() or "12:00"
-                lat = float(fld_birth_lat.value.strip() or current_place["latitude"])
-                lon = float(fld_birth_lon.value.strip() or current_place["longitude"])
-                dt_date = parse_dt(d_str)
-                if not dt_date:
-                    set_status("Invalid DOB format — use DD-MM-YYYY", C["red"])
-                    page.update()
-                    return
-                hh, mm = 12,0
-                try:
-                    if ":" in t_str:
-                        parts = t_str.split(":")
-                        hh = int(parts[0]); mm = int(parts[1])
-                    else:
-                        hh = int(t_str)
-                except:
-                    hh,mm = 12,0
-                dt_full = datetime(dt_date.year, dt_date.month, dt_date.day, hh, mm)
-                nak_idx, charan, moon_lon, ay, sid = calc_birth_nak_from_dob(dt_full, lat, lon)
-                det = get_charan_details(nak_idx, charan)
+                nak_idx, charan, moon_lon, ay, det, local_dt = calculate_janam_from_dob(
+                    fld_profile_dob.value.strip(), fld_profile_time.value.strip(),
+                    fld_profile_lat.value.strip() or "28.6139",
+                    fld_profile_lon.value.strip() or "77.2090",
+                    fld_profile_gmt.value.strip() or "5.5"
+                )
                 fld_profile_nak.value = f"{NAK_EN[nak_idx]} ({NAK[nak_idx]})"
                 fld_profile_charan.value = str(charan)
-                profile_calc_preview.content.value = f"📅 DOB: {d_str} {t_str} | Moon {moon_lon:.2f}° | Ayanamsa {ay:.4f}°\n➡️ {NAK_EN[nak_idx]} ({NAK[nak_idx]}) Charan {charan} | Rashi {det['rashi']} | Syllable {det['syllable']} | Pada {det['pada']}/108 | Lord {NAKSHATRA_LORD_CYCLE[nak_idx%9]}"
+                profile_calc_preview.content.value = f"📅 {fld_profile_dob.value} {fld_profile_time.value} | Moon {moon_lon:.2f}° Lahiri | Ayanamsa {ay:.4f}°\n➡️ {NAK_EN[nak_idx]} ({NAK[nak_idx]}) Charan {charan} | Rashi {det['rashi']} | Syllable {det['syllable']} | Pada {det['pada']}/108"
                 profile_calc_preview.visible = True
-                set_status(f"Calculated from DOB: {NAK_EN[nak_idx]} Charan {charan} — tap SAVE below", C["green"])
+                set_status(f"Calculated: {NAK_EN[nak_idx]} C{charan} - tap SAVE", C["green"])
+                page.update()
+            except Exception as ex:
+                set_status(f"DOB calc error: {ex}", C["red"])
+                page.update()
+
+        def do_calc_from_dob_data(e):
+            try:
+                nak_idx, charan, moon_lon, ay, det, local_dt = calculate_janam_from_dob(
+                    fld_data_dob.value.strip(), fld_data_time.value.strip(),
+                    fld_data_lat.value.strip() or "28.6139",
+                    fld_data_lon.value.strip() or "77.2090",
+                    fld_data_gmt.value.strip() or "5.5"
+                )
+                fld_data_nak.value = f"{NAK_EN[nak_idx]} ({NAK[nak_idx]})"
+                fld_data_charan.value = str(charan)
+                data_calc_preview.content.value = f"📅 {fld_data_dob.value} {fld_data_time.value} | Moon {moon_lon:.2f}° Lahiri | Ayanamsa {ay:.4f}°\n➡️ {NAK_EN[nak_idx]} ({NAK[nak_idx]}) Charan {charan} | Rashi {det['rashi']} | Syllable {det['syllable']} | Pada {det['pada']}/108"
+                data_calc_preview.visible = True
+                set_status(f"Calculated: {NAK_EN[nak_idx]} C{charan} - tap SAVE", C["green"])
                 page.update()
             except Exception as ex:
                 set_status(f"DOB calc error: {ex}", C["red"])
@@ -5188,12 +5235,7 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
 
         def do_save_birth_profile(e):
             try:
-                sel = fld_profile_nak.value
-                nak_idx = 0
-                for i, en in enumerate(NAK_EN):
-                    if en in sel:
-                        nak_idx = i
-                        break
+                nak_idx = get_nak_idx_from_dropdown_value(fld_profile_nak.value)
                 charan = int(fld_profile_charan.value)
                 ok, det = save_user_profile_db(nak_idx, charan)
                 if ok:
@@ -5206,125 +5248,78 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
                 set_status(f"Save error: {ex}", C["red"])
                 page.update()
 
-        btn_calc_dob = ft.ElevatedButton("🔮 CALCULATE Nakshatra+Charan FROM DOB", bgcolor="#6A1B9A", color="#FFFFFF", height=50, on_click=do_calc_from_dob)
-        btn_save_profile = ft.ElevatedButton("💾 SAVE Birth Nakshatra + Charan", bgcolor=C["primary"], color="#FFFFFF", height=50, on_click=do_save_birth_profile)
-
-        # Build common birth form column (used in both screens)
-        birth_form_common = ft.Column(spacing=8, controls=[
-            ft.Text("STEP 1: Date of Birth (auto-calculate)", size=13, weight="bold", color="#4A148C"),
-            fld_birth_dob, fld_birth_time, fld_birth_place,
-            ft.Row([fld_birth_lat, fld_birth_lon, fld_birth_gmt]),
-            btn_calc_dob,
-            profile_calc_preview,
-            ft.Divider(height=4, color=C["divider"]),
-            ft.Text("STEP 2: Confirm Nakshatra + Charan", size=13, weight="bold", color="#4A148C"),
-            fld_profile_nak,
-            fld_profile_charan,
-            btn_save_profile,
-            ft.Divider(height=4, color=C["divider"]),
-            profile_saved_banner,
-            profile_detail_text,
-        ])
-
-        profile_screen = ft.Column(visible=False, scroll="auto", controls=[
-            make_header("👤 MY BIRTH - Date of Birth + Nakshatra + Charan"),
-            ft.Text("Enter DOB + Time — app auto-calculates Nakshatra/Charan/Rashi using Swiss Ephemeris Lahiri. This makes Tara/Chandra/SBC personal.", size=12, color=C["black_txt"]),
-            ft.Divider(height=4, color=C["divider"]),
-            birth_form_common,
-            ft.Container(height=10),
-            ft.Text("Charan Details: 1 Charan = 3°20'. 108 Charan = 12 Rashi x 9 Navamsa. Your syllable (e.g., Chu, Che, Cho, La for Ashwini) is your name's starting sound.", size=11, color=C["hint_txt"]),
-        ])
-
-        refresh_profile_display()
-
-        refresh_profile_display()
-
-        # PROPER FIX: Data button now shows Birth Data + Database
-        # Instead of duplicating controls (which causes Flet parent conflict), Data screen will have its own dedicated DOB form that re-uses same logic via new field objects synced to the same save functions
-        # Create second set of fields for Data screen
-        fld_data_dob = make_field("Date of Birth (DD-MM-YYYY)", value=fld_birth_dob.value, hint="e.g. 15-08-1990")
-        fld_data_time = make_field("Time of Birth (HH:MM)", value=fld_birth_time.value)
-        fld_data_place = make_field("Birth Place", value=fld_birth_place.value)
-        fld_data_lat = make_field("Birth Latitude", value=fld_birth_lat.value)
-        fld_data_lon = make_field("Birth Longitude", value=fld_birth_lon.value)
-        fld_data_gmt = make_field("Birth GMT", value=fld_birth_gmt.value)
-        fld_data_nak = ft.Dropdown(label="Birth Nakshatra (27)", value=fld_profile_nak.value, options=birth_nak_options, width=360)
-        fld_data_charan = ft.Dropdown(label="Charan / Pada 1-4", value=fld_profile_charan.value, options=[ft.dropdown.Option("1"), ft.dropdown.Option("2"), ft.dropdown.Option("3"), ft.dropdown.Option("4")], width=160)
-        data_calc_preview = ft.Container(content=ft.Text("", size=12, weight="bold", color="#FFFFFF"), bgcolor="#6A1B9A", padding=10, border_radius=8, visible=False)
-
-        def do_calc_data_dob(e):
+        def do_save_birth_data(e):
             try:
-                # sync to main fields
-                fld_birth_dob.value = fld_data_dob.value
-                fld_birth_time.value = fld_data_time.value
-                fld_birth_place.value = fld_data_place.value
-                fld_birth_lat.value = fld_data_lat.value
-                fld_birth_lon.value = fld_data_lon.value
-                fld_birth_gmt.value = fld_data_gmt.value
-                do_calc_from_dob(e)
-                # copy preview
-                data_calc_preview.content.value = profile_calc_preview.content.value
-                data_calc_preview.visible = profile_calc_preview.visible
-                fld_data_nak.value = fld_profile_nak.value
-                fld_data_charan.value = fld_profile_charan.value
+                nak_idx = get_nak_idx_from_dropdown_value(fld_data_nak.value)
+                charan = int(fld_data_charan.value)
+                ok, det = save_user_profile_db(nak_idx, charan)
+                if ok:
+                    refresh_profile_display()
+                    set_status(f"Birth saved: {NAK_EN[nak_idx]} Charan {charan} Rashi {det['rashi']}", C["green"])
+                else:
+                    set_status(f"Save failed: {det}", C["red"])
                 page.update()
             except Exception as ex:
-                set_status(f"Data DOB calc error: {ex}", C["red"])
+                set_status(f"Save error: {ex}", C["red"])
                 page.update()
 
-        def do_save_data_birth(e):
-            try:
-                fld_profile_nak.value = fld_data_nak.value
-                fld_profile_charan.value = fld_data_charan.value
-                do_save_birth_profile(e)
-                # refresh data fields
-                fld_data_nak.value = fld_profile_nak.value
-                fld_data_charan.value = fld_profile_charan.value
-                page.update()
-            except Exception as ex:
-                set_status(f"Data save error: {ex}", C["red"])
-                page.update()
-
-        db_screen.controls = [
-            make_header("⚙️ DATA - My Birth + Database Setup"),
-            ft.Container(
-                content=ft.Column([
-                    ft.Text("👤 MY DATA - Date of Birth + Nakshatra + Charan", size=16, weight="bold", color="#FFFFFF"),
-                    db_profile_summary_text,
-                    ft.Text("This is what you asked for - Data button now asks for DOB, Nakshatra, Charan", size=11, color="#E1BEE7"),
-                ]), bgcolor="#4A148C", padding=14, border_radius=12
-            ),
+        profile_screen = ft.Column(visible=False, scroll=ft.ScrollMode.AUTO, controls=[
+            make_header("👤 MY BIRTH - Janam Nakshatra"),
+            ft.Container(content=ft.Text("Enter Date of Birth, Time and Place → Auto-calculates Janam Nakshatra + Charan using Swiss Ephemeris (Lahiri) from your ephe/ folder.", size=12, color="#FFFFFF"), bgcolor="#4A148C", padding=12, border_radius=10),
             ft.Divider(height=6, color=C["divider"]),
-            ft.Text("STEP 1: Enter Date of Birth", size=13, weight="bold", color="#4A148C"),
+            ft.Text("STEP 1: Date of Birth, Time, Place of Birth", size=13, weight="bold", color="#4A148C"),
+            fld_profile_dob, fld_profile_time, fld_profile_place,
+            ft.Row([fld_profile_lat, fld_profile_lon, fld_profile_gmt]),
+            ft.ElevatedButton("🔮 CALCULATE Janam Nakshatra + Charan FROM DOB", bgcolor="#6A1B9A", color="#FFFFFF", height=54, on_click=do_calc_from_dob_profile),
+            profile_calc_preview,
+            ft.Divider(height=6, color=C["divider"]),
+            ft.Text("STEP 2: Confirm Janam Nakshatra + Charan", size=13, weight="bold", color="#4A148C"),
+            fld_profile_nak, fld_profile_charan,
+            ft.ElevatedButton("💾 SAVE Birth Data", bgcolor=C["primary"], color="#FFFFFF", height=50, on_click=do_save_birth_profile),
+            ft.Divider(height=6, color=C["divider"]),
+            profile_saved_banner, profile_detail_text,
+        ])
+
+        # Rebuild db_screen - CLEAN, no shared controls
+        db_screen.controls = [
+            make_header("⚙️ MY DATA - DOB + Janam Nakshatra + Database"),
+            ft.Container(content=ft.Column([
+                ft.Text("👤 MY DATA - Date of Birth + Nakshatra + Charan", size=16, weight="bold", color="#FFFFFF"),
+                db_profile_summary_text,
+                ft.Text("Enter DOB, Time, Place → auto-calculates Janam Nakshatra + Charan using swisseph/ephe/ files from GitHub", size=11, color="#E1BEE7"),
+            ]), bgcolor="#4A148C", padding=14, border_radius=12),
+            ft.Divider(height=6, color=C["divider"]),
+            ft.Text("STEP 1: Date of Birth, Time, Place of Birth", size=13, weight="bold", color="#4A148C"),
             fld_data_dob, fld_data_time, fld_data_place,
             ft.Row([fld_data_lat, fld_data_lon, fld_data_gmt]),
-            ft.ElevatedButton("🔮 CALCULATE Nakshatra+Charan FROM DOB", bgcolor="#6A1B9A", color="#FFFFFF", height=50, on_click=do_calc_data_dob),
+            ft.ElevatedButton("🔮 CALCULATE Janam Nakshatra + Charan FROM DOB", bgcolor="#6A1B9A", color="#FFFFFF", height=54, on_click=do_calc_from_dob_data),
             data_calc_preview,
-            ft.Divider(height=4, color=C["divider"]),
-            ft.Text("STEP 2: Confirm Nakshatra + Charan", size=13, weight="bold", color="#4A148C"),
+            ft.Divider(height=6, color=C["divider"]),
+            ft.Text("STEP 2: Confirm Janam Nakshatra + Charan", size=13, weight="bold", color="#4A148C"),
             fld_data_nak, fld_data_charan,
-            ft.ElevatedButton("💾 SAVE Birth Nakshatra + Charan", bgcolor=C["primary"], color="#FFFFFF", height=50, on_click=do_save_data_birth),
-            db_profile_saved_banner,
-            db_profile_detail_text,
-            ft.Divider(height=10, color=C["divider"]),
-            ft.Text("DATABASE ENGINE (below)", size=14, weight="bold", color=C["black_txt"]),
+            ft.ElevatedButton("💾 SAVE Birth Data for Future Calculations", bgcolor=C["primary"], color="#FFFFFF", height=54, on_click=do_save_birth_data),
+            ft.Divider(height=6, color=C["divider"]),
+            db_profile_saved_banner, db_profile_detail_text,
+            ft.Divider(height=12, color=C["divider"]),
+            make_header("🔧 DATABASE ENGINE"),
             ft.ElevatedButton("⚡ BUILD AUTOMATED DATABASE", bgcolor=C["orange"], color="#FFFFFF", height=54, on_click=lambda e: __import__("threading").Thread(target=build_db_thread, daemon=True).start()),
             prg_bar, prg_txt,
             db_place_summary_text,
-            ft.Row([
-                ft.ElevatedButton("📍 PLACE SETTINGS", bgcolor="#455A64", color="#FFFFFF", expand=1, on_click=lambda e: show_screen("place")),
-                ft.ElevatedButton("👤 MY BIRTH TAB", bgcolor="#6A1B9A", color="#FFFFFF", expand=1, on_click=lambda e: show_screen("profile")),
-            ]),
+            ft.ElevatedButton("📍 PLACE SETTINGS", bgcolor="#455A64", color="#FFFFFF", height=44, on_click=lambda e: show_screen("place")),
             ft.ElevatedButton("🔧 CHECK EPHEMERIS FILES", bgcolor="#37474F", color="#FFFFFF", height=44, on_click=do_check_ephemeris),
             ephem_diag_text,
             ft.Divider(height=8, color=C["divider"]),
-            ft.Text("💾 BACKUP / RESTORE", size=14, weight="bold", color=C["black_txt"]),
+            ft.Text("💾 BACKUP / RESTORE", size=12, weight="bold", color=C["black_txt"]),
             ft.ElevatedButton("📤 EXPORT MY CORRECTIONS", bgcolor=C["accent"], color="#FFFFFF", height=44, on_click=do_export_full),
             backup_output, backup_input,
             ft.ElevatedButton("📥 RESTORE MY CORRECTIONS", bgcolor=C["green"], color="#FFFFFF", height=44, on_click=do_import_full),
         ]
-        db_screen.scroll = "auto"
+        db_screen.scroll = ft.ScrollMode.AUTO
+        db_screen.visible = False
 
+        refresh_profile_display()
+
+        
         def render_personal_confluence(moon_nak_idx):
             prof = load_user_profile_db()
             personal_confluence_container.controls.clear()
@@ -5413,12 +5408,6 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
         page.overlay.append(floating_back_to_oracle)
 
         def show_screen(name):
-            # Refresh birth display whenever entering Data or My Birth
-            if name in ("db", "profile"):
-                try:
-                    refresh_profile_display()
-                except:
-                    pass
             for k, v in all_screens.items(): v.visible = (k == name)
             confirm_exit_panel.visible = False
             floating_back_to_oracle.visible = (name == "list")

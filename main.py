@@ -2339,6 +2339,7 @@ def main(page: ft.Page):
     try:
         page.title   = "Bhoovalaya Oracle"
         personal_confluence_container = ft.Column(spacing=8, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False)
+        personal_stocks_highlight = ft.Container(visible=False, padding=10, border_radius=8, bgcolor="#FFF3E0", border=ft.border.all(2, "#EF6C00"))
         page.bgcolor = C["bg"]
         page.padding = 8
         page.scroll  = "auto"
@@ -3922,6 +3923,40 @@ def main(page: ft.Page):
 
         def load_list(q=""):
             list_rows.controls.clear()
+            # ── PERSONAL HIGHLIGHT NEAR SHOW ALL ──
+            try:
+                prof_p = load_user_profile_db()
+                if prof_p:
+                    moon_idx_p = get_today_moon_nak_idx()
+                    calc_p = calc_user_tara_chandra_sbc(prof_p["nak_idx"], moon_idx_p)
+                    det_p = get_charan_details(prof_p["nak_idx"], prof_p["charan"])
+                    if calc_p:
+                        if calc_p["points"]>=3:
+                            p_txt="STRONG BULLISH for YOU - Trade"; p_col="#2E7D32"; p_icon="🟢"
+                        elif calc_p["points"]>=1:
+                            p_txt="BULLISH for YOU - Buy dip"; p_col="#558B2F"; p_icon="🟢"
+                        elif calc_p["points"]<=-2:
+                            p_txt="STRONG BEARISH for YOU - Avoid"; p_col="#B71C1C"; p_icon="🔴"
+                        else:
+                            p_txt="BEARISH/NEUTRAL for YOU - Caution"; p_col="#EF6C00"; p_icon="🟡"
+                        tara_c = "GOOD" if calc_p["tara_good"] else "BAD" if calc_p["tara_bad"] else "Neutral"
+                        ch_c = "GOOD" if calc_p["chandra_good"] else "WEAK (6/8/12)"
+                        vedha_c = "⚠️ Vedha YES - Obstruction" if calc_p["vedha"] else "✅ No Vedha"
+                        personal_stocks_highlight.content = ft.Column([
+                            ft.Text(f"{p_icon} PERSONAL ALL-ROUND TODAY (Birth: {prof_p['nak_name']} C{prof_p['charan']} {det_p['rashi']} vs Moon: {NAK[moon_idx_p]} | {NAK_EN[moon_idx_p]})", size=12, weight="bold", color="#000000"),
+                            ft.Text(f"Tara: {calc_p['tara_name']} ({tara_c}) | Chandra: {calc_p['chandra_dist']}th ({ch_c}) | SBC: {calc_p['sbc_sig']} {calc_p['sbc_score']} | {vedha_c} | Points {calc_p['points']}", size=11, color="#000000"),
+                            ft.Container(content=ft.Text(p_txt, size=13, weight="bold", color="#FFFFFF"), bgcolor=p_col, padding=ft.padding.symmetric(horizontal=10, vertical=6), border_radius=6)
+                        ], spacing=4)
+                        personal_stocks_highlight.visible=True
+                    else:
+                        personal_stocks_highlight.visible=False
+                else:
+                    personal_stocks_highlight.visible=False
+                    personal_stocks_highlight.content = ft.Text("👤 Set Birth Nakshatra + Charan in My Birth tab to see personal highlight here", size=11, color="#6A1B9A")
+                    personal_stocks_highlight.visible=True
+            except Exception as _pe:
+                personal_stocks_highlight.visible=False
+
             rows = db_search(q, portfolio_only=fld_portfolio_only.value, letter=selected_letter["value"])
             if fld_up_only.value:
                 rows = [r for r in rows if quick_verdict(r[4], r[3])[0] == "UP"]
@@ -3946,6 +3981,30 @@ def main(page: ft.Page):
                 combined_dir, has_vedha = quick_verdict(asum, ldt)
                 badge_color = {"UP": C["green"], "DOWN": C["red"], "SIDEWAYS": C["orange"], "MIXED": C["accent"]}.get(combined_dir, C["accent"])
                 badge_text = {"UP": "🔼 UP", "DOWN": "🔽 DOWN", "SIDEWAYS": "↔️ SIDE", "MIXED": "⚠️ MIXED"}.get(combined_dir, combined_dir)
+                # Personal badge for this stock (same moon for all, but highlighted per row)
+                personal_badge_text = ""
+                personal_badge_color = "#9E9E9E"
+                try:
+                    prof_r = load_user_profile_db()
+                    if prof_r:
+                        moon_idx_r = get_today_moon_nak_idx()
+                        calc_r = calc_user_tara_chandra_sbc(prof_r["nak_idx"], moon_idx_r)
+                        if calc_r:
+                            if calc_r["points"]>=3:
+                                personal_badge_text = "👤 YOU: STRONG BULL"
+                                personal_badge_color = "#2E7D32"
+                            elif calc_r["points"]>=1:
+                                personal_badge_text = "👤 YOU: BULL"
+                                personal_badge_color = "#558B2F"
+                            elif calc_r["points"]<=-2:
+                                personal_badge_text = "👤 YOU: BEAR AVOID"
+                                personal_badge_color = "#B71C1C"
+                            else:
+                                personal_badge_text = "👤 YOU: CAUTION"
+                                personal_badge_color = "#EF6C00"
+                except:
+                    pass
+
 
                 def make_portfolio_toggle(s):
                     def _on_change(e):
@@ -3963,6 +4022,8 @@ def main(page: ft.Page):
                             ft.Text(ldt, size=12, color=C["hint_txt"]),
                             ft.Text(f"Ak:{asum}", size=12, color=C["accent"]),
                             ft.Container(content=ft.Text(badge_text, size=11, color="#FFFFFF", weight="bold"), bgcolor=badge_color, padding=ft.padding.symmetric(horizontal=8, vertical=3), border_radius=4),
+                            ft.Container(content=ft.Text(personal_badge_text, size=10, color="#FFFFFF", weight="bold"), bgcolor=personal_badge_color, padding=ft.padding.symmetric(horizontal=6, vertical=3), border_radius=4, visible=bool(personal_badge_text)),
+
                         ] + ([ft.Container(content=ft.Text("Vedha", size=10, color="#FFFFFF", weight="bold"), bgcolor=C["red"], padding=ft.padding.symmetric(horizontal=6, vertical=3), border_radius=4)] if has_vedha else []), wrap=True, spacing=6),
                         ft.Text(eng, size=14, color=C["black_txt"], weight="bold"),
                         ft.Text(hi, size=15, color=C["primary"], weight="bold"),
@@ -3994,6 +4055,7 @@ def main(page: ft.Page):
             ft.Divider(height=4, color=C["divider"]),
             ft.Text("🔼 UP  🔽 DOWN  ↔️ SIDE  ⚠️ MIXED — Bhoovalaya (Graha+Bandha) combined direction | Vedha = Sarvatobhadra caution flag", size=10, color=C["hint_txt"]),
             fld_list_search,
+            personal_stocks_highlight,
             ft.Row([
                 ft.ElevatedButton("🔍 Search", bgcolor=C["primary"], color="#FFFFFF", height=46, on_click=lambda e: load_list(fld_list_search.value.strip().upper())),
                 ft.ElevatedButton("📋 Show All", bgcolor=C["accent"], color="#FFFFFF", height=46, on_click=lambda e: load_list("")),
@@ -5058,8 +5120,64 @@ Rule (2) — D9 house 11 → D1 kendra/trikona, unaspected by Mars/Saturn → SE
 • ACTION = SELL
 (Leave 🔧 ADVANCED untouched — Planet stays ANY.)
 
-Tap any field on an existing rule row to change it — it saves as soon as you leave the field. Tap the trash icon to delete a row."""
+Tap any field on an existing rule row to change it — it saves as soon as you leave the field. Tap the trash icon to delete a row.
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 MY BIRTH - Nakshatra + Charan se kya fayda? (Personal All-Round Prediction)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Siribhoovalaya result sabke liye SAME hota hai (same stock = same Akshara Sum, same Bandha, same Graha). Lekin profit/loss PERSONAL hota hai — aapka Tara/Chandra us din achha hai ya bura, us par depend karta hai.
+
+Jab aap apna Birth Nakshatra + Charan set karte ho, app 7-point personal confluence nikalta hai:
+
+1. TARA BALA (27 Nakshatra chakra):
+   (Today Moon Nak - Your Birth Nak) % 27
+   1=Janma Neutral, 2=Sampat VERY GOOD (+2), 3=Vipat BAD (-2), 4=Kshema GOOD (+1), 5=Pratyari BAD (-1), 6=Sadhaka VERY GOOD (+2), 7=Vadha VERY BAD (-3), 8=Mitra GOOD (+1), 9=Param Mitra VERY GOOD (+2)
+   Fayda: Aapko pata chalega aaj ka din aapke liye dhan-dayak hai ya loss-day. Sampat/Sadhaka par trade lo, Vipat/Vadha par skip karo — chahe market UP hi kyu na ho.
+
+2. CHANDRA BALA (Rashi distance):
+   (Moon Rashi - Your Birth Rashi) % 12
+   1,2,3,5,7,9,10,11 = GOOD, 6,8,12 = BAD/WEAK
+   Fayda: Aaj Chandra aapki Rashi se 6th/8th/12th hai to mind confuse, galat entry hogi. Good Chandra par decision sharp hota hai.
+
+3. VEDHA (Obstruction):
+   Ashwini <-> Jyeshtha, Bharani <-> Anuradha, etc 12 jodi. Agar aapke Birth Nak aur aaj ke Moon Nak me Vedha hai to kaam atakta hai.
+   Fayda: Vedha wale din bada trade avoid, chhota trade ya wait.
+
+4. CHARAN DETAILS (Pada):
+   1 Charan = 3°20'. 108 Charan = 12 Rashi x 9 Navamsa.
+   Charan se aapko milta hai:
+   - Rashi (e.g., Rohini Charan 2 = Taurus/Vrishabha)
+   - Navamsa (D9)
+   - Akshar/Syllable (e.g., Ashwini = Chu, Che, Cho, La) — aapke naam ka pehla akshar
+   - Full Pada 1-108, Degree, Lord
+   Fayda: Exact Rashi/Navamsa se Chandra Bala accurate, naam-shastra, muhurta ke liye use.
+
+5. PERSONAL SBC SCORE:
+   SBC = Tara + Chandra + Vedha ka combined points
+   +3 se upar = STRONG BULLISH for YOU, -2 se neeche = STRONG BEARISH for YOU
+   Fayda: Market BULLISH ho sakta hai lekin aapka personal -3 ho to aap galat time pe entry loge — skip karna better.
+
+6. ALL-ROUND FINAL VERDICT:
+   Market = Bhoovalaya Bandha UP + SBC GOOD + Tara GOOD + Chandra GOOD = 7 points me se 5-6 positive = High Confidence BUY for YOU
+   Market UP + Personal BAD = 2-3 points = LOW confidence — wait.
+
+Example:
+Same day Moon = Bharani, Nifty Bandha = Padmabandha UP (market bullish)
+Person A: Birth Rohini Charan 2 → Tara 8 Mitra GOOD, Chandra 2nd GOOD, Points +3 → App bolega "STRONG BULLISH for YOU - Trade karo"
+Person B: Birth Jyeshtha Charan 4 → Tara 3 Vipat BAD, Chandra 6th WEAK, Points -3 → App bolega "STRONG BEARISH for YOU - Avoid, chahe market UP ho"
+
+Iska matlab: Ek hi app, ek hi stock, same time par do logon ko alag result — jo sahi hai kyunki kismat personal hai.
+
+7. Ek baar set karo, hamesha kaam karega:
+   - Phone me user_profile table id=1 me save hota hai
+   - Har Oracle calculation me automatic personal box add ho jata hai
+   - Dusre phone me dusra birth = dusra result
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+"""
         help_screen = ft.Column(visible=False, scroll="auto", controls=[
             make_header("📖 HELP / REFERENCE GUIDE"), ft.Divider(height=4, color=C["divider"]),
             ft.Text(HELP_TEXT, size=12.5, color=C["black_txt"], selectable=True),
@@ -5125,7 +5243,7 @@ Tap any field on an existing rule row to change it — it saves as soon as you l
 
         profile_screen = ft.Column(visible=False, scroll="auto", controls=[
             make_header("👤 MY BIRTH - Nakshatra + Charan (Indian All-Round)"),
-            ft.Text("Set your birth Nakshatra and Charan once - used for Tara Bala, Chandra Bala, Vedha, SBC confluence with Bhoovalaya. This makes prediction personal and all-round as per Indian culture.", size=12, color=C["black_txt"]),
+            ft.Text("Set your birth Nakshatra and Charan ONCE — app will give you PERSONAL 7-point result every time you check any stock.\n\nBENEFIT:\n1. Tara Bala = Aaj ka din aapke liye Sampat (profit) ya Vipat (loss) — trade lena ya skip\n2. Chandra Bala = Aaj mind clear ya confused (6/8/12 weak)\n3. Vedha = Kaam atkega ya chalega\n4. Charan = Rashi/Navamsa/Akshar/Pada exact — for accurate Chandra & naam shastra\n5. Final = STRONG BULLISH for YOU / BEARISH for YOU — market UP ho ke bhi aapka din kharab ho to skip karo\n\nSame stock, same time par dusre vyakti ko alag result milega — kyunki birth alag.", size=12, color=C["black_txt"]),
             ft.Divider(height=4, color=C["divider"]),
             fld_profile_nak,
             fld_profile_charan,

@@ -2915,6 +2915,11 @@ def main(page: ft.Page):
                 bhoovalaya_label = ("⚠️ VEDHA — avoid entry" if has_vedha else DIR_ARROW.get(combined_dir, combined_dir))
                 latest_verdicts.update({"sym": sym, "bhoovalaya": (bhoovalaya_label, combined_dir),
                                         "ramal": None, "technical": None, "fundamentals": None})
+                try:
+                    moon_idx_f = get_today_moon_nak_idx()
+                    render_personal_confluence(moon_idx_f, combined_dir=combined_dir, has_vedha_stock=has_vedha, stock_sym=sym, listing_nak_idx=None)
+                except:
+                    pass
             else:
                 set_status("Not found: " + q, C["red"])
                 result_txt.value = f"'{q}' NOT FOUND\n\nTry: RELIANCE TCS SBIN"
@@ -5235,6 +5240,56 @@ Iska matlab: Ek hi app, ek hi stock, same time par do logon ko alag result — j
                 profile_saved_banner.value = "No birth profile saved yet."
                 profile_detail_text.value = "Select your birth Nakshatra (from Kundli) and Charan 1-4. Each Charan = 3°20'. Used for Tara Bala, Chandra Bala, Vedha, SBC - all-round Indian prediction."
 
+        def render_personal_confluence(moon_nak_idx, combined_dir=None, has_vedha_stock=None, stock_sym=None, listing_nak_idx=None):
+            prof = load_user_profile_db()
+            personal_confluence_container.controls.clear()
+            if not prof:
+                personal_confluence_container.controls.append(ft.Container(content=ft.Text("👤 Set Birth Nakshatra + Charan in My Birth tab", size=12, color="#FFFFFF", weight="bold"), bgcolor="#6A1B9A", padding=10, border_radius=8))
+                personal_confluence_container.visible=True
+                return
+            calc = calc_user_tara_chandra_sbc(prof["nak_idx"], moon_nak_idx)
+            char_det = get_charan_details(prof["nak_idx"], prof["charan"])
+            if not calc:
+                personal_confluence_container.visible=False
+                return
+            if calc["points"]>=3:
+                final_personal="STRONG BULLISH for YOU"; final_col=C["green"]
+            elif calc["points"]>=1:
+                final_personal="BULLISH for YOU - Buy on dip"; final_col=C["green"]
+            elif calc["points"]<=-2:
+                final_personal="STRONG BEARISH for YOU - Avoid"; final_col=C["red"]
+            elif calc["points"]<=0:
+                final_personal="BEARISH for YOU - Caution"; final_col=C["orange"]
+            else:
+                final_personal="NEUTRAL for YOU - Wait"; final_col=C["orange"]
+            market_dir = combined_dir or "UNKNOWN"
+            stock_vedha_txt = "⚠️ STOCK VEDHA YES" if has_vedha_stock else "✅ No Stock Vedha"
+            listing_nak_name = f"{NAK[listing_nak_idx]} ({NAK_EN[listing_nak_idx]})" if listing_nak_idx is not None and listing_nak_idx < len(NAK) else "N/A"
+            if market_dir == "UP" and calc["points"]>=2:
+                combined_verdict = f"✅ MARKET UP + YOUR BIRTH GOOD = STRONG BUY for YOU in {stock_sym or ''}"
+                combined_col = C["green"]
+            elif market_dir == "UP" and calc["points"]<=-1:
+                combined_verdict = f"⚠️ MARKET UP but YOUR BIRTH BAD = AVOID for YOU in {stock_sym or ''}"
+                combined_col = C["orange"]
+            elif market_dir == "DOWN" and calc["points"]>=2:
+                combined_verdict = f"⚠️ MARKET DOWN but YOUR BIRTH GOOD = Small bounce try in {stock_sym or ''}"
+                combined_col = C["orange"]
+            elif market_dir == "DOWN" and calc["points"]<=-1:
+                combined_verdict = f"🔴 MARKET DOWN + YOUR BIRTH BAD = STRONG AVOID for YOU in {stock_sym or ''}"
+                combined_col = C["red"]
+            else:
+                combined_verdict = f"⏸️ MARKET {market_dir} + YOUR POINTS {calc['points']} = WAIT for YOU in {stock_sym or ''}"
+                combined_col = C["accent"]
+            personal_confluence_container.controls.append(ft.Divider(height=4, color=C["divider"]))
+            personal_confluence_container.controls.append(ft.Container(content=ft.Column([
+                ft.Text(f"👤 AS PER YOUR BIRTH Nakshatra + Charan Effect (Birth: {prof['nak_name']} C{prof['charan']} {char_det['rashi']} vs Moon: {NAK[moon_nak_idx]})", size=12, weight="bold", color="#000000"),
+                ft.Text(f"Tara: {calc['tara_name']} | Chandra: {calc['chandra_dist']}th | SBC: {calc['sbc_sig']} | Vedha: {'YES' if calc['vedha'] else 'No'}", size=11, color="#000000"),
+                ft.Text(f"📿 SARVATOBHADRA: Listing Nak {listing_nak_name} vs Moon = {stock_vedha_txt} | SIRIBHOOVALAYA Market: {market_dir}", size=11, color="#000000", weight="bold"),
+                ft.Container(content=ft.Text(final_personal, size=13, weight="bold", color="#FFFFFF"), bgcolor=final_col, padding=ft.padding.symmetric(horizontal=10, vertical=6), border_radius=6),
+                ft.Container(content=ft.Text(combined_verdict, size=13, weight="bold", color="#FFFFFF"), bgcolor=combined_col, padding=ft.padding.symmetric(horizontal=10, vertical=8), border_radius=6),
+            ], spacing=4), bgcolor="#FFF8E1", padding=10, border_radius=8, border=ft.border.all(2, final_col)))
+            personal_confluence_container.visible=True
+
         def do_save_birth_profile(e):
             try:
                 sel = fld_profile_nak.value
@@ -5273,41 +5328,6 @@ Iska matlab: Ek hi app, ek hi stock, same time par do logon ko alag result — j
         ])
 
         refresh_profile_display()
-
-        def render_personal_confluence(moon_nak_idx):
-            prof = load_user_profile_db()
-            personal_confluence_container.controls.clear()
-            if not prof:
-                personal_confluence_container.controls.append(ft.Container(content=ft.Text("👤 Set Birth Nakshatra + Charan in My Birth tab for personal all-round prediction - Tara/Chandra/SBC", size=12, color="#FFFFFF", weight="bold"), bgcolor="#6A1B9A", padding=10, border_radius=8))
-                personal_confluence_container.visible=True
-                return
-            calc = calc_user_tara_chandra_sbc(prof["nak_idx"], moon_nak_idx)
-            char_det = get_charan_details(prof["nak_idx"], prof["charan"])
-            if not calc:
-                personal_confluence_container.visible=False
-                return
-            tara_color = C["green"] if calc["tara_good"] else C["red"] if calc["tara_bad"] else C["orange"]
-            chandra_color = C["green"] if calc["chandra_good"] else C["red"]
-            vedha_color = C["red"] if calc["vedha"] else C["green"]
-            if calc["points"]>=3:
-                final_personal="STRONG BULLISH for YOU"; final_col=C["green"]
-            elif calc["points"]>=1:
-                final_personal="BULLISH for YOU - Buy on dip"; final_col=C["green"]
-            elif calc["points"]<=-2:
-                final_personal="STRONG BEARISH for YOU - Avoid"; final_col=C["red"]
-            elif calc["points"]<=0:
-                final_personal="BEARISH for YOU - Caution"; final_col=C["orange"]
-            else:
-                final_personal="NEUTRAL for YOU - Wait"; final_col=C["orange"]
-            personal_confluence_container.controls.append(ft.Divider(height=4, color=C["divider"]))
-            personal_confluence_container.controls.append(ft.Container(content=ft.Column([
-                ft.Text(f"👤 PERSONAL ALL-ROUND (Birth: {prof['nak_name']} Charan {prof['charan']} Rashi {char_det['rashi']} Akshar {char_det['syllable']} Navamsa {char_det['navamsa']} Pada {char_det['pada']}/108)", size=12, weight="bold", color="#FFFFFF"),
-                ft.Text(f"Tara: {calc['tara_num']} {calc['tara_name']} - {'GOOD' if calc['tara_good'] else 'BAD' if calc['tara_bad'] else 'NEUTRAL'} | Chandra: {calc['chandra_dist']}th - {'GOOD' if calc['chandra_good'] else 'WEAK 6/8/12'} | Vedha: {'YES Obstruction' if calc['vedha'] else 'No Clear'} | SBC: {calc['sbc_score']} {calc['sbc_sig']}", size=11, color="#000000", weight="bold"),
-                ft.Text(f"Personal Score: {calc['points']}/5 | {final_personal}", size=13, weight="bold", color="#FFFFFF"),
-            ], spacing=4), bgcolor=final_col, padding=10, border_radius=8))
-            personal_confluence_container.controls.append(ft.Text(f"Your birth Nak {prof['nak_name']} vs Today Moon {NAK[moon_nak_idx] if moon_nak_idx < len(NAK) else ''} = Tara {calc['tara_name']}. Rashi {char_det['rashi']} vs Moon Rashi = Chandra Bala. Combined with Bhoovalaya Bandha + SBC = all-round.", size=10, color=C["hint_txt"]))
-            personal_confluence_container.visible=True
-
 
         all_screens = {"oracle": oracle_screen, "list": list_screen, "entry": entry_screen, "astro": astro_screen, "db": db_screen, "place": place_screen, "rules": rules_screen, "help": help_screen, "profile": profile_screen}
 

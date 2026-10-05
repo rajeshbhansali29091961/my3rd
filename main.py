@@ -589,6 +589,8 @@ def full_analysis_for_stock(symbol, stock_name_devanagari=None, listing_date_str
 
 
 
+DB_PATH = None
+
 NAK = [
     "अश्विनी","भरणी","कृत्तिका","रोहिणी","मृगशिरा","आर्द्रा",
     "पुनर्वसु","पुष्य","आश्लेषा","मघा","पूर्वाफाल्गुनी","उत्तराफाल्गुनी",
@@ -2345,10 +2347,24 @@ def main(page: ft.Page):
         page.scroll  = "auto"
 
         storage = os.getenv("FLET_APP_STORAGE_DATA", ".")
+        global DB_PATH
         db_path = os.path.join(storage, "bhuvalaya.db")
+        DB_PATH = db_path
 
         try:
             conn = sqlite3.connect(db_path)
+            conn.execute("""CREATE TABLE IF NOT EXISTS user_profile(
+                id INTEGER PRIMARY KEY,
+                birth_nak_idx INTEGER,
+                birth_nak_en TEXT,
+                birth_nak_hi TEXT,
+                birth_charan INTEGER,
+                rashi TEXT,
+                syllable TEXT,
+                navamsa TEXT,
+                pada TEXT,
+                created TEXT
+            )""")
             conn.execute("""CREATE TABLE IF NOT EXISTS stocks(
                 symbol      TEXT PRIMARY KEY,
                 eng_name    TEXT,

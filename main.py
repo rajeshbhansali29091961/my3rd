@@ -555,6 +555,31 @@ def predict_next_9_days(symbol, stock_name, listing_date, history_42d, backtest_
         })
     return daily_forecast
 
+def get_next_5_moon_naks():
+    try:
+        from datetime import datetime as dt, timedelta
+        naks=[]
+        try:
+            import swisseph as swe
+            base = dt.now()
+            for i in range(5):
+                d = base + timedelta(days=i)
+                jd = swe.julday(d.year, d.month, d.day, 12, 0)
+                res = swe.calc_ut(jd, 1, swe.FLG_SWIEPH)
+                lon = res[0][0] % 360
+                idx = int(lon / (360.0/27.0)) % 27
+                naks.append((d.strftime('%d-%m'), idx))
+            return naks
+        except:
+            today_idx = get_today_moon_nak_idx()
+            from datetime import datetime as dt
+            for i in range(5):
+                naks.append(((dt.now() + __import__('datetime').timedelta(days=i)).strftime('%d-%m'), (today_idx + i) % 27))
+            return naks
+    except:
+        today = get_today_moon_nak_idx()
+        return [(f"D{i}", (today + i) % 27) for i in range(5)]
+
 def get_today_moon_nak_idx():
     try:
         from datetime import datetime as dt

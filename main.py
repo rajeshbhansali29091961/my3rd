@@ -555,6 +555,20 @@ def predict_next_9_days(symbol, stock_name, listing_date, history_42d, backtest_
         })
     return daily_forecast
 
+def get_today_moon_nak_idx():
+    try:
+        from datetime import datetime as dt
+        try:
+            import swisseph as swe
+            jd = swe.julday(dt.now().year, dt.now().month, dt.now().day, dt.now().hour + dt.now().minute/60.0)
+            res = swe.calc_ut(jd, 1, swe.FLG_SWIEPH)
+            lon = res[0][0] % 360
+            return int(lon / (360.0/27.0)) % 27
+        except:
+            return 0
+    except:
+        return 0
+
 def full_analysis_for_stock(symbol, stock_name_devanagari=None, listing_date_str=None):
     stock_name = stock_name_devanagari or symbol
     listing_date = None
@@ -2928,6 +2942,11 @@ def main(page: ft.Page):
                 ramal_container.visible = False
                 current_stock["sym"], current_stock["asum"], current_stock["ldt"] = None, None, None
                 latest_verdicts.update({"sym": None, "bhoovalaya": None, "ramal": None, "technical": None, "fundamentals": None})
+            # Always show personal effect at bottom - even if no stock found
+            try:
+                render_personal_confluence(get_today_moon_nak_idx())
+            except:
+                pass
             page.update()
 
         def do_oracle_back(e):

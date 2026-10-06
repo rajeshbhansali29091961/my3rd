@@ -3737,8 +3737,8 @@ def main(page: ft.Page):
                 ft.Text("42 days NSE history + all 24 Bandhas with hit/miss + 9-day prediction (listing date + swisseph)", size=12, color=C["hint_txt"]),
                 ft.ElevatedButton("🕉️  RUN 24 BANDHA BACKTEST", bgcolor="#6A1B9A", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_bandha_backtest),
                 bandha_backtest_container,
-            personal_confluence_container,
             ]),
+            personal_confluence_container,
             make_collapsible_section("📈  Technical Analysis", [
                 ft.Text("real price/volume data (SMA, RSI, MACD)", size=12, color=C["hint_txt"]),
                 ft.ElevatedButton("📈  TECHNICAL ANALYSIS", bgcolor="#0D47A1", color="#FFFFFF", height=48, style=ft.ButtonStyle(text_style=ft.TextStyle(size=15, weight="bold")), on_click=do_oracle_technical),

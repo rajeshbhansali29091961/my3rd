@@ -565,7 +565,8 @@ def get_next_5_moon_naks():
             for i in range(5):
                 d = base + timedelta(days=i)
                 jd = swe.julday(d.year, d.month, d.day, 12, 0)
-                res = swe.calc_ut(jd, 1, swe.FLG_SWIEPH)
+                swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+                res = swe.calc_ut(jd, 1, swe.FLG_SWIEPH | swe.FLG_SIDEREAL)
                 lon = res[0][0] % 360
                 idx = int(lon / (360.0/27.0)) % 27
                 naks.append((d.strftime('%d-%m'), idx))
@@ -585,8 +586,9 @@ def get_today_moon_nak_idx():
         from datetime import datetime as dt
         try:
             import swisseph as swe
+            swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
             jd = swe.julday(dt.now().year, dt.now().month, dt.now().day, dt.now().hour + dt.now().minute/60.0)
-            res = swe.calc_ut(jd, 1, swe.FLG_SWIEPH)
+            res = swe.calc_ut(jd, 1, swe.FLG_SWIEPH | swe.FLG_SIDEREAL)
             lon = res[0][0] % 360
             return int(lon / (360.0/27.0)) % 27
         except:
@@ -734,18 +736,17 @@ def get_lat_lon_offline(place_name):
     return None
 
 def calc_nakshatra_from_dob(dob_str, time_str, lat, lon, gmt):
-    """dob_str DD-MM-YYYY, time_str HH:MM, lat, lon, gmt float -> (nak_idx, charan, rashi, deg)"""
+    """dob_str DD-MM-YYYY, time_str HH:MM, lat, lon, gmt float -> (nak_idx, charan, moon_lon_sidereal) - Uses Lahiri Ayanamsa for correct Indian Nakshatra"""
     try:
-        from datetime import datetime as dt
-        import math
-        # Parse
-        d,m,y = map(int, dob_str.split('-'))
-        hh,mm = map(int, time_str.split(':'))
-        # Local to UT
-        local_dt = dt(y,m,d,hh,mm)
+        from datetime import datetime as dt, timedelta
+        # Parse DD-MM-YYYY
+        try:
+            d,m,y = map(int, dob_str.strip().split('-'))
+            hh,mm = map(int, time_str.strip().split(':'))
+        except:
+            return None
         # UT = local - gmt
-        ut_hours = hh + mm/60.0 - gmt
-        # Handle day rollover
+        ut_hours = hh + mm/60.0 - float(gmt)
         day_offset = 0
         if ut_hours < 0:
             ut_hours += 24
@@ -753,27 +754,59 @@ def calc_nakshatra_from_dob(dob_str, time_str, lat, lon, gmt):
         elif ut_hours >= 24:
             ut_hours -= 24
             day_offset = 1
-        # JD
+        jd_date = dt(y,m,d) + timedelta(days=day_offset)
         try:
             import swisseph as swe
-            # Adjust date for UT offset
-            jd_date = dt(y,m,d) + __import__('datetime').timedelta(days=day_offset)
+            # Lahiri ayanamsa for Indian astrology - sidereal
+            swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
             jd = swe.julday(jd_date.year, jd_date.month, jd_date.day, ut_hours)
-            res = swe.calc_ut(jd, 1, swe.FLG_SWIEPH)  # Moon = 1
-            moon_lon = res[0][0] % 360
-        except:
-            # Fallback approximate: Moon moves 13.176 deg per day, use simple approx based on date
-            # Very rough fallback - will still give some nakshatra
-            moon_lon = ( (y*12 + m)*30 + d*13.176 ) % 360
+            # Calculate Moon with sidereal flag
+            res = swe.calc_ut(jd, 1, swe.FLG_SWIEPH | swe.FLG_SIDEREAL)
+            moon_lon_sidereal = res[0][0] % 360
+            # Also get ayanamsa for debug
+            ayan = swe.get_ayanamsa_ut(jd)
+            # moon_lon_sidereal already sidereal, but double check if needed: tropical - ayan
+            # res with SIDEREAL already gives sidereal, so use directly
+        except Exception as e:
+            # If swisseph not available on this device, try without it but warn wrong
+            # Fallback: approximate using simple formula - NOT accurate, return None to show error
+            # Instead of wrong calc, return None so user knows to install pyswisseph
+            return None
         nak_deg = 360.0/27.0
-        nak_idx = int(moon_lon / nak_deg) % 27
-        deg_in_nak = moon_lon % nak_deg
+        nak_idx = int(moon_lon_sidereal / nak_deg) % 27
+        deg_in_nak = moon_lon_sidereal % nak_deg
         charan = int(deg_in_nak / (nak_deg/4.0)) + 1
         if charan<1: charan=1
         if charan>4: charan=4
-        return nak_idx, charan, moon_lon
+        return nak_idx, charan, moon_lon_sidereal
     except Exception as e:
         return None
+
+def calc_nakshatra_from_dob_with_debug(dob_str, time_str, lat, lon, gmt):
+    """Returns dict with debug info for UI"""
+    try:
+        from datetime import datetime as dt, timedelta
+        d,m,y = map(int, dob_str.strip().split('-'))
+        hh,mm = map(int, time_str.strip().split(':'))
+        ut_hours = hh + mm/60.0 - float(gmt)
+        day_offset = 0
+        if ut_hours < 0:
+            ut_hours += 24
+            day_offset = -1
+        elif ut_hours >= 24:
+            ut_hours -= 24
+            day_offset = 1
+        jd_date = dt(y,m,d) + timedelta(days=day_offset)
+        import swisseph as swe
+        swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+        jd = swe.julday(jd_date.year, jd_date.month, jd_date.day, ut_hours)
+        res_trop = swe.calc_ut(jd, 1, swe.FLG_SWIEPH)
+        res_sid = swe.calc_ut(jd, 1, swe.FLG_SWIEPH | swe.FLG_SIDEREAL)
+        ayan = swe.get_ayanamsa_ut(jd)
+        return {"jd": jd, "tropical": res_trop[0][0]%360, "sidereal": res_sid[0][0]%360, "ayanamsa": ayan, "ut_hours": ut_hours, "day_offset": day_offset}
+    except Exception as e:
+        return {"error": str(e)}
+
 
 NAK_EN = ["Ashwini","Bharani","Krittika","Rohini","Mrigashira","Ardra","Punarvasu","Pushya","Ashlesha","Magha","P.Phalguni","U.Phalguni","Hasta","Chitra","Swati","Vishakha","Anuradha","Jyeshtha","Mula","P.Shadha","U.Shadha","Shravana","Dhanishtha","Shatabhisha","P.Bhadra","U.Bhadra","Revati"]
 NAK_SYLLABLES = {0:["Chu","Che","Cho","La"],1:["Li","Lu","Le","Lo"],2:["A","I","U","E"],3:["O","Va","Vi","Vu"],4:["Ve","Vo","Ka","Ki"],5:["Ku","Gha","Ng","Chha"],6:["Ke","Ko","Ha","Hi"],7:["Hu","He","Ho","Da"],8:["Di","Du","De","Do"],9:["Ma","Mi","Mu","Me"],10:["Mo","Ta","Ti","Tu"],11:["Te","To","Pa","Pi"],12:["Pu","Sha","Na","Tha"],13:["Pe","Po","Ra","Ri"],14:["Ru","Re","Ro","Ta"],15:["Ti","Tu","Te","To"],16:["Na","Ni","Nu","Ne"],17:["No","Ya","Yi","Yu"],18:["Ye","Yo","Bha","Bhi"],19:["Bhu","Dha","Pha","Dha"],20:["Bhe","Bho","Ja","Ji"],21:["Ju","Je","Jo","Gha"],22:["Ga","Gi","Gu","Ge"],23:["Go","Sa","Si","Su"],24:["Se","So","Da","Di"],25:["Du","Tha","Jha","Na"],26:["De","Do","Cha","Chi"]}
@@ -5543,32 +5576,39 @@ Iska matlab: Ek hi app, ek hi stock, same time par do logon ko alag result — j
                 dob = fld_dob.value.strip(); tob = fld_tob.value.strip()
                 lat_s = fld_lat.value.strip(); lon_s = fld_lon.value.strip(); gmt_s = fld_gmt.value.strip()
                 if not dob or not tob:
-                    set_status("Enter DOB DD-MM-YYYY and Time HH:MM", C["red"]); page.update(); return
+                    set_status("Enter DOB DD-MM-YYYY and Time HH:MM - e.g. 15-08-1990 10:30", C["red"]); page.update(); return
                 if not lat_s or not lon_s:
-                    # Try auto find from place
                     place = fld_pob.value.strip()
                     coords = get_lat_lon_offline(place) if place else None
                     if coords:
                         lat, lon, gmt = coords
                         fld_lat.value = str(lat); fld_lon.value = str(lon); fld_gmt.value = str(gmt)
                         lat_s = str(lat); lon_s = str(lon); gmt_s = str(gmt)
+                        page.update()
                     else:
-                        set_status("Enter Lat/Lon or Place first. Tap Find Lat/Lon.", C["red"]); page.update(); return
+                        set_status("Enter Lat/Lon or Place first. Tap Find Lat/Lon. Delhi=28.61,77.20 GMT 5.5", C["red"]); page.update(); return
                 try:
-                    lat = float(lat_s); lon = float(lon_s); gmt = float(gmt_s)
+                    lat = float(lat_s); lon = float(lon_s); gmt = float(gmt_s or 5.5)
                 except:
-                    set_status("Lat/Lon/GMT must be numbers", C["red"]); page.update(); return
+                    set_status("Lat/Lon/GMT must be numbers - Lat 28.61 Lon 77.20 GMT 5.5", C["red"]); page.update(); return
+                # Debug info
+                debug = calc_nakshatra_from_dob_with_debug(dob, tob, lat, lon, gmt)
                 res = calc_nakshatra_from_dob(dob, tob, lat, lon, gmt)
                 if not res:
-                    set_status("Calculation failed - check DOB format DD-MM-YYYY and Time HH:MM", C["red"]); page.update(); return
+                    if "error" in debug:
+                        set_status(f"Swisseph not found or calc failed: {debug.get('error')} - Add pyswisseph to requirements.txt", C["red"])
+                    else:
+                        set_status("Calculation failed - Ensure pyswisseph installed. Check DOB format DD-MM-YYYY Time HH:MM", C["red"])
+                    page.update()
+                    return
                 nak_idx, charan, moon_lon = res
-                # Auto set dropdowns
                 fld_profile_nak.value = f"{NAK_EN[nak_idx]} ({NAK[nak_idx]})"
                 fld_profile_charan.value = str(charan)
-                set_status(f"Calculated: {NAK_EN[nak_idx]} ({NAK[nak_idx]}) Charan {charan} Moon {moon_lon:.2f}° - Now tap SET BIRTH to save", C["green"])
+                ayan_txt = f"Ayan {debug.get('ayanamsa',0):.2f}°" if isinstance(debug, dict) and "ayanamsa" in debug else ""
+                set_status(f"Calculated (Lahiri Sidereal): {NAK_EN[nak_idx]} ({NAK[nak_idx]}) Charan {charan} Moon {moon_lon:.2f}° {ayan_txt} - Now tap SET BIRTH to save. Lat/Lon saved.", C["green"])
                 page.update()
             except Exception as ex:
-                set_status(f"Calc error: {ex}", C["red"]); page.update()
+                set_status(f"Calc error: {ex} - Ensure format DD-MM-YYYY HH:MM", C["red"]); page.update()
 
         def do_save_birth_profile(e):
             try:

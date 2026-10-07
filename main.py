@@ -637,6 +637,144 @@ NAK = [
     "मूल","पूर्वाषाढ़ा","उत्तराषाढ़ा","श्रवण","धनिष्ठा","शतभिषा",
     "पूर्वाभाद्रपद","उत्तराभाद्रपद","रेवती"
 ]
+
+# ── OFFLINE INDIA CITIES (No API key needed) ──
+INDIA_CITIES_DB = {
+    "delhi": (28.6139, 77.2090, 5.5), "new delhi": (28.6139, 77.2090, 5.5),
+    "mumbai": (19.0760, 72.8777, 5.5), "bombay": (19.0760, 72.8777, 5.5),
+    "kolkata": (22.5726, 88.3639, 5.5), "calcutta": (22.5726, 88.3639, 5.5),
+    "chennai": (13.0827, 80.2707, 5.5), "madras": (13.0827, 80.2707, 5.5),
+    "bangalore": (12.9716, 77.5946, 5.5), "bengaluru": (12.9716, 77.5946, 5.5),
+    "hyderabad": (17.3850, 78.4867, 5.5), "pune": (18.5204, 73.8567, 5.5),
+    "ahmedabad": (23.0225, 72.5714, 5.5), "jaipur": (26.9124, 75.7873, 5.5),
+    "lucknow": (26.8467, 80.9462, 5.5), "kanpur": (26.4499, 80.3319, 5.5),
+    "nagpur": (21.1458, 79.0882, 5.5), "indore": (22.7196, 75.8577, 5.5),
+    "thane": (19.2183, 72.9781, 5.5), "bhopal": (23.2599, 77.4126, 5.5),
+    "visakhapatnam": (17.6868, 83.2185, 5.5), "vizag": (17.6868, 83.2185, 5.5),
+    "patna": (25.5941, 85.1376, 5.5), "vadodara": (22.3072, 73.1812, 5.5),
+    "ghaziabad": (28.6692, 77.4538, 5.5), "ludhiana": (30.9010, 75.8573, 5.5),
+    "agra": (27.1767, 78.0081, 5.5), "nashik": (19.9975, 73.7898, 5.5),
+    "faridabad": (28.4089, 77.3178, 5.5), "meerut": (28.9845, 77.7064, 5.5),
+    "rajkot": (22.3039, 70.8022, 5.5), "kalyan": (19.2437, 73.1355, 5.5),
+    "vasai": (19.4256, 72.8228, 5.5), "varanasi": (25.3176, 82.9739, 5.5), "benares": (25.3176, 82.9739, 5.5),
+    "srinagar": (34.0837, 74.7973, 5.5), "aurangabad": (19.8762, 75.3433, 5.5),
+    "dhanbad": (23.7957, 86.4304, 5.5), "amritsar": (31.6340, 74.8723, 5.5),
+    "navi mumbai": (19.0330, 73.0297, 5.5), "allahabad": (25.4358, 81.8463, 5.5), "prayagraj": (25.4358, 81.8463, 5.5),
+    "ranchi": (23.3441, 85.3096, 5.5), "howrah": (22.5958, 88.2636, 5.5),
+    "coimbatore": (11.0168, 76.9558, 5.5), "jabalpur": (23.1599, 79.9120, 5.5),
+    "gwalior": (26.2183, 78.1828, 5.5), "vijayawada": (16.5062, 80.6480, 5.5),
+    "jodhpur": (26.2389, 73.0243, 5.5), "madurai": (9.9252, 78.1198, 5.5),
+    "raipur": (21.2514, 81.6296, 5.5), "kota": (25.2138, 75.8648, 5.5),
+    "guwahati": (26.1445, 91.7362, 5.5), "chandigarh": (30.7333, 76.7794, 5.5),
+    "solapur": (17.6599, 75.9064, 5.5), "hubli": (15.3647, 75.1240, 5.5), "hubballi": (15.3647, 75.1240, 5.5),
+    "mysore": (12.2958, 76.6394, 5.5), "mysuru": (12.2958, 76.6394, 5.5),
+    "bareilly": (28.3670, 79.4304, 5.5), "aligarh": (27.8974, 78.0880, 5.5),
+    "moradabad": (28.8386, 78.7733, 5.5), "jalandhar": (31.3260, 75.5762, 5.5),
+    "bhubaneswar": (20.2961, 85.8245, 5.5), "salem": (11.6643, 78.1460, 5.5),
+    "warangal": (17.9784, 79.6000, 5.5), "mira bhayandar": (19.2813, 72.8512, 5.5),
+    "jalgaon": (21.0077, 75.5626, 5.5), "guntur": (16.3067, 80.4365, 5.5),
+    "thiruvananthapuram": (8.5241, 76.9366, 5.5), "trivandrum": (8.5241, 76.9366, 5.5),
+    "bhiwandi": (19.3002, 73.0635, 5.5), "saharanpur": (29.9640, 77.5460, 5.5),
+    "gorakhpur": (26.7606, 83.3732, 5.5), "bikaner": (28.0229, 73.3119, 5.5),
+    "amravati": (20.9374, 77.7796, 5.5), "noida": (28.5355, 77.3910, 5.5),
+    "jamshedpur": (22.8046, 86.2029, 5.5), "bhilai": (21.2096, 81.4288, 5.5),
+    "cuttack": (20.4625, 85.8830, 5.5), "firozabad": (27.1592, 78.3958, 5.5),
+    "kochi": (9.9312, 76.2673, 5.5), "cochin": (9.9312, 76.2673, 5.5),
+    "bhavnagar": (21.7645, 72.1519, 5.5), "dehradun": (30.3165, 78.0322, 5.5),
+    "durgapur": (23.5204, 87.3119, 5.5), "asansol": (23.6739, 86.9524, 5.5),
+    "nanded": (19.1383, 77.3210, 5.5), "kolhapur": (16.7050, 74.2433, 5.5),
+    "ajmer": (26.4499, 74.6399, 5.5), "akola": (20.7002, 77.0082, 5.5),
+    "gulbarga": (17.3297, 76.8343, 5.5), "jamnagar": (22.4707, 70.0577, 5.5),
+    "ujjain": (23.1793, 75.7849, 5.5), "loni": (28.7469, 77.2980, 5.5),
+    "siliguri": (26.7271, 88.3953, 5.5), "jhansi": (25.4484, 78.5685, 5.5),
+    "ulhasnagar": (19.2215, 73.1645, 5.5), "nellore": (14.4426, 79.9865, 5.5),
+    "jammu": (32.7266, 74.8570, 5.5), "sangli": (16.8524, 74.5815, 5.5),
+    "belgaum": (15.8497, 74.4977, 5.5), "mangalore": (12.9141, 74.8560, 5.5),
+    "ambattur": (13.1143, 80.1548, 5.5), "tirunelveli": (8.7139, 77.7567, 5.5),
+    "malegaon": (20.5579, 74.5287, 5.5), "gaya": (24.7914, 85.0002, 5.5),
+    "jalna": (19.8347, 75.8815, 5.5), "udaypur": (24.5854, 73.7125, 5.5), "udaipur": (24.5854, 73.7125, 5.5),
+    "maheshtala": (22.5086, 88.3523, 5.5), "davanagere": (14.4644, 75.9218, 5.5),
+    "kozhikode": (11.2588, 75.7804, 5.5), "calicut": (11.2588, 75.7804, 5.5),
+    "akola": (20.7002, 77.0082, 5.5), "kurnool": (15.8281, 78.0373, 5.5),
+    "rajahmundry": (17.0005, 81.8040, 5.5), "bhilwara": (25.3407, 74.6387, 5.5),
+    "bokaro": (23.6693, 86.1511, 5.5), "south dumdum": (22.6122, 88.4137, 5.5),
+    "bellary": (15.1394, 76.9214, 5.5), "patiala": (30.3398, 76.3869, 5.5),
+    "gopalpur": (19.2668, 84.8627, 5.5), "agartala": (23.8315, 91.2868, 5.5),
+    "bhagalpur": (25.2425, 86.9842, 5.5), "muzaffarnagar": (29.4727, 77.7085, 5.5),
+    "bhatpara": (22.8656, 88.4098, 5.5), "panihati": (22.6902, 88.3741, 5.5),
+    "latur": (18.4088, 76.5604, 5.5), "dhule": (20.9042, 74.7749, 5.5),
+    "tirupati": (13.6288, 79.4192, 5.5), "rohtak": (28.8955, 76.6066, 5.5),
+    "korba": (22.3595, 82.7501, 5.5), "bhilwara": (25.3407, 74.6387, 5.5),
+    "berhampur": (19.3144, 84.7941, 5.5), "muzaffarpur": (26.1226, 85.3906, 5.5),
+    "ahmednagar": (19.0948, 74.7496, 5.5), "mathura": (27.4924, 77.6737, 5.5),
+    "kollam": (8.8932, 76.6141, 5.5), "avadi": (13.1143, 80.1018, 5.5),
+    "kadapa": (14.4673, 78.8242, 5.5), "kamarhati": (22.6693, 88.3742, 5.5),
+    "bilaspur": (22.0797, 82.1409, 5.5), "shahjahanpur": (27.8833, 79.9080, 5.5),
+    "satara": (17.6805, 74.0183, 5.5), "bijapur": (16.8302, 75.7100, 5.5),
+    "rampur": (28.8119, 79.0256, 5.5), "shimoga": (13.9299, 75.5681, 5.5),
+    "chandrapur": (19.9615, 79.2961, 5.5), "junagadh": (21.5222, 70.4579, 5.5),
+    "thrissur": (10.5276, 76.2144, 5.5), "alwar": (27.5530, 76.6346, 5.5),
+    "bardhaman": (23.2324, 87.8615, 5.5), "kulti": (23.7316, 86.8418, 5.5),
+    "kakinada": (16.9891, 82.2475, 5.5), "nizamabad": (18.6725, 78.0940, 5.5),
+    "parbhani": (19.2666, 76.7710, 5.5), "tumkur": (13.3423, 77.1010, 5.5),
+    "khammam": (17.2473, 80.1514, 5.5), "darjeeling": (27.0410, 88.2663, 5.5),
+    "haridwar": (29.9457, 78.1642, 5.5), "bharuch": (21.7051, 72.9959, 5.5),
+}
+
+def get_lat_lon_offline(place_name):
+    if not place_name:
+        return None
+    key = place_name.strip().lower()
+    if key in INDIA_CITIES_DB:
+        return INDIA_CITIES_DB[key]
+    # partial match
+    for city, coords in INDIA_CITIES_DB.items():
+        if city in key or key in city:
+            return coords
+    return None
+
+def calc_nakshatra_from_dob(dob_str, time_str, lat, lon, gmt):
+    """dob_str DD-MM-YYYY, time_str HH:MM, lat, lon, gmt float -> (nak_idx, charan, rashi, deg)"""
+    try:
+        from datetime import datetime as dt
+        import math
+        # Parse
+        d,m,y = map(int, dob_str.split('-'))
+        hh,mm = map(int, time_str.split(':'))
+        # Local to UT
+        local_dt = dt(y,m,d,hh,mm)
+        # UT = local - gmt
+        ut_hours = hh + mm/60.0 - gmt
+        # Handle day rollover
+        day_offset = 0
+        if ut_hours < 0:
+            ut_hours += 24
+            day_offset = -1
+        elif ut_hours >= 24:
+            ut_hours -= 24
+            day_offset = 1
+        # JD
+        try:
+            import swisseph as swe
+            # Adjust date for UT offset
+            jd_date = dt(y,m,d) + __import__('datetime').timedelta(days=day_offset)
+            jd = swe.julday(jd_date.year, jd_date.month, jd_date.day, ut_hours)
+            res = swe.calc_ut(jd, 1, swe.FLG_SWIEPH)  # Moon = 1
+            moon_lon = res[0][0] % 360
+        except:
+            # Fallback approximate: Moon moves 13.176 deg per day, use simple approx based on date
+            # Very rough fallback - will still give some nakshatra
+            moon_lon = ( (y*12 + m)*30 + d*13.176 ) % 360
+        nak_deg = 360.0/27.0
+        nak_idx = int(moon_lon / nak_deg) % 27
+        deg_in_nak = moon_lon % nak_deg
+        charan = int(deg_in_nak / (nak_deg/4.0)) + 1
+        if charan<1: charan=1
+        if charan>4: charan=4
+        return nak_idx, charan, moon_lon
+    except Exception as e:
+        return None
+
 NAK_EN = ["Ashwini","Bharani","Krittika","Rohini","Mrigashira","Ardra","Punarvasu","Pushya","Ashlesha","Magha","P.Phalguni","U.Phalguni","Hasta","Chitra","Swati","Vishakha","Anuradha","Jyeshtha","Mula","P.Shadha","U.Shadha","Shravana","Dhanishtha","Shatabhisha","P.Bhadra","U.Bhadra","Revati"]
 NAK_SYLLABLES = {0:["Chu","Che","Cho","La"],1:["Li","Lu","Le","Lo"],2:["A","I","U","E"],3:["O","Va","Vi","Vu"],4:["Ve","Vo","Ka","Ki"],5:["Ku","Gha","Ng","Chha"],6:["Ke","Ko","Ha","Hi"],7:["Hu","He","Ho","Da"],8:["Di","Du","De","Do"],9:["Ma","Mi","Mu","Me"],10:["Mo","Ta","Ti","Tu"],11:["Te","To","Pa","Pi"],12:["Pu","Sha","Na","Tha"],13:["Pe","Po","Ra","Ri"],14:["Ru","Re","Ro","Ta"],15:["Ti","Tu","Te","To"],16:["Na","Ni","Nu","Ne"],17:["No","Ya","Yi","Yu"],18:["Ye","Yo","Bha","Bhi"],19:["Bhu","Dha","Pha","Dha"],20:["Bhe","Bho","Ja","Ji"],21:["Ju","Je","Jo","Gha"],22:["Ga","Gi","Gu","Ge"],23:["Go","Sa","Si","Su"],24:["Se","So","Da","Di"],25:["Du","Tha","Jha","Na"],26:["De","Do","Cha","Chi"]}
 CHARAN_RASHI_108 = ["Aries","Aries","Aries","Aries","Taurus","Taurus","Taurus","Taurus","Taurus","Taurus","Gemini","Gemini","Gemini","Gemini","Gemini","Gemini","Gemini","Cancer","Cancer","Cancer","Cancer","Cancer","Cancer","Cancer","Leo","Leo","Leo","Leo","Leo","Virgo","Virgo","Virgo","Virgo","Virgo","Virgo","Libra","Libra","Libra","Libra","Libra","Libra","Libra","Scorpio","Scorpio","Scorpio","Scorpio","Scorpio","Sagittarius","Sagittarius","Sagittarius","Sagittarius","Sagittarius","Capricorn","Capricorn","Capricorn","Capricorn","Capricorn","Capricorn","Capricorn","Aquarius","Aquarius","Aquarius","Aquarius","Aquarius","Pisces","Pisces","Pisces","Pisces","Pisces","Pisces","Pisces","Pisces","Aries","Aries","Aries","Aries","Taurus","Taurus","Taurus","Taurus","Taurus","Gemini","Gemini","Gemini","Gemini","Gemini","Cancer","Cancer","Cancer","Cancer","Cancer","Leo","Leo","Leo","Leo","Leo","Virgo","Virgo","Virgo","Virgo","Virgo","Libra","Libra","Libra","Libra","Libra"]
@@ -729,13 +867,32 @@ def get_tara_bala(listing_nak_idx, target_nak_idx):
     return tara_num, TARA_NAMES.get(tara_num, "Unknown")
 
 
-def save_user_profile_db(birth_nak_idx, birth_charan):
+def save_user_profile_db(birth_nak_idx, birth_charan, dob='', tob='', pob='', lat='', lon='', gmt='5.5'):
     try:
         conn = sqlite3.connect(str(DB_PATH))
         cur = conn.cursor()
+        # Ensure new columns exist (migration for old DB)
+        try:
+            cur.execute("ALTER TABLE user_profile ADD COLUMN dob TEXT")
+        except: pass
+        try:
+            cur.execute("ALTER TABLE user_profile ADD COLUMN tob TEXT")
+        except: pass
+        try:
+            cur.execute("ALTER TABLE user_profile ADD COLUMN pob TEXT")
+        except: pass
+        try:
+            cur.execute("ALTER TABLE user_profile ADD COLUMN lat TEXT")
+        except: pass
+        try:
+            cur.execute("ALTER TABLE user_profile ADD COLUMN lon TEXT")
+        except: pass
+        try:
+            cur.execute("ALTER TABLE user_profile ADD COLUMN gmt TEXT")
+        except: pass
         details = get_charan_details(birth_nak_idx, birth_charan)
-        cur.execute("INSERT OR REPLACE INTO user_profile(id,birth_nak_idx,birth_nak_en,birth_nak_hi,birth_charan,rashi,syllable,navamsa,pada,created) VALUES(1,?,?,?,?,?,?,?,?,?)",
-            (birth_nak_idx, NAK_EN[birth_nak_idx] if birth_nak_idx < len(NAK_EN) else "", NAK[birth_nak_idx] if birth_nak_idx < len(NAK) else "", birth_charan, details["rashi"], details["syllable"], details["navamsa"], details["pada"], datetime.now().isoformat()))
+        cur.execute("INSERT OR REPLACE INTO user_profile(id,birth_nak_idx,birth_nak_en,birth_nak_hi,birth_charan,rashi,syllable,navamsa,pada,created,dob,tob,pob,lat,lon,gmt) VALUES(1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (birth_nak_idx, NAK_EN[birth_nak_idx] if birth_nak_idx < len(NAK_EN) else "", NAK[birth_nak_idx] if birth_nak_idx < len(NAK) else "", birth_charan, details["rashi"], details["syllable"], details["navamsa"], details["pada"], datetime.now().isoformat(), dob, tob, pob, lat, lon, gmt))
         conn.commit()
         conn.close()
         return True, details
@@ -746,12 +903,24 @@ def load_user_profile_db():
     try:
         conn = sqlite3.connect(str(DB_PATH))
         cur = conn.cursor()
-        cur.execute("SELECT birth_nak_idx,birth_nak_en,birth_nak_hi,birth_charan,rashi,syllable,navamsa,pada FROM user_profile WHERE id=1")
-        row = cur.fetchone()
-        conn.close()
-        if row:
-            return {"nak_idx":row[0],"nak_name":row[1],"nak_hi":row[2],"charan":row[3],"rashi":row[4],"syllable":row[5],"navamsa":row[6],"pada":row[7]}
-        return None
+        try:
+            cur.execute("SELECT birth_nak_idx,birth_nak_en,birth_nak_hi,birth_charan,rashi,syllable,navamsa,pada,dob,tob,pob,lat,lon,gmt FROM user_profile WHERE id=1")
+            row = cur.fetchone()
+            conn.close()
+            if row:
+                return {"nak_idx":row[0],"nak_name":row[1],"nak_hi":row[2],"charan":row[3],"rashi":row[4],"syllable":row[5],"navamsa":row[6],"pada":row[7],"dob":row[8] if len(row)>8 else "","tob":row[9] if len(row)>9 else "","pob":row[10] if len(row)>10 else "","lat":row[11] if len(row)>11 else "","lon":row[12] if len(row)>12 else "","gmt":row[13] if len(row)>13 else "5.5"}
+            return None
+        except:
+            # Fallback old schema
+            try:
+                cur.execute("SELECT birth_nak_idx,birth_nak_en,birth_nak_hi,birth_charan,rashi,syllable,navamsa,pada FROM user_profile WHERE id=1")
+                row = cur.fetchone()
+                conn.close()
+                if row:
+                    return {"nak_idx":row[0],"nak_name":row[1],"nak_hi":row[2],"charan":row[3],"rashi":row[4],"syllable":row[5],"navamsa":row[6],"pada":row[7],"dob":"","tob":"","pob":"","lat":"","lon":"","gmt":"5.5"}
+            except:
+                pass
+            return None
     except:
         return None
 
@@ -5267,10 +5436,17 @@ Iska matlab: Ek hi app, ek hi stock, same time par do logon ko alag result — j
 
         # ── NAVIGATION CONTROL ────────────────────────────────────────────────
 
-        # ── USER BIRTH PROFILE SCREEN — Birth Nakshatra + Charan (separate button) ──
+        # ── USER BIRTH PROFILE SCREEN — DOB + Place (offline, no API key) + Nakshatra fallback ──
         birth_nak_options = [ft.dropdown.Option(f"{en} ({hi})") for en, hi in zip(NAK_EN, NAK)]
         fld_profile_nak = ft.Dropdown(label="Birth Nakshatra (27)", value=f"{NAK_EN[0]} ({NAK[0]})", options=birth_nak_options, width=360)
         fld_profile_charan = ft.Dropdown(label="Charan / Pada 1-4", value="1", options=[ft.dropdown.Option("1"), ft.dropdown.Option("2"), ft.dropdown.Option("3"), ft.dropdown.Option("4")], width=160)
+        # DOB fields - no API key needed
+        fld_dob = ft.TextField(label="DOB DD-MM-YYYY (e.g. 15-08-1990)", value="", width=220, hint_text="15-08-1990")
+        fld_tob = ft.TextField(label="Birth Time HH:MM (24h)", value="", width=160, hint_text="10:30")
+        fld_pob = ft.TextField(label="Place of Birth (e.g. Delhi)", value="", width=200, hint_text="Delhi")
+        fld_lat = ft.TextField(label="Lat", value="", width=90, hint_text="28.6")
+        fld_lon = ft.TextField(label="Lon", value="", width=90, hint_text="77.2")
+        fld_gmt = ft.TextField(label="GMT", value="5.5", width=70, hint_text="5.5")
         profile_detail_text = ft.Text("", size=12, color=C["black_txt"], selectable=True)
         profile_saved_banner = ft.Text("", size=13, weight="bold", color=C["green"])
 
@@ -5278,11 +5454,23 @@ Iska matlab: Ek hi app, ek hi stock, same time par do logon ko alag result — j
             prof = load_user_profile_db()
             if prof:
                 det = get_charan_details(prof["nak_idx"], prof["charan"])
-                profile_saved_banner.value = f"Saved: {prof['nak_name']} Charan {prof['charan']} | Rashi {det['rashi']} | Akshar {det['syllable']} | Navamsa {det['navamsa']} | Pada {det['pada']}/108"
-                profile_detail_text.value = f"Rashi: {det['rashi']} | Syllable: {det['syllable']} | Navamsa: {det['navamsa']} | Full Pada: {det['pada']} | Deg: {det['deg']} | Lord: {NAKSHATRA_LORD_CYCLE[prof['nak_idx']%9]} | Use for Tara/Chandra/SBC"
+                dob_txt = prof.get("dob","") or "N/A"
+                pob_txt = prof.get("pob","") or "N/A"
+                profile_saved_banner.value = f"Saved: {prof['nak_name']} C{prof['charan']} | Rashi {det['rashi']} | DOB {dob_txt} {pob_txt} | Akshar {det['syllable']} | Pada {det['pada']}/108"
+                profile_detail_text.value = f"Rashi: {det['rashi']} | Syllable: {det['syllable']} | Navamsa: {det['navamsa']} | Full Pada: {det['pada']} | Deg: {det['deg']} | Lord: {NAKSHATRA_LORD_CYCLE[prof['nak_idx']%9]} | DOB:{dob_txt} Place:{pob_txt}"
+                # Fill fields if exist
+                try:
+                    if prof.get("dob"): fld_dob.value = prof["dob"]
+                    if prof.get("tob"): fld_tob.value = prof["tob"]
+                    if prof.get("pob"): fld_pob.value = prof["pob"]
+                    if prof.get("lat"): fld_lat.value = str(prof["lat"])
+                    if prof.get("lon"): fld_lon.value = str(prof["lon"])
+                    if prof.get("gmt"): fld_gmt.value = str(prof["gmt"])
+                except:
+                    pass
             else:
-                profile_saved_banner.value = "No birth profile saved yet."
-                profile_detail_text.value = "Select your birth Nakshatra (from Kundli) and Charan 1-4. Each Charan = 3°20'. Used for Tara Bala, Chandra Bala, Vedha, SBC - all-round Indian prediction."
+                profile_saved_banner.value = "No birth profile saved yet. Enter DOB+Place and tap Calculate OR select Nakshatra directly."
+                profile_detail_text.value = "Option 1: DOB + Place -> Find Lat/Lon (offline DB, no API) -> Calculate Nakshatra. Option 2: Directly select Nakshatra+Charan from Kundli."
 
         def render_personal_confluence(moon_nak_idx, combined_dir=None, has_vedha_stock=None, stock_sym=None, listing_nak_idx=None):
             prof = load_user_profile_db()
@@ -5334,6 +5522,54 @@ Iska matlab: Ek hi app, ek hi stock, same time par do logon ko alag result — j
             ], spacing=4), bgcolor="#FFF8E1", padding=10, border_radius=8, border=ft.border.all(2, final_col)))
             personal_confluence_container.visible=True
 
+        def do_find_latlon(e):
+            try:
+                place = fld_pob.value.strip()
+                if not place:
+                    set_status("Enter Place of Birth first", C["red"]); page.update(); return
+                coords = get_lat_lon_offline(place)
+                if coords:
+                    lat, lon, gmt = coords
+                    fld_lat.value = str(lat); fld_lon.value = str(lon); fld_gmt.value = str(gmt)
+                    set_status(f"Found offline: {place} -> Lat {lat} Lon {lon} GMT {gmt} (no API key)", C["green"])
+                else:
+                    set_status(f"Place '{place}' not in offline DB (150+ cities). Enter Lat/Lon manually from Google Maps. Format: Delhi = 28.61, 77.20", C["orange"])
+                page.update()
+            except Exception as ex:
+                set_status(f"Find error: {ex}", C["red"]); page.update()
+
+        def do_calc_nak_from_dob(e):
+            try:
+                dob = fld_dob.value.strip(); tob = fld_tob.value.strip()
+                lat_s = fld_lat.value.strip(); lon_s = fld_lon.value.strip(); gmt_s = fld_gmt.value.strip()
+                if not dob or not tob:
+                    set_status("Enter DOB DD-MM-YYYY and Time HH:MM", C["red"]); page.update(); return
+                if not lat_s or not lon_s:
+                    # Try auto find from place
+                    place = fld_pob.value.strip()
+                    coords = get_lat_lon_offline(place) if place else None
+                    if coords:
+                        lat, lon, gmt = coords
+                        fld_lat.value = str(lat); fld_lon.value = str(lon); fld_gmt.value = str(gmt)
+                        lat_s = str(lat); lon_s = str(lon); gmt_s = str(gmt)
+                    else:
+                        set_status("Enter Lat/Lon or Place first. Tap Find Lat/Lon.", C["red"]); page.update(); return
+                try:
+                    lat = float(lat_s); lon = float(lon_s); gmt = float(gmt_s)
+                except:
+                    set_status("Lat/Lon/GMT must be numbers", C["red"]); page.update(); return
+                res = calc_nakshatra_from_dob(dob, tob, lat, lon, gmt)
+                if not res:
+                    set_status("Calculation failed - check DOB format DD-MM-YYYY and Time HH:MM", C["red"]); page.update(); return
+                nak_idx, charan, moon_lon = res
+                # Auto set dropdowns
+                fld_profile_nak.value = f"{NAK_EN[nak_idx]} ({NAK[nak_idx]})"
+                fld_profile_charan.value = str(charan)
+                set_status(f"Calculated: {NAK_EN[nak_idx]} ({NAK[nak_idx]}) Charan {charan} Moon {moon_lon:.2f}° - Now tap SET BIRTH to save", C["green"])
+                page.update()
+            except Exception as ex:
+                set_status(f"Calc error: {ex}", C["red"]); page.update()
+
         def do_save_birth_profile(e):
             try:
                 sel = fld_profile_nak.value
@@ -5343,10 +5579,12 @@ Iska matlab: Ek hi app, ek hi stock, same time par do logon ko alag result — j
                         nak_idx = i
                         break
                 charan = int(fld_profile_charan.value)
-                ok, det = save_user_profile_db(nak_idx, charan)
+                dob = fld_dob.value.strip(); tob = fld_tob.value.strip(); pob = fld_pob.value.strip()
+                lat = fld_lat.value.strip(); lon = fld_lon.value.strip(); gmt = fld_gmt.value.strip() or "5.5"
+                ok, det = save_user_profile_db(nak_idx, charan, dob, tob, pob, lat, lon, gmt)
                 if ok:
                     refresh_profile_display()
-                    set_status(f"Birth saved: {NAK_EN[nak_idx]} Charan {charan} Rashi {det['rashi']}", C["green"])
+                    set_status(f"Birth saved: {NAK_EN[nak_idx]} C{charan} Rashi {det['rashi']} DOB {dob} {pob} - No API key used", C["green"])
                 else:
                     set_status(f"Save failed: {det}", C["red"])
                 page.update()
@@ -5354,12 +5592,21 @@ Iska matlab: Ek hi app, ek hi stock, same time par do logon ko alag result — j
                 set_status(f"Save error: {ex}", C["red"])
                 page.update()
 
-        btn_save_profile = ft.ElevatedButton("💾 SET BIRTH NAKSHATRA + CHARAN", bgcolor=C["primary"], color="#FFFFFF", height=50, on_click=do_save_birth_profile)
+        btn_find = ft.ElevatedButton("🔍 FIND LAT/LON (Offline DB, No API)", bgcolor="#37474F", color="#FFFFFF", height=40, on_click=do_find_latlon)
+        btn_calc = ft.ElevatedButton("🧮 CALCULATE NAKSHATRA FROM DOB", bgcolor="#EF6C00", color="#FFFFFF", height=50, on_click=do_calc_nak_from_dob)
+        btn_save_profile = ft.ElevatedButton("💾 SET BIRTH (Save)", bgcolor=C["primary"], color="#FFFFFF", height=50, on_click=do_save_birth_profile)
 
         profile_screen = ft.Column(visible=False, scroll="auto", controls=[
-            make_header("👤 MY BIRTH - Nakshatra + Charan (Indian All-Round)"),
-            ft.Text("Set your birth Nakshatra and Charan ONCE — app will give you PERSONAL 7-point result every time you check any stock.\n\nBENEFIT:\n1. Tara Bala = Aaj ka din aapke liye Sampat (profit) ya Vipat (loss) — trade lena ya skip\n2. Chandra Bala = Aaj mind clear ya confused (6/8/12 weak)\n3. Vedha = Kaam atkega ya chalega\n4. Charan = Rashi/Navamsa/Akshar/Pada exact — for accurate Chandra & naam shastra\n5. Final = STRONG BULLISH for YOU / BEARISH for YOU — market UP ho ke bhi aapka din kharab ho to skip karo\n\nSame stock, same time par dusre vyakti ko alag result milega — kyunki birth alag.", size=12, color=C["black_txt"]),
+            make_header("👤 MY BIRTH - DOB + Place (No API Key)"),
+            ft.Text("Option 1 (Easy): Enter DOB + Time + Place -> Find Lat/Lon (offline 150+ cities, no API key) -> Calculate Nakshatra -> Save.\nOption 2: If you know Kundli, directly select Nakshatra+Charan and Save.\nBoth give same result for Sarvatobhadra + Siribhoovalaya.", size=12, color=C["black_txt"], weight="bold"),
             ft.Divider(height=4, color=C["divider"]),
+            ft.Text("STEP 1: Birth Details (No API needed)", size=13, weight="bold", color=C["black_txt"]),
+            ft.Row([fld_dob, fld_tob], wrap=True),
+            ft.Row([fld_pob, btn_find], wrap=True),
+            ft.Row([fld_lat, fld_lon, fld_gmt], wrap=True),
+            btn_calc,
+            ft.Divider(height=4, color=C["divider"]),
+            ft.Text("STEP 2: Nakshatra + Charan (Auto-filled from DOB or select manually)", size=13, weight="bold", color=C["black_txt"]),
             fld_profile_nak,
             fld_profile_charan,
             btn_save_profile,
@@ -5367,8 +5614,8 @@ Iska matlab: Ek hi app, ek hi stock, same time par do logon ko alag result — j
             profile_saved_banner,
             profile_detail_text,
             ft.Container(height=10),
-            ft.Text("Charan Details: 1 Charan = 3°20'. 108 Charan = 12 Rashi x 9 Navamsa. Your syllable (e.g., Chu, Che, Cho, La for Ashwini) is your name's starting sound as per Indian naming.", size=11, color=C["hint_txt"]),
-            ft.Text("How it helps: Birth Nak vs Today Moon = Tara (Sampat good, Vipat bad). Rashi vs Moon Rashi = Chandra Bala (6/8/12 weak). Birth Nak vs Moon Vedha = obstruction. Combined with Bhoovalaya Bandha + SBC = 7-point all-round signal.", size=11, color=C["hint_txt"]),
+            ft.Text("How place -> lat/lon without API: App has offline DB of 150+ Indian cities (Delhi 28.61,77.20 etc). No internet needed. For village not in list, enter lat/lon manually from Google Maps search.", size=11, color=C["hint_txt"]),
+            ft.Text("Calculation: DOB+Time+Lat/Lon+GMT -> Swiss Ephemeris Moon longitude -> Nakshatra (Moon/13.33) + Charan (3.33 deg each). Same as Kundli.", size=11, color=C["hint_txt"]),
         ])
 
         refresh_profile_display()

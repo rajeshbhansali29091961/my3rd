@@ -736,9 +736,9 @@ def get_lat_lon_offline(place_name):
     return None
 
 def calc_nakshatra_from_dob(dob_str, time_str, lat, lon, gmt):
-    """Use SAME helpers as Kundli tab - jd_ut_from_ist + calc_planet_positions.
-    This uses your __init__.py swisseph_ffi library (no pip pyswisseph needed).
-    Moon from calc_planet_positions is tropical, subtract ayanamsa to get Lahiri sidereal."""
+    """CORRECTED: calc_planet_positions already returns SIDEREAL (Lahiri).
+    So pos["Mo"] is already sidereal - DO NOT subtract ayanamsa again.
+    This was the bug causing Bharani instead of Rohini (double subtraction)."""
     try:
         from datetime import datetime as dt, timedelta
         try:
@@ -748,25 +748,22 @@ def calc_nakshatra_from_dob(dob_str, time_str, lat, lon, gmt):
             lat_f = float(lat); lon_f = float(lon)
         except:
             return None
-        # Same as Kundli tab do_astro: jd from IST
         jd = jd_ut_from_ist(y, m, d, hh, mm, gmt_f)
         pos, ay = calc_planet_positions(jd, lat_f, lon_f)
-        # pos["Mo"] is Moon tropical longitude from your swisseph_ffi
-        moon_trop = pos.get("Mo", 0.0)
-        moon_sid = (moon_trop - ay) % 360
+        # pos["Mo"] is ALREADY sidereal Lahiri from calc_planet_positions
+        moon_sid = pos.get("Mo", 0.0) % 360
         nak_idx = int((moon_sid * 27 / 360) % 27)
         pada108 = int((moon_sid * 108 / 360) % 108)
         charan = (pada108 % 4) + 1
         return nak_idx, charan, moon_sid
     except Exception as e:
-        # Fallback to direct swisseph if calc_planet_positions fails
         try:
             import swisseph as swe
             from datetime import datetime as dt, timedelta
             d, m, y = map(int, dob_str.strip().split('-'))
             hh, mm = map(int, time_str.strip().split(':'))
             gmt_f = float(str(gmt).strip() or 5.5)
-            ut_hour = hh + mm/60.0 - gmt_f
+            ut_hour = hh + mm / 60.0 - gmt_f
             bdate = dt(y, m, d)
             if ut_hour < 0:
                 ut_hour += 24
@@ -793,12 +790,11 @@ def calc_nakshatra_from_dob_with_debug(dob_str, time_str, lat, lon, gmt):
         lat_f = float(lat); lon_f = float(lon)
         jd = jd_ut_from_ist(y, m, d, hh, mm, gmt_f)
         pos, ay = calc_planet_positions(jd, lat_f, lon_f)
-        moon_trop = pos.get("Mo", 0.0)
-        moon_sid = (moon_trop - ay) % 360
+        moon_sid = pos.get("Mo", 0.0) % 360
         nak_idx = int((moon_sid * 27 / 360) % 27)
         pada108 = int((moon_sid * 108 / 360) % 108)
         charan = (pada108 % 4) + 1
-        return {"jd": jd, "moon_trop": moon_trop, "moon_sid": moon_sid, "nak_idx": nak_idx, "charan": charan, "ayanamsa": ay}
+        return {"jd": jd, "moon_sid": moon_sid, "moon_trop": (moon_sid+ay)%360, "nak_idx": nak_idx, "charan": charan, "ayanamsa": ay}
     except Exception as e:
         return {"error": str(e)}
 

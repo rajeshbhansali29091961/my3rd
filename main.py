@@ -565,8 +565,8 @@ def get_next_5_moon_naks():
             for i in range(5):
                 d = base + timedelta(days=i)
                 jd = swe.julday(d.year, d.month, d.day, 12, 0)
-                swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
-                res = swe.calc_ut(jd, 1, swe.FLG_SWIEPH | swe.FLG_SIDEREAL)
+                swe.set_sid_mode(swe.SIDM_LAHIRI)
+                res = swe.calc_ut(jd, swe.MOON)
                 lon = res[0][0] % 360
                 idx = int(lon / (360.0/27.0)) % 27
                 naks.append((d.strftime('%d-%m'), idx))
@@ -586,9 +586,9 @@ def get_today_moon_nak_idx():
         from datetime import datetime as dt
         try:
             import swisseph as swe
-            swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+            swe.set_sid_mode(swe.SIDM_LAHIRI)
             jd = swe.julday(dt.now().year, dt.now().month, dt.now().day, dt.now().hour + dt.now().minute/60.0)
-            res = swe.calc_ut(jd, 1, swe.FLG_SWIEPH | swe.FLG_SIDEREAL)
+            res = swe.calc_ut(jd, swe.MOON)
             lon = res[0][0] % 360
             return int(lon / (360.0/27.0)) % 27
         except:
@@ -736,68 +736,71 @@ def get_lat_lon_offline(place_name):
     return None
 
 def calc_nakshatra_from_dob(dob_str, time_str, lat, lon, gmt):
-    """Use SAME swisseph functions as Kundli tab for 100% accurate result"""
-    try:
-        from datetime import datetime as dt
-        # Parse
-        d,m,y = map(int, dob_str.strip().split('-'))
-        hh,mm = map(int, time_str.strip().split(':'))
-        lat_f = float(lat); lon_f = float(lon); gmt_f = float(gmt)
-        # Use existing helper from Kundli tab - same as accurate Kundli
-        jd = jd_ut_from_ist(y, m, d, hh, mm, gmt_f)
-        pos, ay = calc_planet_positions(jd, lat_f, lon_f)
-        moon_lon_tropical = pos["Mo"]  # Tropical longitude from Kundli function
-        # Convert to Sidereal Lahiri using existing ayanamsa 'ay'
-        moon_lon_sidereal = (moon_lon_tropical - ay) % 360
-        nak_deg = 360.0/27.0
-        nak_idx = int(moon_lon_sidereal / nak_deg) % 27
-        deg_in_nak = moon_lon_sidereal % nak_deg
-        charan = int(deg_in_nak / (nak_deg/4.0)) + 1
-        if charan<1: charan=1
-        if charan>4: charan=4
-        return nak_idx, charan, moon_lon_sidereal
-    except Exception as e:
-        return None
-
-def calc_nakshatra_from_dob_with_debug(dob_str, time_str, lat, lon, gmt):
-    try:
-        d,m,y = map(int, dob_str.strip().split('-'))
-        hh,mm = map(int, time_str.strip().split(':'))
-        lat_f = float(lat); lon_f = float(lon); gmt_f = float(gmt)
-        jd = jd_ut_from_ist(y, m, d, hh, mm, gmt_f)
-        pos, ay = calc_planet_positions(jd, lat_f, lon_f)
-        moon_trop = pos["Mo"]
-        moon_sid = (moon_trop - ay) % 360
-        return {"jd": jd, "tropical": moon_trop, "sidereal": moon_sid, "ayanamsa": ay}
-    except Exception as e:
-        return {"error": str(e)}
-
-
-def calc_nakshatra_from_dob_with_debug(dob_str, time_str, lat, lon, gmt):
-    """Returns dict with debug info for UI"""
+    """Use SAME helpers as Kundli tab - jd_ut_from_ist + calc_planet_positions.
+    This uses your __init__.py swisseph_ffi library (no pip pyswisseph needed).
+    Moon from calc_planet_positions is tropical, subtract ayanamsa to get Lahiri sidereal."""
     try:
         from datetime import datetime as dt, timedelta
-        d,m,y = map(int, dob_str.strip().split('-'))
-        hh,mm = map(int, time_str.strip().split(':'))
-        ut_hours = hh + mm/60.0 - float(gmt)
-        day_offset = 0
-        if ut_hours < 0:
-            ut_hours += 24
-            day_offset = -1
-        elif ut_hours >= 24:
-            ut_hours -= 24
-            day_offset = 1
-        jd_date = dt(y,m,d) + timedelta(days=day_offset)
-        import swisseph as swe
-        swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
-        jd = swe.julday(jd_date.year, jd_date.month, jd_date.day, ut_hours)
-        res_trop = swe.calc_ut(jd, 1, swe.FLG_SWIEPH)
-        res_sid = swe.calc_ut(jd, 1, swe.FLG_SWIEPH | swe.FLG_SIDEREAL)
-        ayan = swe.get_ayanamsa_ut(jd)
-        return {"jd": jd, "tropical": res_trop[0][0]%360, "sidereal": res_sid[0][0]%360, "ayanamsa": ayan, "ut_hours": ut_hours, "day_offset": day_offset}
+        try:
+            d, m, y = map(int, dob_str.strip().split('-'))
+            hh, mm = map(int, time_str.strip().split(':'))
+            gmt_f = float(str(gmt).strip() or 5.5)
+            lat_f = float(lat); lon_f = float(lon)
+        except:
+            return None
+        # Same as Kundli tab do_astro: jd from IST
+        jd = jd_ut_from_ist(y, m, d, hh, mm, gmt_f)
+        pos, ay = calc_planet_positions(jd, lat_f, lon_f)
+        # pos["Mo"] is Moon tropical longitude from your swisseph_ffi
+        moon_trop = pos.get("Mo", 0.0)
+        moon_sid = (moon_trop - ay) % 360
+        nak_idx = int((moon_sid * 27 / 360) % 27)
+        pada108 = int((moon_sid * 108 / 360) % 108)
+        charan = (pada108 % 4) + 1
+        return nak_idx, charan, moon_sid
+    except Exception as e:
+        # Fallback to direct swisseph if calc_planet_positions fails
+        try:
+            import swisseph as swe
+            from datetime import datetime as dt, timedelta
+            d, m, y = map(int, dob_str.strip().split('-'))
+            hh, mm = map(int, time_str.strip().split(':'))
+            gmt_f = float(str(gmt).strip() or 5.5)
+            ut_hour = hh + mm/60.0 - gmt_f
+            bdate = dt(y, m, d)
+            if ut_hour < 0:
+                ut_hour += 24
+                bdate = bdate - timedelta(days=1)
+            elif ut_hour >= 24:
+                ut_hour -= 24
+                bdate = bdate + timedelta(days=1)
+            swe.set_sid_mode(swe.SIDM_LAHIRI)
+            jd = swe.julday(bdate.year, bdate.month, bdate.day, ut_hour)
+            moon_lon = swe.calc_ut(jd, swe.MOON)[0][0] % 360
+            nak_idx = int((moon_lon * 27 / 360) % 27)
+            pada108 = int((moon_lon * 108 / 360) % 108)
+            charan = (pada108 % 4) + 1
+            return nak_idx, charan, moon_lon
+        except:
+            return None
+
+def calc_nakshatra_from_dob_with_debug(dob_str, time_str, lat, lon, gmt):
+    try:
+        from datetime import datetime as dt
+        d, m, y = map(int, dob_str.strip().split('-'))
+        hh, mm = map(int, time_str.strip().split(':'))
+        gmt_f = float(str(gmt).strip() or 5.5)
+        lat_f = float(lat); lon_f = float(lon)
+        jd = jd_ut_from_ist(y, m, d, hh, mm, gmt_f)
+        pos, ay = calc_planet_positions(jd, lat_f, lon_f)
+        moon_trop = pos.get("Mo", 0.0)
+        moon_sid = (moon_trop - ay) % 360
+        nak_idx = int((moon_sid * 27 / 360) % 27)
+        pada108 = int((moon_sid * 108 / 360) % 108)
+        charan = (pada108 % 4) + 1
+        return {"jd": jd, "moon_trop": moon_trop, "moon_sid": moon_sid, "nak_idx": nak_idx, "charan": charan, "ayanamsa": ay}
     except Exception as e:
         return {"error": str(e)}
-
 
 NAK_EN = ["Ashwini","Bharani","Krittika","Rohini","Mrigashira","Ardra","Punarvasu","Pushya","Ashlesha","Magha","P.Phalguni","U.Phalguni","Hasta","Chitra","Swati","Vishakha","Anuradha","Jyeshtha","Mula","P.Shadha","U.Shadha","Shravana","Dhanishtha","Shatabhisha","P.Bhadra","U.Bhadra","Revati"]
 NAK_SYLLABLES = {0:["Chu","Che","Cho","La"],1:["Li","Lu","Le","Lo"],2:["A","I","U","E"],3:["O","Va","Vi","Vu"],4:["Ve","Vo","Ka","Ki"],5:["Ku","Gha","Ng","Chha"],6:["Ke","Ko","Ha","Hi"],7:["Hu","He","Ho","Da"],8:["Di","Du","De","Do"],9:["Ma","Mi","Mu","Me"],10:["Mo","Ta","Ti","Tu"],11:["Te","To","Pa","Pi"],12:["Pu","Sha","Na","Tha"],13:["Pe","Po","Ra","Ri"],14:["Ru","Re","Ro","Ta"],15:["Ti","Tu","Te","To"],16:["Na","Ni","Nu","Ne"],17:["No","Ya","Yi","Yu"],18:["Ye","Yo","Bha","Bhi"],19:["Bhu","Dha","Pha","Dha"],20:["Bhe","Bho","Ja","Ji"],21:["Ju","Je","Jo","Gha"],22:["Ga","Gi","Gu","Ge"],23:["Go","Sa","Si","Su"],24:["Se","So","Da","Di"],25:["Du","Tha","Jha","Na"],26:["De","Do","Cha","Chi"]}
@@ -5465,12 +5468,12 @@ Iska matlab: Ek hi app, ek hi stock, same time par do logon ko alag result — j
         fld_profile_nak = ft.Dropdown(label="Birth Nakshatra (27)", value=f"{NAK_EN[0]} ({NAK[0]})", options=birth_nak_options, width=360)
         fld_profile_charan = ft.Dropdown(label="Charan / Pada 1-4", value="1", options=[ft.dropdown.Option("1"), ft.dropdown.Option("2"), ft.dropdown.Option("3"), ft.dropdown.Option("4")], width=160)
         # DOB fields - no API key needed
-        fld_dob = ft.TextField(label="DOB DD-MM-YYYY (e.g. 15-08-1990)", value="", width=220, hint_text="15-08-1990", color=C["black_txt"], bgcolor="#FFFFFF", text_style=ft.TextStyle(weight="bold"))
-        fld_tob = ft.TextField(label="Birth Time HH:MM (24h)", value="", width=160, hint_text="10:30", color=C["black_txt"], bgcolor="#FFFFFF", text_style=ft.TextStyle(weight="bold"))
-        fld_pob = ft.TextField(label="Place of Birth (e.g. Delhi)", value="", width=200, hint_text="Delhi", color=C["black_txt"], bgcolor="#FFFFFF", text_style=ft.TextStyle(weight="bold"))
-        fld_lat = ft.TextField(label="Lat", value="", width=90, hint_text="28.6", color=C["black_txt"], bgcolor="#FFFFFF")
-        fld_lon = ft.TextField(label="Lon", value="", width=90, hint_text="77.2", color=C["black_txt"], bgcolor="#FFFFFF")
-        fld_gmt = ft.TextField(label="GMT", value="5.5", width=70, hint_text="5.5", color=C["black_txt"], bgcolor="#FFFFFF")
+        fld_dob = ft.TextField(label="DOB DD-MM-YYYY (e.g. 15-08-1990)", value="", width=220, hint_text="15-08-1990", color="#212121", bgcolor="#FFFFFF", label_style=ft.TextStyle(color="#212121", weight="bold"), hint_style=ft.TextStyle(color="#616161"), text_style=ft.TextStyle(color="#212121", weight="bold"))
+        fld_tob = ft.TextField(label="Birth Time HH:MM (24h)", value="", width=160, hint_text="10:30", color="#212121", bgcolor="#FFFFFF", label_style=ft.TextStyle(color="#212121", weight="bold"), hint_style=ft.TextStyle(color="#616161"), text_style=ft.TextStyle(color="#212121", weight="bold"))
+        fld_pob = ft.TextField(label="Place of Birth (e.g. Delhi)", value="", width=200, hint_text="Delhi", color="#212121", bgcolor="#FFFFFF", label_style=ft.TextStyle(color="#212121", weight="bold"), hint_style=ft.TextStyle(color="#616161"), text_style=ft.TextStyle(color="#212121", weight="bold"))
+        fld_lat = ft.TextField(label="Lat", value="", width=90, hint_text="28.6", color="#212121", bgcolor="#FFFFFF", label_style=ft.TextStyle(color="#212121", weight="bold"), hint_style=ft.TextStyle(color="#616161"), text_style=ft.TextStyle(color="#212121", weight="bold"))
+        fld_lon = ft.TextField(label="Lon", value="", width=90, hint_text="77.2", color="#212121", bgcolor="#FFFFFF", label_style=ft.TextStyle(color="#212121", weight="bold"), hint_style=ft.TextStyle(color="#616161"), text_style=ft.TextStyle(color="#212121", weight="bold"))
+        fld_gmt = ft.TextField(label="GMT", value="5.5", width=70, hint_text="5.5", color="#212121", bgcolor="#FFFFFF", label_style=ft.TextStyle(color="#212121", weight="bold"), hint_style=ft.TextStyle(color="#616161"), text_style=ft.TextStyle(color="#212121", weight="bold"))
         profile_detail_text = ft.Text("", size=12, color=C["black_txt"], selectable=True)
         profile_saved_banner = ft.Text("", size=13, weight="bold", color=C["green"])
 

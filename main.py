@@ -2166,9 +2166,14 @@ def _resolve_native_dir():
     here = os.path.dirname(os.path.abspath(__file__))
     candidates = [
         os.path.join(here, "native"),
+        os.path.join(here, "assets", "native"),
         os.path.join(here, "..", "native"),
+        os.path.join(here, "..", "assets", "native"),
         os.path.join(os.getcwd(), "native"),
+        os.path.join(os.getcwd(), "assets", "native"),
         os.path.join(os.getenv("FLET_APP_STORAGE_DATA", ".") or ".", "native"),
+        os.path.join(os.getenv("FLET_ASSETS_DIR", ".") or ".", "native"),
+        os.path.join(os.getenv("FLET_APP_STORAGE_DATA", ".") or ".", "assets", "native"),
     ]
     for c in candidates:
         try:

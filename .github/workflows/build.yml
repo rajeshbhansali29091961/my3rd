@@ -53,7 +53,7 @@ jobs:
         run: |
           set -eux
           git clone --depth 1 https://github.com/aloistr/swisseph.git sweph-src
-          ls -la sweph-src
+          ls -la sweph-src/ephe | head -20
 
       - name: Build libswe.so ARM64 + ARMv7
         run: |
@@ -64,33 +64,42 @@ jobs:
           $TOOLCHAIN/bin/aarch64-linux-android24-clang -shared -fPIC -O2 -o native/arm64-v8a/libswe.so sweph-src/swedate.c sweph-src/swehouse.c sweph-src/swejpl.c sweph-src/swemmoon.c sweph-src/swemplan.c sweph-src/sweph.c sweph-src/swephlib.c sweph-src/swecl.c sweph-src/swehel.c -lm
           $TOOLCHAIN/bin/armv7a-linux-androideabi24-clang -shared -fPIC -O2 -o native/armeabi-v7a/libswe.so sweph-src/swedate.c sweph-src/swehouse.c sweph-src/swejpl.c sweph-src/swemmoon.c sweph-src/swemplan.c sweph-src/sweph.c sweph-src/swephlib.c sweph-src/swecl.c sweph-src/swehel.c -lm
           file native/arm64-v8a/libswe.so native/armeabi-v7a/libswe.so
+          ls -lh native/arm64-v8a/ native/armeabi-v7a/
 
       - name: Prepare ephemeris data
         run: |
           set -eux
-          mkdir -p native/ephe assets/native/ephe
-          for f in sepl_18.se1 semo_18.se1 seas_18.se1; do
+          mkdir -p native/ephe assets/native/ephe ephe
+          for f in sepl_18.se1 semo_18.se1 seas_18.se1 seplm18.se1 semom18.se1; do
             if [ -f "sweph-src/ephe/$f" ]; then cp "sweph-src/ephe/$f" "native/ephe/$f"; echo "Copied from clone: $f"; fi
-            if [ -f "ephe-cache/$f" ]; then cp "ephe-cache/$f" "native/ephe/$f"; echo "Copied from ephe-cache: $f"; fi
+            if [ -f "ephe-cache/$f" ]; then cp "ephe-cache/$f" "native/ephe/$f"; echo "Copied from cache: $f"; fi
           done
+          # Copy to both locations Flet looks at
           cp native/ephe/* assets/native/ephe/ 2>/dev/null || true
+          cp native/ephe/* ephe/ 2>/dev/null || true
           cp -r native assets/ 2>/dev/null || true
-          ls -lh native/ephe/ assets/native/ephe/ || true
+          echo "=== native/ephe ===" && ls -lh native/ephe/
+          echo "=== assets/native/ephe ===" && ls -lh assets/native/ephe/
+          echo "=== ephe/ ===" && ls -lh ephe/ || true
 
-      - name: Install Flet
+      - name: Install Flet + dependencies (FIXED)
         run: |
           python -m pip install --upgrade pip
-          pip install "flet==0.28.3"
+          pip install "flet==0.28.3" "swisseph-ffi" "requests"
+          pip install -e . || echo "pip install -e . failed, continuing with direct deps"
+          flet --version
 
       - name: Show project layout
         run: |
           flet --version
           python --version
           flutter --version
-          find . -maxdepth 3 -type f ! -path './.git/*' ! -path './sweph-src/*' | sort
-          find native assets -type f 2>/dev/null | sort || true
+          python -c "import swisseph_ffi; print('swisseph_ffi OK')"
+          find . -maxdepth 4 -type f -name "libswe.so" | sort
+          find native assets ephe -type f 2>/dev/null | sort || true
+          ls -R assets/ | head -100
 
-      - name: Configure Gradle
+      - name: Configure Gradle (FIXED for parsing error)
         run: |
           mkdir -p "$HOME/.gradle"
           cat > "$HOME/.gradle/gradle.properties" << 'EOF'
@@ -98,24 +107,33 @@ jobs:
           org.gradle.parallel=false
           org.gradle.workers.max=1
           org.gradle.daemon=false
+          android.useAndroidX=true
+          android.enableJetifier=true
           EOF
 
-      - name: Build APK
+      - name: Build APK (FIXED - universal release)
         run: |
           set -eux
           export ANDROID_HOME="$HOME/android"
           export ANDROID_SDK_ROOT="$HOME/android"
           flutter config --no-analytics
+          # Clean previous build
+          rm -rf build/
+          # Build universal release APK (signed with debug keystore - installable)
           printf "y\n" | flet build apk --verbose --no-rich-output
+          echo "Build finished"
+          find build -type f -name "*.apk" -print
+          ls -lh build/apk/
 
       - name: Inspect APK
         run: |
           set -eux
-          find build -type f -name "*.apk" -print
           for apk in $(find build -type f -name "*.apk"); do
             echo "=== $apk ==="
             ls -lh "$apk"
-            unzip -l "$apk" | grep -E "libswe|sepl|semo|native|libflutter" || echo "checking apk content..."
+            echo "APK size (bytes):" && stat -c%s "$apk"
+            unzip -l "$apk" | grep -E "libswe|sepl|semo|native|libflutter|assets" | head -50 || echo "grep no match, listing all:"
+            unzip -l "$apk" | head -100
           done
 
       - name: Upload APK

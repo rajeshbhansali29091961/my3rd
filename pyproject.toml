@@ -13,18 +13,22 @@ dependencies = [
 org = "com.bhoovalaya"
 product = "BhoovalayaOracle"
 company = "Bhoovalaya"
-# App entry (repo root). Change to "src" if main.py lives under src/
-# path = "."
+# Entry point
+main = "main.py"
+assets_dir = "assets"
 
 [tool.flet.android]
+# FIXED for parsing error on Android 13/14
+min_sdk_version = 21
+target_sdk_version = 33
+compile_sdk_version = 33
 permissions = [
     "android.permission.INTERNET",
 ]
-# Target modern 64-bit phones only (matches build.yml --arch arm64-v8a)
+# Build ONLY arm64-v8a to avoid split-APK parsing error (modern phones are 64-bit)
+# If you need old 32-bit phones, change to ["arm64-v8a", "armeabi-v7a"]
 target_arch = ["arm64-v8a"]
-# legacy_packaging / --android-legacy-packaging only exist on Flet 0.86+.
-# With flet==0.28.3 leave this unset (not supported).
 
-# Optional: explicit features if you need them later
-# [tool.flet.android.feature]
-# "android.hardware.touchscreen" = false
+[tool.flet.build]
+# Ensure assets are packaged
+assets_dir = "assets"

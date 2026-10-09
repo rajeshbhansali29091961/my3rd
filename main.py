@@ -5330,6 +5330,33 @@ Badge:
 यह Gochar (गोचर) का classical नियम है — जन्म नक्षत्र vs दैनिक चंद्र गोचर, जैसा पंचांग में तारा-चंद्र विचार होता है।
 
 ═══════════════════════════════════════════
+💡 2nd ALERT (YOU: BULL/BEAR) का फायदा क्या है? — आपके लिए क्यों जरूरी
+═══════════════════════════════════════════
+
+SHOW ALL में 2 Alerts क्यों?
+1st Alert = Stock का अपना Trend (Listing Nak + Bhoovalaya Bandha) — सबके लिए same
+2nd Alert = आपका Personal दिन (Birth Nak vs आज Moon) — सिर्फ आपके लिए
+
+फायदा:
+1. Personal Loss से बचना: Stock UP है पर आपका दिन Vadha (7th Tara) + 12th Chandra = -2 → YOU: BEAR AVOID. मतलब Stock तेज़ी में है पर आपका Muhurta खराब — आप late entry loge, SL hit होगा। आज avoid → बड़े loss से बचाव।
+
+2. High Conviction Day: Stock UP + YOU: STRONG BULL (+3) → दोनों मिले → आपका best day. Confidence से trade।
+
+3. Daily Risk Filter: Chandra रोज़ बदलता है। BEAR AVOID वाले दिन सभी 100 stocks पर Red badge → आज personal trading बंद, सिर्फ watch। BULL वाले दिन सभी पर Green → आज trade करो।
+
+कैसे use करें:
+• YOU: BEAR AVOID + Stock UP → WAIT (Stock अच्छा पर आपका दिन खराब)
+• YOU: STRONG BULL + Stock UP → TRADE (Best Combo — high win rate)
+• YOU: BEAR AVOID + Stock DOWN → Strong AVOID
+• YOU: CAUTION → छोटे quantity, strict SL
+
+उदा: Rohini C2 जन्म वाले के लिए कल Moon Ashwini = -2 → BEAR AVOID → Trade avoid किया तो बच गए। परसों Moon Mrigashira = Sampat GOOD + 2nd Chandra GOOD + Mridu 80 → +3 → STRONG BULL → उस दिन UP stocks में hit rate high।
+
+यह ठीक वैसे है जैसे Doctor बोले "दवा अच्छी है पर आज आपको allergy है तो मत लो" — Stock अच्छा हो सकता है पर आपका व्यक्तिगत गोचर खराब हो तो नुकसान। इसलिए 2nd Alert Risk Management का निजी पंचांग फिल्टर है, जो हर व्यक्ति का जन्म नक्षत्र अलग होने से अलग-अलग आएगा (आपका Rohini से, किसी और का Ashwini से)।
+
+
+
+═══════════════════════════════════════════
 REFERENCE — सभी के लिए समान
 ═══════════════════════════════════════════
 • Nakshatra चरण C1-C4: चरण से राशि का नवांश नहीं बदलता, केवल नामाक्षर (जैसे Rohini C1=O, C2=Va, C3=Vi, C4=Vu)

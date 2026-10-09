@@ -5254,191 +5254,87 @@ def main(page: ft.Page):
 
 UP / DOWN / SIDEWAYS / MIXED का नियम:
 
-• Graha (ग्रह) संकेत: Stock नाम के अक्षरों के योग (अक्षर-योग) + Listing Date + आज की तिथि + SwissEph चंद्र नक्षत्र से ग्रह निकलता है। Graha का दिशा-निर्देश (BULLISH=UP, BEARISH=DOWN, NEUTRAL=SIDEWAYS) तय होता है।
+• Graha (ग्रह) संकेत: Stock नाम के अक्षरों के योग (अक्षर-योग) + Listing Date + आज की तिथि + SwissEph चंद्र नक्षत्र से ग्रह निकलता है।
 
-• Bandha (बंध) दिशा: ऊपर लिखे 24 बंधों में से जिस बंध में stock का नाम फंसता है, उसकी base दिशा (UP/DOWN/SIDEWAYS/CONTINUATION) ली जाती है।
+• Bandha दिशा: 24 बंधों में से जिस बंध में stock का नाम फंसता है, उसकी base दिशा (UP/DOWN/SIDEWAYS/CONTINUATION) ली जाती है।
 
-• Combine Direction (मिलाकर अंतिम दिशा):
-  - Graha UP + Bandha UP/CONTINUATION = 🔼 UP (खरीदो)
-  - Graha DOWN + Bandha DOWN = 🔽 DOWN (बेचो / बचो)
-  - एक UP और दूसरा DOWN = ⚠️ MIXED (मिला-जुला, ट्रेड से बचो)
-  - कोई भी SIDEWAYS = ↔️ SIDEWAYS (रेंज, इंतजार करो)
+• Combine Direction:
+  - Graha UP + Bandha UP/CONTINUATION = 🔼 UP
+  - Graha DOWN + Bandha DOWN = 🔽 DOWN
+  - एक UP दूसरा DOWN = ⚠️ MIXED
+  - कोई भी SIDEWAYS = ↔️ SIDEWAYS
 
-• Sarvatobhadra Vedha (वेध) नियम: Stock के Listing नक्षत्र और आज के चंद्र नक्षत्र में अगर वेध (जैसे अश्विनी ↔ ज्येष्ठा, भरणी ↔ अनुराधा) हो, तो:
-  - UP + वेध = SIDEWAYS (तेजी कमजोर, WAIT)
-  - DOWN + वेध = और ज्यादा DOWN (मंदी मजबूत)
-  - Dhanishta नक्षत्र का कोई वेध नहीं होता।
+• Sarvatobhadra Vedha (Stock): Listing नक्षत्र vs आज चंद्र नक्षत्र में वेध (अश्विनी↔ज्येष्ठा, भरणी↔अनुराधा आदि) हो तो UP→SIDEWAYS, DOWN→और DOWN. धनिष्ठा का वेध नहीं।
 
-• 9 दिन का Forecast: आज + अगले 9 ट्रेडिंग दिन (कुल 10 दिन) के लिए सभी 24 बंधों के वोट को accuracy% के weight से गिना जाता है। सबसे ज्यादा वोट वाली दिशा ही final दिशा होती है। Exp Close = last close ± (avg volatility × confidence)।
+• 10 दिन Forecast: आज + अगले 9 दिन के लिए 24 बंधों के वोट accuracy% weight से।
 
-तारा बल (Sampat/Vipat आदि): Listing नक्षत्र को जन्म (1) मानकर गिनती: 1=जन्म Neutral, 2=संपत् VERY GOOD धन, 3=विपत् BAD, 4=क्षेम GOOD, 5=प्रत्यरि BAD, 6=साधक VERY GOOD, 7=वध VERY BAD, 8=मित्र GOOD, 9=परम मित्र VERY GOOD. अच्छे तारे (2,4,6,8,9) = UP मजबूत, खराब (3,5,7)= UP->SIDEWAYS, DOWN मजबूत। यह शैक्षिक मॉडल है, वित्तीय सलाह नहीं।
+═══════════════════════════════════════════
+👤 MYDATA — PERSONAL ALL-ROUND TODAY (आपका निजी गोचर फिल्टर)
+═══════════════════════════════════════════
 
-------------------------------------------------------------
-HOW THE BUY/SELL/NEUTRAL/WAIT SIGNAL WORKS
+यह सभी 27 नक्षत्रों और किसी भी चरण के लिए समान नियम से काम करता है — आपका जन्म नक्षत्र जो भी हो (अश्विनी से रेवती, C1-C4) उसी को आधार मानता है।
 
-Every rule — saved or brand new — is ONE FRIENDLY CARD on the Rules page. ANY field you actually set (leave anything else at its default — Any / No / unchecked / blank) must ALL be true at the same time for that rule to fire. Leaving a field at its default just means "don't check this" — it does not mean "must be empty." A blank ➕ NEW RULE card always sits at the bottom of the list, ready to fill in.
+यह क्या है?
+STOCKS → SHOW ALL → MYDATA पर क्लिक करने पर ऊपर दिखता है:
+PERSONAL ALL-ROUND TODAY (Birth: YOUR_NAK C* vs Moon: TODAY_MOON_NAK)
+और हर stock के साथ YOU: STRONG BULL / BULL / CAUTION / BEAR AVOID
 
-THE RULE CARD, TOP TO BOTTOM
-• Rule Name / Description — optional label just for you, e.g. "D9-2 unaspected by Su/Ma/Sa → Buy". Purely cosmetic, doesn't affect matching.
-• ACTION — a single choice: 🟢 BUY, 🔴 SELL, ⚪ Alert Only (NEUTRAL, logged but doesn't move the score), or 🟡 WAIT (a hard caution flag — see below).
-• PRIMARY CHART & HOUSE — Chart (D1/D9) + House (1-12) this rule is about, plus an Occupancy choice: Any (don't check) / Empty (house must have NO planet sitting in it) / Occupied (house must have AT LEAST ONE planet in it).
-• RASHI LOCATION CHECK — Target Chart + tick-boxes for which of its houses (1-12) the Primary house's rashi must also fall in, plus "Aspected by ANY Planet?" (Any/Yes/No) for the plain "any planet" version of the aspect check.
-• ASPECT RESTRICTION — tick-boxes for named planets (Su, Mo, Ma, Me, Ju, Ve, Sa, Ra, Ke) plus Aspect Mode (None Aspect / At Least One / All Aspect) for the named-planet version of the aspect check.
-• 🔧 ADVANCED: Planet-Specific Conditions (tap to expand) — the original planet-level fields: Planet, D1 House, D1 Rashi, D1 House List, D9 House, D9 Rashi, D9 House=Aspected?, Vargottama?, D1=D9 House?, Companion Planet + Companion D9 House, Retro Only?, Weight. Use this whenever the rule is about a SPECIFIC planet rather than the chart's structure alone.
-• Live preview (yellow italic text) — a plain-English sentence that updates automatically as you change any field, so you can always see exactly what the rule currently says before saving.
-• 🧪 TEST vs Last Chart — checks the Chart & House / Rashi Location / Aspect sections of this rule against whichever chart your app most recently calculated (CALCULATE ASTRO or the Live Timing Signal), and reports PASS/FAIL with the reason for each condition. Run CALCULATE ASTRO at least once first so there's a chart to test against.
-• 💾 SAVE RULE / UPDATE — writes the rule to the database and refreshes the list.
+यह Stock की दिशा नहीं, आपकी व्यक्तिगत दिन-दशा है। Stock UP हो सकता है पर आपके लिए दिन खराब → YOU: BEAR AVOID.
 
-FIELD-BY-FIELD MEANING (Advanced / Planet-Specific section)
-• Planet — which planet this rule applies to, or ANY for every planet.
-• D1 House — planet's house (1-12, counted from Lagna) in the D1 (Rashi) chart.
-• D1 Rashi — planet's zodiac sign in D1, regardless of house.
-• D1 House List — planet's D1 house must be ONE OF these (comma-separated, e.g. 4,5,9,10,11).
-• D9 House — planet's house in the D9 (Navamsha) chart.
-• D9 House = Aspected? — if Yes, "D9 House" above means the house being ASPECTED by the planet, not the house it's sitting in.
-• D9 Rashi — planet's zodiac sign in D9, regardless of house.
-• Vargottama? — Yes means: same rashi in both D1 and D9 (a classical strength placement).
-• D1=D9 House? — Yes means: the house number is the same in both charts (any number).
-• Companion Planet / Companion D9 House — an extra AND condition: a second planet that must ALSO be sitting in this D9 house for the rule to count.
-• Retro Only? — Yes means the rule only fires while the planet is retrograde.
-• Weight — how strongly a BUY/SELL match counts toward the score (default 1).
-• Action — BUY (+weight to score), SELL (-weight to score), NEUTRAL (logged only), or WAIT (a hard caution flag — see below).
+नियम — 4 classical Muhurta नियमों से Points बनते हैं:
 
-RASHI LOCATION CHECK + ASPECT RESTRICTION — A DIFFERENT KIND OF FIELD (Chart & House / Occupancy / Target Chart + tick-boxes / Aspected by Any Planet? / named-planet tick-boxes + Aspect Mode)
-These card sections are NOT about any planet — they're a fact about the chart itself.
-• Target House List: "does the rashi sitting in Source Chart's Source House ALSO sit in one of Target Chart's Target House List houses?" Depends only on the Lagna of each chart.
-• Aspected by Any Planet?: "is the Source Chart's Source House aspected by AT LEAST ONE planet, whichever it is?" — checked once across every planet in that chart, not tied to a specific one. Leave at Any to skip this check.
-• Aspect Planets + Aspect Mode: the NAMED-planet version — put comma-separated planet codes in Aspect Planets (e.g. Ma,Sa for Mars and Saturn) and pick a mode:
-   - None Aspect  = the Source House must NOT be aspected by any of the listed planets (none of them may aspect it)
-   - At Least One = at least one of the listed planets aspects the Source House
-   - All Aspect   = every listed planet aspects the Source House
-  Leave Aspect Mode at Any to skip this named-planet check entirely (use plain "Aspected by Any Planet?" instead, or neither).
-• If you set ONLY this section (Planet left at ANY, nothing else above set) — the rule fires once for the whole chart, not once per planet.
-• If you combine it WITH planet fields above (e.g. Planet=Ju + D1 House=9) — it becomes an extra AND requirement on top of the planet condition.
-Example — "D9's house 11 rashi exists in D1's houses 4, 5, 9, 10, or 11": Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,9,10,11.
-Example — "D9's house 11 should NOT be aspected by Mars and Saturn": Src Chart=D9, Src House=11, Aspect Planets=Ma,Sa, Aspect Mode=None Aspect.
+1️⃣ TARA BALA (तारा बल) — 9 तारा:
+आपके जन्म नक्षत्र को 1 (Janma) मानकर आज के चंद्र नक्षत्र तक गिनें:
+  1=Janma Neutral (0), 2=Sampat VERY GOOD (+1), 3=Vipat BAD (-1), 4=Kshema GOOD (+1), 5=Pratyari BAD (-1), 6=Sadhaka VERY GOOD (+1), 7=Vadha VERY BAD (-1), 8=Mitra GOOD (+1), 9=Parama Mitra VERY GOOD (+1)
+  Formula: diff = (MoonNak - BirthNak) %27, tara = diff%9+1
+  GOOD = {2,4,6,8,9}, BAD = {3,5,7}
 
-HOW THE SCORE WORKS
-The banner under CALCULATE ASTRO adds up every matching rule: +weight for BUY, -weight for SELL, 0 for NEUTRAL. WAIT is deliberately NOT part of that tally — it's a hard caution flag. If even ONE WAIT rule matches, the banner switches to "WAIT ON THIS STOCK TODAY" regardless of what the BUY/SELL score says.
+2️⃣ CHANDRA BALA (चंद्र बल) — 12 राशियों की दूरी:
+जन्म राशि से चंद्र राशि की दूरी:
+  जन्म राशि = BirthNak // 2.25 (0=Aries...11=Pisces)
+  dist = (MoonRashi - BirthRashi) %12 +1
+  6,8,12 वाँ खराब → -1, बाकी 1,2,3,4,5,7,9,10,11 वाँ अच्छा → +1
+  उदा: Rohini (Taurus) जन्म के लिए Moon Aries=12th BAD, Moon Gemini=2nd GOOD
 
-This is a reference tool based on conventional interpretations, not a validated predictive model — use it as one input, not a standalone signal.
+3️⃣ SBC / Sarvatobhadra Chakra Signal (स्थिरता):
+  Tikshna (उग्र, volatile) नक्षत्र: भरणी(1), कृत्तिका(2), आश्लेषा(8), मघा(9), ज्येष्ठा(17), मूल(18) → BEARISH 35 Score → -1
+  Mridu (मृदु, stable) नक्षत्र: रोहिणी(3), मृगशिरा(4), चित्रा(6), अनुराधा(7), श्रवण(12), धनिष्ठा(13), रेवती(16), उत्तराषाढ़ा(26), पूर्वाषाढ़ा(21), उत्तराभाद्रपद(23) → BULLISH 80 Score → +1
+  बाकी = NEUTRAL 60 → 0
 
-PANCHANGA (Tithi / Yoga / Karana) — shown alongside the D1/D9 chart on both the Stocks page's CALCULATE ASTRO and the Kundali Engines page. This is informational only right now — it is NOT wired into the BUY/SELL/WAIT rule engine, so it never changes the score. Caution notes (Rikta Tithi, inauspicious Yoga, Vishti/Bhadra Karana) are shown as soft flags for your own judgement.
+4️⃣ VEDHA (वेध — बाधा):
+  Sarvatobhadra वेध जोड़ी:
+  अश्विनी(0)↔ज्येष्ठा(17), भरणी(1)↔अनुराधा(16), कृत्तिका(2)↔विशाखा(15), रोहिणी(3)↔स्वाति(14), मृगशिरा(4)↔चित्रा(13), आर्द्रा(5)↔हस्त(12), पुनर्वसु(6)↔उत्तराफाल्गुनी(11), पुष्य(7)↔पूर्वाफाल्गुनी(10), आश्लेषा(8)↔मघा(9), श्रवण(18)↔रेवती(26), धनिष्ठा(22)=No Vedha, श्रविष्ठा(19)↔पूर्वाभाद्रपद(25), शतभिषा(20)↔उत्तराभाद्रपद(24), पूर्वाषाढ़ा(21)↔अनुराधा? Actually 21↔23 etc.
+  अगर BirthNak का VedhaPartner == TodayMoonNak → Vedha YES → -1
 
-SARVATOBHADRA — TWO DIFFERENT USES OF THE SAME NAME
-The word "Sarvatobhadra" appears in this app in two unrelated places — don't confuse them:
-1. BANDHA PATTERN (one of six): "सर्वतोभद्र Sarvatobhadra — All-auspicious square, balance in every direction." This is one of the six classical Bandha traversal patterns (Rathabandha, Chakrabandha, Padmabandha, Hamsabandha, Muktavali, Sarvatobhadra) mapped from a stock's Navaank (0-8), shown on the Oracle report as a symbolic overlay alongside the Graha reading. Sarvatobhadra Bandha reads as balanced/range-bound — the app's guidance is to wait for a clear breakout rather than force an entry.
-2. SARVATOBHADRA VEDHA CHECK (Muhurta Shastra — Nakshatra Obstruction): a separate check, also shown on the Oracle report (STEP 9), that compares today's Nakshatra against the stock's listing-date birth Nakshatra using the classical Vedha (obstruction) pairing table — e.g. Ashwini↔Jyeshtha, Bharani↔Anuradha, and so on; Dhanishta traditionally has no pair. If today's Nakshatra and the stock's birth Nakshatra are Vedha partners, the report shows "⚠️ VEDHA PRESENT" with a warning to avoid a fresh entry today, plus the sectors affected via each Nakshatra's ruling planet (Graha). If they're clear of each other, it shows "✅ NO VEDHA." A small "Vedha" red tag also appears next to a stock's row in the Stock List when this flag is active. Like Panchanga, this is a soft caution flag — it does NOT change the BUY/SELL/WAIT score, it only tags the day/stock for your own judgement.
+Points जोड़:
+  tara_good +1, tara_bad -1, chandra_good +1 else -1, sbc>=70 +1, sbc<=40 -1, vedha -1
+  Total -4 से +3
 
-RAMAL PRASHNA (16-House Geomancy Chart) — Kundali Engines page, separate from the main D1/D9 rule engine.
-Casts a fresh 16-house Ramal chart the moment you open it: 4 random Mother figures (each a 4-bit combination of odd/even marks) → 4 Daughter figures (the Mothers' rows transposed into columns) → 4 Nephew figures (Mothers and Daughters combined pairwise using Ramal parity-addition, where Odd+Odd=Even and Odd+Even=Odd) → a Right Witness and a Left Witness (Nephews combined pairwise the same way) → the Judge, house 15 (the two Witnesses combined) → the Final Outcome/Reconciler, house 16 (Mother 1 combined with the Judge). Each of the 16 four-bit figures ("Shakal") is looked up by name — e.g. Jamat, Tariq, Lahan, Nafki, Kajjul, Uqla, and so on — along with its nature (Mitrik = inward/accumulating, Kharij = outward/depleting, or Nishasht = neutral), ruling element (Agni/Jala/Vayu/Prithvi), and a bullish/bearish bias. The final recommendation looks at the Judge AND the Final Outcome together: both Mitrik → 🟢 high-probability BUY (strong inward alignment); Judge is Kharij → 🔴 avoid buying, favors SELL (outward depletion / possible trap); anything else (mixed) → ⚪ neutral, wait for price-action confirmation. Like Panchanga and the Sarvatobhadra Vedha check, Ramal is a separate informational tool — it is NOT wired into the main BUY/SELL/WAIT rule-engine score.
+Badge:
+  >=3 → 👤 YOU: STRONG BULL (Dark Green)
+  >=1 → 👤 YOU: BULL (Light Green)
+  <=-2 → 👤 YOU: BEAR AVOID (Red) — आज personal trade avoid
+  else → 👤 YOU: CAUTION (Orange)
 
-WORKED EXAMPLES (what to set, leaving everything else at its default)
-• Jupiter in D1 house 9 → BUY: Planet=Ju, D1 House=9, Action=BUY
-• Saturn in D9 Sagittarius → WAIT: Planet=Sa, D9 Rashi=Sagittarius, Action=WAIT
-• Mars vargottama → BUY: Planet=Ma, Vargottama?=Yes, Action=BUY
-• D1 house equals D9 house, any planet → NEUTRAL: Planet=ANY, D1=D9 House?=Yes, Action=NEUTRAL
-• Any planet aspecting D9 house 11 → BUY: Planet=ANY, D9 House=11, D9 House = Aspected?=Yes, Action=BUY
-• A planet's D9 house is 2, AND its D1 house is one of 4,5,9,10,11 → BUY: Planet=ANY (or your choice), D9 House=2, D1 House List=4,5,9,10,11, Action=BUY.
-• Same idea, but only when a second planet is also confirming it: add Companion Planet + Companion D9 House.
-• Mercury in D1 house 3, only while retrograde → caution: Planet=Me, D1 House=3, Retro Only?=Yes, Action=WAIT
-• D9's house 11 rashi carries into D1's kendra/trikona houses, no planet involved → BUY: Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,9,10,11, Action=BUY
-• D9 house 11's rashi in D1's houses 4,5,10,11 → SELL: Src Chart=D9, Src House=11, Target Chart=D1, Target House List=4,5,10,11, Action=SELL
-• D9 house 2's rashi in D1's houses 4,5,10,11 → BUY: Src Chart=D9, Src House=2, Target Chart=D1, Target House List=4,5,10,11, Action=BUY
-• Same two rules, but ALSO require that D9 house 11 (or D9 house 2) is aspected by some planet: add Aspected by Any Planet?=Yes to that rule.
-• Saturn in D9 house 7 → avoid trading: Planet=Sa, D9 House=7, Action=WAIT. WAIT is this app's "avoid trading" flag — a single match overrides the BUY/SELL score and shows "WAIT ON THIS STOCK TODAY" regardless of anything else.
+यह कब बदलेगा आपके पक्ष में?
+रोज़ चंद्रमा ~1 नक्षत्र बदलता है (Swiss Ephemeris REAL). जब Moon आपके BirthNak से:
+  Sampat(2), Kshema(4), Sadhaka(6), Mitra(8), ParamaMitra(9) पर आए
+  और चंद्र राशि 1/2/3/4/5/7/9/10/11 वीं हो
+  और Mridu नक्षत्र हो
+  और वेध न हो
+  → Points +3 → STRONG BULL → सभी stocks पर YOU: BULL
 
-USER Q&A
-Q: If D9's house no 7 has Saturn we should avoid trade. Can I set this rule in rule list — if yes then say 'yes', else set such rule provision setting in rule.
-A: Yes.
-Set it exactly like this on a rule card:
-• Open 🔧 ADVANCED: Planet-Specific Conditions and set Planet = Sa, D9 House = 7
-• Everything else left at Any/No/unchecked
-• ACTION = WAIT
+उदा: Rohini जन्म वाले के लिए Moon मृगशिरा, पुनर्वसु, पुष्य, मघा, उत्तरा फाल्गुनी, स्वाति, अनुराधा, श्रवण, उत्तरा भाद्रपद में → GOOD दिन
+उदा: अश्विनी जन्म वाले के लिए Moon भरणी=Sampat GOOD, रोहिणी=Kshema GOOD आदि — नियम वही, बस गणना आपके नक्षत्र से।
 
-Q: If D9's 11th house rashi exists in D1's 4,5,10,11th house rashi, AND D9's 11th house should NOT be aspected by Mars and Saturn — can I set this rule? If yes, say 'yes', else make a provision for it.
-A: Yes — the ASPECT RESTRICTION section has named-planet tick-boxes (e.g. tick Ma and Sa) plus an Aspect Mode dropdown (None Aspect / At Least One / All Aspect). Set it exactly like this:
-• PRIMARY CHART & HOUSE: Chart=D9, House=11
-• RASHI LOCATION CHECK: Target Chart=D1, tick houses 4, 5, 10, 11
-• ASPECT RESTRICTION: tick Ma and Sa, Aspect Mode=None Aspect
-• ACTION = BUY (or SELL/WAIT, whichever you intend)
-Leave 🔧 ADVANCED untouched (Planet stays ANY) — this is a pure chart-structure rule, not tied to one named planet.
+यह Gochar (गोचर) का classical नियम है — जन्म नक्षत्र vs दैनिक चंद्र गोचर, जैसा पंचांग में तारा-चंद्र विचार होता है।
 
-Q: (1) If D9's 2nd house rashi exists in D1's house 4, 5, 10, or 11, AND D9's 2nd house is NOT aspected by Sun, Mars, Saturn → BUY signal. (2) If D9's 11th house rashi exists in D1's house 4, 5, 10, or 11, AND D9's 11th house is NOT aspected by Mars and Saturn → SELL signal. Can these be set in the rule list? If yes, say 'yes', else make a provision.
-
-A: Yes — the Aspect Planets field takes ANY comma-separated list of planet codes (not just two), so a 3-planet check like Su,Ma,Sa works exactly the same way as a 2-planet check like Ma,Sa. No new provision was needed; this is the same "Rashi-in-House Match" section used above, just with different Src House / Target House List / Aspect Planets / Action values. Add TWO separate rule rows:
-
-Rule (1) — D9 house 2 → D1 kendra/trikona, unaspected by Sun/Mars/Saturn → BUY:
-• PRIMARY CHART & HOUSE: Chart=D9, House=2
-• RASHI LOCATION CHECK: Target Chart=D1, tick houses 4, 5, 10, 11
-• ASPECT RESTRICTION: tick Su, Ma, Sa, Aspect Mode=None Aspect
-• ACTION = BUY
-(Leave 🔧 ADVANCED untouched — Planet stays ANY.)
-
-Rule (2) — D9 house 11 → D1 kendra/trikona, unaspected by Mars/Saturn → SELL:
-• PRIMARY CHART & HOUSE: Chart=D9, House=11
-• RASHI LOCATION CHECK: Target Chart=D1, tick houses 4, 5, 10, 11
-• ASPECT RESTRICTION: tick Ma, Sa, Aspect Mode=None Aspect
-• ACTION = SELL
-(Leave 🔧 ADVANCED untouched — Planet stays ANY.)
-
-Tap any field on an existing rule row to change it — it saves as soon as you leave the field. Tap the trash icon to delete a row.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-👤 MY BIRTH - Nakshatra + Charan se kya fayda? (Personal All-Round Prediction)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Siribhoovalaya result sabke liye SAME hota hai (same stock = same Akshara Sum, same Bandha, same Graha). Lekin profit/loss PERSONAL hota hai — aapka Tara/Chandra us din achha hai ya bura, us par depend karta hai.
-
-Jab aap apna Birth Nakshatra + Charan set karte ho, app 7-point personal confluence nikalta hai:
-
-1. TARA BALA (27 Nakshatra chakra):
-   (Today Moon Nak - Your Birth Nak) % 27
-   1=Janma Neutral, 2=Sampat VERY GOOD (+2), 3=Vipat BAD (-2), 4=Kshema GOOD (+1), 5=Pratyari BAD (-1), 6=Sadhaka VERY GOOD (+2), 7=Vadha VERY BAD (-3), 8=Mitra GOOD (+1), 9=Param Mitra VERY GOOD (+2)
-   Fayda: Aapko pata chalega aaj ka din aapke liye dhan-dayak hai ya loss-day. Sampat/Sadhaka par trade lo, Vipat/Vadha par skip karo — chahe market UP hi kyu na ho.
-
-2. CHANDRA BALA (Rashi distance):
-   (Moon Rashi - Your Birth Rashi) % 12
-   1,2,3,5,7,9,10,11 = GOOD, 6,8,12 = BAD/WEAK
-   Fayda: Aaj Chandra aapki Rashi se 6th/8th/12th hai to mind confuse, galat entry hogi. Good Chandra par decision sharp hota hai.
-
-3. VEDHA (Obstruction):
-   Ashwini <-> Jyeshtha, Bharani <-> Anuradha, etc 12 jodi. Agar aapke Birth Nak aur aaj ke Moon Nak me Vedha hai to kaam atakta hai.
-   Fayda: Vedha wale din bada trade avoid, chhota trade ya wait.
-
-4. CHARAN DETAILS (Pada):
-   1 Charan = 3°20'. 108 Charan = 12 Rashi x 9 Navamsa.
-   Charan se aapko milta hai:
-   - Rashi (e.g., Rohini Charan 2 = Taurus/Vrishabha)
-   - Navamsa (D9)
-   - Akshar/Syllable (e.g., Ashwini = Chu, Che, Cho, La) — aapke naam ka pehla akshar
-   - Full Pada 1-108, Degree, Lord
-   Fayda: Exact Rashi/Navamsa se Chandra Bala accurate, naam-shastra, muhurta ke liye use.
-
-5. PERSONAL SBC SCORE:
-   SBC = Tara + Chandra + Vedha ka combined points
-   +3 se upar = STRONG BULLISH for YOU, -2 se neeche = STRONG BEARISH for YOU
-   Fayda: Market BULLISH ho sakta hai lekin aapka personal -3 ho to aap galat time pe entry loge — skip karna better.
-
-6. ALL-ROUND FINAL VERDICT:
-   Market = Bhoovalaya Bandha UP + SBC GOOD + Tara GOOD + Chandra GOOD = 7 points me se 5-6 positive = High Confidence BUY for YOU
-   Market UP + Personal BAD = 2-3 points = LOW confidence — wait.
-
-Example:
-Same day Moon = Bharani, Nifty Bandha = Padmabandha UP (market bullish)
-Person A: Birth Rohini Charan 2 → Tara 8 Mitra GOOD, Chandra 2nd GOOD, Points +3 → App bolega "STRONG BULLISH for YOU - Trade karo"
-Person B: Birth Jyeshtha Charan 4 → Tara 3 Vipat BAD, Chandra 6th WEAK, Points -3 → App bolega "STRONG BEARISH for YOU - Avoid, chahe market UP ho"
-
-Iska matlab: Ek hi app, ek hi stock, same time par do logon ko alag result — jo sahi hai kyunki kismat personal hai.
-
-7. Ek baar set karo, hamesha kaam karega:
-   - Phone me user_profile table id=1 me save hota hai
-   - Har Oracle calculation me automatic personal box add ho jata hai
-   - Dusre phone me dusra birth = dusra result
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-
+═══════════════════════════════════════════
+REFERENCE — सभी के लिए समान
+═══════════════════════════════════════════
+• Nakshatra चरण C1-C4: चरण से राशि का नवांश नहीं बदलता, केवल नामाक्षर (जैसे Rohini C1=O, C2=Va, C3=Vi, C4=Vu)
+• Swiss Ephemeris REAL vs APPROX: Data→CHECK EPHEMERIS FILES में REAL दिखे तो ±0.001° accuracy, APPROX में ±2° error हो सकता है
+• यह reference tool है, validated predictive model नहीं — एक input के रूप में उपयोग करें
 """
         help_screen = ft.Column(visible=False, scroll="auto", controls=[
             make_header("📖 HELP / REFERENCE GUIDE"), ft.Divider(height=4, color=C["divider"]),

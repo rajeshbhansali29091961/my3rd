@@ -3393,7 +3393,28 @@ def main(page: ft.Page):
                                         "ramal": None, "technical": None, "fundamentals": None})
                 try:
                     moon_idx_f = get_today_moon_nak_idx()
-                    render_personal_confluence(moon_idx_f, combined_dir=combined_dir, has_vedha_stock=has_vedha, stock_sym=sym, listing_nak_idx=None)
+                    # v25 FIX: pass listing_date_obj and listing_nak_idx for Dasha/Ashta display
+                    ldate_obj_for_dasha = None
+                    listing_nak_idx_for_dasha = None
+                    try:
+                        # Try to get listing date from current stock row
+                        if 'ldate' in locals() and ldate:
+                            ldate_obj_for_dasha = parse_dt(ldate) if isinstance(ldate, str) else ldate
+                        elif 'stock_ldate_str' in locals():
+                            ldate_obj_for_dasha = parse_dt(stock_ldate_str)
+                        # Get moon nak for listing date for Dasha start
+                        if ldate_obj_for_dasha:
+                            try:
+                                jd_ld = jd_ut_from_ist(ldate_obj_for_dasha.year, ldate_obj_for_dasha.month, ldate_obj_for_dasha.day, 12, 0, 5.5)
+                                pos_ld, _ = calc_planet_positions(jd_ld, 19.07, 72.87)
+                                # Moon lon to nak
+                                moon_lon_ld = pos_ld.get('Mo', 0)
+                                listing_nak_idx_for_dasha = int(moon_lon_ld // 13.333333) % 27
+                            except:
+                                listing_nak_idx_for_dasha = None
+                    except:
+                        pass
+                    render_personal_confluence(moon_idx_f, combined_dir=combined_dir, has_vedha_stock=has_vedha, stock_sym=sym, listing_nak_idx=listing_nak_idx_for_dasha, listing_date_obj=ldate_obj_for_dasha, stock_asum=asum if 'asum' in locals() else None, stock_ldate_str=ldate if 'ldate' in locals() else None)
                 except:
                     pass
             else:
@@ -5832,10 +5853,22 @@ REFERENCE — सभी के लिए समान
                 personal_confluence_container.controls.append(ft.Container(content=ft.Text("👤 Set Birth Nakshatra + Charan in My Birth tab", size=12, color="#FFFFFF", weight="bold"), bgcolor="#6A1B9A", padding=10, border_radius=8))
                 personal_confluence_container.visible=True
                 return
-            calc = calc_user_tara_chandra_sbc(prof["nak_idx"], moon_nak_idx)
-            char_det = get_charan_details(prof["nak_idx"], prof["charan"])
-            if not calc:
-                personal_confluence_container.visible=False
+            # Personal Tara only if prof exists
+            calc = None
+            char_det = None
+            if prof:
+                calc = calc_user_tara_chandra_sbc(prof["nak_idx"], moon_nak_idx)
+                char_det = get_charan_details(prof["nak_idx"], prof["charan"])
+            if not calc and prof:
+                # if prof exists but calc fails
+                personal_confluence_container.visible=True
+                # keep Dasha cards already added
+                return
+            if not prof:
+                # Birth not set — Dasha/Score already added above, now add prompt
+                if show_birth_prompt:
+                    personal_confluence_container.controls.append(ft.Container(content=ft.Text("👤 Set Birth Nakshatra + Charan in My Birth tab for Personal filter", size=12, color="#FFFFFF", weight="bold"), bgcolor="#6A1B9A", padding=10, border_radius=8))
+                personal_confluence_container.visible=True
                 return
             if calc["points"]>=3:
                 final_personal="STRONG BULLISH for YOU"; final_col=C["green"]

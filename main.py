@@ -3393,28 +3393,18 @@ def main(page: ft.Page):
                                         "ramal": None, "technical": None, "fundamentals": None})
                 try:
                     moon_idx_f = get_today_moon_nak_idx()
-                    # v25 FIX: pass listing_date_obj and listing_nak_idx for Dasha/Ashta display
-                    ldate_obj_for_dasha = None
+                    # v26 FIX: proper Dasha calc - ldate is datetime already
+                    ldate_obj_for_dasha = ldate if 'ldate' in locals() and ldate else None
                     listing_nak_idx_for_dasha = None
                     try:
-                        # Try to get listing date from current stock row
-                        if 'ldate' in locals() and ldate:
-                            ldate_obj_for_dasha = parse_dt(ldate) if isinstance(ldate, str) else ldate
-                        elif 'stock_ldate_str' in locals():
-                            ldate_obj_for_dasha = parse_dt(stock_ldate_str)
-                        # Get moon nak for listing date for Dasha start
                         if ldate_obj_for_dasha:
-                            try:
-                                jd_ld = jd_ut_from_ist(ldate_obj_for_dasha.year, ldate_obj_for_dasha.month, ldate_obj_for_dasha.day, 12, 0, 5.5)
-                                pos_ld, _ = calc_planet_positions(jd_ld, 19.07, 72.87)
-                                # Moon lon to nak
-                                moon_lon_ld = pos_ld.get('Mo', 0)
-                                listing_nak_idx_for_dasha = int(moon_lon_ld // 13.333333) % 27
-                            except:
-                                listing_nak_idx_for_dasha = None
+                            jd_ld = jd_ut_from_ist(ldate_obj_for_dasha.year, ldate_obj_for_dasha.month, ldate_obj_for_dasha.day, 12, 0, 5.5)
+                            pos_ld, _ = calc_planet_positions(jd_ld, 19.07, 72.87)
+                            moon_lon_ld = pos_ld.get('Mo', 0)
+                            listing_nak_idx_for_dasha = int(moon_lon_ld // 13.333333) % 27
                     except:
                         pass
-                    render_personal_confluence(moon_idx_f, combined_dir=combined_dir, has_vedha_stock=has_vedha, stock_sym=sym, listing_nak_idx=listing_nak_idx_for_dasha, listing_date_obj=ldate_obj_for_dasha, stock_asum=asum if 'asum' in locals() else None, stock_ldate_str=ldate if 'ldate' in locals() else None)
+                    render_personal_confluence(moon_idx_f, combined_dir=combined_dir, has_vedha_stock=has_vedha, stock_sym=sym, listing_nak_idx=listing_nak_idx_for_dasha, listing_date_obj=ldate_obj_for_dasha, stock_asum=asum, stock_ldate_str=ldt)
                 except:
                     pass
             else:
@@ -3425,11 +3415,12 @@ def main(page: ft.Page):
                 ramal_container.visible = False
                 current_stock["sym"], current_stock["asum"], current_stock["ldt"] = None, None, None
                 latest_verdicts.update({"sym": None, "bhoovalaya": None, "ramal": None, "technical": None, "fundamentals": None})
-            # Always show personal effect at bottom - even if no stock found
-            try:
-                render_personal_confluence(get_today_moon_nak_idx())
-            except:
-                pass
+            # v26: keep stock-specific render, don't overwrite
+            if not row:
+                try:
+                    render_personal_confluence(get_today_moon_nak_idx())
+                except:
+                    pass
             page.update()
 
         def do_oracle_back(e):

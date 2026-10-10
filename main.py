@@ -1095,6 +1095,14 @@ def get_tara_bala(listing_nak_idx, target_nak_idx):
 
 def save_user_profile_db(birth_nak_idx, birth_charan, dob='', tob='', pob='', lat='', lon='', gmt='5.5'):
     try:
+        # File backup first (most reliable on Android)
+        try:
+            import json
+            backup_path = os.path.join(STORAGE_DIR if 'STORAGE_DIR' in globals() else ".", "mydata_backup.json")
+            with open(backup_path, "w", encoding="utf-8") as jf:
+                json.dump({"nak_idx": int(birth_nak_idx), "charan": int(birth_charan), "dob": dob, "tob": tob, "pob": pob, "lat": lat, "lon": lon, "gmt": gmt}, jf)
+        except:
+            pass
         conn = sqlite3.connect(str(DB_PATH))
         cur = conn.cursor()
         # Ensure new columns exist (migration for old DB)
@@ -1126,6 +1134,7 @@ def save_user_profile_db(birth_nak_idx, birth_charan, dob='', tob='', pob='', la
         return False, str(e)
 
 def load_user_profile_db():
+    # 1. Try DB first
     try:
         conn = sqlite3.connect(str(DB_PATH))
         cur = conn.cursor()
@@ -2786,9 +2795,12 @@ def main(page: ft.Page):
         page.scroll  = "auto"
 
         storage = os.getenv("FLET_APP_STORAGE_DATA", ".")
-        global DB_PATH
+        global DB_PATH, STORAGE_DIR
+        STORAGE_DIR = storage
         db_path = os.path.join(storage, "bhuvalaya.db")
         DB_PATH = db_path
+        # File backup path for MYDATA (survives even if DB table drops)
+        MYDATA_JSON = os.path.join(storage, "mydata_backup.json")
 
         try:
             conn = sqlite3.connect(db_path)
@@ -5712,9 +5724,110 @@ REFERENCE — सभी के लिए समान
                 profile_saved_banner.value = "No birth profile saved yet. Enter DOB+Place and tap Calculate OR select Nakshatra directly."
                 profile_detail_text.value = "Option 1: DOB + Place -> Find Lat/Lon (offline DB, no API) -> Calculate Nakshatra. Option 2: Directly select Nakshatra+Charan from Kundli."
 
-        def render_personal_confluence(moon_nak_idx, combined_dir=None, has_vedha_stock=None, stock_sym=None, listing_nak_idx=None):
+        def render_personal_confluence(moon_nak_idx, combined_dir=None, has_vedha_stock=None, stock_sym=None, listing_nak_idx=None, listing_date_obj=None, stock_asum=None, stock_ldate_str=None):
             prof = load_user_profile_db()
             personal_confluence_container.controls.clear()
+            # ── V23: Stock Dasha + Ashtakavarga + Stock Score (NEW DISPLAY) ──
+            try:
+                # Get listing date for Dasha calc
+                ldate_obj = listing_date_obj
+                if not ldate_obj and stock_ldate_str:
+                    ldate_obj = parse_dt(stock_ldate_str)
+                # Get planet longs for listing date for Ashtakavarga
+                longs_listing = None
+                if ldate_obj:
+                    try:
+                        longs_listing = get_planet_longitudes_for_date(ldate_obj)
+                    except:
+                        longs_listing = None
+                # Dasha
+                dasha_info = None
+                if listing_nak_idx is not None and ldate_obj:
+                    dasha_info = calc_vimshottari_dasha(listing_nak_idx, ldate_obj, datetime.now())
+                # Ashtakavarga
+                ashta_info = None
+                if longs_listing:
+                    ashta_info = calc_sarva_ashtakavarga_2_11(longs_listing)
+                # Hora + Retro
+                hora_info = get_current_hora()
+                retro_info = check_mercury_retro_eclipse(longs_listing if longs_listing else get_planet_longitudes_for_date(datetime.now()))
+                # Stock Score
+                stock_score_info = None
+                if combined_dir:
+                    # personal points from prof if exists
+                    personal_pts = None
+                    if prof:
+                        try:
+                            tmp = calc_user_tara_chandra_sbc(prof["nak_idx"], moon_nak_idx)
+                            personal_pts = tmp.get("points") if tmp else None
+                        except:
+                            personal_pts = None
+                    stock_score_info = calc_stock_score(combined_dir, dasha_info, ashta_info, personal_pts, hora_info, retro_info)
+                # Build UI cards for Dasha + Ashtakavarga + Score
+                if dasha_info or ashta_info or stock_score_info or hora_info:
+                    # Dasha Card
+                    if dasha_info:
+                        md = dasha_info.get("mahadasha","")
+                        ad = dasha_info.get("antardasha","")
+                        bull_tag = "🔼 BULL MD" if dasha_info.get("is_bull") else "🔽 BEAR MD" if dasha_info.get("is_bear") else ""
+                        personal_confluence_container.controls.append(
+                            ft.Container(
+                                padding=8, border_radius=8, bgcolor="#E8F5E9", border=ft.border.all(1,"#4CAF50"),
+                                content=ft.Column([
+                                    ft.Text(f"📅 VIMSHOTTARI DASHA (Company): {md} MD" + (f" / {ad} AD" if ad else "") + f" {bull_tag}", size=12, weight="bold", color="#2E7D32"),
+                                    ft.Text(f"MD Remaining: {dasha_info.get('md_remaining',0):.1f}y" + (f" | AD Remaining: {dasha_info.get('ad_remaining',0):.1f}y" if dasha_info.get('ad_remaining') else ""), size=11, color="#333333"),
+                                ], spacing=2)
+                            )
+                        )
+                    # Ashtakavarga Card
+                    if ashta_info:
+                        rating_color = "#2E7D32" if ashta_info.get("rating")=="STRONG" else "#F57F17" if ashta_info.get("rating")=="MEDIUM" else "#C62828"
+                        personal_confluence_container.controls.append(
+                            ft.Container(
+                                padding=8, border_radius=8, bgcolor="#FFF3E0", border=ft.border.all(1,"#EF6C00"),
+                                content=ft.Column([
+                                    ft.Text(f"💰 ASHTAKAVARGA 2nd+11th: {ashta_info.get('sav_score',0)} pts → {ashta_info.get('rating','')}", size=12, weight="bold", color=rating_color),
+                                    ft.Text(f"2nd House (Dhan): {ashta_info.get('points_2',0)} bindu | 11th House (Labh): {ashta_info.get('points_11',0)} bindu | >28 STRONG", size=11, color="#333333"),
+                                ], spacing=2)
+                            )
+                        )
+                    # Hora + Retro
+                    if hora_info or retro_info:
+                        hora_txt = f"Hora: {hora_info.get('lord','')} {'✅ GOOD' if hora_info.get('is_good') else '❌ BAD' if hora_info.get('is_bad') else ''}" if hora_info else ""
+                        retro_txt = ""
+                        if retro_info:
+                            if retro_info.get('mercury_retro'):
+                                retro_txt += "⚠️ Mercury Retro (False breakout) "
+                            if retro_info.get('near_eclipse'):
+                                retro_txt += "🌑 Eclipse window ±7 days "
+                            if not retro_txt:
+                                retro_txt = "✅ No Retro/Eclipse"
+                        personal_confluence_container.controls.append(
+                            ft.Container(
+                                padding=8, border_radius=8, bgcolor="#E3F2FD", border=ft.border.all(1,"#1976D2"),
+                                content=ft.Column([
+                                    ft.Text(f"⏰ {hora_txt} | {retro_txt}", size=11, weight="bold", color="#0D47A1"),
+                                ], spacing=2)
+                            )
+                        )
+                    # Stock Score Final
+                    if stock_score_info:
+                        sc = stock_score_info.get("score",0)
+                        verd = stock_score_info.get("verdict","")
+                        col = "#1B5E20" if sc>=75 else "#2E7D32" if sc>=60 else "#F57F17" if sc>=40 else "#C62828"
+                        bg = "#C8E6C9" if sc>=75 else "#E8F5E9" if sc>=60 else "#FFF3E0" if sc>=40 else "#FFEBEE"
+                        personal_confluence_container.controls.append(
+                            ft.Container(
+                                padding=10, border_radius=10, bgcolor=bg, border=ft.border.all(2,col),
+                                content=ft.Column([
+                                    ft.Text(f"📊 STOCK SCORE: {sc}/100 → {verd}", size=14, weight="bold", color=col),
+                                    ft.Text("40% Bhoovalaya +20% Dasha +15% Ashtakavarga +10% Personal +10% Hora +5% Retro/Eclipse", size=10, color="#333333"),
+                                ], spacing=2, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                            )
+                        )
+            except Exception as ex_dasha:
+                # Non-fatal
+                pass
             if not prof:
                 personal_confluence_container.controls.append(ft.Container(content=ft.Text("👤 Set Birth Nakshatra + Charan in My Birth tab", size=12, color="#FFFFFF", weight="bold"), bgcolor="#6A1B9A", padding=10, border_radius=8))
                 personal_confluence_container.visible=True

@@ -1044,6 +1044,101 @@ def calc_stock_score(bhoovalaya_dir, dasha_info, ashtavarga_info, personal_point
         verdict = "AVOID"
     return {"score":score, "verdict":verdict}
 
+def calc_stock_score_fast_for_list(asum, ldt, moon_nak_idx_today=None, prof_nak_idx=None):
+    # Fast version for SHOW ALL list - avoids heavy Swiss calc per row
+    # Uses Bhoovalaya + simplified Dasha + simplified Ashtakavarga + Personal + Hora
+    try:
+        combined_dir, has_vedha = quick_verdict(asum, ldt)
+        score = 0
+        # 40% Bhoovalaya
+        if combined_dir == "UP":
+            score += 40
+        elif combined_dir == "MIXED":
+            score += 15
+        elif combined_dir == "SIDEWAYS":
+            score += 20
+        else:
+            score += 5
+        # 20% Dasha - simplified from listing year (avoid Swiss for 200 rows)
+        try:
+            ldate_obj = parse_dt(ldt) if isinstance(ldt, str) else ldt
+            if ldate_obj:
+                # Simplified MD from listing year %9
+                md_idx = (ldate_obj.year + ldate_obj.month) % 9
+                md_lord = DASHA_ORDER[md_idx]
+                if md_lord in ["Guru","Shukra","Budha","Chandra"]:
+                    score += 20
+                elif md_lord in ["Shani","Rahu"]:
+                    score += 5
+                else:
+                    score += 10
+            else:
+                score += 10
+        except:
+            score += 10
+        # 15% Ashtakavarga - simplified from asum (higher asum = stronger name = more bindu)
+        # asum %9 gives navamsa strength proxy
+        try:
+            nav = (asum % 9) or 9
+            if nav in [1,5,9]:
+                score += 15
+            elif nav in [2,3,6]:
+                score += 10
+            else:
+                score += 5
+        except:
+            score += 5
+        # 10% Personal
+        try:
+            if prof_nak_idx is not None and moon_nak_idx_today is not None:
+                calc = calc_user_tara_chandra_sbc(prof_nak_idx, moon_nak_idx_today)
+                pts = calc.get("points",0) if calc else 0
+                if pts >=3:
+                    score += 10
+                elif pts >=1:
+                    score += 7
+                elif pts <= -2:
+                    score += 0
+                else:
+                    score += 4
+            else:
+                score += 5
+        except:
+            score += 5
+        # 10% Hora (same for all rows, from current hora)
+        try:
+            hora = get_current_hora()
+            if hora.get("is_good"):
+                score += 10
+            elif hora.get("is_bad"):
+                score += 0
+            else:
+                score += 5
+        except:
+            score += 5
+        # 5% Retro
+        try:
+            # Check if today near eclipse/mercury retro from top flag
+            if "Mercury Retro" in str(top_timing_flag_container.controls) if hasattr(top_timing_flag_container, 'controls') else "":
+                score -= 2
+            else:
+                score += 5
+        except:
+            score += 3
+        score = max(0, min(100, score))
+        if score >=75:
+            verdict="STRONG BUY"
+        elif score >=60:
+            verdict="BUY"
+        elif score >=40:
+            verdict="WAIT"
+        else:
+            verdict="AVOID"
+        return score, verdict
+    except:
+        return 0, "UNKNOWN"
+
+
 
 # Sarvatobhadra Chakra Vedha (obstruction) pairs — classical Muhurta-shastra nakshatra
 # pairing used to flag an afflicted/inauspicious combination. Indices are 0-based to
@@ -4493,6 +4588,23 @@ def main(page: ft.Page):
                 current_list_symbols.append(sym)
                 bg = C["row_odd"] if i % 2 == 0 else C["row_even"]
                 combined_dir, has_vedha = quick_verdict(asum, ldt)
+                # v27: Stock Score for glance in SHOW ALL
+                try:
+                    prof_for_score = load_user_profile_db()
+                    prof_nak_for_score = prof_for_score["nak_idx"] if prof_for_score else None
+                    moon_for_score = get_today_moon_nak_idx()
+                    score_val, score_verd = calc_stock_score_fast_for_list(asum, ldt, moon_for_score, prof_nak_for_score)
+                    if score_val >=75:
+                        score_color = "#1B5E20"; score_bg="#C8E6C9"
+                    elif score_val >=60:
+                        score_color = "#2E7D32"; score_bg="#E8F5E9"
+                    elif score_val >=40:
+                        score_color = "#EF6C00"; score_bg="#FFF3E0"
+                    else:
+                        score_color = "#C62828"; score_bg="#FFEBEE"
+                    score_badge_text = f"📊 {score_val} {score_verd}"
+                except:
+                    score_val=0; score_verd=""; score_color="#9E9E9E"; score_bg="#F5F5F5"; score_badge_text=""
                 badge_color = {"UP": C["green"], "DOWN": C["red"], "SIDEWAYS": C["orange"], "MIXED": C["accent"]}.get(combined_dir, C["accent"])
                 badge_text = {"UP": "🔼 UP", "DOWN": "🔽 DOWN", "SIDEWAYS": "↔️ SIDE", "MIXED": "⚠️ MIXED"}.get(combined_dir, combined_dir)
                 # Personal badge for this stock (same moon for all, but highlighted per row)
@@ -4537,6 +4649,7 @@ def main(page: ft.Page):
                             ft.Text(f"Ak:{asum}", size=12, color=C["accent"]),
                             ft.Container(content=ft.Text(badge_text, size=11, color="#FFFFFF", weight="bold"), bgcolor=badge_color, padding=ft.padding.symmetric(horizontal=8, vertical=3), border_radius=4),
                             ft.Container(content=ft.Text(personal_badge_text, size=10, color="#FFFFFF", weight="bold"), bgcolor=personal_badge_color, padding=ft.padding.symmetric(horizontal=6, vertical=3), border_radius=4, visible=bool(personal_badge_text)),
+                            ft.Container(content=ft.Text(score_badge_text, size=10, weight="bold", color=score_color), bgcolor=score_bg, padding=ft.padding.symmetric(horizontal=6, vertical=2), border_radius=4, border=ft.border.all(1, score_color), visible=bool(score_badge_text)),
 
                         ] + ([ft.Container(content=ft.Text("Vedha", size=10, color="#FFFFFF", weight="bold"), bgcolor=C["red"], padding=ft.padding.symmetric(horizontal=6, vertical=3), border_radius=4)] if has_vedha else []), wrap=True, spacing=6),
                         ft.Text(eng, size=14, color=C["black_txt"], weight="bold"),

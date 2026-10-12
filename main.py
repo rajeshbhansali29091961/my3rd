@@ -1044,99 +1044,87 @@ def calc_stock_score(bhoovalaya_dir, dasha_info, ashtavarga_info, personal_point
         verdict = "AVOID"
     return {"score":score, "verdict":verdict}
 
-def calc_stock_score_fast_for_list(asum, ldt, moon_nak_idx_today=None, prof_nak_idx=None):
-    # Fast version for SHOW ALL list - avoids heavy Swiss calc per row
-    # Uses Bhoovalaya + simplified Dasha + simplified Ashtakavarga + Personal + Hora
+# v28 CACHE for real scores - avoids recalc for 200 rows
+STOCK_SCORE_CACHE = {}
+
+def calc_stock_score_fast_for_list(asum, ldt, moon_nak_idx_today=None, prof_nak_idx=None, sym=None):
+    # v28 REAL synced score - same as detail page, with cache
+    cache_key = f"{sym}_{asum}_{ldt}_{moon_nak_idx_today}_{prof_nak_idx}"
+    if cache_key in STOCK_SCORE_CACHE:
+        return STOCK_SCORE_CACHE[cache_key]
     try:
+        ldate_obj = parse_dt(ldt) if isinstance(ldt, str) else ldt
+        if not ldate_obj:
+            # fallback
+            combined_dir, _ = quick_verdict(asum, ldt)
+            sc = 40 if combined_dir=="UP" else 20
+            res = (sc, "WAIT")
+            STOCK_SCORE_CACHE[cache_key]=res
+            return res
+        # Real calculations (same as detail page)
+        # 1. Bhoovalaya dir
         combined_dir, has_vedha = quick_verdict(asum, ldt)
-        score = 0
-        # 40% Bhoovalaya
-        if combined_dir == "UP":
-            score += 40
-        elif combined_dir == "MIXED":
-            score += 15
-        elif combined_dir == "SIDEWAYS":
-            score += 20
-        else:
-            score += 5
-        # 20% Dasha - simplified from listing year (avoid Swiss for 200 rows)
+        # 2. Listing Moon Nak for Dasha
+        listing_nak_idx = None
+        longs_listing = None
         try:
-            ldate_obj = parse_dt(ldt) if isinstance(ldt, str) else ldt
-            if ldate_obj:
-                # Simplified MD from listing year %9
-                md_idx = (ldate_obj.year + ldate_obj.month) % 9
-                md_lord = DASHA_ORDER[md_idx]
-                if md_lord in ["Guru","Shukra","Budha","Chandra"]:
-                    score += 20
-                elif md_lord in ["Shani","Rahu"]:
-                    score += 5
-                else:
-                    score += 10
-            else:
-                score += 10
+            jd_ld = jd_ut_from_ist(ldate_obj.year, ldate_obj.month, ldate_obj.day, 12, 0, 5.5)
+            pos_ld, _ = calc_planet_positions(jd_ld, 19.07, 72.87)
+            moon_lon_ld = pos_ld.get('Mo', 0)
+            listing_nak_idx = int(moon_lon_ld // 13.333333) % 27
+            longs_listing = pos_ld
         except:
-            score += 10
-        # 15% Ashtakavarga - simplified from asum (higher asum = stronger name = more bindu)
-        # asum %9 gives navamsa strength proxy
+            pass
+        # 3. Dasha
+        dasha_info = None
+        if listing_nak_idx is not None:
+            try:
+                dasha_info = calc_vimshottari_dasha(listing_nak_idx, ldate_obj, datetime.now())
+            except:
+                pass
+        # 4. Ashtakavarga
+        ashta_info = None
+        if longs_listing:
+            try:
+                ashta_info = calc_sarva_ashtakavarga_2_11(longs_listing)
+            except:
+                pass
+        # 5. Personal points
+        personal_pts = None
+        if prof_nak_idx is not None and moon_nak_idx_today is not None:
+            try:
+                calc_p = calc_user_tara_chandra_sbc(prof_nak_idx, moon_nak_idx_today)
+                personal_pts = calc_p.get("points") if calc_p else None
+            except:
+                pass
+        # 6. Hora + Retro
+        hora_info = None
+        retro_info = None
         try:
-            nav = (asum % 9) or 9
-            if nav in [1,5,9]:
-                score += 15
-            elif nav in [2,3,6]:
-                score += 10
-            else:
-                score += 5
+            hora_info = get_current_hora()
         except:
-            score += 5
-        # 10% Personal
+            pass
         try:
-            if prof_nak_idx is not None and moon_nak_idx_today is not None:
-                calc = calc_user_tara_chandra_sbc(prof_nak_idx, moon_nak_idx_today)
-                pts = calc.get("points",0) if calc else 0
-                if pts >=3:
-                    score += 10
-                elif pts >=1:
-                    score += 7
-                elif pts <= -2:
-                    score += 0
-                else:
-                    score += 4
-            else:
-                score += 5
+            retro_info = check_mercury_retro_eclipse(longs_listing if longs_listing else get_planet_longitudes_for_date(datetime.now()))
         except:
-            score += 5
-        # 10% Hora (same for all rows, from current hora)
+            pass
+        # 7. Final Stock Score (same function as detail)
         try:
-            hora = get_current_hora()
-            if hora.get("is_good"):
-                score += 10
-            elif hora.get("is_bad"):
-                score += 0
-            else:
-                score += 5
+            stock_score_info = calc_stock_score(combined_dir, dasha_info, ashta_info, personal_pts, hora_info, retro_info)
+            sc = stock_score_info.get("score",0)
+            verd = stock_score_info.get("verdict","")
+            res = (sc, verd)
+            STOCK_SCORE_CACHE[cache_key]=res
+            return res
         except:
-            score += 5
-        # 5% Retro
-        try:
-            # Check if today near eclipse/mercury retro from top flag
-            if "Mercury Retro" in str(top_timing_flag_container.controls) if hasattr(top_timing_flag_container, 'controls') else "":
-                score -= 2
-            else:
-                score += 5
-        except:
-            score += 3
-        score = max(0, min(100, score))
-        if score >=75:
-            verdict="STRONG BUY"
-        elif score >=60:
-            verdict="BUY"
-        elif score >=40:
-            verdict="WAIT"
-        else:
-            verdict="AVOID"
-        return score, verdict
-    except:
-        return 0, "UNKNOWN"
+            # fallback to Bhoovalaya only
+            sc = 75 if combined_dir=="UP" else 40
+            res = (sc, "BUY" if combined_dir=="UP" else "WAIT")
+            STOCK_SCORE_CACHE[cache_key]=res
+            return res
+    except Exception as e:
+        res = (0, "UNKNOWN")
+        return res
 
 
 
@@ -4593,7 +4581,7 @@ def main(page: ft.Page):
                     prof_for_score = load_user_profile_db()
                     prof_nak_for_score = prof_for_score["nak_idx"] if prof_for_score else None
                     moon_for_score = get_today_moon_nak_idx()
-                    score_val, score_verd = calc_stock_score_fast_for_list(asum, ldt, moon_for_score, prof_nak_for_score)
+                    score_val, score_verd = calc_stock_score_fast_for_list(asum, ldt, moon_for_score, prof_nak_for_score, sym=sym)
                     if score_val >=75:
                         score_color = "#1B5E20"; score_bg="#C8E6C9"
                     elif score_val >=60:

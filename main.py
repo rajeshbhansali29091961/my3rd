@@ -2714,6 +2714,18 @@ def make_report(asum, tval, ldate):
         vedha_sector_line = ""
         has_vedha = False
         tara = "N/A"
+    # v29 Eclipse + SBC check
+    try:
+        ei = check_eclipse_window(today)
+        eclipse_line = f"⚠️ ECLIPSE {ei.get('eclipse_date')} {ei.get('days_diff')}d away ±7d → AVOID new BUY" if ei.get('in_window') else f"✅ No Eclipse near - Safe"
+    except:
+        eclipse_line = "Eclipse check N/A"
+        ei = {"in_window": False}
+    try:
+        # Simplified SBC for make_report - if vedha present already considered
+        sbc_line = vedha_line  # already has vedha
+    except:
+        sbc_line = "SBC N/A"
     risk_pct, risk_label, conviction_pct, conv_label, total_votes, agree_votes = \
         compute_conviction_and_risk(g, b, has_vedha, panch_notes, combined_dir)
     risk_bar = _meter_bar(risk_pct, "🟥", "⬜")
@@ -2745,6 +2757,7 @@ def make_report(asum, tval, ldate):
         "  " + b[1], "  Thought: " + b[2],
         "  Bandha Direction: " + b[3], S,
         "STEP 8: COMBINED PRICE DIRECTION (GRAHA + BANDHA)", S2,
+        "  " + eclipse_line, "  " + sbc_line,
         "  " + DIR_ARROW.get(combined_dir, combined_dir),
         "  " + combined_note,
         "  (Graha=" + g[1] + " → " + GRAHA_DIRECTION.get(g[1],"SIDEWAYS") + "  |  Bandha=" + b[3] + ")",

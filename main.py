@@ -977,7 +977,292 @@ def check_mercury_retro_eclipse(longs):
     except:
         return {"mercury_retro":False, "near_eclipse":False}
 
-def calc_stock_score(bhoovalaya_dir, dasha_info, ashtavarga_info, personal_points, hora_info, retro_info):
+
+# ===== v29 NEW ACCURACY HELPERS =====
+ECLIPSE_DATES = [
+    # 2025-2027 major eclipses (NASA)
+    "2025-03-14","2025-03-29","2025-09-07","2025-09-21",
+    "2026-02-17","2026-03-03","2026-08-12","2026-08-28",
+    "2027-02-06","2027-02-20","2027-08-02","2027-08-17",
+    "2028-01-26","2028-07-22",
+]
+
+def check_eclipse_window(check_date=None):
+    # Returns dict if within 7 days of eclipse
+    try:
+        from datetime import datetime, timedelta
+        if check_date is None:
+            check_date = datetime.now()
+        if isinstance(check_date, str):
+            check_date = parse_dt(check_date)
+        if not check_date:
+            return {"in_window": False}
+        for e_str in ECLIPSE_DATES:
+            e_dt = datetime.strptime(e_str, "%Y-%m-%d")
+            diff = abs((check_date - e_dt).days)
+            if diff <= 7:
+                return {"in_window": True, "eclipse_date": e_str, "days_diff": diff, "msg": f"Eclipse {e_str} ±7d ({diff}d away) - AVOID new BUY"}
+        return {"in_window": False}
+    except:
+        return {"in_window": False}
+
+# SBC Vedha table for Nakshatra (simplified traditional)
+SBC_VEDHA_MAP = {
+    0:[10,11,12],1:[11,12,13],2:[12,13,14],3:[13,14,15],4:[14,15,16],5:[15,16,17],
+    6:[16,17,18],7:[17,18,19],8:[18,19,20],9:[19,20,21],10:[20,21,22],11:[21,22,23],
+    12:[22,23,24],13:[23,24,25],14:[24,25,26],15:[25,26,0],16:[26,0,1],17:[0,1,2],
+    18:[1,2,3],19:[2,3,4],20:[3,4,5],21:[4,5,6],22:[5,6,7],23:[6,7,8],24:[7,8,9],25:[8,9,10],26:[9,10,11]
+}
+
+def calc_sbc_vedha_stock(listing_nak_idx, transit_moon_nak_idx, transit_sun_nak_idx=None):
+    # Check if today transit vedha on listing Moon Nak = crash day
+    try:
+        if listing_nak_idx is None or transit_moon_nak_idx is None:
+            return {"has_vedha": False, "points": 0, "msg": "N/A"}
+        vedha_list = SBC_VEDHA_MAP.get(listing_nak_idx, [])
+        has_vedha = transit_moon_nak_idx in vedha_list
+        # Also Sun vedha dangerous
+        has_sun_vedha = False
+        if transit_sun_nak_idx is not None:
+            has_sun_vedha = transit_sun_nak_idx in vedha_list
+        if has_vedha and has_sun_vedha:
+            return {"has_vedha": True, "points": -15, "msg": f"Double Vedha! Moon+Sun on {listing_nak_idx} - CRASH risk -15", "type": "DOUBLE"}
+        elif has_vedha:
+            return {"has_vedha": True, "points": -10, "msg": f"Moon Vedha on listing Nak {listing_nak_idx} - Bearish -10", "type": "MOON"}
+        elif has_sun_vedha:
+            return {"has_vedha": True, "points": -5, "msg": f"Sun Vedha on listing Nak - Weak -5", "type": "SUN"}
+        else:
+            return {"has_vedha": False, "points": 10, "msg": "No SBC Vedha - Safe +10", "type": "SAFE"}
+    except Exception as e:
+        return {"has_vedha": False, "points": 0, "msg": f"Err {e}"}
+
+def calc_shadbal_simple(longs):
+    # Simplified Shadbal - Guru/Shukra strength proxy from longitude
+    try:
+        if not longs:
+            return {"points": 5, "msg": "No data"}
+        guru_lon = longs.get('Ju',0) % 360
+        shukra_lon = longs.get('Ve',0) % 360
+        shani_lon = longs.get('Sa',0) % 360
+        pts = 0
+        # Guru in own/exalt 1,4,5,9,10
+        guru_nav = int((guru_lon % 30) // 3.33)
+        if guru_lon < 30 or 90 < guru_lon < 120 or 240 < guru_lon < 270:
+            pts += 6
+        else:
+            pts += 3
+        # Shukra strong = good for finance
+        if 180 < shukra_lon < 240 or 0 < shukra_lon < 60:
+            pts += 4
+        else:
+            pts += 2
+        # Shani weak = good (less restriction)
+        if 0 < shani_lon < 90:
+            pts -= 1
+        return {"points": min(10, max(0, pts)), "msg": f"Shadbal proxy Guru/Shukra {pts}/10"}
+    except:
+        return {"points": 5, "msg": "Err"}
+
+def calc_tithi_risk(check_date=None):
+    # Rikta Tithi 4,9,14 = avoid buy
+    try:
+        from datetime import datetime
+        if check_date is None:
+            check_date = datetime.now()
+        if isinstance(check_date, str):
+            check_date = parse_dt(check_date)
+        day = check_date.day % 30
+        tithi = (day % 15) or 15
+        if tithi in [4,9,14]:
+            return {"is_rikta": True, "points": -5, "msg": f"Rikta Tithi {tithi} - Avoid new entry -5"}
+        elif tithi in [2,3,5,7,10,11,13]:
+            return {"is_rikta": False, "points": 5, "msg": f"Shubh Tithi {tithi} +5"}
+        else:
+            return {"is_rikta": False, "points": 2, "msg": f"Tithi {tithi} neutral +2"}
+    except:
+        return {"is_rikta": False, "points": 0, "msg": "N/A"}
+
+def get_volume_points_yf(symbol):
+    # Optional yfinance - returns 0 if no internet / no yf
+    try:
+        import yfinance as yf
+        ticker = yf.Ticker(f"{symbol}.NS")
+        hist = ticker.history(period="1mo")
+        if hist.empty or len(hist) < 20:
+            return {"points": 0, "msg": "No vol data"}
+        last_vol = hist['Volume'].iloc[-1]
+        avg_vol = hist['Volume'].mean()
+        if last_vol > avg_vol * 1.5:
+            return {"points": 5, "msg": f"High Vol {last_vol/avg_vol:.1f}x +5", "ratio": last_vol/avg_vol}
+        elif last_vol < avg_vol * 0.7:
+            return {"points": -3, "msg": f"Low Vol {last_vol/avg_vol:.1f}x -3 trap", "ratio": last_vol/avg_vol}
+        else:
+            return {"points": 2, "msg": f"Normal Vol {last_vol/avg_vol:.1f}x +2", "ratio": last_vol/avg_vol}
+    except:
+        return {"points": 0, "msg": "yfinance not available / offline"}
+
+# v29 NEW distribution: 30% Bhoovalaya +15% Dasha +10% Ashta +10% SBC +10% Shadbal +10% Personal +5% Hora +5% Retro +5% Tithi/Eclipse/Vol
+def calc_stock_score_v29(combined_dir, dasha_info, ashta_info, sbc_info, shadbal_info, personal_pts, hora_info, retro_info, tithi_info, eclipse_info, vol_info=None):
+    try:
+        score = 0
+        details = []
+        # 30% Bhoovalaya (was 40)
+        if combined_dir == "UP":
+            s=30; details.append(f"Bhoovalaya UP +30")
+        elif combined_dir == "MIXED":
+            s=12; details.append(f"MIXED +12")
+        elif combined_dir == "SIDEWAYS":
+            s=15; details.append(f"SIDE +15")
+        else:
+            s=3; details.append(f"DOWN +3")
+        score+=s
+        # 15% Dasha
+        if dasha_info:
+            md = dasha_info.get("md_lord","")
+            if md in ["Guru","Shukra","Budha","Chandra"]:
+                s=15; details.append(f"Dasha {md} benefic +15")
+            elif md in ["Shani","Rahu"]:
+                s=3; details.append(f"Dasha {md} malefic +3")
+            else:
+                s=8; details.append(f"Dasha {md} +8")
+        else:
+            s=7; details.append(f"Dasha unknown +7")
+        score+=s
+        # 10% Ashta
+        if ashta_info:
+            bindu = ashta_info.get("total_2_11", ashta_info.get("total",0)) if isinstance(ashta_info, dict) else 0
+            if bindu >= 18:
+                s=10; details.append(f"Ashta {bindu} strong +10")
+            elif bindu >=12:
+                s=6; details.append(f"Ashta {bindu} +6")
+            else:
+                s=2; details.append(f"Ashta {bindu} weak +2")
+        else:
+            s=4; details.append(f"Ashta N/A +4")
+        score+=s
+        # 10% SBC Vedha stock
+        if sbc_info:
+            pts = sbc_info.get("points",0)
+            # convert -15..+10 to 0..10 scale
+            if pts <0:
+                s = max(0, 10+pts)  # -15 -> 0, -10 ->0, -5->5
+            else:
+                s = pts
+            details.append(f"SBC {sbc_info.get('msg','')} -> +{s}")
+        else:
+            s=5; details.append(f"SBC N/A +5")
+        score+=s
+        # 10% Shadbal
+        if shadbal_info:
+            s = shadbal_info.get("points",5)
+            details.append(f"Shadbal {shadbal_info.get('msg','')} +{s}")
+        else:
+            s=5
+        score+=s
+        # 10% Personal
+        if personal_pts is not None:
+            if personal_pts >=3:
+                s=10; details.append(f"Personal Tara {personal_pts} +10")
+            elif personal_pts >=1:
+                s=7; details.append(f"Personal +7")
+            elif personal_pts <= -2:
+                s=0; details.append(f"Personal {personal_pts} -ve +0")
+            else:
+                s=4; details.append(f"Personal {personal_pts} +4")
+        else:
+            s=5; details.append(f"Personal N/A +5")
+        score+=s
+        # 5% Hora
+        if hora_info and hora_info.get("is_good"):
+            s=5; details.append(f"Hora {hora_info.get('hora_lord')} good +5")
+        elif hora_info and hora_info.get("is_bad"):
+            s=0; details.append(f"Hora bad +0")
+        else:
+            s=2; details.append(f"Hora neutral +2")
+        score+=s
+        # 5% Retro
+        if retro_info and retro_info.get("is_merc_retro"):
+            s=0; details.append(f"Mercury Retro +0")
+        else:
+            s=5; details.append(f"No Retro +5")
+        score+=s
+        # 5% Tithi + Eclipse + Vol combined
+        t_pts = tithi_info.get("points",0) if tithi_info else 0
+        e_pts = -5 if eclipse_info and eclipse_info.get("in_window") else 2
+        v_pts = vol_info.get("points",0) if vol_info else 0
+        combined_tv = t_pts + e_pts + v_pts
+        # Normalize -10..+12 to 0..5
+        if combined_tv >=5:
+            s=5
+        elif combined_tv >=2:
+            s=3
+        elif combined_tv >=0:
+            s=2
+        else:
+            s=0
+        details.append(f"Tithi {t_pts} Eclipse {e_pts} Vol {v_pts} => +{s}")
+        score+=s
+
+        score = max(0, min(100, score))
+        if score >=75:
+            verdict="STRONG BUY"
+        elif score >=60:
+            verdict="BUY"
+        elif score >=40:
+            verdict="WAIT"
+        else:
+            verdict="AVOID"
+        return {"score": score, "verdict": verdict, "details": details, "sbc": sbc_info, "eclipse": eclipse_info, "tithi": tithi_info, "shadbal": shadbal_info, "vol": vol_info}
+    except Exception as e:
+        return {"score": 0, "verdict": f"ERR {e}", "details": [str(e)]}
+
+
+
+
+def calc_stock_score(combined_dir, dasha_info, ashta_info, personal_pts, hora_info, retro_info):
+    # Wrapper for backward compat + v29 enhanced
+    try:
+        # Get extra data from current context if available
+        # listing_nak, transit nak from globals if possible
+        sbc_info = None
+        shadbal_info = None
+        tithi_info = calc_tithi_risk(datetime.now())
+        eclipse_info = check_eclipse_window(datetime.now())
+        # Try to get listing_nak from dasha_info or longs
+        listing_nak = None
+        transit_moon_nak = None
+        transit_sun_nak = None
+        try:
+            # dasha_info may contain listing_nak
+            if dasha_info and isinstance(dasha_info, dict):
+                listing_nak = dasha_info.get("listing_nak_idx")
+        except:
+            pass
+        try:
+            # get current transit
+            jd_now = jd_ut_from_ist(datetime.now().year, datetime.now().month, datetime.now().day, datetime.now().hour, datetime.now().minute, 5.5)
+            pos_now, _ = calc_planet_positions(jd_now, 19.07, 72.87)
+            transit_moon_nak = int(pos_now.get('Mo',0) // 13.333333) % 27 if pos_now else None
+            transit_sun_nak = int(pos_now.get('Su',0) // 13.333333) % 27 if pos_now else None
+            if listing_nak is not None and transit_moon_nak is not None:
+                sbc_info = calc_sbc_vedha_stock(listing_nak, transit_moon_nak, transit_sun_nak)
+            # shadbal from retro_info longs if available
+            longs_for_shad = retro_info.get("longs") if isinstance(retro_info, dict) else None
+            if longs_for_shad:
+                shadbal_info = calc_shadbal_simple(longs_for_shad)
+        except:
+            pass
+        return calc_stock_score_v29(combined_dir, dasha_info, ashta_info, sbc_info, shadbal_info, personal_pts, hora_info, retro_info, tithi_info, eclipse_info, None)
+    except Exception as e:
+        # Fallback to old logic
+        try:
+            return calc_stock_score_ORIG_OLD(combined_dir, dasha_info, ashta_info, personal_pts, hora_info, retro_info)
+        except:
+            return {"score":0,"verdict":"ERR","details":[str(e)]}
+
+
+
+def calc_stock_score_ORIG_OLD(bhoovalaya_dir, dasha_info, ashtavarga_info, personal_points, hora_info, retro_info):
     score = 0
     # 40% Bhoovalaya
     if bhoovalaya_dir == "UP":
@@ -1048,19 +1333,92 @@ def calc_stock_score(bhoovalaya_dir, dasha_info, ashtavarga_info, personal_point
 STOCK_SCORE_CACHE = {}
 
 def calc_stock_score_fast_for_list(asum, ldt, moon_nak_idx_today=None, prof_nak_idx=None, sym=None):
-    # v28 REAL synced score - same as detail page, with cache
-    cache_key = f"{sym}_{asum}_{ldt}_{moon_nak_idx_today}_{prof_nak_idx}"
+    cache_key = f"{sym}_{asum}_{ldt}_{moon_nak_idx_today}_{prof_nak_idx}_v29"
     if cache_key in STOCK_SCORE_CACHE:
         return STOCK_SCORE_CACHE[cache_key]
     try:
+        from datetime import datetime
         ldate_obj = parse_dt(ldt) if isinstance(ldt, str) else ldt
         if not ldate_obj:
-            # fallback
             combined_dir, _ = quick_verdict(asum, ldt)
             sc = 40 if combined_dir=="UP" else 20
             res = (sc, "WAIT")
             STOCK_SCORE_CACHE[cache_key]=res
             return res
+        combined_dir, has_vedha = quick_verdict(asum, ldt)
+        listing_nak_idx = None
+        longs_listing = None
+        try:
+            jd_ld = jd_ut_from_ist(ldate_obj.year, ldate_obj.month, ldate_obj.day, 12, 0, 5.5)
+            pos_ld, _ = calc_planet_positions(jd_ld, 19.07, 72.87)
+            moon_lon_ld = pos_ld.get('Mo', 0)
+            listing_nak_idx = int(moon_lon_ld // 13.333333) % 27
+            longs_listing = pos_ld
+        except:
+            pass
+        dasha_info = None
+        if listing_nak_idx is not None:
+            try:
+                dasha_info = calc_vimshottari_dasha(listing_nak_idx, ldate_obj, datetime.now())
+                if dasha_info:
+                    dasha_info["listing_nak_idx"]=listing_nak_idx
+            except:
+                pass
+        ashta_info = None
+        if longs_listing:
+            try:
+                ashta_info = calc_sarva_ashtakavarga_2_11(longs_listing)
+            except:
+                pass
+        personal_pts = None
+        if prof_nak_idx is not None and moon_nak_idx_today is not None:
+            try:
+                calc_p = calc_user_tara_chandra_sbc(prof_nak_idx, moon_nak_idx_today)
+                personal_pts = calc_p.get("points") if calc_p else None
+            except:
+                pass
+        hora_info = None
+        retro_info = None
+        try:
+            hora_info = get_current_hora()
+        except:
+            pass
+        try:
+            retro_info = check_mercury_retro_eclipse(longs_listing if longs_listing else get_planet_longitudes_for_date(datetime.now()))
+            if isinstance(retro_info, dict) and longs_listing:
+                retro_info["longs"]=longs_listing
+        except:
+            pass
+        # v29 extras
+        sbc_info = None
+        try:
+            if listing_nak_idx is not None and moon_nak_idx_today is not None:
+                sbc_info = calc_sbc_vedha_stock(listing_nak_idx, moon_nak_idx_today, None)
+        except:
+            pass
+        shadbal_info = None
+        try:
+            if longs_listing:
+                shadbal_info = calc_shadbal_simple(longs_listing)
+        except:
+            pass
+        tithi_info = calc_tithi_risk(datetime.now())
+        eclipse_info = check_eclipse_window(datetime.now())
+        try:
+            stock_score_info = calc_stock_score_v29(combined_dir, dasha_info, ashta_info, sbc_info, shadbal_info, personal_pts, hora_info, retro_info, tithi_info, eclipse_info, None)
+            sc = stock_score_info.get("score",0)
+            verd = stock_score_info.get("verdict","")
+            res = (sc, verd)
+            STOCK_SCORE_CACHE[cache_key]=res
+            return res
+        except Exception as e:
+            sc = 75 if combined_dir=="UP" else 40
+            res = (sc, "BUY" if combined_dir=="UP" else "WAIT")
+            STOCK_SCORE_CACHE[cache_key]=res
+            return res
+    except Exception as e:
+        res = (0, "UNKNOWN")
+        return res
         # Real calculations (same as detail page)
         # 1. Bhoovalaya dir
         combined_dir, has_vedha = quick_verdict(asum, ldt)

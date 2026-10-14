@@ -5078,7 +5078,7 @@ def main(page: ft.Page):
 
 
         # v29.3 Date picker for study mode
-        fld_custom_date = ft.TextField(label="📅 Custom Date for Study (DD-MM-YYYY) - Leave empty for TODAY", value="", hint_text="e.g., 07-09-2025 or 2025-09-07 - for backtest", width=500, bgcolor=C["field_bg"])
+        fld_custom_date = ft.TextField(label="📅 Custom Date for Study (DD-MM-YYYY) - Leave empty for TODAY", value="", hint_text="e.g., 07-09-2025 or 2025-09-07 - for backtest", width=500, bgcolor="#FFFFFF")
         custom_date_status = ft.Text("", size=12, color=C["hint_txt"])
         def do_set_custom_date(e):
             ok, msg = set_selected_date_from_str(fld_custom_date.value)

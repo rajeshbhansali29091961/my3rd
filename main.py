@@ -5117,7 +5117,11 @@ def main(page: ft.Page):
             make_header("📋 STOCK LIST (NSE India)"), ft.Divider(height=4, color=C["divider"]),
             ft.Container(content=ft.Column([
                 ft.Text("📅 STUDY MODE: Check any past/future date - Eclipse, SBC, Tithi will calculate for that date. Default = TODAY Mumbai IST.", size=11, weight="bold", color="#0D47A1"),
-                ft.Row([fld_custom_date, ft.ElevatedButton("✅ SET DATE", bgcolor="#1565C0", color="white", height=44, on_click=do_set_custom_date), ft.ElevatedButton("🔄 TODAY", bgcolor="#455A64", color="white", height=44, on_click=do_reset_custom_date)]),
+                fld_custom_date,
+                ft.Row([
+                    ft.ElevatedButton("✅ SET DATE", bgcolor="#1565C0", color="white", height=50, width=160, on_click=do_set_custom_date),
+                    ft.ElevatedButton("🔄 TODAY", bgcolor="#455A64", color="white", height=50, width=120, on_click=do_reset_custom_date)
+                ], wrap=True, spacing=8),
                 custom_date_status,
                 ft.Divider(height=2, color=C["divider"]),
             ]), bgcolor="#E3F2FD", padding=10, border_radius=8, border=ft.border.all(1, "#90CAF9")),

@@ -5082,12 +5082,28 @@ def main(page: ft.Page):
         custom_date_status = ft.Text("", size=12, color=C["hint_txt"])
         def do_set_custom_date(e):
             ok, msg = set_selected_date_from_str(fld_custom_date.value)
-            custom_date_status.value = msg
+            custom_date_status.value = msg + " | Auto-reset to TODAY in 5 min for safety"
             custom_date_status.color = C["green"] if ok else C["red"]
             page.update()
             if ok:
                 # Auto reload list with new date calculations
                 load_list(fld_list_search.value.strip().upper())
+                # Auto-reset after 5 minutes to avoid live trading mistake
+                def auto_reset_task():
+                    import time
+                    time.sleep(300)  # 5 min
+                    try:
+                        set_selected_date_from_str("")
+                        # Need to run on UI thread
+                        if page:
+                            fld_custom_date.value = ""
+                            custom_date_status.value = "⏰ Auto-reset to TODAY (5 min over) - Now using live date"
+                            custom_date_status.color = C["green"]
+                            load_list(fld_list_search.value.strip().upper())
+                            page.update()
+                    except:
+                        pass
+                threading.Thread(target=auto_reset_task, daemon=True).start()
         def do_reset_custom_date(e):
             fld_custom_date.value = ""
             set_selected_date_from_str("")

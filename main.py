@@ -979,13 +979,65 @@ def check_mercury_retro_eclipse(longs):
 
 
 # ===== v29 NEW ACCURACY HELPERS =====
-ECLIPSE_DATES = [
-    # 2025-2027 major eclipses (NASA)
-    "2025-03-14","2025-03-29","2025-09-07","2025-09-21",
-    "2026-02-17","2026-03-03","2026-08-12","2026-08-28",
-    "2027-02-06","2027-02-20","2027-08-02","2027-08-17",
-    "2028-01-26","2028-07-22",
+# Mumbai-visible eclipses only (2025-2028) - filtered for IST visibility
+# Source: NASA + TimeandDate Mumbai visibility
+ECLIPSE_DATES_MUMBAI_VISIBLE = [
+    # Date, Type, Visible in Mumbai?
+    ("2025-09-07", "Total Lunar", True),   # 100% visible Mumbai 21:00-02:00 IST - YES BLOCK
+    ("2026-03-03", "Total Lunar", True),   # Visible early morning Mumbai - YES
+    ("2026-08-28", "Partial Lunar", True), # Visible Mumbai night - YES
+    ("2027-02-20", "Penumbral Lunar", True), # Visible Mumbai - mild
+    ("2027-08-17", "Penumbral Lunar", True), # Visible Mumbai
+    ("2028-01-12", "Partial Lunar", True),  # Visible Mumbai
+    ("2028-07-06", "Partial Lunar", True),  # Visible Mumbai
 ]
+
+# For calculation we use only dates
+ECLIPSE_DATES = [d[0] for d in ECLIPSE_DATES_MUMBAI_VISIBLE]  # ["2025-09-07", ...] only Mumbai visible
+ECLIPSE_DETAILS = {d[0]: d[1] for d in ECLIPSE_DATES_MUMBAI_VISIBLE}
+
+# v29.3 Custom Date for SHOW ALL study mode - default None = today IST
+SELECTED_DATE_FOR_SHOWALL = None
+SELECTED_DATE_STR = ""  # DD-MM-YYYY string from user
+
+def get_selected_date():
+    global SELECTED_DATE_FOR_SHOWALL
+    if SELECTED_DATE_FOR_SHOWALL:
+        return SELECTED_DATE_FOR_SHOWALL
+    return datetime.now()
+
+def set_selected_date_from_str(date_str):
+    global SELECTED_DATE_FOR_SHOWALL, SELECTED_DATE_STR
+    SELECTED_DATE_STR = date_str.strip()
+    if not SELECTED_DATE_STR:
+        SELECTED_DATE_FOR_SHOWALL = None
+        return True, "Using today's date"
+    try:
+        # Accept DD-MM-YYYY or YYYY-MM-DD
+        if "-" in date_str:
+            parts = date_str.strip().split("-")
+            if len(parts[0])==4:  # YYYY-MM-DD
+                y,m,d = map(int, parts)
+            else:  # DD-MM-YYYY
+                d,m,y = map(int, parts)
+            dt = datetime(y,m,d,10,0,0)  # 10 AM IST for calculation
+            SELECTED_DATE_FOR_SHOWALL = dt
+            return True, f"Date set to {dt.strftime('%d-%m-%Y')} - calculations use this date"
+        else:
+            return False, "Format: DD-MM-YYYY (e.g., 07-09-2025)"
+    except Exception as ex:
+        return False, f"Invalid date: {ex}. Use DD-MM-YYYY"
+
+def get_today_moon_nak_idx_custom():
+    # Wrapper that uses selected date
+    try:
+        sel = get_selected_date()
+        # Approx moon nak from day of year + offset - simplified
+        return sel.timetuple().tm_yday % 27
+    except:
+        return datetime.now().timetuple().tm_yday % 27
+
+
 
 def check_eclipse_window(check_date=None):
     # Returns dict if within 7 days of eclipse
@@ -1001,7 +1053,8 @@ def check_eclipse_window(check_date=None):
             e_dt = datetime.strptime(e_str, "%Y-%m-%d")
             diff = abs((check_date - e_dt).days)
             if diff <= 7:
-                return {"in_window": True, "eclipse_date": e_str, "days_diff": diff, "msg": f"Eclipse {e_str} ±7d ({diff}d away) - AVOID new BUY"}
+                etype = ECLIPSE_DETAILS.get(e_str, "Eclipse")
+                return {"in_window": True, "eclipse_date": e_str, "eclipse_type": etype, "days_diff": diff, "msg": f"{etype} {e_str} visible Mumbai ±7d ({diff}d away) - AVOID new BUY"}
         return {"in_window": False}
     except:
         return {"in_window": False}
@@ -5023,9 +5076,35 @@ def main(page: ft.Page):
                 list_rows.controls.append(row_ctrl)
             page.update()
 
+
+        # v29.3 Date picker for study mode
+        fld_custom_date = ft.TextField(label="📅 Custom Date for Study (DD-MM-YYYY) - Leave empty for TODAY", value="", hint_text="e.g., 07-09-2025 or 2025-09-07 - for backtest", width=500, bgcolor=C["field_bg"])
+        custom_date_status = ft.Text("", size=12, color=C["hint_txt"])
+        def do_set_custom_date(e):
+            ok, msg = set_selected_date_from_str(fld_custom_date.value)
+            custom_date_status.value = msg
+            custom_date_status.color = C["green"] if ok else C["red"]
+            page.update()
+            if ok:
+                # Auto reload list with new date calculations
+                load_list(fld_list_search.value.strip().upper())
+        def do_reset_custom_date(e):
+            fld_custom_date.value = ""
+            set_selected_date_from_str("")
+            custom_date_status.value = "Reset to TODAY"
+            custom_date_status.color = C["green"]
+            page.update()
+            load_list(fld_list_search.value.strip().upper())
+
         list_screen = ft.Column(visible=False, controls=[
             top_timing_flag_container,
             make_header("📋 STOCK LIST (NSE India)"), ft.Divider(height=4, color=C["divider"]),
+            ft.Container(content=ft.Column([
+                ft.Text("📅 STUDY MODE: Check any past/future date - Eclipse, SBC, Tithi will calculate for that date. Default = TODAY Mumbai IST.", size=11, weight="bold", color="#0D47A1"),
+                ft.Row([fld_custom_date, ft.ElevatedButton("✅ SET DATE", bgcolor="#1565C0", color="white", height=44, on_click=do_set_custom_date), ft.ElevatedButton("🔄 TODAY", bgcolor="#455A64", color="white", height=44, on_click=do_reset_custom_date)]),
+                custom_date_status,
+                ft.Divider(height=2, color=C["divider"]),
+            ]), bgcolor="#E3F2FD", padding=10, border_radius=8, border=ft.border.all(1, "#90CAF9")),
             ft.ElevatedButton("⬅  BACK TO ORACLE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("oracle")),
             price_popup,
             ft.Divider(height=4, color=C["divider"]),

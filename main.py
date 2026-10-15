@@ -5078,12 +5078,18 @@ def main(page: ft.Page):
 
 
         # v29.3 Date picker for study mode
-        fld_custom_date = ft.TextField(label="📅 Custom Date for Study (DD-MM-YYYY) - Leave empty for TODAY", value="", hint_text="e.g., 07-09-2025 or 2025-09-07 - for backtest", width=500, bgcolor="#FFFFFF")
+        fld_custom_date = ft.TextField(label="📅 Custom Date for Study (DD-MM-YYYY) - Leave empty for TODAY", value="", hint_text="e.g., 07-09-2025 or 2025-09-07 - for backtest", width=500, bgcolor="#FFFFFF", color="#000000", label_style=ft.TextStyle(color="#000000"), hint_style=ft.TextStyle(color="#616161"), text_style=ft.TextStyle(color="#000000", weight="bold", size=16))
         custom_date_status = ft.Text("", size=12, color=C["hint_txt"])
+        study_mode_banner = ft.Container(visible=False, content=ft.Text("", size=14, weight="bold", color="#FFFFFF"), bgcolor="#B71C1C", padding=10, border_radius=6)
         def do_set_custom_date(e):
             ok, msg = set_selected_date_from_str(fld_custom_date.value)
             custom_date_status.value = msg + " | Auto-reset to TODAY in 5 min for safety"
             custom_date_status.color = C["green"] if ok else C["red"]
+            if ok and SELECTED_DATE_FOR_SHOWALL:
+                study_mode_banner.content.value = f"🔴 STUDY MODE ACTIVE - Showing calculations for {SELECTED_DATE_FOR_SHOWALL.strftime('%d-%m-%Y')} - NOT LIVE TODAY - Click TODAY to go back"
+                study_mode_banner.visible = True
+            else:
+                study_mode_banner.visible = False
             page.update()
             if ok:
                 # Auto reload list with new date calculations
@@ -5107,8 +5113,9 @@ def main(page: ft.Page):
         def do_reset_custom_date(e):
             fld_custom_date.value = ""
             set_selected_date_from_str("")
-            custom_date_status.value = "Reset to TODAY"
+            custom_date_status.value = "✅ Reset to TODAY - Live Mumbai date"
             custom_date_status.color = C["green"]
+            study_mode_banner.visible = False
             page.update()
             load_list(fld_list_search.value.strip().upper())
 
@@ -5123,6 +5130,7 @@ def main(page: ft.Page):
                     ft.ElevatedButton("🔄 TODAY", bgcolor="#455A64", color="white", height=50, width=120, on_click=do_reset_custom_date)
                 ], wrap=True, spacing=8),
                 custom_date_status,
+                study_mode_banner,
                 ft.Divider(height=2, color=C["divider"]),
             ]), bgcolor="#E3F2FD", padding=10, border_radius=8, border=ft.border.all(1, "#90CAF9")),
             ft.ElevatedButton("⬅  BACK TO ORACLE", bgcolor=C["primary"], color="#FFFFFF", height=44, on_click=lambda e: show_screen("oracle")),

@@ -591,10 +591,29 @@ def get_today_moon_nak_idx():
             res = swe.calc_ut(jd, swe.MOON)
             lon = res[0][0] % 360
             return int(lon / (360.0/27.0)) % 27
-        except:
-            return 0
-    except:
-        return 0
+        except Exception:
+            # Fallback to internal ephemeris (calc_planet_positions returns sidereal)
+            try:
+                now = dt.now()
+                longs = get_planet_longitudes_for_date(now)
+                moon_lon = longs.get(2, 0) % 360
+                if moon_lon != 0:
+                    return int(moon_lon / (360.0/27.0)) % 27
+            except Exception:
+                pass
+            # Last fallback: day-of-year based but moves daily
+            try:
+                import datetime as _dt
+                # Use selected date if user set custom date for SHOW ALL
+                sel = get_selected_date() if 'get_selected_date' in globals() else _dt.datetime.now()
+                # Add fractional day progress to avoid stuck at midnight
+                frac = (sel.hour*3600 + sel.minute*60 + sel.second)/86400.0 if hasattr(sel, 'hour') else 0
+                return int((sel.timetuple().tm_yday + frac) % 27)
+            except Exception:
+                return int(_dt.datetime.now().timetuple().tm_yday % 27)
+    except Exception:
+        import datetime as _dt2
+        return int(_dt2.datetime.now().timetuple().tm_yday % 27)
 
 def full_analysis_for_stock(symbol, stock_name_devanagari=None, listing_date_str=None):
     stock_name = stock_name_devanagari or symbol
@@ -811,16 +830,27 @@ def get_charan_details(nak_idx, charan):
     nav_rashi = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"][full_idx%12]
     return {"rashi":rashi,"syllable":syll,"navamsa":nav_rashi,"pada":full_idx+1,"deg":f"{full_idx*3.333:.2f}°"}
 
-def calc_user_tara_chandra_sbc(birth_nak_idx, moon_nak_idx):
+def calc_user_tara_chandra_sbc(birth_nak_idx, moon_nak_idx, birth_charan=2, moon_charan=2):
     if birth_nak_idx is None or moon_nak_idx is None:
         return None
     diff = (moon_nak_idx - birth_nak_idx) % 27
     tara_num = (diff % 9) + 1
-    tara_name = list(TARA_NAMES.values())[tara_num-1] if tara_num in TARA_NAMES else f"Tara {tara_num}"
+    # Robust tara name
+    try:
+        tara_name = TARA_NAMES.get(tara_num, f"Tara {tara_num}")
+    except Exception:
+        tara_name = f"Tara {tara_num}"
     tara_good = tara_num in TARA_GOOD
     tara_bad = tara_num in TARA_BAD
-    birth_rashi_idx = int(birth_nak_idx // 2.25)
-    moon_rashi_idx = int(moon_nak_idx // 2.25)
+    # CORRECT Rashi calc: 108 padas, 9 padas = 1 rashi. Use middle pada if charan unknown
+    try:
+        b_full = int(birth_nak_idx)*4 + int(birth_charan or 2) -1
+        m_full = int(moon_nak_idx)*4 + int(moon_charan or 2) -1
+        birth_rashi_idx = (b_full // 9) % 12
+        moon_rashi_idx = (m_full // 9) % 12
+    except Exception:
+        birth_rashi_idx = int((int(birth_nak_idx)*4)//9) % 12
+        moon_rashi_idx = int((int(moon_nak_idx)*4)//9) % 12
     dist = (moon_rashi_idx - birth_rashi_idx) % 12 + 1
     chandra_good = dist not in [6,8,12]
     tikshna = [1,2,8,9,17,18]
@@ -831,7 +861,11 @@ def calc_user_tara_chandra_sbc(birth_nak_idx, moon_nak_idx):
         sbc_score, sbc_sig = 80, "BULLISH Stable"
     else:
         sbc_score, sbc_sig = 60, "NEUTRAL"
-    vedha = VEDHA_PAIRS.get(birth_nak_idx) == moon_nak_idx if birth_nak_idx is not None else False
+    vedha = False
+    try:
+        vedha = VEDHA_PAIRS.get(int(birth_nak_idx)) == int(moon_nak_idx) if birth_nak_idx is not None else False
+    except Exception:
+        vedha = False
     points = 0
     if tara_good: points+=1
     if tara_bad: points-=1
@@ -840,7 +874,7 @@ def calc_user_tara_chandra_sbc(birth_nak_idx, moon_nak_idx):
     if sbc_score>=70: points+=1
     elif sbc_score<=40: points-=1
     if vedha: points-=1
-    return {"tara_num":tara_num,"tara_name":tara_name,"tara_good":tara_good,"tara_bad":tara_bad,"chandra_dist":dist,"chandra_good":chandra_good,"sbc_score":sbc_score,"sbc_sig":sbc_sig,"vedha":vedha,"points":points}
+    return {"tara_num":tara_num,"tara_name":tara_name,"tara_good":tara_good,"tara_bad":tara_bad,"chandra_dist":dist,"chandra_good":chandra_good,"sbc_score":sbc_score,"sbc_sig":sbc_sig,"vedha":vedha,"points":points,"birth_rashi_idx":birth_rashi_idx,"moon_rashi_idx":moon_rashi_idx}
 
 # ── V22 NEW: Vimshottari Dasha, Ashtakavarga, Hora, Mercury Retro, Eclipse, Stock Score ──
 DASHA_YEARS = {"Ketu":7,"Shukra":20,"Surya":6,"Chandra":10,"Mangal":7,"Rahu":18,"Guru":16,"Shani":19,"Budha":17}
@@ -1029,12 +1063,18 @@ def set_selected_date_from_str(date_str):
         return False, f"Invalid date: {ex}. Use DD-MM-YYYY"
 
 def get_today_moon_nak_idx_custom():
-    # Wrapper that uses selected date
+    # Wrapper that uses selected date - now uses real ephemeris
     try:
         sel = get_selected_date()
-        # Approx moon nak from day of year + offset - simplified
-        return sel.timetuple().tm_yday % 27
-    except:
+        try:
+            longs = get_planet_longitudes_for_date(sel)
+            moon_lon = longs.get(2, 0) % 360
+            if moon_lon != 0:
+                return int(moon_lon / (360.0/27.0)) % 27
+        except Exception:
+            pass
+        return int(sel.timetuple().tm_yday % 27)
+    except Exception:
         return datetime.now().timetuple().tm_yday % 27
 
 

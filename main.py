@@ -6369,8 +6369,13 @@ REFERENCE — सभी के लिए समान
                 pob_txt = prof.get("pob","") or "N/A"
                 profile_saved_banner.value = f"Saved: {prof['nak_name']} C{prof['charan']} | Rashi {det['rashi']} | DOB {dob_txt} {pob_txt} | Akshar {det['syllable']} | Pada {det['pada']}/108"
                 profile_detail_text.value = f"Rashi: {det['rashi']} | Syllable: {det['syllable']} | Navamsa: {det['navamsa']} | Full Pada: {det['pada']} | Deg: {det['deg']} | Lord: {NAKSHATRA_LORD_CYCLE[prof['nak_idx']%9]} | DOB:{dob_txt} Place:{pob_txt}"
-                # Fill fields if exist
+                # v6 FIX: Restore Nakshatra and Charan dropdowns + DOB fields on reopen
                 try:
+                    nak_idx = int(prof.get("nak_idx",0))
+                    if 0 <= nak_idx < len(NAK_EN):
+                        fld_profile_nak.value = f"{NAK_EN[nak_idx]} ({NAK[nak_idx]})"
+                    charan_val = prof.get("charan",1)
+                    fld_profile_charan.value = str(charan_val)
                     if prof.get("dob"): fld_dob.value = prof["dob"]
                     if prof.get("tob"): fld_tob.value = prof["tob"]
                     if prof.get("pob"): fld_pob.value = prof["pob"]
